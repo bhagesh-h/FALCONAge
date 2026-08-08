@@ -56,6 +56,7 @@ reference:
   contents:
   - prepare
   - qc
+  - probe_loss
 - title: Scoring
   desc: The predict loop, its result object, and the provenance it carries.
   contents:
@@ -63,6 +64,7 @@ reference:
   - combine
   - coverage
   - manifest
+  - interpretation
   - write_results
   - as.data.frame.falcon_result
 - title: The clock catalogue
@@ -81,6 +83,7 @@ reference:
     a pace-of-aging clock is a units error, not a conservative choice.
   contents:
   - acceleration
+  - cell_composition
   - associate
   - cox_hazard
   - agreement

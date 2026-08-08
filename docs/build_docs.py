@@ -215,7 +215,15 @@ def quarto_yaml(spec: dict) -> str:
             # place Quarto lets arbitrary prose into the sidebar.
             "sidebar": {
                 "style": "docked",
-                "search": True,
+                # NOT `search: true`, and this is not a style preference.
+                # Quarto puts a search box in the navbar and another in the
+                # sidebar, and both get `id="quarto-search"` -- two elements
+                # with one id, which is invalid HTML before it is a design
+                # problem. On a phone they are two search boxes a thumb apart.
+                # The navbar's is the one that stays; this sidebar carries
+                # identity and citation, not navigation, so it has nothing to
+                # search.
+                "search": False,
                 # Quarto emits this into a block AFTER `header:`; the
                 # stylesheet reorders it to the top. Using the key rather than
                 # a hand-written <img> is what makes the path correct at every

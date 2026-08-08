@@ -43,7 +43,7 @@ from .core import (
 )
 from .download import download
 from .io import read, read_betas, read_clinical, read_rrbs_dir, read_series_matrix, write_results
-from .preprocess import prepare, prepare_clinical, qc
+from .preprocess import prepare, prepare_clinical, probe_loss, qc
 from .score import FalconResult, combine, score
 
 __all__ = [
@@ -52,7 +52,8 @@ __all__ = [
     "cell_composition",
     "agreement", "analysis", "associate", "combine", "configure", "core", "cox_hazard",
     "describe", "download", "icc", "io", "models", "plot", "prepare",
-    "prepare_clinical", "preprocess", "qc", "read", "read_betas", "read_clinical",
+    "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_betas",
+    "read_clinical",
     "read_rrbs_dir", "read_series_matrix", "registry", "run_benchmark", "score",
     "write_results",
 ]

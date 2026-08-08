@@ -14,7 +14,23 @@ written to disk and read back is self-describing.
 
 | Name | Description |
 | --- | --- |
+| [interpretation](#falconage.FalconResult.interpretation) | One row per clock: what the number is, and what may be done with it. |
 | [long](#falconage.FalconResult.long) | One row per sample per clock, with the scale and provenance attached. |
+
+### interpretation { #falconage.FalconResult.interpretation }
+
+```python
+FalconResult.interpretation()
+```
+
+One row per clock: what the number is, and what may be done with it.
+
+Everything needed to read a score, in the object holding the score.
+Scale and unit say what the quantity is; ``legal_operations`` says which
+arithmetic the package will perform on it; reliability says how much of
+a within-person change is likely to be the assay; ``caveats`` carries
+any documented disagreement between the clock's paper and the
+coefficients that circulate for it.
 
 ### long { #falconage.FalconResult.long }
 

@@ -51,7 +51,7 @@ website:
       href: https://github.com/bhagesh-h/FALCONAge
   sidebar:
     style: docked
-    search: true
+    search: false
     logo: logo.png
     logo-alt: FALCONAge logo
     logo-href: https://bhagesh-h.github.io/FALCONAge/
@@ -103,6 +103,7 @@ quartodoc:
     - prepare
     - prepare_clinical
     - qc
+    - probe_loss
     - preprocess.aggregate_replicate_probes
     - preprocess.impute
   - title: Scoring
@@ -126,6 +127,7 @@ quartodoc:
       a pace-of-aging clock is a units error, not a conservative choice.
     contents:
     - acceleration
+    - cell_composition
     - associate
     - cox_hazard
     - agreement

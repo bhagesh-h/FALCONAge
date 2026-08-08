@@ -22,6 +22,7 @@ Getting a matrix into the shape every clock assumes: bare probe identifiers, val
 | [prepare](prepare.qmd#falconage.prepare) | The standard chain: harmonise ids, collapse v2 replicates, clip, identify. |
 | [prepare_clinical](prepare_clinical.qmd#falconage.prepare_clinical) | Rename to canonical markers and convert to the units the models expect. |
 | [qc](qc.qmd#falconage.qc) | Look at the data before scoring it. |
+| [probe_loss](probe_loss.qmd#falconage.probe_loss) | What each clock has lost on this dataset, before scoring anything. |
 | [preprocess.aggregate_replicate_probes](preprocess.aggregate_replicate_probes.qmd#falconage.preprocess.aggregate_replicate_probes) | Strip EPIC v2 probe suffixes and collapse the replicates. |
 | [preprocess.impute](preprocess.impute.qmd#falconage.preprocess.impute) | Dataset-level imputation, applied before any clock sees the matrix. |
 
@@ -53,6 +54,7 @@ Age acceleration in its three conventions, association and survival models, reli
 | | |
 | --- | --- |
 | [acceleration](acceleration.qmd#falconage.acceleration) | Age acceleration, in whichever of the three conventions you mean. |
+| [cell_composition](cell_composition.qmd#falconage.cell_composition) | Cell-type proportions estimated in this same run, as a covariate frame. |
 | [associate](associate.qmd#falconage.associate) | Ordinary least squares of each clock on an outcome, adjusted for covariates. |
 | [cox_hazard](cox_hazard.qmd#falconage.cox_hazard) | Univariable Cox hazard ratio per clock, by Breslow-tied partial likelihood. |
 | [agreement](agreement.qmd#falconage.agreement) | Between-clock correlation. |

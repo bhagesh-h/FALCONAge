@@ -210,29 +210,47 @@ main video {
 // absurd in a 360 px one -- a square mark rendered 360 px tall, pushing every
 // other thing in the drawer off the first screen. This is the "overlapping on
 // small devices" symptom.
+// ONE SET OF CHROME ON A PHONE, NOT TWO.
+//
+// This site declares a navbar and a docked sidebar. On a wide screen they have
+// different jobs -- the navbar navigates, the sidebar carries the logo, the
+// one-line description and the citation buttons -- and both fit.
+//
+// Below the sidebar breakpoint Quarto collapses each of them behind its own
+// control, and the result was two hamburgers side by side in the header, each
+// opening a different thing. The reported symptom was "two menus, two search
+// bars, two logos, two titles", and every part of it traces here.
+//
+// Note this is invisible to a geometry check. Two search boxes that each fit
+// the viewport and do not touch each other pass an overflow test and an
+// overlap test both, which is exactly what happened -- the earlier checks
+// reported clean while the page was wrong. test/responsive_check.py now counts
+// them instead.
+//
+// The sidebar is the one to drop. It holds no navigation at all here (that was
+// removed deliberately: repeating the navbar down the left is two copies of one
+// menu), so on a phone its drawer offers a logo and a citation button behind a
+// control that looks exactly like the real menu next to it. The logo and the
+// citation are both on the About page, one tap away.
 @media (max-width: 991.98px) {
-  // Quarto marks the sidebar logo `d-lg-inline d-none`, so a reader who opens
-  // the drawer on a phone gets navigation with no mark on it at all. Show it --
-  // but at a fixed small size, never `width: 100%`. At full drawer width a
-  // square logo is 390 px tall and pushes every link below the fold, which is
-  // the other half of what "horribly overlapping" described.
-  //
-  // `!important` because `.d-none` is a Bootstrap utility and utilities are
-  // `display: none !important` by definition; specificity cannot reach them.
-  // This was not obvious from the computed style either -- `width` from this
-  // block applied while `display` did not, which is the fingerprint of an
-  // `!important` on one property and the thing that identified the cause.
-  #quarto-sidebar img.sidebar-logo {
-    display: block !important;
-    width: 140px;
-    max-width: 40%;
-    margin: 0.25rem auto 0;
+  #quarto-sidebar,
+  #quarto-sidebar-glass,
+  .quarto-btn-toggle,
+  #quarto-header .quarto-sidebar-collapse-item,
+  nav.quarto-secondary-nav {
+    display: none !important;
   }
-  #quarto-sidebar .sidebar-header { margin-bottom: 0.5rem; }
-  #quarto-sidebar .quarto-sidebar-header { font-size: 0.9rem; }
 
-  // The citation buttons sit side by side at 250 px and wrap at 320 px; give
-  // them room to be tapped rather than squeezing two onto one line.
+  // Nothing is done to the grid. Quarto's `page-columns` uses named tracks and
+  // already lays the article out correctly when the sidebar is collapsed --
+  // it was clean at every width before this block existed. Overriding
+  // `grid-template-columns: 1fr` and `grid-column: 1 / -1` to reclaim what
+  // looked like a spare gutter blew main.content out to 1949 px on a 390 px
+  // screen. Hiding the sidebar is the whole change; the layout was never the
+  // problem.
+
+  // The citation buttons are on the About page at this width, in the article
+  // body rather than the sidebar. Give them a tap target.
   .falcon-copy {
     padding: 0.4rem 0.7rem;
     font-size: 0.78rem;

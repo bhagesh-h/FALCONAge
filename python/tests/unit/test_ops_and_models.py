@@ -260,3 +260,192 @@ def test_scaffold_architecture_is_testable_without_real_coefficients(tmp_path):
     got, _ = model.predict(d, resolve("cpu"))
     assert got["a"] == pytest.approx(1.0)   # 0.5 * 2.0, identity postprocess
     assert got["b"] == pytest.approx(0.5)   # 0.25 * 2.0
+
+
+# ---------------------------------------------------------------------------
+# the published output transforms
+# ---------------------------------------------------------------------------
+
+def test_every_documented_postprocess_op_is_dispatchable():
+    """The op table in the science page is the spec; this is the inventory."""
+    from falconage.models import ops
+
+    documented = {
+        "add", "multiply", "divide_by", "anti_log_linear", "log_linear",
+        "expit", "exp", "clip", "cox_to_years", "anti_logp2", "anti_log_log",
+        "one_minus", "days_to_weeks", "days_to_months", "scale_and_shift",
+        "petkovich_blood", "stubbs_multitissue", "mortality_to_phenoage",
+        "anti_log", "sigmoid", "add_constant",
+    }
+    assert documented <= set(ops.POSTPROCESS)
+
+
+def test_the_aliases_are_the_same_function_not_a_copy():
+    """A copied implementation is one that can drift; an alias cannot."""
+    from falconage.models import ops
+
+    assert ops.POSTPROCESS["anti_log"] is ops.POSTPROCESS["exp"]
+    assert ops.POSTPROCESS["sigmoid"] is ops.POSTPROCESS["expit"]
+    assert ops.POSTPROCESS["add_constant"] is ops.POSTPROCESS["add"]
+
+
+@pytest.mark.parametrize("op,kwargs,x,want", [
+    ("anti_logp2", {}, 0.0, -1.0),                     # e^0 - 2
+    ("anti_log_log", {}, 0.0, np.exp(-1.0)),           # e^(-e^0)
+    ("one_minus", {}, 0.25, 0.75),
+    ("days_to_weeks", {}, 280.0, 40.0),                # a term pregnancy
+    ("days_to_months", {}, 61.0, 2.0),
+    ("scale_and_shift", {"scale": 2.0, "offset": 3.0}, 1.0, 8.0),   # (1+3)*2
+])
+def test_transform_values(op, kwargs, x, want):
+    from falconage.models import ops
+
+    got = ops.POSTPROCESS[op](np.array([x]), **kwargs)
+    assert float(got[0]) == pytest.approx(want)
+
+
+def test_petkovich_is_pinned_at_zero_rather_than_nan():
+    """A fractional power of a negative base is a NaN that spreads."""
+    from falconage.models import ops
+
+    out = ops.POSTPROCESS["petkovich_blood"](np.array([-99.0, 0.0]))
+    assert np.isfinite(out).all()
+    assert out[0] == 0.0
+
+
+def test_stubbs_is_not_monotone_and_that_is_the_published_model():
+    from falconage.models import ops
+
+    f = ops.POSTPROCESS["stubbs_multitissue"]
+    vertex = -1.2424 / (2 * 0.1207)
+    lo, hi = f(np.array([vertex - 2.0])), f(np.array([vertex + 2.0]))
+    assert float(lo[0]) == pytest.approx(float(hi[0]), rel=1e-9)
+
+
+def test_mortality_to_phenoage_uses_the_corrected_constant():
+    """0.090165, not 0.09165. The two differ by years on the same input."""
+    from falconage.models import ops
+
+    f = ops.POSTPROCESS["mortality_to_phenoage"]
+    x = np.array([-7.0, -5.0, -3.0])
+    got = f(x)
+
+    gamma = 0.0076927
+    m = 1.0 - np.exp(-np.exp(x) * (np.exp(120.0 * gamma) - 1.0) / gamma)
+    want = 141.50225 + np.log(-0.00553 * np.log(1.0 - m)) / 0.090165
+    np.testing.assert_allclose(got, want, rtol=0, atol=0)
+
+    # Monotone: more mortality risk is more phenotypic age, always.
+    assert np.all(np.diff(got) > 0)
+
+    # And the wrong constant is not quietly equivalent.
+    wrong = 141.50225 + np.log(-0.00553 * np.log(1.0 - m)) / 0.09165
+    assert abs(float((got - wrong)[0])) > 1.0
+
+
+def test_mortality_to_phenoage_survives_the_extremes():
+    """ln(1 - m) diverges at m = 1; a very sick sample is not an infinity."""
+    from falconage.models import ops
+
+    out = ops.POSTPROCESS["mortality_to_phenoage"](np.array([-40.0, 0.0, 40.0]))
+    assert np.isfinite(out).all()
+
+
+# ---------------------------------------------------------------------------
+# PC clocks
+# ---------------------------------------------------------------------------
+
+def _synthetic_rotation(features, n_components=5, seed=20260808):
+    """A rotation with the shape of a real one and none of the coefficients."""
+    from falconage.models.pc import PCRotation
+
+    rng = np.random.default_rng(seed)
+    n = len(features)
+    return PCRotation(
+        features=list(features),
+        centre=rng.uniform(0.2, 0.8, n),
+        rotation=rng.normal(0, 1 / np.sqrt(n), (n, n_components)),
+        coefficients=rng.normal(0, 2.0, n_components),
+    )
+
+
+def test_pc_rotation_rejects_mismatched_shapes():
+    from falconage.core.errors import RegistryError
+    from falconage.models.pc import PCRotation
+
+    with pytest.raises(RegistryError, match="coefficients"):
+        PCRotation(features=["a", "b"], centre=np.zeros(2),
+                   rotation=np.zeros((2, 3)), coefficients=np.zeros(2))
+    with pytest.raises(RegistryError, match="rotation has"):
+        PCRotation(features=["a", "b"], centre=np.zeros(2),
+                   rotation=np.zeros((3, 2)), coefficients=np.zeros(2))
+
+
+def test_pc_clock_computes_the_published_form(synthetic_betas):
+    """((x - centre) @ rotation) @ coefficients, asserted against numpy."""
+    from falconage.models.pc import PCLinearClock
+
+    reg = fa.registry.load()
+    feats = list(synthetic_betas.features[:200])
+    rot = _synthetic_rotation(feats)
+    m = PCLinearClock(clock=reg.get("pchorvath2013"), rotation=rot)
+
+    got, al = m.predict(synthetic_betas, resolve("cpu"))
+
+    x = synthetic_betas.X[feats].to_numpy(dtype=np.float64)
+    want = ((x - rot.centre) @ rot.rotation) @ rot.coefficients
+    # pchorvath2013 carries Horvath's output transform, so apply it too.
+    want = ops.apply_chain(want, reg.get("pchorvath2013").postprocess,
+                           ops.POSTPROCESS)
+    np.testing.assert_allclose(got.to_numpy(), want, rtol=1e-12)
+    assert al.coverage == pytest.approx(1.0)
+
+
+def test_pc_clock_reports_no_coefficient_mass(synthetic_betas):
+    """A PC clock has no per-probe weight, so claiming a mass share would be
+    attributing a component back to probes -- the very thing PCA removes."""
+    from falconage.models.pc import PCLinearClock
+
+    reg = fa.registry.load()
+    feats = list(synthetic_betas.features[:200])
+    m = PCLinearClock(clock=reg.get("pchorvath2013"),
+                      rotation=_synthetic_rotation(feats))
+    _, al = m.predict(synthetic_betas, resolve("cpu"))
+    assert al.mass_coverage is None
+
+
+def test_pc_rotation_roundtrips_through_npz(tmp_path, synthetic_betas):
+    from falconage.models.pc import read_rotation
+
+    feats = list(synthetic_betas.features[:50])
+    rot = _synthetic_rotation(feats, n_components=4)
+    p = tmp_path / "r.npz"
+    np.savez(p, features=np.array(rot.features), centre=rot.centre,
+             rotation=rot.rotation, coefficients=rot.coefficients)
+
+    back = read_rotation(p)
+    assert back.features == rot.features
+    assert back.n_components == 4
+    np.testing.assert_allclose(back.rotation, rot.rotation)
+
+
+def test_npz_missing_an_array_says_which(tmp_path):
+    from falconage.core.errors import RegistryError
+    from falconage.models.pc import read_rotation
+
+    p = tmp_path / "bad.npz"
+    np.savez(p, features=np.array(["a"]), centre=np.zeros(1))
+    with pytest.raises(RegistryError, match="rotation"):
+        read_rotation(p)
+
+
+def test_pc_clock_enforces_the_feature_floor(synthetic_betas):
+    from falconage.core.errors import FeatureCoverageError
+    from falconage.models.pc import PCLinearClock
+
+    reg = fa.registry.load()
+    feats = list(synthetic_betas.features[:100]) + [f"cg9999{i:04d}" for i in range(100)]
+    m = PCLinearClock(clock=reg.get("pchorvath2013"),
+                      rotation=_synthetic_rotation(feats))
+    with pytest.raises(FeatureCoverageError, match="below the"):
+        m.predict(synthetic_betas, resolve("cpu"), min_coverage=0.8)

@@ -63,6 +63,7 @@ Useful links:
 \itemize{
   \item \url{https://github.com/bhagesh-h/FALCONAge}
   \item \url{https://bhagesh-h.github.io/FALCONAge/}
+  \item \url{https://bhagesh-h.github.io/FALCONAge/r}
   \item Report bugs at \url{https://github.com/bhagesh-h/FALCONAge/issues}
 }
 

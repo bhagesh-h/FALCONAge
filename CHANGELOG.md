@@ -48,6 +48,35 @@ own `registry_version` so a coefficient correction can be pinned independently o
 - **A Docker walkthrough for people who have never used Python or R** — numbered from installing
   Docker to scoring their own data, covering the CPU image, the CUDA image and R, with the
   no-transfer dry run of the 586 MB benchmark corpus first.
+- **Nine published output transforms**, so the registry can express the clocks that need them:
+  `anti_logp2`, `anti_log_log`, `one_minus`, `days_to_weeks`, `days_to_months`, `scale_and_shift`,
+  `petkovich_blood`, `stubbs_multitissue` and `mortality_to_phenoage`, plus `anti_log`, `sigmoid`
+  and `add_constant` as aliases of existing ops rather than second copies that could drift.
+  Twenty-two tier B and C clocks were carrying an empty chain, which is not neutral — it means
+  identity, so Bohlin would have returned gestational age in days on a scale declared in weeks.
+  A test now asserts that every op named anywhere in the registry is dispatchable, because a
+  typo in a chain is otherwise invisible until someone registers coefficients.
+- **`PCLinearClock`** — `((x - centre) @ rotation) @ pc_coefficients`, with an `.npz` loader,
+  because a rotation of 78,464 CpGs by 121 components is not expressible as a coefficient CSV.
+  No PC clock ships weights; the architecture is implemented and tested against synthetic
+  rotations. It deliberately reports no `mass_coverage`: the weights live in component space, and
+  attributing them back to probes is exactly what PCA destroys.
+- **Five download backends**: PRIDE, MetaboLights, GDC, Figshare, and SRA/ENA. Figshare is split
+  from Zenodo by DOI prefix, since sending one to the other's API returns a 404 that reads like a
+  missing record. PRIDE refuses an unfiltered project and prints the extensions available instead,
+  because most of a PRIDE deposit is raw instrument output no clock reads. SRA stops at a run
+  table on purpose — reads need alignment and methylation calling first, which is not in scope
+  and should not be pretended.
+- **`probe_loss()`** — the per-clock report of what a dataset costs each clock, before scoring:
+  features present, weight present, and the heaviest absent probes named. Sorted worst-first by
+  weight rather than by count.
+- **R parity** for all of it: `cell_composition()`, `interpretation()`, `probe_loss()`, and
+  `adjust=` on `acceleration()`.
+- **`py_require()` support on load.** With reticulate 1.41+, `library(FALCONAge)` declares the
+  Python core as a dependency and reticulate builds a uv-managed environment on first use, so
+  `falconage_install()` stops being a step someone has to be told about. It stays for pinned,
+  reproducible environments — an ephemeral resolution is right for trying the package and wrong
+  for an analysis that has to be reproduced in a year. Guarded, so older reticulate still loads.
 
 ### Fixed
 
@@ -59,6 +88,19 @@ own `registry_version` so a coefficient correction can be pinned independently o
   screen. Six page/width combinations also scrolled sideways, all from long inline `code` spans
   that could not wrap — Quarto ships `code { white-space: pre }`, under which `overflow-wrap` is
   never consulted, so setting only `overflow-wrap` (the obvious fix) changed nothing.
+- **A phone got two of everything: two menus, two search boxes, two logos, two titles.** The site
+  declares a navbar and a docked sidebar, and Quarto gives each its own search box and its own
+  collapse control — including two elements carrying `id="quarto-search"`, which is invalid HTML
+  before it is a design fault. Below the sidebar breakpoint that surfaced as two hamburgers side
+  by side, each opening something different. Search is now off on the sidebar, which had no
+  navigation to search, and the sidebar is hidden entirely below 992px instead of collapsing into
+  a rival menu. Its logo and citation buttons live on the About page, one tap away.
+
+  Worth recording how this got through: the responsive check measured geometry, and two search
+  boxes that each fit the viewport and never touch each other pass an overflow test and an overlap
+  test both. It reported clean while the page was wrong. `test/responsive_check.py` now counts
+  chrome as well as measuring it — search boxes, menu toggles, logos and titles, with the drawers
+  opened — and fails on more than one of any.
 - **`align()` reindexed the frame twice.** The second pass existed only to count per-sample
   missingness, which the mask built two lines earlier already held. Alignment dominates a scoring
   run, so removing it is worth 1.17–1.25× across 1k–16k samples.

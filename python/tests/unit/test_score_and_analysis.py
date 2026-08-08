@@ -302,3 +302,37 @@ def test_interpretation_carries_scale_reliability_and_caveats(synthetic_betas):
     # The paper-vs-coefficients disagreement travels with the number.
     assert "586" in t.loc["yingcausage", "caveats"]
     assert "not a diagnostic" in fa.FalconResult.CAVEAT
+
+
+# ---------------------------------------------------------------------------
+# probe loss, before scoring
+# ---------------------------------------------------------------------------
+
+def test_probe_loss_names_tier_b_and_c_instead_of_omitting_them(synthetic_betas):
+    """A clock silently absent from this table reads as 'fine'."""
+    t = fa.probe_loss(synthetic_betas, clocks=["horvath2013", "grimage2"])
+    assert set(t.index) == {"horvath2013", "grimage2"}
+    assert t.loc["grimage2", "heaviest_absent"] == "coefficients not available"
+    assert np.isnan(t.loc["grimage2", "mass_coverage"])
+
+
+def test_probe_loss_separates_count_from_weight(synthetic_betas):
+    """The EPICv2 case: same probes lost by count, very different by weight."""
+    reg = fa.registry.load()
+    feats, coefs = reg.coefficients("horvath2013")
+    heaviest = [f for _, f in sorted(zip(np.abs(coefs), feats), reverse=True)[:12]]
+
+    X = synthetic_betas.X.drop(columns=heaviest, errors="ignore")
+    d = fa.FalconData(X=X, obs=synthetic_betas.obs,
+                      modality="dna_methylation", platform="450K")
+
+    row = fa.probe_loss(d, clocks=["horvath2013"]).loc["horvath2013"]
+    assert row["coverage"] > row["mass_coverage"], (
+        "dropping the heaviest probes must cost more weight than count")
+    assert row["heaviest_absent"]
+
+
+def test_probe_loss_is_ordered_worst_first(synthetic_betas):
+    t = fa.probe_loss(synthetic_betas, clocks="scoreable")
+    mass = t["mass_coverage"].dropna().to_numpy()
+    assert (np.diff(mass) >= -1e-12).all(), "should ascend from worst"

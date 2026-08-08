@@ -9,7 +9,8 @@ acceleration(
   method = c("residual", "absolute", "within_group"),
   age_col = "age",
   group = NULL,
-  clocks = NULL
+  clocks = NULL,
+  adjust = NULL
 )
 }
 \arguments{
@@ -34,6 +35,17 @@ accelerate relative to \emph{their own} controls.}
 \item{clocks}{Optional clock names. Naming them means every one must be
 valid, and a pace or log-hazard clock raises. Leaving it \code{NULL} means "the
 ones this makes sense for" and quietly excludes the others.}
+
+\item{adjust}{Extra covariates to regress out alongside chronological age.
+
+\code{"cell_composition"} uses the deconvolution clocks scored in the same run.
+An acceleration adjusted this way answers "is this blood ageing faster",
+where the unadjusted version answers "is it ageing faster \emph{or} is its cell
+mix different" and reports both as one number.
+
+A character vector instead names columns of the sample annotation, for
+measured counts or anything else. Only available with
+\code{method = "residual"}.}
 }
 \value{
 A data frame of samples by clocks.

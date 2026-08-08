@@ -47,14 +47,15 @@ groups:
       identifiers, values in the beta range, a known platform. The EPIC v2 step
       is mandatory rather than optional -- without it a v2 dataset overlaps
       almost nothing and the clocks score imputed values.
-    python: [prepare, prepare_clinical, qc, preprocess.aggregate_replicate_probes,
-             preprocess.impute]
-    r: [prepare, qc]
+    python: [prepare, prepare_clinical, qc, probe_loss,
+             preprocess.aggregate_replicate_probes, preprocess.impute]
+    r: [prepare, qc, probe_loss]
 
   - title: Scoring
     desc: The predict loop, its result object, and the provenance it carries.
     python: [score, combine, FalconResult]
-    r: [score, combine, coverage, manifest, write_results, as.data.frame.falcon_result]
+    r: [score, combine, coverage, manifest, interpretation, write_results,
+        as.data.frame.falcon_result]
 
   - title: The clock catalogue
     desc: >-
@@ -72,8 +73,10 @@ groups:
       models, reliability, and the AA1/AA2 benchmark. Each is gated on the
       clock's scale type -- acceleration on a pace-of-aging clock is a units
       error, not a conservative choice.
-    python: [acceleration, associate, cox_hazard, agreement, icc, run_benchmark]
-    r: [acceleration, associate, cox_hazard, agreement, icc, run_benchmark]
+    python: [acceleration, cell_composition, associate, cox_hazard, agreement,
+             icc, run_benchmark]
+    r: [acceleration, cell_composition, associate, cox_hazard, agreement,
+        icc, run_benchmark]
 
   - title: Clinical references
     desc: >-

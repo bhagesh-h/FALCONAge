@@ -154,3 +154,43 @@ compatible_clocks <- function(data, min_coverage = 0.8) {
   cs <- reticulate::py_to_r(reg$compatible_with(data$py, min_coverage = min_coverage))
   vapply(cs, function(c) reticulate::py_to_r(c$id), character(1))
 }
+
+
+#' What each clock has lost on this dataset, before scoring
+#'
+#' One row per clock: how many of its features are present, and -- where the
+#' coefficients are available -- how much of the model's total weight those
+#' present features carry, plus the heaviest probes that are missing.
+#'
+#' @section Why both numbers:
+#' A count treats every probe as interchangeable, and an elastic net's weights
+#' are nothing like uniform. "92% of probes present" covers both "the missing
+#' 8% are negligible" and "the missing 8% carry a third of the model". EPIC v2
+#' dropped probes that several first-generation clocks lean on, which is why
+#' those clocks shift on v2 arrays while the principal-component versions
+#' barely move -- the same probe loss, very different consequences.
+#'
+#' Run this on an array you have not used before, before `score()`. It answers
+#' "will this dataset support these clocks" without producing a number anyone
+#' can quote.
+#'
+#' @param x A `falcon_data`.
+#' @param clocks `"all"`, `"scoreable"` for the ones whose coefficients are
+#'   available, or a character vector of clock names.
+#' @param top How many of the heaviest absent features to name per clock.
+#' @return A data frame, worst mass coverage first. `mass_coverage` is `NA` for
+#'   a clock whose coefficients are not available -- the weights are what the
+#'   column is computed from.
+#' @examples
+#' \dontrun{
+#' probe_loss(d, clocks = "scoreable")
+#' }
+#' @export
+probe_loss <- function(x, clocks = "all", top = 3L) {
+  cl <- if (length(clocks) == 1L && clocks %in% c("all", "scoreable")) {
+    clocks
+  } else {
+    reticulate::r_to_py(as.list(clocks))
+  }
+  as_df(py_do(fa()$probe_loss(x$py, clocks = cl, top = as.integer(top))))
+}

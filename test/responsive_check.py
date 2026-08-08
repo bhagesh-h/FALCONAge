@@ -126,6 +126,35 @@ OVERLAP = """
 }
 """
 
+# Duplicated chrome. Geometry cannot see this: two search boxes that each fit
+# the viewport and do not touch each other pass the overflow and overlap tests
+# both, and the page still shows a reader two of everything. That is precisely
+# what happened -- those two checks reported clean while the mobile header
+# carried two menu toggles and two search boxes.
+#
+# Counted with the sidebar drawer OPEN as well as closed, because the second
+# set only appears once something is expanded.
+CHROME = """
+() => {
+  const vis = (el) => {
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden'
+           && cs.display !== 'none' && cs.opacity !== '0';
+  };
+  const count = (sel) => [...document.querySelectorAll(sel)].filter(vis).length;
+  return {
+    // Duplicate ids are invalid HTML before they are a layout problem, and
+    // Quarto emits id="quarto-search" for both the navbar and the sidebar.
+    searchIds: document.querySelectorAll('#quarto-search').length,
+    searchVisible: count('#quarto-search, .sidebar-search, input[type=search]'),
+    toggles: count('.navbar-toggler, .quarto-btn-toggle'),
+    logos: count('img.sidebar-logo, .navbar-logo'),
+    brandTitles: count('.navbar-title, .sidebar-title'),
+  };
+}
+"""
+
 SIDEBAR = """
 () => {
   const bar = document.querySelector('#quarto-sidebar');
@@ -198,11 +227,43 @@ def main(argv=None) -> int:
                         failures.append(f"      {h['overlap']} "
                                         f"{h['a']!r} over {h['b']!r}")
 
-            # The sidebar, on the landing page, at this width.
+            # The sidebar and the chrome count, on the landing page.
             page.goto((site / "index.html").as_uri(), wait_until="load")
             page.wait_for_timeout(200)
             s = page.evaluate(SIDEBAR)
             desktop = width >= 992
+
+            # Closed, then with everything expanded -- the duplicates only
+            # appear once a drawer is open.
+            chrome = page.evaluate(CHROME)
+            for sel in (".navbar-toggler", ".quarto-btn-toggle"):
+                try:
+                    el = page.query_selector(sel)
+                    if el and el.is_visible():
+                        el.click(timeout=2000)
+                        page.wait_for_timeout(500)
+                except Exception:
+                    pass
+            opened = page.evaluate(CHROME)
+
+            if chrome["searchIds"] > 1:
+                failures.append(
+                    f"@{width}px: id=\"quarto-search\" appears "
+                    f"{chrome['searchIds']} times -- duplicate id, and two "
+                    "search boxes. Turn off search on one of navbar/sidebar.")
+            for state, c in (("closed", chrome), ("expanded", opened)):
+                if c["searchVisible"] > 1:
+                    failures.append(f"@{width}px ({state}): "
+                                    f"{c['searchVisible']} search boxes visible")
+                if c["toggles"] > 1:
+                    failures.append(f"@{width}px ({state}): {c['toggles']} menu "
+                                    "toggles visible -- a reader cannot tell "
+                                    "which is the menu")
+                if c["logos"] > 1:
+                    failures.append(f"@{width}px ({state}): {c['logos']} logos visible")
+                if c["brandTitles"] > 1:
+                    failures.append(f"@{width}px ({state}): "
+                                    f"{c['brandTitles']} site titles visible")
 
             if not s.get("present"):
                 failures.append(f"@{width}px: no #quarto-sidebar in the page")
@@ -214,14 +275,16 @@ def main(argv=None) -> int:
             elif s["visible"]:
                 failures.append(
                     f"@{width}px: sidebar is painted ({s['width']}px wide, "
-                    f"display:{s['display']}) instead of collapsing behind the "
-                    "toggle -- this is the rule that overlays the article")
+                    f"display:{s['display']}) instead of being hidden -- below "
+                    "992px it duplicates the navbar's chrome and overlays the "
+                    "article")
 
             state = ("docked" if desktop and s.get("visible")
-                     else "collapsed" if not s.get("visible") else "PAINTED")
+                     else "hidden" if not s.get("visible") else "PAINTED")
             logo = (f"logo {s['logoW']}x{s['logoH']}px"
-                    if s.get("logoH") else "logo hidden")
-            print(f"@{width:>5}px  {state:<9} {logo:<22} "
+                    if s.get("logoH") else "no logo")
+            print(f"@{width:>5}px  {state:<7} {logo:<18} "
+                  f"search {opened['searchVisible']}  menus {opened['toggles']}  "
                   f"overflow {n_over}/{len(PAGES)}  overlap {n_lap}/{len(PAGES)}")
             page.close()
         browser.close()
@@ -232,8 +295,10 @@ def main(argv=None) -> int:
             print(f"  {f}")
         return 1
 
-    print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths, "
-          "no sideways scroll, no overlapping text, sidebar collapses below 992px")
+    print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths -- no sideways "
+          "scroll, no overlapping text, one search box, one menu, one title, "
+          "and the sidebar is hidden below 992px rather than duplicating the "
+          "navbar")
     return 0
 
 

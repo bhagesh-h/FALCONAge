@@ -67,7 +67,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   altumage:
     name: "altumage"
@@ -160,7 +161,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "days_to_weeks"
 
   cabec:
     name: "cabec"
@@ -401,7 +403,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   deconvolutebloodepicbcell:
     name: "deconvolutebloodepicbcell"
@@ -1227,7 +1230,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "days_to_weeks"
 
   epicmithyper:
     name: "epicmithyper"
@@ -2025,7 +2029,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "one_minus"
 
   intrinclock:
     name: "intrinclock"
@@ -2233,7 +2238,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "anti_logp2"
 
   mammalian2:
     name: "mammalian2"
@@ -2378,7 +2384,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mammalianlifespan:
     name: "mammalianlifespan"
@@ -2407,7 +2414,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "anti_log"
 
   mammalianskin2:
     name: "mammalianskin2"
@@ -2523,7 +2531,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneybmi:
     name: "mccartneybmi"
@@ -2552,7 +2561,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneybodyfat:
     name: "mccartneybodyfat"
@@ -2581,7 +2591,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneyeducation:
     name: "mccartneyeducation"
@@ -2610,7 +2621,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneyhdlcholesterol:
     name: "mccartneyhdlcholesterol"
@@ -2639,7 +2651,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneyldlcholesterol:
     name: "mccartneyldlcholesterol"
@@ -2668,7 +2681,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneysmoking:
     name: "mccartneysmoking"
@@ -2697,7 +2711,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneytotalcholesterol:
     name: "mccartneytotalcholesterol"
@@ -2726,7 +2741,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneytotalhdlratio:
     name: "mccartneytotalhdlratio"
@@ -2755,7 +2771,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   mccartneywhr:
     name: "mccartneywhr"
@@ -2784,7 +2801,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "sigmoid"
 
   meer:
     name: "meer"
@@ -2813,7 +2831,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "days_to_months"
 
   neusin:
     name: "neusin"
@@ -3115,7 +3134,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "petkovich_blood"
 
   phenoage:
     name: "phenoage"
@@ -3712,7 +3732,8 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "stubbs_multitissue"
 
   systemsage:
     name: "systemsage"
@@ -4561,7 +4582,11 @@ clocks:
       primary_source_traced: false
       redistributable: null
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "anti_log_linear"
+        adult_age: 48.0
+      - op: "divide_by"
+        value: 12.0
 
   xchrom:
     name: "xchrom"

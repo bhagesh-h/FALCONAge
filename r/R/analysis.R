@@ -22,6 +22,16 @@
 #' @param clocks Optional clock names. Naming them means every one must be
 #'   valid, and a pace or log-hazard clock raises. Leaving it `NULL` means "the
 #'   ones this makes sense for" and quietly excludes the others.
+#' @param adjust Extra covariates to regress out alongside chronological age.
+#'
+#'   `"cell_composition"` uses the deconvolution clocks scored in the same run.
+#'   An acceleration adjusted this way answers "is this blood ageing faster",
+#'   where the unadjusted version answers "is it ageing faster *or* is its cell
+#'   mix different" and reports both as one number.
+#'
+#'   A character vector instead names columns of the sample annotation, for
+#'   measured counts or anything else. Only available with
+#'   `method = "residual"`.
 #'
 #' @section Which convention a paper used:
 #' Often not stated, and the three disagree by several years on the same data.
@@ -35,13 +45,25 @@
 #' }
 #' @export
 acceleration <- function(x, method = c("residual", "absolute", "within_group"),
-                         age_col = "age", group = NULL, clocks = NULL) {
+                         age_col = "age", group = NULL, clocks = NULL,
+                         adjust = NULL) {
   method <- match.arg(method)
+  adj <- if (is.null(adjust)) {
+    reticulate::py_none()
+  } else if (length(adjust) == 1L && identical(adjust, "cell_composition")) {
+    "cell_composition"
+  } else {
+    reticulate::r_to_py(as.list(adjust))
+  }
   out <- py_do(fa()$acceleration(
     x$py, age_col = age_col, method = method, group = or_none(group),
-    clocks = if (is.null(clocks)) reticulate::py_none() else reticulate::r_to_py(as.list(clocks))))
+    clocks = if (is.null(clocks)) reticulate::py_none() else reticulate::r_to_py(as.list(clocks)),
+    adjust = adj))
   df <- as_df(out)
   attr(df, "method") <- method
+  # An adjusted acceleration is a different quantity from an unadjusted one and
+  # has to say which it is, or the two get compared.
+  attr(df, "adjusted_for") <- if (is.null(adjust)) character(0) else as.character(adjust)
   df
 }
 
@@ -224,4 +246,57 @@ fit_kdm <- function(reference, markers, age_col = "age") {
 fit_hd <- function(reference, markers) {
   cl <- reticulate::import("falconage.models.clinical", convert = FALSE)
   py_do(cl$fit_hd(as_pandas(reference), reticulate::r_to_py(as.list(markers))))
+}
+
+
+#' Cell-type proportions estimated in the same run
+#'
+#' Every clock in a result whose scale is `proportion` -- the reference-based
+#' deconvolution models -- one column each, ready to pass to
+#' [acceleration()] as `adjust`.
+#'
+#' @section Why this matters:
+#' Blood composition changes with age and with everything else happening to a
+#' person. A study of more than 10,000 blood samples found significant
+#' associations between immune cell composition and epigenetic age acceleration
+#' for every one of six widely used clocks (Aging Cell 2024;23:e14071), which
+#' means an unadjusted acceleration measures two things and reports one number.
+#' The proportions needed to separate them are usually already in the same
+#' result.
+#'
+#' @param x A `falcon_result`.
+#' @param min_clocks Minimum number of deconvolution clocks before a frame is
+#'   returned rather than an empty one.
+#' @return A data frame of samples by cell types, empty when the run had no
+#'   deconvolution clocks -- absence of an adjustment is data, not an error.
+#' @examples
+#' \dontrun{
+#' cell_composition(res)
+#' acceleration(res, adjust = "cell_composition")
+#' }
+#' @export
+cell_composition <- function(x, min_clocks = 2L) {
+  as_df(py_do(fa()$cell_composition(x$py, min_clocks = as.integer(min_clocks))))
+}
+
+
+#' How to read each score in a result
+#'
+#' One row per clock giving the scale, the unit, which operations that scale
+#' permits, both coverage measures, the published reliability where one is
+#' established, and any documented disagreement between the clock's paper and
+#' the coefficients that circulate for it.
+#'
+#' The point is that this travels with the numbers. A scale type on a
+#' documentation page warns nobody reading a table in an R session.
+#'
+#' @param x A `falcon_result`.
+#' @return A data frame, one row per clock.
+#' @examples
+#' \dontrun{
+#' interpretation(res)
+#' }
+#' @export
+interpretation <- function(x) {
+  as_df(py_do(x$py$interpretation()))
 }

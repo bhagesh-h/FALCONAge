@@ -19,7 +19,8 @@ from .methylation import (
 
 __all__ = [
     "QCReport", "aggregate_replicate_probes", "clip_betas", "ensure_platform",
-    "harmonise_probe_ids", "impute", "prepare", "prepare_clinical", "qc",
+    "harmonise_probe_ids", "impute", "prepare", "prepare_clinical", "probe_loss",
+    "qc",
 ]
 
 
@@ -103,3 +104,90 @@ def impute(data: FalconData, how: str = "median") -> FalconData:
                      platform=data.platform, uns=dict(data.uns))
     out.uns["dataset_imputation"] = how
     return out
+
+
+def probe_loss(data: FalconData, clocks: str | list[str] = "all",
+               *, registry=None, top: int = 3) -> pd.DataFrame:
+    """What each clock has lost on this dataset, before scoring anything.
+
+    One row per clock: how many of its features are present, and -- for the
+    clocks whose coefficients are available -- how much of the model's total
+    weight those present features carry, plus the heaviest probes that are
+    missing.
+
+    WHY BOTH NUMBERS. A count treats every probe as interchangeable and an
+    elastic-net's weights are nothing like uniform, so "92% of probes present"
+    covers both "the 8% missing are negligible" and "the 8% missing carry a
+    third of the model". EPIC v2 dropped probes that several first-generation
+    clocks lean on, which is why those clocks shift on v2 arrays while the
+    principal-component versions barely move (Life Science Alliance
+    2025;8:e202403155) -- the same probe loss, very different consequences.
+
+    Run this before ``score``, on an array you have not used before. It costs
+    one alignment per clock and answers "will this dataset support these
+    clocks" without producing a number anyone can quote.
+
+    Parameters
+    ----------
+    clocks
+        ``"all"``, ``"scoreable"`` for the ones whose coefficients are
+        available, or an explicit list.
+    top
+        How many of the heaviest absent features to name per clock.
+
+    Returns
+    -------
+    One row per clock, worst mass coverage first. ``mass_coverage`` is ``NaN``
+    for a clock whose coefficients are not available -- the weights are what
+    the column is computed from, so there is no honest value without them.
+    """
+    from ..models.linear import align
+    from ..registry import load as _load
+
+    reg = registry if registry is not None else _load()
+
+    if clocks == "all":
+        chosen = [c.id for c in reg if c.data_type == data.modality]
+    elif clocks == "scoreable":
+        chosen = [c.id for c in reg
+                  if c.data_type == data.modality and reg.has_coefficients(c.id)]
+    else:
+        chosen = list(clocks)
+
+    rows = []
+    for cid in chosen:
+        c = reg.get(cid)
+        if c.formula:
+            continue
+        try:
+            feats, coefs = reg.coefficients(cid)
+        except Exception:
+            # Tier B and C: the feature list itself is not available, so there
+            # is nothing to align against. Say so rather than omitting the row,
+            # because a clock silently missing from this table reads as "fine".
+            rows.append({"clock": cid, "tier": c.availability,
+                         "n_features": c.n_features, "n_present": None,
+                         "coverage": np.nan, "mass_coverage": np.nan,
+                         "heaviest_absent": "coefficients not available"})
+            continue
+
+        al = align(data, list(feats), imputation="none", coefficients=coefs)
+        rows.append({
+            "clock": cid,
+            "tier": c.availability,
+            "n_features": len(feats),
+            "n_present": int(al.present.sum()),
+            "coverage": round(al.coverage, 4),
+            "mass_coverage": (np.nan if al.mass_coverage is None
+                              else round(al.mass_coverage, 4)),
+            "heaviest_absent": ", ".join(
+                f"{f} ({s:.1%})" for f, s in al.missing_mass[:top]) or "",
+        })
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    # Worst first, and by weight rather than by count -- the ordering that
+    # matches which clock this dataset actually damages most.
+    return df.sort_values(["mass_coverage", "coverage"],
+                          na_position="last").set_index("clock")

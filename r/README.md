@@ -86,7 +86,9 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | — | `fa.read()` |
 | **Preprocessing** | `prepare()` | `fa.prepare()` |
 |  | `qc()` | `fa.qc()` |
+|  | `probe_loss()` | — |
 |  | — | `fa.prepare_clinical()` |
+|  | — | `fa.probe_loss()` |
 |  | — | `fa.preprocess.aggregate_replicate_probes()` |
 |  | — | `fa.preprocess.impute()` |
 | **Scoring** | `score()` | `fa.score()` |
@@ -94,6 +96,7 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `as.data.frame.falcon_result()` | `fa.FalconResult()` |
 |  | `coverage()` | — |
 |  | `manifest()` | — |
+|  | `interpretation()` | — |
 |  | `write_results()` | — |
 | **The clock catalogue** | `list_clocks()` | `fa.registry.ClockRegistry()` |
 |  | `clock_info()` | `fa.registry.Clock()` |
@@ -107,6 +110,8 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `agreement()` | `fa.agreement()` |
 |  | `icc()` | `fa.icc()` |
 |  | `run_benchmark()` | `fa.run_benchmark()` |
+|  | `cell_composition()` | — |
+|  | — | `fa.cell_composition()` |
 | **Clinical references** | `fit_kdm()` | `fa.models.fit_kdm()` |
 |  | `fit_hd()` | `fa.models.fit_hd()` |
 |  | — | `fa.models.clinical.phenoage()` |

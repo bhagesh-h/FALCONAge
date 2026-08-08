@@ -166,3 +166,34 @@ def test_a_discrepancy_becomes_a_warning_at_score_time(synthetic_betas):
     notes = [w for w in res.manifest.warnings if w.get("category") == "discrepancy"]
     assert notes and notes[0]["clock"] == "yingcausage"
     assert "586" in notes[0]["message"]
+
+
+def test_every_op_named_in_the_registry_is_dispatchable(registry):
+    """A typo in a chain is invisible until the clock is scored.
+
+    Most of these clocks cannot be scored at all yet -- no coefficients -- so
+    nothing would exercise the chain until the day someone registers a weight
+    file, at which point the failure looks like a coefficient problem. Check
+    the names now.
+    """
+    from falconage.models import ops
+
+    for c in registry:
+        for step in c.preprocess:
+            assert step.get("op") in ops.PREPROCESS, f"{c.id}: preprocess {step}"
+        for step in c.postprocess:
+            assert step.get("op") in ops.POSTPROCESS, f"{c.id}: postprocess {step}"
+
+
+def test_a_clock_reported_in_days_does_not_claim_to_be_in_weeks(registry):
+    """The reason the chains above were worth wiring before the coefficients.
+
+    An empty chain is not neutral -- it means identity. Bohlin and EPICGA are
+    trained on gestational age in days and declared on a weeks scale, so with
+    no transform they would return roughly seven times the right number and
+    nothing would say so.
+    """
+    from falconage.models import ops
+
+    for cid in ("bohlin", "epicga"):
+        assert ops.describe_chain(registry.get(cid).postprocess) == "days_to_weeks()"

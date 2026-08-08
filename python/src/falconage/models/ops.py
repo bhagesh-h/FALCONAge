@@ -187,6 +187,109 @@ def simplex_projection(x, xp=np):
 
 
 # ---------------------------------------------------------------------------
+# the remaining published output transforms
+# ---------------------------------------------------------------------------
+# Each of these is one clock family's final step. They are small, and that is
+# the point: the alternative is a lambda per clock, where a wrong constant is
+# invisible and the R side has to reimplement it.
+
+
+def anti_logp2(x, xp=np):
+    """``e^y - 2``. Mammalian1.
+
+    The plus-two offset is inside the training target, so the inverse has to
+    subtract it after exponentiating and not before.
+    """
+    return xp.exp(x) - 2.0
+
+
+def anti_log_log(x, xp=np):
+    """``e^(-e^(-y))``. The Mammalian2 relative-age step.
+
+    A Gompertz inverse, and it maps the whole real line into (0, 1) -- the
+    output is a relative age, not years, which is why Mammalian2 carries a
+    separate step to put it on a species lifespan.
+    """
+    return xp.exp(-xp.exp(-x))
+
+
+def one_minus(x, xp=np):
+    """``1 - y``. HypoClock, whose score is a hypomethylation fraction."""
+    return 1.0 - x
+
+
+def days_to_weeks(x, xp=np):
+    """``y / 7``. Bohlin and EPICGA predict gestational age in days."""
+    return x / 7.0
+
+
+def days_to_months(x, xp=np):
+    """``y / 30.5``. Meer, a mouse clock trained in days and reported in months.
+
+    30.5 and not 30 or 365.25/12: it is the constant the paper used, and a
+    month is not a defined length so there is no more correct value to prefer.
+    """
+    return x / 30.5
+
+
+def scale_and_shift(x, scale: float, offset: float, xp=np):
+    """``y*s + o*s``. Pasta and PastaMouse.
+
+    Note the offset is inside the scaling, which is unusual and is what the
+    published form does. Writing it as the more natural ``y*s + o`` gives a
+    different answer for every sample.
+    """
+    return x * scale + offset * scale
+
+
+def petkovich_blood(x, xp=np):
+    """Petkovich mouse blood, to months.
+
+    ``age = ((y + 1.712) / 0.1666) ** (1 / 0.4185) / 30.5``
+
+    The fractional power is only real for a non-negative base, and a strongly
+    negative prediction makes it negative. Rather than return a NaN that
+    propagates silently into a mean, the base is clipped at zero, which pins
+    such a sample at age zero and is the honest floor for a quantity that
+    cannot be less.
+    """
+    base = xp.maximum((x + 1.712) / 0.1666, 0.0)
+    return base ** (1.0 / 0.4185) / 30.5
+
+
+def stubbs_multitissue(x, xp=np):
+    """Stubbs mouse multi-tissue, to months.
+
+    ``age = (exp(0.1207*y^2 + 1.2424*y + 2.5440) - 3) * 7 / 30.5``
+
+    Quadratic in the linear predictor, so it is not monotone: the minimum sits
+    at y = -5.147 and predictions either side of it map to the same age. That
+    is a property of the published model, not of this implementation.
+    """
+    return (xp.exp(0.1207 * x * x + 1.2424 * x + 2.5440) - 3.0) * 7.0 / 30.5
+
+
+def mortality_to_phenoage(x, xp=np):
+    """The Gompertz inversion at the end of clinical PhenoAge.
+
+    ``m   = 1 - exp(-exp(xb) * (exp(120*g) - 1) / g)``  with ``g = 0.0076927``
+    ``age = 141.50225 + ln(-0.00553 * ln(1 - m)) / 0.090165``
+
+    0.090165 and not 0.09165. Both circulate; BioAge corrected to this one in
+    April 2026 and the two differ by several years on the same input. The
+    clock carries a ``known_discrepancies`` note saying so.
+
+    ``m`` is clamped away from 0 and 1 before the log, because ``ln(1 - m)``
+    diverges at 1 and a sample at either end is a very sick or very well
+    person, not a reason to return an infinity.
+    """
+    gamma = 0.0076927
+    m = 1.0 - xp.exp(-xp.exp(x) * (xp.exp(120.0 * gamma) - 1.0) / gamma)
+    m = xp.clip(m, 1e-12, 1.0 - 1e-12)
+    return 141.50225 + xp.log(-0.00553 * xp.log(1.0 - m)) / 0.090165
+
+
+# ---------------------------------------------------------------------------
 # dispatch
 # ---------------------------------------------------------------------------
 POSTPROCESS: dict[str, Callable] = {
@@ -199,6 +302,21 @@ POSTPROCESS: dict[str, Callable] = {
     "exp": exp_op,
     "clip": clip,
     "cox_to_years": cox_to_years,
+    "anti_logp2": anti_logp2,
+    "anti_log_log": anti_log_log,
+    "one_minus": one_minus,
+    "days_to_weeks": days_to_weeks,
+    "days_to_months": days_to_months,
+    "scale_and_shift": scale_and_shift,
+    "petkovich_blood": petkovich_blood,
+    "stubbs_multitissue": stubbs_multitissue,
+    "mortality_to_phenoage": mortality_to_phenoage,
+    # Aliases, because the literature names these three differently in
+    # different places and a registry entry copied from a paper should not
+    # fail on a synonym. Same function object, so they cannot drift.
+    "anti_log": exp_op,
+    "sigmoid": expit,
+    "add_constant": add,
 }
 
 PREPROCESS: dict[str, Callable] = {

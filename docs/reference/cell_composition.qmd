@@ -1,0 +1,22 @@
+# cell_composition { #falconage.cell_composition }
+
+```python
+cell_composition(result, *, min_clocks=2)
+```
+
+Cell-type proportions estimated in this same run, as a covariate frame.
+
+Every clock in the result whose scale is ``proportion`` -- the
+reference-based deconvolution models -- one column each.
+
+WHY THIS IS WORTH A FUNCTION. Blood composition changes with age, and it
+changes with whatever else is happening to a person. A study of 10,000+
+blood samples found significant associations between immune cell
+composition and epigenetic age acceleration for every one of six widely
+used clocks (Aging Cell 2024;23:e14071), which means an unadjusted
+acceleration is measuring two things at once and reporting one number. The
+proportions needed to separate them are usually already sitting in the same
+result, computed by the deconvolution clocks; nothing connected the two.
+
+Returns an empty frame when the run had no deconvolution clocks, so callers
+can treat "no adjustment available" as data rather than as an exception.

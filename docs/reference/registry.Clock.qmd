@@ -29,6 +29,7 @@ registry.Clock(
     requires_covariates=(),
     requires_reference=False,
     known_discrepancies=(),
+    reliability=Reliability(),
 )
 ```
 
