@@ -81,6 +81,61 @@ manifest(res)                       # versions, device, and every coefficient ch
 a reason. Naming clocks explicitly is different: then every one must work, because an explicit
 request should never be dropped quietly.
 
+## Before you score: what this array costs each clock
+
+Worth running once on an array you have not used before. It reports, per clock, how many features
+are present **and** how much of the model's weight they carry — two different numbers, and the
+second is the one that catches EPIC v2 probe loss:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.probe_loss(d, clocks="scoreable")
+#>                 tier  n_features  n_present  coverage  mass_coverage  heaviest_absent
+#> horvath2013        A         353        340    0.9632         0.6117  cg16867657 (14.1%), ...
+```
+
+### R
+
+```r
+probe_loss(d, clocks = "scoreable")
+```
+
+:::
+
+A clock at 96% feature coverage and 61% weight coverage has kept nearly all its probes and lost
+the ones that matter. The scoring floor applies to both measures, so this run would be refused
+with a message naming the heaviest absent probes rather than returning a confident number.
+
+## How to read what came back
+
+The scale, the unit, which arithmetic is permitted, both coverage measures, the published
+reliability where one exists, and any documented disagreement between the clock's paper and the
+coefficients in circulation — all on the object, not only on this website:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+res.interpretation()
+```
+
+### R
+
+```r
+interpretation(res)
+```
+
+:::
+
+`technical_icc` and `biological_icc` are separate columns because they measure different things
+and do not track together: the same sample assayed twice, versus the same person sampled again a
+few days later. A clock can be excellent on the first and poor on the second, and the clocks most
+used to claim an intervention worked are where that gap is widest.
+
 ## Age acceleration, and which convention you mean
 
 The three conventions disagree by several years on the same data, and papers frequently do not say
@@ -93,6 +148,7 @@ which they used.
 ```python
 fa.acceleration(res, method="absolute")      # predicted - chronological
 fa.acceleration(res, method="residual")      # residual of predicted on chronological
+fa.acceleration(res, method="both")          # both, as <clock>_absolute / <clock>_residual
 fa.acceleration(res, method="within_group", group="dataset")
 ```
 
@@ -101,6 +157,7 @@ fa.acceleration(res, method="within_group", group="dataset")
 ```r
 acceleration(res, method = "absolute")
 acceleration(res, method = "residual")
+acceleration(res, method = "both")
 acceleration(res, method = "within_group", group = "dataset")
 ```
 
@@ -109,7 +166,43 @@ acceleration(res, method = "within_group", group = "dataset")
 Absolute is interpretable in years and carries the clock's own bias: a clock five years high on
 everybody gives everybody five years of acceleration. Residual removes that bias, and removes any
 real cohort-wide effect with it. Within-group is what the AA2 benchmark needs - it asks whether
-cases accelerate relative to *their own* controls.
+cases accelerate relative to *their own* controls. `"both"` returns the first two side by side,
+suffixed, for when you would otherwise have to pick without knowing which the comparison paper
+used.
+
+### Adjusting for cell composition
+
+Blood cell composition changes with age, and with most other things that happen to a person. In
+more than 10,000 blood samples, immune composition was significantly associated with age
+acceleration for **every one** of six widely used clocks — so an unadjusted acceleration is
+measuring two things and reporting one number.
+
+The proportions needed to separate them are usually already in the result, computed by the
+deconvolution clocks in the same run:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.cell_composition(res)                        # the proportions, as covariates
+fa.acceleration(res, adjust="cell_composition") # net of them
+fa.acceleration(res, adjust=["cd8t", "mono"])   # or measured counts from obs
+```
+
+### R
+
+```r
+cell_composition(res)
+acceleration(res, adjust = "cell_composition")
+acceleration(res, adjust = c("cd8t", "mono"))
+```
+
+:::
+
+An adjusted acceleration is a different quantity from an unadjusted one, so the returned frame
+records which covariates went in. Comparing the two as though they were the same measurement is
+the error this is designed to make visible.
 
 Ask for acceleration on a pace-of-aging clock and it refuses:
 

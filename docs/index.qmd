@@ -92,10 +92,17 @@ Each of these is a silent wrong answer somewhere else, so each is a hard failure
   `units=` has no default.
 - **Score below the coverage floor.** A clock whose features are largely absent is skipped and
   named, rather than scored on mostly-imputed input.
-- **Claim coverage means validity.** High feature coverage says the probes are present. It says
-  nothing about whether coefficients fitted in one tissue, species or population transfer to
-  yours; that judgement stays with you, and [Choosing a clock](guide/clocks.qmd) lays out the
-  grounds for it.
+- **Treat probes as interchangeable.** Coverage is measured twice: by count, and by the share of
+  the model's total |coefficient| the present features carry. A clock can clear a 92% feature
+  floor having lost the probes that do a third of the work, and only the second number sees it.
+  `probe_loss()` reports both before you score anything.
+- **Claim coverage means validity.** High coverage says the probes are present. It says nothing
+  about whether coefficients fitted in one tissue, species or population transfer to yours; that
+  judgement stays with you, and [Choosing a clock](guide/clocks.qmd) lays out the grounds for it.
+- **Let a paper-versus-implementation disagreement pass silently.** Eleven clocks in the
+  catalogue are scored from coefficients that differ from what their paper describes — a feature
+  count, a changed statistic, a constant. Each carries the note, and it is raised as a warning at
+  score time, not left on a documentation page.
 
 ## What it is not
 

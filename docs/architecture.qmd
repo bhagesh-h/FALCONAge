@@ -1983,13 +1983,13 @@ names. This table is the contract the conformance tests enforce (§10.5).
 | Python | R | Returns |
 |---|---|---|
 | `fa.download()` | `download()` | `falcon_download` |
-| `fa.probe()` | `probe()` | `data.frame` |
-| `fa.preprocess_methylation()` | `preprocess_methylation()` | `falcon_data` |
-| `fa.preprocess_clinical()` | `preprocess_clinical()` | `falcon_data` |
+| `fa.download(dry_run=True)` | `download(dry_run = TRUE)` | `data.frame` |
+| `fa.prepare()` | `prepare()` | `falcon_data` |
+| `fa.prepare_clinical()` | `preprocess_clinical()` | `falcon_data` |
 | `fa.qc()` | `qc()` | `falcon_qc` |
 | `fa.score()` | `score()` | `falcon_result` |
 | `fa.acceleration()` | `acceleration()` | `data.frame` |
-| `fa.cox()` | `cox()` | `data.frame` |
+| `fa.cox_hazard()` | `cox()` | `data.frame` |
 | `fa.icc()` | `icc()` | `data.frame` |
 | `fa.run_benchmark()` | `run_benchmark()` | `falcon_benchmark` |
 | `fa.registry.list()` | `list_clocks()` | `data.frame` |
@@ -2666,7 +2666,7 @@ Every guide page shows the same operation in both languages with Quarto tabsets:
 ```python
 import falconage as fa
 
-data = fa.preprocess_methylation("betas.csv", platform="illumina_450k")
+data = fa.prepare(fa.read_betas("betas.csv"))
 res  = fa.score(data, clocks=["horvath2013", "phenoage"])
 res.table().head()
 ```

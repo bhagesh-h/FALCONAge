@@ -15,6 +15,8 @@ website:
   - issue
   - source
   navbar:
+    logo: logo.png
+    logo-alt: FALCONAge logo
     left:
     - text: About
       file: index.qmd
@@ -76,7 +78,9 @@ format:
     toc: true
     code-copy: true
     code-overflow: wrap
-    include-after-body: cite-copy.html
+    include-after-body:
+    - cite-copy.html
+    - table-scroll.html
     code-annotations: hover
 quartodoc:
   package: falconage

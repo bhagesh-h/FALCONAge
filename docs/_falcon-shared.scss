@@ -77,6 +77,16 @@
   line-height: 1.45;
 }
 
+// Above the breakpoint the sidebar shows the mark at full column width, so the
+// navbar's copy would be the second logo on the page -- the duplication this
+// whole arrangement exists to avoid. One or the other, never both.
+@media (min-width: 992px) {
+  .navbar-brand img,
+  .navbar-logo {
+    display: none !important;
+  }
+}
+
 // One line, doing the job the navbar cannot: saying what this is.
 .falcon-blurb {
   margin: 0 0 1rem;
@@ -136,14 +146,82 @@ main .quarto-title-block + hr {
   display: none;
 }
 
-// Wide tables are the norm here -- the clock catalogue is 161 rows of six
-// columns. Let them scroll rather than force the page to.
-.cell-output-display > table,
-.table-responsive,
-main table {
-  display: block;
+// =============================================================================
+// Wide tables
+// =============================================================================
+//
+// The clock catalogue is 161 rows of six columns and several pages carry
+// comparison tables, so these have to scroll rather than force the page to.
+//
+// THE SCROLLING ELEMENT IS THE WRAPPER, NOT THE TABLE. This used to be
+// `main table { display: block; overflow-x: auto }`, which reads like the
+// right thing and is not: it turns the table into a block box of width auto,
+// so it shrinks to its container and the anonymous inner table compresses
+// every column to minimum content width. Measured on the catalogue at 390px --
+// cells 46px wide and 82px tall, "dnamphenoage" broken across three lines. The
+// table was not overflowing, it was being crushed, which is why it looked like
+// one letter per row.
+//
+// docs/table-scroll.html adds the wrapper Pandoc does not emit.
+.falcon-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+.falcon-table-scroll > table {
+  display: table;      // a real table formatting context again
+  width: auto;
+  max-width: none;
+  margin-bottom: 0;
+}
+
+// Quarto's own wrappers, where it makes them.
+.cell-output-display,
+.table-responsive {
   overflow-x: auto;
   max-width: 100%;
+}
+
+// Tables Quarto renders before the script runs, and any the script misses --
+// still capped so a wide one cannot drag the page sideways in the interval.
+main table {
+  max-width: 100%;
+}
+
+// Phones. Two things at once, because either alone is not enough: a floor on
+// the table width so columns get room to be read, and a smaller type size so
+// that floor costs less scrolling. Without the floor the columns crush; without
+// the smaller type the floor means scrolling every table.
+@media (max-width: 767.98px) {
+  .falcon-table-scroll > table {
+    font-size: 0.76rem;
+    // ~30rem at this font is roughly 60 characters across six columns: enough
+    // that a word wraps at a word boundary instead of a letter one.
+    min-width: 30rem;
+  }
+  .falcon-table-scroll th,
+  .falcon-table-scroll td {
+    padding: 0.3rem 0.4rem;
+    // `break-word`, deliberately not the `anywhere` used elsewhere on this
+    // page. `anywhere` also shrinks min-content, which in a table means the
+    // browser is free to give a column four pixels -- the exact failure this
+    // section exists to fix. `break-word` splits a long token only when it
+    // genuinely will not fit.
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
+  }
+  // Headers stay on one line where they can; a wrapped header row makes every
+  // table look twice as tall as it is.
+  .falcon-table-scroll thead th {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 400px) {
+  .falcon-table-scroll > table { font-size: 0.72rem; }
 }
 
 // =============================================================================
@@ -239,6 +317,25 @@ main video {
   #quarto-header .quarto-sidebar-collapse-item,
   nav.quarto-secondary-nav {
     display: none !important;
+  }
+
+  // ...which took the logo with it, because the sidebar was the only place one
+  // was rendered. The navbar carries one for these widths. Small: it sits
+  // beside the wordmark in a short bar, not above a column.
+  //
+  // `max-height` as well as `height`, because Quarto ships
+  // `.navbar-logo { max-height: 24px }` and a bare `height: 30px` is capped by
+  // it without saying so -- the element measured 24px tall while the
+  // stylesheet said 30. Both are set here so the size is a decision rather
+  // than the smaller of two rules.
+  .navbar-brand img,
+  .navbar-logo {
+    display: inline-block !important;
+    height: 28px;
+    max-height: 28px;
+    width: auto;
+    object-fit: contain;   // never crop the mark to fill a box
+    margin-right: 0.45rem;
   }
 
   // Nothing is done to the grid. Quarto's `page-columns` uses named tracks and

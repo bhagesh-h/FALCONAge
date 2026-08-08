@@ -98,6 +98,15 @@ jobs:
           python docs/build_news.py --check
           python docs/build_catalogue.py --check
 
+      # Prose is not executed, so a function name in a fenced code block is
+      # just text and stays wrong forever. The README's quick start told people
+      # to call fa.report(), fa.cox(), fa.probe(), fa.preprocess_methylation()
+      # and fa.preprocess_clinical() -- none of which existed. The first
+      # example on the landing page raised AttributeError on its last line and
+      # every test in this suite passed anyway.
+      - name: Documented API exists
+        run: python docs/check_api_docs.py
+
       # The rule selection lives in python/pyproject.toml, with the reasoning.
       # Short version: pyflakes and syntax errors only. A style gate a single
       # maintainer argues with weekly gets disabled, and the rules that catch

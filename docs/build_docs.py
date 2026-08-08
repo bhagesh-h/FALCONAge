@@ -170,6 +170,14 @@ def quarto_yaml(spec: dict) -> str:
             "repo-url": site["repo"],
             "repo-actions": ["issue", "source"],
             "navbar": {
+                # The mark, for the widths where the sidebar is not rendered.
+                # The sidebar owns the logo on a wide screen; below 992px it is
+                # hidden (it duplicated the navbar's search and menu), and
+                # hiding it took the only logo on the page with it. The
+                # stylesheet shows exactly one of the two at any width: this one
+                # below the breakpoint, the sidebar's above it.
+                "logo": "logo.png",
+                "logo-alt": f"{site['title']} logo",
                 # Ordered the way someone reads it: what the tool is, then the
                 # science it rests on, then how to drive it, then the API.
                 #
@@ -262,7 +270,10 @@ def quarto_yaml(spec: dict) -> str:
             "code-overflow": "wrap",
             # The copy buttons on the sidebar citation. Quarto's own code-copy
             # only decorates code blocks in the article body.
-            "include-after-body": "cite-copy.html",
+            # cite-copy: the sidebar citation buttons. table-scroll: wraps every
+            # article table in a scroll container, which has to be a parent of
+            # the table and which Pandoc does not emit.
+            "include-after-body": ["cite-copy.html", "table-scroll.html"],
             # Both languages appear in the same tabset on every guide page, so
             # a reader picking "R" once keeps R selected across the whole site.
             "code-annotations": "hover",

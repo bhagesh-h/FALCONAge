@@ -1,0 +1,50 @@
+<script>
+// Wrap every article table in a horizontal scroll container.
+//
+// WHY THIS IS JAVASCRIPT AND NOT CSS. The scrolling element has to be a
+// *parent* of the table. Setting `display: block; overflow-x: auto` on the
+// table itself -- the obvious CSS-only version, and what this site did -- makes
+// the table a block box of width auto, so it shrinks to the container and the
+// anonymous inner table compresses every column to its minimum content width.
+// Measured at 390px on the clock catalogue: cells 46-120px wide and 82px tall,
+// with "dnamphenoage" broken over three lines. The table was not overflowing;
+// it was being crushed.
+//
+// Bootstrap solves this with a `.table-responsive` wrapper div, and Pandoc does
+// not emit one, so it gets added here. Then the table keeps a sane width and
+// the wrapper scrolls, which is the behaviour everyone expects from a wide
+// table on a phone.
+(function () {
+  function wrap() {
+    var tables = document.querySelectorAll(
+      "main table:not(.falcon-wrapped)");
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      t.classList.add("falcon-wrapped");
+      // Already inside something that scrolls (Quarto does wrap some outputs)?
+      // A second wrapper would nest two scrollbars.
+      if (t.parentElement &&
+          t.parentElement.classList.contains("falcon-table-scroll")) continue;
+
+      var box = document.createElement("div");
+      box.className = "falcon-table-scroll";
+      // Keyboard users need to be able to scroll it too, and a focusable
+      // scroll container is the accessible way to expose that.
+      box.setAttribute("tabindex", "0");
+      box.setAttribute("role", "region");
+      var cap = t.querySelector("caption");
+      box.setAttribute("aria-label",
+        cap && cap.textContent.trim() ? cap.textContent.trim() : "Table");
+
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wrap);
+  } else {
+    wrap();
+  }
+})();
+</script>

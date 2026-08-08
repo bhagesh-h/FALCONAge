@@ -26,7 +26,7 @@ from __future__ import annotations
 # `download` and `score` name both a module and a function. The verb wins at
 # the top level -- fa.score(data) is the API -- so the modules are bound to
 # private aliases, which also keeps fa.download.cache_info reachable.
-from . import analysis, core, io, models, plot, preprocess, registry
+from . import analysis, core, io, models, plot, preprocess, registry, report
 from . import download as _download_mod  # noqa: F401  (module, not the verb)
 from . import score as _score_mod  # noqa: F401  (module, not the verb)
 from ._version import REGISTRY_VERSION, __version__
@@ -53,6 +53,7 @@ __all__ = [
     "agreement", "analysis", "associate", "combine", "configure", "core", "cox_hazard",
     "describe", "download", "icc", "io", "models", "plot", "prepare",
     "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_betas",
+    "report",
     "read_clinical",
     "read_rrbs_dir", "read_series_matrix", "registry", "run_benchmark", "score",
     "write_results",

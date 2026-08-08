@@ -209,25 +209,28 @@ import falconage as fa
 # public data by accession
 dl = fa.download("GSE40279")
 
-# raw intensities to beta values
-data = fa.preprocess_methylation(
-    dl,
-    pipeline="noob_bmiq",
-)
+# harmonise probe ids, detect
+# the platform, clip betas
+data = fa.prepare(dl.read())
+
+# what each clock would lose
+# on this array, before scoring
+fa.probe_loss(data, clocks="scoreable")
 
 # score
 res = fa.score(
     data,
-    clocks=["horvath2013", "phenoage",
-            "grimage2", "dunedinpace"],
+    clocks=["horvath2013", "hannum",
+            "dnamphenoage"],
     device="auto",
 )
 
-res.table().head()
-res.acceleration(method="both")
+res.summary()
+res.interpretation()
+fa.acceleration(res, method="both")
 
-fa.plot.ba_vs_ca(res)
-fa.report(res, "report.html")
+fa.plot.ba_vs_ca(res, "horvath2013")
+fa.report.write_report(res, "report.html")
 ```
 
 </td>
@@ -239,24 +242,27 @@ library(FALCONAge)
 # public data by accession
 dl <- download("GSE40279")
 
-# raw intensities to beta values
-data <- preprocess_methylation(
-  dl,
-  pipeline = "noob_bmiq"
-)
+# harmonise probe ids, detect
+# the platform, clip betas
+data <- prepare(read_betas(dl$files[[1]]))
+
+# what each clock would lose
+# on this array, before scoring
+probe_loss(data, clocks = "scoreable")
 
 # score
 res <- score(
   data,
-  clocks = c("horvath2013", "phenoage",
-             "grimage2", "dunedinpace"),
+  clocks = c("horvath2013", "hannum",
+             "dnamphenoage"),
   device = "auto"
 )
 
-head(as.data.frame(res))
+summary(res)
+interpretation(res)
 acceleration(res, method = "both")
 
-plot_ba_vs_ca(res)
+plot_ba_vs_ca(res, "horvath2013")
 report(res, "report.html")
 ```
 
@@ -268,10 +274,13 @@ Command line:
 
 ```bash
 falconage download GSE40279 --dest data/
-falconage preprocess methylation data/GSE40279/ --out prepared.h5ad
-falconage score prepared.h5ad --clocks horvath2013,phenoage,grimage2 --outdir results/
-falconage report results/ --out report.html
+falconage preprocess data/GSE40279/ --out prepared.h5ad
+falconage score prepared.h5ad --clocks horvath2013,hannum,dnamphenoage --outdir results/
+falconage clocks --tier A            # what will actually run offline
 ```
+
+The CLI verbs are `download`, `preprocess`, `score`, `clocks`, `bench`, `cache` and `config`.
+Report writing is library-only for now — `fa.report.write_report(res, "report.html")`.
 
 ## 4. The four modules
 
@@ -282,27 +291,35 @@ One verb, one accession.
 ```python
 fa.download("GSE40279")                       # GEO series
 fa.download("GSM989827")                      # GEO sample
-fa.download("E-MTAB-11827")                   # ArrayExpress
+fa.download("E-MTAB-11827")                   # ArrayExpress / BioStudies
 fa.download("10.5281/zenodo.18763485")        # Zenodo, by DOI
-fa.download("PRJNA553602")                    # SRA / ENA
+fa.download("10.6084/m9.figshare.12345678")   # Figshare, by DOI
+fa.download("PXD012345", extensions=[".tsv"]) # PRIDE proteomics
+fa.download("MTBLS1234")                      # MetaboLights
+fa.download("TCGA-BRCA")                      # GDC, open-access files
+fa.download("PRJNA553602")                    # SRA / ENA -> run table
 fa.download("owner/repo")                     # Hugging Face
 ```
 
-Those six are what v1.0 resolves. PRIDE, MetaboLights and the GDC are specified and not yet
-implemented; Synapse, EGA, dbGaP and UK Biobank are credentialed and deliberately never automated
-— the access agreement is yours, not the tool's, and `fa.download()` on one of those accessions
-says so and points at the portal rather than pretending to try.
+The source is inferred from the shape of the accession. Two of these behave deliberately unlike
+the others:
+
+- **PRIDE refuses an unfiltered project** and prints the extensions present instead. Most of a
+  PRIDE deposit is raw instrument output that no aging clock reads, and starting a
+  multi-gigabyte transfer nobody sized is not a helpful default.
+- **SRA stops at a run table**, in `result.run_table`, with the FASTQ URLs. Reads are not
+  something a clock can score — they need alignment and methylation calling first, and that
+  pipeline is not in this package. What it can usefully do is resolve the accession.
+
+Figshare and Zenodo are told apart by DOI prefix rather than by asking one API and falling back
+to the other, because a Figshare DOI sent to Zenodo returns a 404 that reads like a missing
+record. Synapse, EGA, dbGaP and UK Biobank are credentialed and deliberately never automated —
+the access agreement is yours, not the tool's, and `fa.download()` on one of those says so and
+points at the portal rather than pretending to try.
 
 Check before you commit to a transfer:
 
 ```python
-info = fa.probe("GSE40279")
-#> GSE40279  "Genome-wide methylation profiles reveal quantitative views of human aging rates"
-#>   656 samples, GPL13534 (illumina_450k)
-#>   IDATs: no   series matrix: yes   supplementary: 1 file
-#>   total 1.4 GB
-#>   characteristics fields: age (y), gender, tissue, ethnicity
-
 fa.download("GSE40279", dry_run=True)         # file list and sizes, nothing transferred
 ```
 
@@ -328,15 +345,24 @@ falconage cache gc --older-than 90d
 ### 4.2 Preprocess
 
 ```python
-data = fa.preprocess_methylation(
-    "data/GSE40279/",
-    platform=None,             # auto-detected from probe IDs
-    pipeline="noob_bmiq",      # or "sesame", "noob", "raw"
-    detection_p=0.01,
-    mask_probes=True,          # cross-reactive, SNP, sex chromosome
+data = fa.prepare(
+    fa.read_betas("data/GSE40279/betas.csv"),
     aggregate_epicv2=True,     # mandatory on EPIC v2
 )
+fa.qc(data)                    # missingness, beta distribution, sex check
 ```
+
+`prepare()` takes a **beta matrix** and harmonises it: replicate-probe aggregation, probe-id
+normalisation, platform detection from the probe pattern, and clipping to [0, 1]. Readers exist
+for a beta CSV or Parquet (`read_betas`), a GEO series matrix (`read_series_matrix`) and RRBS
+coverage files (`read_rrbs_dir`).
+
+**Normalisation is not included, and this is a real limit rather than an omission to be inferred
+from silence.** There is no `noob`, no `BMIQ`, no detection-p filter and no cross-reactive or SNP
+probe mask in v1.0. IDAT intensities can be parsed (`io.read_idat_pair`) but turning addresses
+into probe ids needs the Illumina manifest, which the package does not vendor. If your input is
+raw IDATs, normalise with sesame or minfi first and bring the beta matrix here. See
+[ROADMAP.md](ROADMAP.md) item 2.5.
 
 EPIC v2 probe IDs carry replicate suffixes (`cg00000029_TC21`). Without aggregation every clock
 sees zero overlapping features, so the module raises rather than returning an empty result.
@@ -346,7 +372,7 @@ creatinine of 80 is plausible as µmol/L and absurd as mg/dL, and guessing is ho
 happens.
 
 ```python
-data = fa.preprocess_clinical(
+data = fa.prepare_clinical(
     labs,
     units={"albumin": "g/dL", "creatinine": "mg/dL", "glucose": "mg/dL",
            "crp": "mg/L", "alp": "U/L"},
@@ -382,21 +408,65 @@ looks like a result and is not one.
 Every row carries its provenance:
 
 ```python
-res.table().columns
-#> sample_id, clock, clock_version, registry_version, value, unit, scale_type,
-#> chronological_age, aa_absolute, aa_relative, percent_features_missing,
-#> n_features_missing, imputation, preprocess_ops, postprocess_ops, species,
-#> tissue, platform_native, platform_applied, research_only, flags, citation, doi
+res.long().columns
+#> sample_id, clock, value, unit, scale_type, generation, predicts, n_features,
+#> coverage, mass_coverage, n_imputed, availability, registry_version,
+#> falconage_version
 ```
+
+#### Two coverage numbers, not one
+
+`coverage` counts features. `mass_coverage` weighs them — the share of the model's total
+|coefficient| carried by the features you actually have. An elastic net's weights are nothing
+like uniform, so 92% feature coverage covers both "the missing 8% are negligible" and "the
+missing 8% carry a third of the model", and those give very different numbers.
+
+The coverage floor applies to both, and the error says which one failed:
+
+```
+FeatureCoverageError: horvath2013: 96.3% of features are present, but they carry
+only 61.2% of the model's total |coefficient| -- below the 80% floor.
+  Heaviest absent features: cg16867657 (14.1%), cg24724428 (9.7%), cg06639320 (6.2%).
+  Feature count alone would have passed this dataset. The probes that are
+  missing are the ones the clock leans on.
+```
+
+This is the mechanism behind EPIC v2 probe loss shifting the first-generation clocks while the
+principal-component versions barely move. To see it before committing to a run:
+
+```python
+fa.probe_loss(data, clocks="scoreable")   # per clock, worst by weight first
+```
+
+#### How to read a result
+
+```python
+res.interpretation()
+#> per clock: scale_type, unit, legal_operations, coverage, mass_coverage,
+#>            technical_icc, biological_icc, reliability_note, caveats, tier
+```
+
+`caveats` carries the documented disagreements between a clock's paper and the coefficients that
+circulate for it — eleven of them, surfaced as warnings at score time rather than left in prose.
+`technical_icc` and `biological_icc` are separate columns on purpose: they do not track together,
+and the clocks most used in intervention work are where the gap is widest.
 
 ### 4.4 Analyse
 
 ```python
-fa.acceleration(res, method="both")                       # absolute and residual
-fa.cox(res, time="time", status="status")                 # HR per sex-specific SD
-fa.icc(res, subject_col="subject", replicate_col="rep")   # test-retest reliability
+fa.acceleration(res, method="both")                       # absolute and residual, side by side
+fa.acceleration(res, adjust="cell_composition")           # net of blood cell mix
+fa.cox_hazard(res, time_col="time", event_col="status")   # HR per SD
+fa.icc(values, subject_col="subject", value_col="value")  # test-retest reliability
 fa.run_benchmark(res, condition_col="condition", control="HC")
 ```
+
+`adjust="cell_composition"` regresses out the deconvolution clocks scored in the same run. It
+matters because cell composition changes with age and with everything else: across more than
+10,000 blood samples, immune composition was significantly associated with age acceleration for
+every one of six widely used clocks. An unadjusted acceleration measures two things and reports
+one number. `adjust=["cd8t", "mono"]` uses measured counts from `obs` instead, and the returned
+frame records what it was adjusted for.
 
 ## 5. Clock catalogue
 

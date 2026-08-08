@@ -336,3 +336,30 @@ def test_probe_loss_is_ordered_worst_first(synthetic_betas):
     t = fa.probe_loss(synthetic_betas, clocks="scoreable")
     mass = t["mass_coverage"].dropna().to_numpy()
     assert (np.diff(mass) >= -1e-12).all(), "should ascend from worst"
+
+
+def test_acceleration_both_returns_the_two_conventions_side_by_side(synthetic_betas):
+    """Documented in six places before it existed; now it exists."""
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "hannum"])
+    both = fa.acceleration(res, method="both")
+
+    for cid in ("horvath2013", "hannum"):
+        assert f"{cid}_absolute" in both.columns
+        assert f"{cid}_residual" in both.columns
+
+    plain_abs = fa.acceleration(res, method="absolute")["horvath2013"]
+    plain_res = fa.acceleration(res, method="residual")["horvath2013"]
+    np.testing.assert_allclose(both["horvath2013_absolute"], plain_abs, rtol=0, atol=0)
+    np.testing.assert_allclose(both["horvath2013_residual"], plain_res, rtol=0, atol=0)
+
+    # They are genuinely different, which is the reason to show both.
+    assert not np.allclose(both["horvath2013_absolute"],
+                           both["horvath2013_residual"])
+
+
+def test_an_unknown_method_names_the_ones_that_work(synthetic_betas):
+    from falconage.core.errors import AnalysisError
+
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    with pytest.raises(AnalysisError, match="both"):
+        fa.acceleration(res, method="typo")

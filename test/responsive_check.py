@@ -149,7 +149,15 @@ CHROME = """
     searchIds: document.querySelectorAll('#quarto-search').length,
     searchVisible: count('#quarto-search, .sidebar-search, input[type=search]'),
     toggles: count('.navbar-toggler, .quarto-btn-toggle'),
-    logos: count('img.sidebar-logo, .navbar-logo'),
+    logos: count('img.sidebar-logo, img.navbar-logo'),
+    // Which one, and whether the file actually resolved at this page depth --
+    // a logo that 404s from guide/ still counts as one element.
+    logoWhich: [...document.querySelectorAll('img.sidebar-logo, img.navbar-logo')]
+      .filter(vis)
+      .map(e => e.className.split(' ')[0] + ' ' +
+                Math.round(e.getBoundingClientRect().height) + 'px' +
+                (e.complete && e.naturalWidth > 0 ? '' : ' BROKEN'))
+      .join(', ') || 'none',
     brandTitles: count('.navbar-title, .sidebar-title'),
   };
 }
@@ -260,7 +268,16 @@ def main(argv=None) -> int:
                                     "toggles visible -- a reader cannot tell "
                                     "which is the menu")
                 if c["logos"] > 1:
-                    failures.append(f"@{width}px ({state}): {c['logos']} logos visible")
+                    failures.append(f"@{width}px ({state}): {c['logos']} logos "
+                                    f"visible ({c['logoWhich']})")
+                if c["logos"] == 0:
+                    failures.append(
+                        f"@{width}px ({state}): no logo anywhere. The sidebar "
+                        "owns it above 992px and the navbar below; if both are "
+                        "hidden the page has lost its mark entirely.")
+                if "BROKEN" in c["logoWhich"]:
+                    failures.append(f"@{width}px ({state}): logo does not load "
+                                    f"at this page depth ({c['logoWhich']})")
                 if c["brandTitles"] > 1:
                     failures.append(f"@{width}px ({state}): "
                                     f"{c['brandTitles']} site titles visible")
@@ -281,9 +298,7 @@ def main(argv=None) -> int:
 
             state = ("docked" if desktop and s.get("visible")
                      else "hidden" if not s.get("visible") else "PAINTED")
-            logo = (f"logo {s['logoW']}x{s['logoH']}px"
-                    if s.get("logoH") else "no logo")
-            print(f"@{width:>5}px  {state:<7} {logo:<18} "
+            print(f"@{width:>5}px  sidebar {state:<7} logo {opened['logoWhich']:<22} "
                   f"search {opened['searchVisible']}  menus {opened['toggles']}  "
                   f"overflow {n_over}/{len(PAGES)}  overlap {n_lap}/{len(PAGES)}")
             page.close()

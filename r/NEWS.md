@@ -81,6 +81,34 @@
   screen. Six page/width combinations also scrolled sideways, all from long inline `code` spans
   that could not wrap — Quarto ships `code { white-space: pre }`, under which `overflow-wrap` is
   never consulted, so setting only `overflow-wrap` (the obvious fix) changed nothing.
+- **The documented API did not exist.** The README's quick start — the first code anyone copies —
+  called `fa.report()`, `fa.cox()`, `fa.probe()`, `fa.preprocess_methylation()` and
+  `fa.preprocess_clinical()`. None of the five were real names, the last line raised
+  `AttributeError`, and the entire test suite passed regardless, because prose is not executed and
+  a name in a fenced block is just text. It also named two tier C clocks that cannot score and a
+  CLI verb (`falconage report`) that does not exist.
+
+  Fixed: `report` is now exported alongside `plot`, the other four are corrected to
+  `cox_hazard`, `download(dry_run=True)`, `prepare` and `prepare_clinical`, and the examples use
+  clocks that actually run. `acceleration(method="both")` was documented in six places and was
+  not implemented — it is now, returning `<clock>_absolute` and `<clock>_residual` side by side,
+  since suppressing a documented convention is worse than adding it. `docs/check_api_docs.py`
+  checks every `fa.*` reference across 71 documents and the enumerated argument values with them,
+  and runs in CI.
+- **The preprocessing section described a pipeline the package does not have.** `noob`, `BMIQ`,
+  detection-p filtering and probe masking were documented as arguments. None exist in v1.0. The
+  section now says so plainly and tells IDAT users to normalise with sesame or minfi first.
+- **Tables were crushed rather than scrolled on phones.** `main table { display: block;
+  overflow-x: auto }` looks like the right rule and is not: it makes the table a block box of
+  width auto, so it shrinks to the container and the anonymous inner table compresses every
+  column to minimum content width. Measured on the catalogue at 390px — cells 46px wide and 82px
+  tall, `dnamphenoage` broken across three lines. The scroll container has to be a *parent* of
+  the table and Pandoc emits none, so `docs/table-scroll.html` adds one; the table then keeps a
+  readable width and the wrapper scrolls. Row height 82px to 48px, with a smaller type size and a
+  width floor below 768px.
+- **The logo vanished on phones**, because hiding the duplicated sidebar took the only rendered
+  logo with it. The navbar now carries one below 992px and the sidebar above it — exactly one at
+  any width, verified at both page depths.
 - **A phone got two of everything: two menus, two search boxes, two logos, two titles.** The site
   declares a navbar and a docked sidebar, and Quarto gives each its own search box and its own
   collapse control — including two elements carrying `id="quarto-search"`, which is invalid HTML

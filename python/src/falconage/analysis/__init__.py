@@ -109,6 +109,11 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
             The residual from regressing predicted on chronological age. Centred
             at zero by construction, which removes that bias and also removes
             any real cohort-wide effect. The field's default.
+        ``"both"``
+            Absolute and residual side by side, two columns per clock named
+            ``<clock>_absolute`` and ``<clock>_residual``. Suffixed rather than
+            stacked, because the two disagree by several years and a reader who
+            cannot tell which column is which is worse off than with one.
         ``"within_group"``
             Residual from a regression fitted separately within each level of
             ``group``. What the AA2 benchmark needs: it asks whether cases
@@ -117,9 +122,9 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
 
     Notes
     -----
-    Which one a paper used is often not stated, and the three disagree by
-    several years on the same data. The convention is recorded in the returned
-    frame's ``method`` column so a downstream reader does not have to guess.
+    Which one a paper used is often not stated, and they disagree by several
+    years on the same data. The convention is recorded in the returned frame's
+    ``method`` attribute so a downstream reader does not have to guess.
     """
     if age_col not in result.obs.columns:
         raise AnalysisError(
@@ -195,14 +200,24 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
                 f"{1 + extra.shape[1]} predictor(s); need at least "
                 f"{3 + extra.shape[1]}")
 
+        def _resid() -> pd.Series:
+            if extra.shape[1]:
+                design = pd.concat([age.rename("__age"), extra], axis=1)
+                return _regress_out(y, design, ok)
+            return _residual(y, age, ok)
+
         if method == "absolute":
             out[cid] = y - age
         elif method == "residual":
-            if extra.shape[1]:
-                design = pd.concat([age.rename("__age"), extra], axis=1)
-                out[cid] = _regress_out(y, design, ok)
-            else:
-                out[cid] = _residual(y, age, ok)
+            out[cid] = _resid()
+        elif method == "both":
+            # Two columns per clock rather than two calls. The two conventions
+            # disagree by several years on the same data and papers often do
+            # not say which they used, so having them side by side is the
+            # honest way to read a result -- and suffixed names mean a reader
+            # cannot mistake one column for the other.
+            out[f"{cid}_absolute"] = y - age
+            out[f"{cid}_residual"] = _resid()
         elif method == "within_group":
             if group is None or group not in result.obs.columns:
                 raise AnalysisError(
@@ -214,7 +229,9 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
                     res.loc[idx] = _residual(y.loc[idx], age.loc[idx], sub)
             out[cid] = res
         else:
-            raise AnalysisError("method must be 'absolute', 'residual' or 'within_group'")
+            raise AnalysisError(
+                "method must be 'absolute', 'residual', 'both' or 'within_group'; "
+                f"got {method!r}")
 
     df = pd.DataFrame(out, index=result.scores.index)
     df.attrs["method"] = method
