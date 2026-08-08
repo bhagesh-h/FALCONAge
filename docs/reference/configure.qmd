@@ -1,0 +1,7 @@
+# configure { #falconage.configure }
+
+```python
+configure(verbose=None)
+```
+
+Set the console verbosity. ``None`` reads ``FALCONAGE_VERBOSE``.

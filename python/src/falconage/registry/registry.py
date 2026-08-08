@@ -29,7 +29,7 @@ import csv
 import difflib
 import functools
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +69,38 @@ class CoefficientSource:
 
 
 @dataclass(frozen=True)
+class Reliability:
+    """How repeatable a clock is, split into the two things that word means.
+
+    These are separate properties and they do not track together, which is the
+    entire reason both fields exist rather than one called ``icc``:
+
+    * **technical** -- the same biological sample, assayed twice. Measures the
+      assay and the model's sensitivity to array noise.
+    * **biological** -- the same person, sampled again a short time later, with
+      nothing clinically relevant having happened in between. Measures whether
+      the number is a property of the person or of the morning.
+
+    A clock can be excellent on the first and poor on the second, and the
+    clocks most used in intervention work are exactly where that gap is widest
+    (bioRxiv 2025.10.13.682176). A single reliability figure hides that.
+
+    Most entries have neither value. That is honest: an unpublished ICC is not
+    a good ICC, and ``None`` here means "not established in this registry",
+    never "fine".
+    """
+
+    technical_icc: float | None = None
+    biological_icc: float | None = None
+    source: str = ""
+    note: str = ""
+
+    @property
+    def known(self) -> bool:
+        return self.technical_icc is not None or self.biological_icc is not None
+
+
+@dataclass(frozen=True)
 class Clock:
     """One registry entry."""
 
@@ -99,6 +131,7 @@ class Clock:
     requires_covariates: tuple[str, ...] = ()
     requires_reference: bool = False
     known_discrepancies: tuple[str, ...] = ()
+    reliability: Reliability = field(default_factory=Reliability)
 
     @property
     def legal_operations(self) -> set[str]:
@@ -196,6 +229,10 @@ class ClockRegistry:
                 requires_covariates=_tuple(e.get("requires_covariates")),
                 requires_reference=bool(e.get("requires_reference", False)),
                 known_discrepancies=_tuple(e.get("known_discrepancies")),
+                reliability=Reliability(**{
+                    k: v for k, v in (e.get("reliability") or {}).items()
+                    if k in ("technical_icc", "biological_icc", "source", "note")
+                }),
             )
         return cls(clocks, version, p)
 

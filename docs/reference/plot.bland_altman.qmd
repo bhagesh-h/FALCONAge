@@ -1,0 +1,12 @@
+# plot.bland_altman { #falconage.plot.bland_altman }
+
+```python
+plot.bland_altman(result, clock, *, age_col='age')
+```
+
+Difference against mean, with bias and 95% limits of agreement.
+
+A correlation coefficient cannot show that a clock's error depends on age.
+This can, and age-dependent error is the failure mode that makes a single
+MedAE meaningless: a clock accurate at 40 and eight years out at 80 reports
+the same summary statistic as one uniformly four years out.

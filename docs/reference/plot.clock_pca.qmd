@@ -1,0 +1,11 @@
+# plot.clock_pca { #falconage.plot.clock_pca }
+
+```python
+plot.clock_pca(result, *, colour_by=None, method='pca')
+```
+
+Samples embedded in clock space.
+
+PC1 is almost always chronological age; that is expected and is not a
+finding. Structure on PC2 that tracks a plate or a scan date and not a
+phenotype is a batch effect, and this is where it shows up.

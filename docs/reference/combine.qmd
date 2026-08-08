@@ -1,0 +1,20 @@
+# combine { #falconage.combine }
+
+```python
+combine(results, *, keys=None, dataset_col='dataset')
+```
+
+Stack per-dataset results into one, for a benchmark across studies.
+
+Datasets are scored separately and combined afterwards, never merged before
+scoring. Two reasons, and the second is the one that bites:
+
+* a 27K study and an EPIC study have different probe spaces, and the outer
+  join of ten of them is a mostly-NaN matrix that no clock should see;
+* feature coverage is a property of a dataset. Merged, a clock that covers
+  99% of one study and 40% of another reports a single meaningless average,
+  and the AA2 test silently compares cases in the well-covered study against
+  controls in the badly-covered one.
+
+Per-clock coverage is kept per dataset in ``uns`` and the manifests are
+merged, so a combined result still says which study contributed what.

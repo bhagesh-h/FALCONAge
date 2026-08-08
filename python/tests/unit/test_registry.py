@@ -126,3 +126,43 @@ def test_weight_record_distinguishes_bundled_from_supplied(registry):
     rec = registry.weight_record("horvath2013")
     assert rec["source"] == "bundled"
     assert len(rec["sha256"]) == 64
+
+
+# ---------------------------------------------------------------------------
+# paper-vs-implementation disagreements
+# ---------------------------------------------------------------------------
+
+# The eleven cases docs/science.qmd records. Pinned by name rather than by
+# count alone: a count assertion passes just as happily when one entry is lost
+# and another gained, and the whole value of this field is that a specific
+# clock carries a specific caveat to the person scoring with it.
+DOCUMENTED_DISCREPANCIES = {
+    "bocklandt", "bohlin", "cvdwesterman", "zhangmortality",
+    "yingcausage", "yingdamage", "yingadaptage",
+    "senchronoage", "sencultureage", "senmortalityage",
+    "phenoage",
+}
+
+
+def test_every_documented_discrepancy_reaches_the_registry(registry):
+    """Prose in the docs warns nobody. This field is what a user actually sees."""
+    carried = {c.id for c in registry if c.known_discrepancies}
+    assert carried == DOCUMENTED_DISCREPANCIES
+
+
+def test_discrepancy_text_is_useful(registry):
+    """A bare integer difference is not actionable; say what it means."""
+    for cid in DOCUMENTED_DISCREPANCIES:
+        for d in registry.get(cid).known_discrepancies:
+            assert len(d) > 60, f"{cid}: discrepancy note is too terse"
+            assert d.rstrip().endswith("."), f"{cid}: not a sentence"
+
+
+def test_a_discrepancy_becomes_a_warning_at_score_time(synthetic_betas):
+    """The path that matters: registry field -> run manifest -> user."""
+    import falconage as fa
+
+    res = fa.score(synthetic_betas, clocks=["yingcausage"], min_coverage=0.0)
+    notes = [w for w in res.manifest.warnings if w.get("category") == "discrepancy"]
+    assert notes and notes[0]["clock"] == "yingcausage"
+    assert "586" in notes[0]["message"]

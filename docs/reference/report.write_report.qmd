@@ -1,0 +1,14 @@
+# report.write_report { #falconage.report.write_report }
+
+```python
+report.write_report(
+    result,
+    path,
+    *,
+    age_col='age',
+    group=None,
+    title='FALCONAge report',
+)
+```
+
+Render one self-contained HTML file for a scoring run.

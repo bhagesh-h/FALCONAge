@@ -233,3 +233,72 @@ def test_combine_keeps_per_dataset_coverage(synthetic_betas):
     c = fa.combine([a, b], keys=["full", "thin"])
     assert c.scores.shape[0] == a.scores.shape[0] * 2
     assert c.coverage["horvath2013"]["coverage"] <= a.coverage["horvath2013"]["coverage"]
+
+
+# ---------------------------------------------------------------------------
+# cell-composition adjustment
+# ---------------------------------------------------------------------------
+
+def test_cell_composition_is_empty_without_deconvolution_clocks(synthetic_betas):
+    """Absence of an adjustment is data, not an exception."""
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "hannum"])
+    assert fa.cell_composition(res).empty
+
+
+def test_adjust_needs_something_to_adjust_with(synthetic_betas):
+    from falconage.core.errors import AnalysisError
+
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    with pytest.raises(AnalysisError, match="deconvolution clocks"):
+        fa.acceleration(res, adjust="cell_composition")
+
+
+def test_adjust_is_refused_on_methods_that_cannot_honour_it(synthetic_betas):
+    from falconage.core.errors import AnalysisError
+
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    with pytest.raises(AnalysisError, match="needs method='residual'"):
+        fa.acceleration(res, method="absolute", adjust=["age"])
+
+
+def test_adjusting_removes_the_covariate_it_is_given(synthetic_betas):
+    """The property that makes this worth having.
+
+    Build a covariate that the score genuinely depends on, then confirm the
+    adjusted acceleration is uncorrelated with it while the unadjusted one is
+    not. This is the confounding the deconvolution clocks exist to remove.
+    """
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    rng = np.random.default_rng(20260808)
+
+    y = res.scores["horvath2013"]
+    confounder = 0.4 * (y - y.mean()) / y.std() + rng.normal(0, 1, len(y))
+    res.obs["mono"] = confounder.to_numpy()
+
+    plain = fa.acceleration(res)["horvath2013"]
+    fixed = fa.acceleration(res, adjust=["mono"])["horvath2013"]
+
+    r_plain = abs(np.corrcoef(plain, confounder)[0, 1])
+    r_fixed = abs(np.corrcoef(fixed, confounder)[0, 1])
+    assert r_plain > 0.2, "the confounder was not actually confounding"
+    assert r_fixed < 1e-8, "regressing it out should leave no correlation"
+
+
+def test_the_adjustment_is_recorded_on_the_frame(synthetic_betas):
+    """An adjusted acceleration is a different quantity and must say so."""
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    res.obs["mono"] = np.linspace(0.1, 0.3, res.scores.shape[0])
+    assert fa.acceleration(res).attrs["adjusted_for"] == []
+    assert fa.acceleration(res, adjust=["mono"]).attrs["adjusted_for"] == ["mono"]
+
+
+def test_interpretation_carries_scale_reliability_and_caveats(synthetic_betas):
+    """1.6: what a reader needs is in the object, not only on the website."""
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "yingcausage"],
+                   min_coverage=0.0)
+    t = res.interpretation()
+    assert t.loc["horvath2013", "scale_type"] == "age_years"
+    assert "acceleration" in t.loc["horvath2013", "legal_operations"]
+    # The paper-vs-coefficients disagreement travels with the number.
+    assert "586" in t.loc["yingcausage", "caveats"]
+    assert "not a diagnostic" in fa.FalconResult.CAVEAT

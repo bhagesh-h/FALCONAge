@@ -30,7 +30,8 @@ from . import analysis, core, io, models, plot, preprocess, registry
 from . import download as _download_mod  # noqa: F401  (module, not the verb)
 from . import score as _score_mod  # noqa: F401  (module, not the verb)
 from ._version import REGISTRY_VERSION, __version__
-from .analysis import acceleration, agreement, associate, cox_hazard, icc, run_benchmark
+from .analysis import (acceleration, agreement, associate, cell_composition, cox_hazard,
+                       icc, run_benchmark)
 from .core import (
     FalconConfig,
     FalconData,
@@ -48,6 +49,7 @@ from .score import FalconResult, combine, score
 __all__ = [
     "FalconConfig", "FalconData", "FalconError", "FalconResult", "REGISTRY_VERSION",
     "RunManifest", "WeightsUnavailableError", "__version__", "acceleration",
+    "cell_composition",
     "agreement", "analysis", "associate", "combine", "configure", "core", "cox_hazard",
     "describe", "download", "icc", "io", "models", "plot", "prepare",
     "prepare_clinical", "preprocess", "qc", "read", "read_betas", "read_clinical",

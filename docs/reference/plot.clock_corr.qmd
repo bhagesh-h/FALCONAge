@@ -1,0 +1,12 @@
+# plot.clock_corr { #falconage.plot.clock_corr }
+
+```python
+plot.clock_corr(result, *, method='spearman', cluster=True)
+```
+
+Correlation heatmap, hierarchically ordered.
+
+Rank correlation, not Pearson: clocks on different scales have no meaningful
+linear correlation, and mixing scales is the normal case. Clustering the
+rows is what makes the blocks visible, and the blocks are usually shared
+training cohorts rather than shared biology.

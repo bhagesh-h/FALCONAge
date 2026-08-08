@@ -141,6 +141,65 @@ def test_all_nan_column_counts_as_absent(synthetic_betas):
     assert al.coverage == pytest.approx(0.5)
 
 
+def test_mass_coverage_needs_coefficients_to_exist(synthetic_betas):
+    """Without weights there is no honest answer, so the field stays None
+    rather than defaulting to 1.0 and reading as 'all the weight is here'."""
+    al = fa.models.align(synthetic_betas, list(synthetic_betas.X.columns[:4]))
+    assert al.mass_coverage is None
+    assert al.missing_mass == []
+
+
+def test_mass_coverage_separates_heavy_from_negligible_absences(synthetic_betas):
+    """The case feature count cannot see.
+
+    Two datasets, each missing exactly one of four features, so both report
+    75% feature coverage. One drops the feature carrying 97% of the weight and
+    the other drops a rounding error. A single coverage number calls these
+    identical; they are not.
+    """
+    feats = list(synthetic_betas.X.columns[:4])
+    coefs = np.array([10.0, 0.1, 0.1, 0.1])
+
+    def cover(drop):
+        X = synthetic_betas.X.drop(columns=[feats[drop]])
+        d = fa.FalconData(X=X, obs=synthetic_betas.obs,
+                          modality="dna_methylation")
+        return fa.models.align(d, feats, coefficients=coefs)
+
+    heavy, light = cover(0), cover(3)
+
+    assert heavy.coverage == pytest.approx(0.75)
+    assert light.coverage == pytest.approx(0.75)
+
+    assert heavy.mass_coverage == pytest.approx(0.3 / 10.3)
+    assert light.mass_coverage == pytest.approx(10.2 / 10.3)
+    assert heavy.missing_mass[0][0] == feats[0]
+
+
+def test_the_mass_floor_rejects_what_the_feature_floor_would_pass(synthetic_betas):
+    """A clock can clear the count and still have lost the probes it leans on."""
+    from falconage.core.errors import FeatureCoverageError
+
+    reg = fa.registry.load()
+    m = fa.models.LinearClock.from_registry(reg, "horvath2013")
+
+    # Drop the ten heaviest probes: a rounding error by count, a large share of
+    # the model by weight.
+    heaviest = [f for _, f in sorted(
+        zip(np.abs(m.coefficients), m.features), reverse=True)[:10]]
+    X = synthetic_betas.X.drop(columns=heaviest, errors="ignore")
+    d = fa.FalconData(X=X, obs=synthetic_betas.obs,
+                      modality="dna_methylation", platform="450K")
+
+    al = fa.models.align(d, m.features, coefficients=m.coefficients)
+    assert al.coverage > al.mass_coverage    # the whole point
+
+    spec = resolve("cpu")
+    floor = 0.5 * (al.coverage + al.mass_coverage)   # between the two measures
+    with pytest.raises(FeatureCoverageError, match="total .coefficient."):
+        m.predict(d, spec, min_coverage=floor)
+
+
 def test_feature_order_does_not_change_the_score(synthetic_betas):
     """A clock's answer must not depend on the column order of the input."""
     spec = resolve("cpu")

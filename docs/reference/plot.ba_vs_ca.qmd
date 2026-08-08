@@ -1,0 +1,12 @@
+# plot.ba_vs_ca { #falconage.plot.ba_vs_ca }
+
+```python
+plot.ba_vs_ca(result, clock, *, age_col='age', group=None)
+```
+
+Predicted against chronological age, with the identity line.
+
+The identity line, not a regression line. A regression line always looks
+like a good fit; the identity line is what exposes a clock running five
+years high on everybody, which is what MedE measures and what quietly wins
+AA1 in a benchmark that does not discount for it.

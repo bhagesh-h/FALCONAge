@@ -1,0 +1,26 @@
+# acceleration { #falconage.acceleration }
+
+```python
+acceleration(
+    result,
+    *,
+    age_col='age',
+    method='residual',
+    group=None,
+    clocks=None,
+)
+```
+
+Age acceleration, in whichever of the three conventions you mean.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Default      |
+|--------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| method | str    | ``"absolute"``     ``predicted - chronological``. Interpretable in years, and     confounded by the clock's own bias: a clock that over-predicts     everyone by three years gives everyone three years of acceleration. ``"residual"``     The residual from regressing predicted on chronological age. Centred     at zero by construction, which removes that bias and also removes     any real cohort-wide effect. The field's default. ``"within_group"``     Residual from a regression fitted separately within each level of     ``group``. What the AA2 benchmark needs: it asks whether cases     accelerate relative to *their own* controls, not relative to a line     fitted through both. | `'residual'` |
+
+## Notes {.doc-section .doc-section-notes}
+
+Which one a paper used is often not stated, and the three disagree by
+several years on the same data. The convention is recorded in the returned
+frame's ``method`` column so a downstream reader does not have to guess.

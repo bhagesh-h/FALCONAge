@@ -1,0 +1,16 @@
+# plot.clock_chord { #falconage.plot.clock_chord }
+
+```python
+plot.clock_chord(result, *, min_shared=5, max_clocks=24)
+```
+
+Circos-style chord diagram of CpG sharing between clocks.
+
+The correlation heatmap says two clocks agree. This says how much of that
+agreement is built in: chord width is the number of CpGs the two clocks have
+literally in common. A pair with a thick chord and a high correlation has
+told you much less than a pair with a high correlation and no chord at all.
+
+Following the circos convention of the single-cell aging literature -- an
+outer ring of colour-coded entities, chords in the interior weighted by the
+strength of the relationship.

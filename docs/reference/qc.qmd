@@ -1,0 +1,12 @@
+# qc { #falconage.qc }
+
+```python
+qc(data, *, sample_missing_threshold=0.1)
+```
+
+Look at the data before scoring it.
+
+Reports rather than fixes. A sample that is 40% missing may be a failed
+array or may be a 27K matrix aligned against an EPIC feature space, and the
+right response differs -- so this says what it sees and leaves the decision
+where it belongs.

@@ -1,0 +1,11 @@
+# plot.beta_density { #falconage.plot.beta_density }
+
+```python
+plot.beta_density(data, *, max_samples=60, n_grid=200)
+```
+
+Per-sample beta distribution.
+
+Two peaks near 0 and 1 is what a working array looks like. A sample with a
+filled middle failed, and no amount of downstream normalisation recovers it
+-- which is why this is the first figure to look at and not the last.

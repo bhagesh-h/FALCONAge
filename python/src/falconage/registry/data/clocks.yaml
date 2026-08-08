@@ -118,6 +118,9 @@ clocks:
     citation: "Bocklandt, S., Lin, W., Sehl, M.E. et al. Epigenetic predictor of age. PLoS ONE 6, e14821 (2011)."
     doi: "https://doi.org/10.1371/journal.pone.0014821"
     notes: "Package-facing one-CpG identity score: pyaging returns raw cg09809672 methylation with coefficient 1 and zero intercept. The published saliva age regression instead uses EDARADD and NPTX2, including an EDARADD-squared basis term; that published age model is not implemented."
+    known_discrepancies:
+      - "The paper describes a 2-CpG model; the coefficient set in circulation carries 1. Which
+        probe was dropped is not documented upstream, so this is not the published model."
     coefficient_source:
       file: null
       url: null
@@ -147,6 +150,9 @@ clocks:
     citation: "Bohlin, J., Håberg, S. E., Magnus, P. et al. Prediction of gestational age based on genome-wide differentially methylated regions. Genome Biology 17, 207 (2016)."
     doi: "https://doi.org/10.1186/s13059-016-1063-4"
     notes: "Official minimum-lambda variant of the Bohlin gestational-age LASSO: pyaging implements the 251-CpG lambda.min model and converts its day-scale output to weeks. The paper/package default one-standard-error variant uses 96 CpGs and has nearly identical predictive performance."
+    known_discrepancies:
+      - "The paper reports 96 CpGs; the coefficient set in circulation carries 251. Scores here
+        will match other packages and not the figures printed in the paper."
     coefficient_source:
       file: null
       url: null
@@ -385,6 +391,9 @@ clocks:
     citation: "Westerman, K. et al. Epigenomic assessment of cardiovascular disease risk and interactions with traditional risk metrics. Journal of the American Heart Association 9, e015299 (2020)."
     doi: "https://doi.org/10.1161/jaha.119.015299"
     notes: "Whole-blood DNA-methylation score for cardiovascular risk. The paper's final cross-study learner stacks cohort-specific elastic-net Cox models; the packaged pyaging implementation is a 235-CpG linear score followed by a sigmoid."
+    known_discrepancies:
+      - "The paper reports 1,305 CpGs; the coefficient set in circulation carries 235. Expect
+        disagreement with any value quoted from the paper."
     coefficient_source:
       file: null
       url: null
@@ -967,6 +976,14 @@ clocks:
     citation: "Belsky, D. W., Caspi, A., Corcoran, D. L., et al. (2022). DunedinPACE, a DNA methylation biomarker of the pace of aging. eLife, 11, e73420."
     doi: "https://doi.org/10.7554/elife.73420"
     notes: "Whole-blood elastic-net pace-of-aging biomarker trained at age 45 against a 20-year longitudinal slope composite of 19 organ-system biomarkers. PyAging follows the official 20,000-probe quantile-normalization panel: 173 scoring CpGs plus 19,827 background probes."
+    reliability:
+      technical_icc: 0.96
+      source: "Belsky et al., eLife 2022;11:e73420 -- ICC 0.96 [0.93-0.98] in the Lehne test-retest set;
+        0.97 [0.94-0.98] EPIC-EPIC and 0.87 [0.82-0.90] 450k-EPIC."
+      note: "Technical and biological reliability come apart for this clock: it is among the most
+        reproducible on repeat assay of one sample and among the least stable on repeat sampling of
+        one person days apart. Treat a single-timepoint change in an individual with caution
+        (bioRxiv 2025.10.13.682176)."
     coefficient_source:
       file: null
       url: null
@@ -1467,6 +1484,11 @@ clocks:
     citation: "Lu, A. T., et al. “DNA methylation GrimAge version 2.” Aging 14(23): 9484–9549 (2022)."
     doi: "https://doi.org/10.18632/aging.204434"
     notes: "Mortality-risk epigenetic clock combining ten blood DNAm surrogate biomarkers with chronological age and sex; the Cox linear predictor is calibrated to an age-like value in years."
+    reliability:
+      note: "Technical and biological reliability come apart for this clock: it is among the most
+        reproducible on repeat assay of one sample and among the least stable on repeat sampling of
+        one person days apart. Treat a single-timepoint change in an individual with caution
+        (bioRxiv 2025.10.13.682176)."
     coefficient_source:
       file: null
       url: null
@@ -2842,6 +2864,12 @@ clocks:
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy trained to reproduce the original DNAmTL clock score; the implemented returned score is on the DNAmTL base-pair scale."
+    reliability:
+      source: "Higgins-Chen et al., Nature Aging 2022;2:644-661."
+      note: "A principal-component rebuild of the original clock, trained to suppress single-probe
+        technical noise. Replicate pairs agree to within 0-1.5 years against deviations of up to 9
+        years for the original. The paper reports agreement in years, not a per-clock ICC, so no ICC
+        is recorded here."
     coefficient_source:
       file: null
       url: null
@@ -2871,6 +2899,12 @@ clocks:
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy trained to reproduce the original DNAm GrimAge score; age and sex are additional model inputs."
+    reliability:
+      source: "Higgins-Chen et al., Nature Aging 2022;2:644-661."
+      note: "A principal-component rebuild of the original clock, trained to suppress single-probe
+        technical noise. Replicate pairs agree to within 0-1.5 years against deviations of up to 9
+        years for the original. The paper reports agreement in years, not a per-clock ICC, so no ICC
+        is recorded here."
     coefficient_source:
       file: null
       url: null
@@ -2903,6 +2937,12 @@ clocks:
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy trained to reproduce the original Hannum whole-blood age-clock score."
+    reliability:
+      source: "Higgins-Chen et al., Nature Aging 2022;2:644-661."
+      note: "A principal-component rebuild of the original clock, trained to suppress single-probe
+        technical noise. Replicate pairs agree to within 0-1.5 years against deviations of up to 9
+        years for the original. The paper reports agreement in years, not a per-clock ICC, so no ICC
+        is recorded here."
     coefficient_source:
       file: null
       url: null
@@ -2932,6 +2972,12 @@ clocks:
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy of the 2013 Horvath pan-tissue clock, trained against the original clock score using substituted multi-tissue datasets."
+    reliability:
+      source: "Higgins-Chen et al., Nature Aging 2022;2:644-661."
+      note: "A principal-component rebuild of the original clock, trained to suppress single-probe
+        technical noise. Replicate pairs agree to within 0-1.5 years against deviations of up to 9
+        years for the original. The paper reports agreement in years, not a per-clock ICC, so no ICC
+        is recorded here."
     coefficient_source:
       file: null
       url: null
@@ -2961,6 +3007,12 @@ clocks:
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component DNAm PhenoAge model trained directly on phenotypic-age scores rather than as a proxy of the original CpG clock."
+    reliability:
+      source: "Higgins-Chen et al., Nature Aging 2022;2:644-661."
+      note: "A principal-component rebuild of the original clock, trained to suppress single-probe
+        technical noise. Replicate pairs agree to within 0-1.5 years against deviations of up to 9
+        years for the original. The paper reports agreement in years, not a per-clock ICC, so no ICC
+        is recorded here."
     coefficient_source:
       file: null
       url: null
@@ -2990,6 +3042,12 @@ clocks:
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy of the skin-and-blood age clock, trained against the original Horvath2 score using skin, blood, and fibroblast datasets."
+    reliability:
+      source: "Higgins-Chen et al., Nature Aging 2022;2:644-661."
+      note: "A principal-component rebuild of the original clock, trained to suppress single-probe
+        technical noise. Replicate pairs agree to within 0-1.5 years against deviations of up to 9
+        years for the original. The paper reports agreement in years, not a per-clock ICC, so no ICC
+        is recorded here."
     coefficient_source:
       file: null
       url: null
@@ -3081,6 +3139,10 @@ clocks:
     notes: "Clinical Phenotypic Age combines chronological age with nine blood biomarkers selected by penalized mortality regression and expresses mortality risk as an equivalent age in years. Closed form -- the ten coefficients and the Gompertz calibration are printed in the paper, so there is no coefficient file to fetch and nothing to trace."
     formula: "phenoage"
     requires_covariates: ["age"]
+    known_discrepancies:
+      - "Two constants circulate in the divisor of the Gompertz inversion: 0.090165 and 0.09165.
+        FALCONAge uses 0.090165, the value BioAge corrected to in April 2026. Code still using
+        0.09165 differs by several years on the same input."
     coefficient_source:
       file: null
       url: null
@@ -3371,6 +3433,9 @@ clocks:
     citation: "Kasamoto, K., Gibson, J., Moqri, M., Smith, R. & Higgins-Chen, A.T. DNA methylation signatures of cellular senescence are not reversed by senolytic treatment. Aging Cell 25, e70430 (2026)."
     doi: "https://doi.org/10.1111/acel.70430"
     notes: "Senescence-enriched chronological-age predictor restricted to CpGs whose directions were concordant across in-vitro senescence, age and mortality analyses."
+    known_discrepancies:
+      - "The upstream README's feature count disagrees with the coefficient object it ships. The
+        registry follows the coefficient file, because that is what scores."
     coefficient_source:
       file: null
       url: null
@@ -3400,6 +3465,9 @@ clocks:
     citation: "Kasamoto, K., Gibson, J., Moqri, M., Smith, R. & Higgins-Chen, A.T. DNA methylation signatures of cellular senescence are not reversed by senolytic treatment. Aging Cell 25, e70430 (2026)."
     doi: "https://doi.org/10.1111/acel.70430"
     notes: "Binomial elastic-net classifier of in-vitro cellular senescence, trained after ComBat correction on pooled human fibroblast and mesenchymal-stromal-cell datasets and restricted to direction-concordant senescence/age/mortality CpGs."
+    known_discrepancies:
+      - "The upstream README's feature count disagrees with the coefficient object it ships. The
+        registry follows the coefficient file, because that is what scores."
     coefficient_source:
       file: null
       url: null
@@ -3429,6 +3497,9 @@ clocks:
     citation: "Kasamoto, K., Gibson, J., Moqri, M., Smith, R. & Higgins-Chen, A.T. DNA methylation signatures of cellular senescence are not reversed by senolytic treatment. Aging Cell 25, e70430 (2026)."
     doi: "https://doi.org/10.1111/acel.70430"
     notes: "Senescence-enriched elastic-net Cox predictor of mortality, restricted to direction-concordant senescence/age/mortality CpGs and trained in the Framingham Heart Study."
+    known_discrepancies:
+      - "The upstream README's feature count disagrees with the coefficient object it ships. The
+        registry follows the coefficient file, because that is what scores."
     coefficient_source:
       file: null
       url: null
@@ -4570,6 +4641,10 @@ clocks:
     citation: "Ying, K., Liu, H., Tarkhov, A.E. et al. Causality-enriched epigenetic age uncouples damage and adaptation. Nature Aging 4, 231–246 (2024)."
     doi: "https://doi.org/10.1038/s43587-023-00557-0"
     notes: "Causality-enriched age predictor restricted to adaptive/protective age-related CpGs, with feature penalties weighted by EWMR causality scores."
+    known_discrepancies:
+      - "The paper reports 1,000 CpGs; the coefficient set carries 999. The same off-by-one
+        appears in all three Ying clocks, consistent with the paper's total counting an
+        intercept row as a feature."
     coefficient_source:
       file: "coefficients/yingadaptage.csv"
       sha256: "c844962e50847593de78b22742e69665ad767756a94806573a906914334e22ee"
@@ -4600,6 +4675,10 @@ clocks:
     citation: "Ying, K., Liu, H., Tarkhov, A.E. et al. Causality-enriched epigenetic age uncouples damage and adaptation. Nature Aging 4, 231–246 (2024)."
     doi: "https://doi.org/10.1038/s43587-023-00557-0"
     notes: "Causality-enriched chronological-age clock using EWMR-prioritized CpGs and feature-specific penalties derived from causality scores."
+    known_discrepancies:
+      - "The paper reports 586 CpGs; the coefficient set carries 585. The same off-by-one appears
+        in all three Ying clocks, consistent with the paper's total counting an intercept row as
+        a feature."
     coefficient_source:
       file: "coefficients/yingcausage.csv"
       sha256: "c57f2e5622743c2fadce96c6bde990ce6c65a430601f3c4ef6b19c5c125a3947"
@@ -4630,6 +4709,10 @@ clocks:
     citation: "Ying, K., Liu, H., Tarkhov, A.E. et al. Causality-enriched epigenetic age uncouples damage and adaptation. Nature Aging 4, 231–246 (2024)."
     doi: "https://doi.org/10.1038/s43587-023-00557-0"
     notes: "Causality-enriched age predictor restricted to damaging age-related CpGs, with feature penalties weighted by EWMR causality scores."
+    known_discrepancies:
+      - "The paper reports 1,090 CpGs; the coefficient set carries 1,089. The same off-by-one
+        appears in all three Ying clocks, consistent with the paper's total counting an
+        intercept row as a feature."
     coefficient_source:
       file: "coefficients/yingdamage.csv"
       sha256: "e3b2019563f150436119047622d4cce714949919ae871bfd6c1ce24588ec09e4"
@@ -4720,6 +4803,11 @@ clocks:
     citation: "Zhang, Y., Wilson, R., Heiss, J. et al. DNA methylation signatures in peripheral blood strongly predict all-cause mortality. Nature Communications 8, 14617 (2017)."
     doi: "https://doi.org/10.1038/ncomms14617"
     notes: "Ten-CpG whole-blood mortality risk score. Pyaging implements the paper supplement's continuous LASSO-weighted score exactly (the sum of ten raw beta values multiplied by their published coefficients). The same study also defines a separate simplified 0-10 aberrant-methylation count based on cohort-specific quartile cutoffs."
+    known_discrepancies:
+      - "The paper defines this as an integer count of markers past quartile thresholds; the
+        implementations in circulation compute a continuous weighted sum. They are different
+        statistics, and the continuous form has no published cut-points, which is why its
+        scale_type is relative_score rather than a count."
     coefficient_source:
       file: "coefficients/zhangmortality.csv"
       sha256: "ebf3915e5f08ec8d1cf4b84d6017088cb87fea2b9cedd1cc781589847293a177"

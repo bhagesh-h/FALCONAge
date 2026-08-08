@@ -26,11 +26,23 @@ classifiers = [
 # forty samples of blood chemistry should not download 800 MB of CUDA kernels
 # to do it. The op implementations are written against an array-module handle
 # (falconage.core.backend), so the same code runs on either.
+#
+# UPPER BOUNDS ARE DELIBERATE AND SO IS WHERE THEY SIT. The lock file pins
+# pandas 2.3.3 and that is the only set CI used to exercise, but nobody installs
+# the lock -- a `pip install` from the GitHub URL resolves whatever is current,
+# which since January 2026 is pandas 3.0. So the shipped install path was the
+# one path nothing tested.
+#
+# The suite was then run against pandas 3.0.5 / numpy 2.5.1 and passes, so the
+# ceilings are set at the next major rather than at `<3`: capping below a
+# version that demonstrably works would be a fiction. `python-test` now has a
+# second job that resolves unpinned, so this claim keeps being checked instead
+# of being a note written once.
 dependencies = [
-  "numpy>=1.24",
-  "pandas>=2.0",
-  "scipy>=1.10",
-  "PyYAML>=6.0",
+  "numpy>=1.24,<3",
+  "pandas>=2.0,<4",
+  "scipy>=1.10,<2",
+  "PyYAML>=6.0,<7",
 ]
 
 [project.optional-dependencies]

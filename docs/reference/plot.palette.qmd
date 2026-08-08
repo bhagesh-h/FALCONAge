@@ -1,0 +1,6 @@
+# plot.palette { #falconage.plot.palette }
+
+```python
+plot.palette(name='categorical')
+```
+

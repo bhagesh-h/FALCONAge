@@ -67,6 +67,7 @@ class FalconResult:
                     "predicts": ", ".join(c.predicts),
                     "n_features": c.n_features,
                     "coverage": cov.get("coverage"),
+                    "mass_coverage": cov.get("mass_coverage"),
                     "n_imputed": cov.get("n_imputed"),
                     "availability": c.availability,
                     "registry_version": self.manifest.registry_version,
@@ -87,12 +88,61 @@ class FalconResult:
         d = self.scores.describe().T
         d["scale_type"] = [self.registry.get(c).scale_type for c in d.index]
         d["coverage"] = [self.coverage.get(c, {}).get("coverage") for c in d.index]
+        d["mass_coverage"] = [self.coverage.get(c, {}).get("mass_coverage")
+                              for c in d.index]
         return d
+
+    # -- how to read it ----------------------------------------------------
+    #: The limit that belongs with every number this object holds. It is on the
+    #: documentation site, which is not where a person looks while reading a
+    #: table in a notebook.
+    CAVEAT = (
+        "Aging clocks are population-research instruments. A score is "
+        "interpretable against a comparison group; it is not a diagnostic "
+        "statement about one person, and no clock here is validated for a "
+        "clinical decision. Reliability varies sharply by clock, and technical "
+        "and biological reliability are separate properties -- see "
+        "result.interpretation()."
+    )
+
+    def interpretation(self) -> pd.DataFrame:
+        """One row per clock: what the number is, and what may be done with it.
+
+        Everything needed to read a score, in the object holding the score.
+        Scale and unit say what the quantity is; ``legal_operations`` says which
+        arithmetic the package will perform on it; reliability says how much of
+        a within-person change is likely to be the assay; ``caveats`` carries
+        any documented disagreement between the clock's paper and the
+        coefficients that circulate for it.
+        """
+        rows = []
+        for cid in self.scores.columns:
+            c = self.registry.get(cid)
+            cov = self.coverage.get(cid, {})
+            r = c.reliability
+            rows.append({
+                "clock": cid,
+                "predicts": ", ".join(c.predicts),
+                "scale_type": c.scale_type,
+                "unit": ", ".join(c.unit) or "",
+                "legal_operations": ", ".join(sorted(c.legal_operations)),
+                "coverage": cov.get("coverage"),
+                "mass_coverage": cov.get("mass_coverage"),
+                "technical_icc": r.technical_icc,
+                "biological_icc": r.biological_icc,
+                "reliability_note": r.note,
+                "caveats": " ".join(c.known_discrepancies),
+                "tier": c.availability,
+            })
+        return pd.DataFrame(rows).set_index("clock")
 
     def __repr__(self) -> str:  # pragma: no cover - display only
         return (f"FalconResult({self.scores.shape[0]} samples x "
                 f"{self.scores.shape[1]} clocks, {len(self.skipped)} skipped, "
-                f"{len(self.manifest.warnings)} warning(s))")
+                f"{len(self.manifest.warnings)} warning(s))\n"
+                f"  {self.CAVEAT.splitlines()[0][:96]}...\n"
+                "  .interpretation() for scale, units, reliability and caveats "
+                "per clock")
 
     def write(self, outdir):
         from ..io import write_results
@@ -211,6 +261,8 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
         if alignment is not None:
             coverage[cid] = {
                 "coverage": round(alignment.coverage, 6),
+                "mass_coverage": (None if alignment.mass_coverage is None
+                                  else round(alignment.mass_coverage, 6)),
                 "n_present": int(alignment.present.sum()),
                 "n_imputed": alignment.n_imputed,
                 "imputation": alignment.imputation,
@@ -220,8 +272,23 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
                     f"{alignment.coverage:.1%} feature coverage; "
                     f"{alignment.n_imputed} value(s) imputed",
                     clock=cid, category="coverage")
+            # Worth its own warning, separate from the count. The count can look
+            # fine while the weights do not, and that combination is the one a
+            # user is least likely to check for. Fires only when the two
+            # measures actually disagree -- repeating a coverage warning in
+            # different units teaches people to skim both.
+            mc = alignment.mass_coverage
+            if mc is not None and mc < 0.95 and mc < alignment.coverage - 0.02:
+                worst = ", ".join(f"{f} ({s:.1%})"
+                                  for f, s in alignment.missing_mass[:3])
+                warns.warn(
+                    f"features present cover {alignment.coverage:.1%} of the "
+                    f"probe list but only {mc:.1%} of the model's total "
+                    f"|coefficient|. Heaviest absent: {worst}",
+                    clock=cid, category="coefficient_mass")
         else:
-            coverage[cid] = {"coverage": 1.0, "n_present": c.n_features or 0,
+            coverage[cid] = {"coverage": 1.0, "mass_coverage": None,
+                             "n_present": c.n_features or 0,
                              "n_imputed": 0, "imputation": "n/a"}
 
         for d in c.known_discrepancies:

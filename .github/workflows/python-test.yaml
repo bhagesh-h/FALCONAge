@@ -104,3 +104,39 @@ jobs:
       # real bugs go with it.
       - name: Lint
         run: uvx ruff check --config python/pyproject.toml python/src python/tests test docs
+
+  # WHY A SECOND JOB WHEN THE WHOLE POINT ABOVE WAS TO HAVE ONE. Because the two
+  # answer different questions, and the first one does not answer this one.
+  #
+  # `test` installs the lock: pandas 2.3.3, the set both Docker images ship. But
+  # the README tells people to `pip install` from a GitHub URL, which resolves
+  # fresh -- pandas 3.0 since January 2026, with copy-on-write mandatory and the
+  # object string dtype gone. That is the install almost every user gets, and
+  # until this job existed it was tested by nothing at all.
+  #
+  # `continue-on-error` on purpose. A new pandas or numpy release breaking this
+  # is news worth having, but it is not the contributor's fault and it must not
+  # block their pull request. Red here means "go and look"; red above means
+  # "you broke it".
+  latest-deps:
+    name: unpinned resolution (what a fresh install gets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install with no lock
+        run: |
+          python -m pip install --upgrade pip
+          pip install "./python[methylation,plot,anndata,cli]" pytest
+
+      - name: What resolved
+        run: pip list | grep -Ei "^(numpy|pandas|scipy|pyarrow|matplotlib) "
+
+      - name: Test
+        run: pytest python/tests -q

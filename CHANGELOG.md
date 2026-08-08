@@ -10,7 +10,61 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ## [Unreleased]
 
+### Added
+
+- **Coefficient-mass coverage.** Feature coverage counted probes and treated them as
+  interchangeable, which elastic-net weights are not: a clock can clear an 80% feature floor while
+  the probes it lost carry most of the model. `Alignment` now also reports `mass_coverage` — the
+  fraction of total |coefficient| the present features carry — plus `missing_mass`, the heaviest
+  absent features ranked by weight share. The floor applies to both, and the error names which one
+  failed. This is the mechanism behind EPICv2 probe loss disrupting the traditional clocks while
+  barely moving the PC ones.
+- **`known_discrepancies` is populated.** The field existed and every one of the 161 entries was
+  empty, so the eleven documented paper-versus-implementation disagreements lived only in prose on
+  the documentation site and warned nobody at score time. All eleven now travel with the clock:
+  Bocklandt, Bohlin, CVDWesterman, ZhangMortality, the three Ying clocks, the three Sen clocks, and
+  the PhenoAge Gompertz constant.
+- **`reliability` on registry entries**, split into `technical_icc` and `biological_icc` because
+  the two do not track together — a clock can be near-perfect on repeat assay of one sample and
+  poor on repeat sampling of one person, and the clocks most used in intervention work are where
+  that gap is widest. Populated only where a value traces to a primary source (eight clocks);
+  everywhere else it is `None`, meaning "not established", never "fine".
+- **`FalconResult.interpretation()`** — one row per clock giving scale, unit, permitted operations,
+  both coverage measures, reliability and any documented caveat. The limits were on the website;
+  they are now on the object a person actually prints.
+- **`cell_composition()` and `acceleration(adjust=...)`.** Blood composition confounds every blood
+  clock, and the proportions needed to adjust for it were already being computed by the
+  deconvolution clocks in the same run with nothing connecting the two. `adjust="cell_composition"`
+  regresses them out alongside chronological age; `adjust=[...]` takes measured columns instead.
+  The frame records what it was adjusted for, because an adjusted acceleration is a different
+  quantity from an unadjusted one.
+- **`test/responsive_check.py`** — loads the rendered site in headless Chromium at 320, 360, 390,
+  768 and 1280 px and fails on sideways scroll, overlapping text, or a sidebar that does not
+  collapse. Written after a CSS rule broke every phone without failing any build.
+- **A second CI job on the unpinned dependency resolution.** The lock pins pandas 2.3.3; a
+  `pip install` from the GitHub URL resolves pandas 3.0. That is the install nearly every user
+  gets and nothing tested it. Non-blocking, because a breaking upstream release is not a
+  contributor's fault.
+- **A Docker walkthrough for people who have never used Python or R** — numbered from installing
+  Docker to scoring their own data, covering the CPU image, the CUDA image and R, with the
+  no-transfer dry run of the 586 MB benchmark corpus first.
+
 ### Fixed
+
+- **The sidebar was painted over the article on every phone.** A rule added to put the logo above
+  the blurb, `#quarto-sidebar { display: flex }`, is specificity (1,0,0); the rule Quarto uses to
+  collapse the sidebar behind a toggle is `.collapse:not(.show) { display: none }` at (0,2,0). The
+  id won at every width. Measured at four phone widths: 155 overlapping text pairs, the citation
+  buttons and author line lying across the prose. Now scoped to a sidebar that is actually on
+  screen. Six page/width combinations also scrolled sideways, all from long inline `code` spans
+  that could not wrap — Quarto ships `code { white-space: pre }`, under which `overflow-wrap` is
+  never consulted, so setting only `overflow-wrap` (the obvious fix) changed nothing.
+- **`align()` reindexed the frame twice.** The second pass existed only to count per-sample
+  missingness, which the mask built two lines earlier already held. Alignment dominates a scoring
+  run, so removing it is worth 1.17–1.25× across 1k–16k samples.
+- **Dependency ceilings.** `pandas>=2.0` with no upper bound meant the package claimed
+  compatibility with versions that did not exist when it was written. Bounded at the next major
+  after verifying the suite passes on pandas 3.0.5 and numpy 2.5.1.
 
 - **Every bundled coefficient file's recorded SHA-256 was wrong on a Windows
   checkout.** All twenty were CRLF on disk while their recorded digests described the LF form, so

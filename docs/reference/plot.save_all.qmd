@@ -1,0 +1,22 @@
+# plot.save_all { #falconage.plot.save_all }
+
+```python
+plot.save_all(
+    result,
+    outdir,
+    *,
+    data=None,
+    bench=None,
+    acc=None,
+    age_col='age',
+    group=None,
+    platform_col=None,
+    dataset_col=None,
+    max_per_clock=4,
+)
+```
+
+Render every figure this result can support and write it as PNG.
+
+Skips anything the data cannot support rather than raising -- a result with
+no age column should still get its coverage and agreement figures.

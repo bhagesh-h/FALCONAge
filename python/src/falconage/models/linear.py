@@ -30,10 +30,18 @@ class Alignment:
     imputation: str
     per_sample_missing: np.ndarray   # count of features imputed per sample
     notes: list[str] = field(default_factory=list)
+    # Fraction of the model's total |coefficient| carried by present features.
+    # None when align() was called without coefficients -- there is no honest
+    # default, and 1.0 would read as "all the weight is here".
+    mass_coverage: float | None = None
+    # The heaviest absent features, worst first, as (feature, |coef| share).
+    # What a user needs to decide whether the gap matters.
+    missing_mass: list[tuple[str, float]] = field(default_factory=list)
 
 
 def align(data, features: list[str], *, imputation: str = "reference",
-          reference: dict[str, float] | None = None) -> Alignment:
+          reference: dict[str, float] | None = None,
+          coefficients: np.ndarray | None = None) -> Alignment:
     """Build the clock's feature matrix from whatever the dataset has.
 
     Parameters
@@ -44,6 +52,11 @@ def align(data, features: list[str], *, imputation: str = "reference",
         published value exists. ``"mean"`` always uses the column mean.
         ``"none"`` refuses, leaving NaN, so the coverage check downstream fails
         loudly instead of returning a number.
+    coefficients
+        The clock's weights, in ``features`` order. Supplying them adds
+        ``mass_coverage`` to the result. Optional because alignment is also
+        used where there are no weights -- the QC path, and the coverage report
+        the registry builds before any model is constructed.
 
     Notes
     -----
@@ -53,6 +66,16 @@ def align(data, features: list[str], *, imputation: str = "reference",
     the array does not carry will read "totally unmethylated" and shift the
     prediction by whole years. Half the disagreements between published
     reimplementations of the same clock come from exactly this.
+
+    WHY COUNTING FEATURES IS NOT ENOUGH. A plain present/total ratio treats
+    every probe as interchangeable, and an elastic-net clock's weights are not
+    remotely uniform -- a handful of CpGs routinely carry a large share of the
+    total. So 92% feature coverage can mean "eight percent of probes missing,
+    all of them negligible" or "eight percent missing, and they carry a third
+    of the model". Those two datasets produce very different numbers and were
+    indistinguishable here until ``mass_coverage`` existed. This is the
+    mechanism behind EPICv2 probe loss disrupting the traditional clocks while
+    barely moving the PC ones (Life Science Alliance 2025;8:e202403155).
     """
     X = data.X
 
@@ -101,13 +124,33 @@ def align(data, features: list[str], *, imputation: str = "reference",
                          "filled from the clock's published reference values")
         mask = np.isnan(out)
         n_imputed = int(mask.sum())
+        # Read off the mask, not from a second X.reindex(). The frame has
+        # already been reindexed once above and that pass is the dominant cost
+        # of a scoring run -- doing it again to recover a count we are holding
+        # was worth 1.17-1.25x across 1k-16k samples when it was removed.
+        per_sample = mask.sum(axis=1)
         out = np.where(mask, np.broadcast_to(fill, out.shape), out)
 
-    per_sample = np.isnan(X.reindex(columns=features)).to_numpy().sum(axis=1)
+    if imputation == "none":
+        per_sample = np.isnan(out).sum(axis=1)
+
+    mass_coverage, missing_mass = None, []
+    if coefficients is not None:
+        w = np.abs(np.asarray(coefficients, dtype=np.float64))
+        total = float(w.sum())
+        # An all-zero coefficient vector is not a real clock, but it is a
+        # legitimate degenerate case in tests; dividing by it is not.
+        if total > 0:
+            mass_coverage = float(w[present].sum()) / total
+            absent = np.flatnonzero(~present)
+            order = absent[np.argsort(-w[absent])]
+            missing_mass = [(features[j], float(w[j]) / total)
+                            for j in order[:10] if w[j] > 0]
 
     return Alignment(matrix=out, present=present, coverage=coverage,
                      n_imputed=n_imputed, imputation=imputation,
-                     per_sample_missing=per_sample, notes=notes)
+                     per_sample_missing=per_sample, notes=notes,
+                     mass_coverage=mass_coverage, missing_mass=missing_mass)
 
 
 @dataclass
@@ -126,16 +169,32 @@ class LinearClock:
 
     def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
-        al = align(data, self.features, imputation=imputation)
+        al = align(data, self.features, imputation=imputation,
+                   coefficients=self.coefficients)
+
+        where = (f"  The dataset is {data.platform or 'an unknown platform'} and this "
+                 f"clock was trained on {', '.join(self.clock.platform) or 'unknown'}.\n"
+                 "  Lower min_coverage to score anyway, and read the result as an "
+                 "extrapolation rather than a measurement.")
 
         if al.coverage < min_coverage:
             raise FeatureCoverageError(
                 f"{self.clock.id}: {al.coverage:.1%} of its {len(self.features)} "
-                f"features are present, below the {min_coverage:.0%} floor.\n"
-                f"  The dataset is {data.platform or 'an unknown platform'} and this "
-                f"clock was trained on {', '.join(self.clock.platform) or 'unknown'}.\n"
-                "  Lower min_coverage to score anyway, and read the result as an "
-                "extrapolation rather than a measurement."
+                f"features are present, below the {min_coverage:.0%} floor.\n" + where
+            )
+
+        # The same floor, applied to the weights rather than the count. A clock
+        # can clear the feature floor comfortably and still have lost the probes
+        # that do most of the work, which is the failure this catches.
+        if al.mass_coverage is not None and al.mass_coverage < min_coverage:
+            worst = ", ".join(f"{f} ({s:.1%})" for f, s in al.missing_mass[:3])
+            raise FeatureCoverageError(
+                f"{self.clock.id}: {al.coverage:.1%} of features are present, "
+                f"but they carry only {al.mass_coverage:.1%} of the model's "
+                f"total |coefficient| -- below the {min_coverage:.0%} floor.\n"
+                f"  Heaviest absent features: {worst}.\n"
+                "  Feature count alone would have passed this dataset. The "
+                "probes that are missing are the ones the clock leans on.\n" + where
             )
 
         xp = spec.xp()

@@ -1,0 +1,12 @@
+# models.fit_hd { #falconage.models.fit_hd }
+
+```python
+models.fit_hd(reference, markers)
+```
+
+Estimate the healthy reference centre and covariance.
+
+The reference should be the healthy young subset, not the whole cohort.
+Kwon and Belsky ship ``NHANES3_HDTrain`` for exactly this, and it is not
+interchangeable with ``NHANES3``: fitting the centre on everybody makes the
+average unhealthy person the definition of normal.

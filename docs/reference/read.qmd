@@ -1,0 +1,7 @@
+# read { #falconage.read }
+
+```python
+read(path, **kw)
+```
+
+Dispatch on the filename. Convenience, not magic -- it says what it chose.

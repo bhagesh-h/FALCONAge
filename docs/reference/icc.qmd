@@ -1,0 +1,13 @@
+# icc { #falconage.icc }
+
+```python
+icc(values, subject_col, value_col)
+```
+
+ICC(2,1): two-way random effects, absolute agreement, single measure.
+
+The variant matters and papers rarely say which they used. ICC(2,1) is the
+one that answers "would a repeat measurement of this person give the same
+number", which is the question a clock's technical reliability is about.
+ICC(3,1) assumes the raters are the only ones of interest and reports a
+higher number for the same data.

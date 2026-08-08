@@ -1,0 +1,7 @@
+# plot.benchmark_heatmap { #falconage.plot.benchmark_heatmap }
+
+```python
+plot.benchmark_heatmap(bench)
+```
+
+Effect size per clock and dataset, with significant cells outlined.

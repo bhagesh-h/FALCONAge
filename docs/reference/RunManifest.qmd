@@ -1,0 +1,24 @@
+# RunManifest { #falconage.RunManifest }
+
+```python
+RunManifest(
+    falconage_version=__version__,
+    registry_version=REGISTRY_VERSION,
+    started_utc=(lambda: datetime.now(timezone.utc).isoformat())(),
+    finished_utc=None,
+    device='cpu',
+    dtype='float64',
+    backend='numpy',
+    python=(lambda: sys.version.split()[0])(),
+    platform=platform.platform(),
+    caller='python',
+    config=dict(),
+    inputs=list(),
+    weights=dict(),
+    coverage=dict(),
+    warnings=list(),
+    skipped=dict(),
+)
+```
+
+Provenance for one scoring run.

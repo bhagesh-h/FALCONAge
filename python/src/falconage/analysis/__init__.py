@@ -44,13 +44,62 @@ def _check_legal(registry, clock_id: str, op: str) -> None:
 # ---------------------------------------------------------------------------
 # age acceleration
 # ---------------------------------------------------------------------------
+def cell_composition(result, *, min_clocks: int = 2) -> pd.DataFrame:
+    """Cell-type proportions estimated in this same run, as a covariate frame.
+
+    Every clock in the result whose scale is ``proportion`` -- the
+    reference-based deconvolution models -- one column each.
+
+    WHY THIS IS WORTH A FUNCTION. Blood composition changes with age, and it
+    changes with whatever else is happening to a person. A study of 10,000+
+    blood samples found significant associations between immune cell
+    composition and epigenetic age acceleration for every one of six widely
+    used clocks (Aging Cell 2024;23:e14071), which means an unadjusted
+    acceleration is measuring two things at once and reporting one number. The
+    proportions needed to separate them are usually already sitting in the same
+    result, computed by the deconvolution clocks; nothing connected the two.
+
+    Returns an empty frame when the run had no deconvolution clocks, so callers
+    can treat "no adjustment available" as data rather than as an exception.
+    """
+    cols = [c for c in result.scores.columns
+            if result.registry.get(c).scale_type == "proportion"]
+    if len(cols) < min_clocks:
+        return pd.DataFrame(index=result.scores.index)
+    return result.scores[cols].copy()
+
+
+def _regress_out(y: pd.Series, design: pd.DataFrame, ok: pd.Series) -> pd.Series:
+    """Residual of y on an intercept plus every column of design."""
+    x = np.column_stack([np.ones(int(ok.sum())),
+                         design.loc[ok].to_numpy(dtype=float)])
+    beta, *_ = np.linalg.lstsq(x, y[ok].to_numpy(float), rcond=None)
+    full = np.column_stack([np.ones(len(y)), design.to_numpy(dtype=float)])
+    return y - pd.Series(full @ beta, index=y.index)
+
+
 def acceleration(result, *, age_col: str = "age", method: str = "residual",
-                 group: str | None = None, clocks: Sequence[str] | None = None
-                 ) -> pd.DataFrame:
+                 group: str | None = None, clocks: Sequence[str] | None = None,
+                 adjust: str | Sequence[str] | None = None) -> pd.DataFrame:
     """Age acceleration, in whichever of the three conventions you mean.
 
     Parameters
     ----------
+    adjust
+        Extra covariates to regress out alongside chronological age.
+
+        ``"cell_composition"``
+            Use the deconvolution clocks scored in this same run. An
+            acceleration adjusted this way answers "is this person's blood
+            aging faster", where the unadjusted version answers "is this
+            person's blood aging faster **or** is its cell mix different",
+            and reports both as one number.
+        a sequence of column names
+            Columns of ``result.obs``, for measured counts or anything else.
+
+        Only available with ``method="residual"``: the absolute convention has
+        no regression to add terms to, and ``within_group`` fits per stratum
+        where a composition term would usually be rank-deficient.
     method
         ``"absolute"``
             ``predicted - chronological``. Interpretable in years, and
@@ -97,17 +146,63 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
                 + ", ".join(sorted({result.registry.get(c).scale_type
                                     for c in result.scores.columns})))
 
+    # Build the extra design columns once, and refuse clearly rather than
+    # quietly ignoring `adjust=` on a method that cannot honour it.
+    extra = pd.DataFrame(index=result.scores.index)
+    if adjust is not None:
+        if method != "residual":
+            raise AnalysisError(
+                f"adjust= needs method='residual'; got {method!r}.\n"
+                "  'absolute' is a subtraction with no regression to extend, and "
+                "'within_group' fits inside each stratum where a composition "
+                "term is usually rank-deficient.")
+        if adjust == "cell_composition":
+            extra = cell_composition(result)
+            if extra.empty:
+                raise AnalysisError(
+                    "adjust='cell_composition' needs deconvolution clocks in the "
+                    "same result, and this one has none.\n"
+                    "  Score them alongside: "
+                    'score(data, clocks="compatible") includes them when the '
+                    "platform supports it, or name them explicitly.\n"
+                    "  Measured cell counts work too: adjust=['cd8t', 'mono', ...] "
+                    "naming columns of obs.")
+        else:
+            names = [adjust] if isinstance(adjust, str) else list(adjust)
+            missing = [n for n in names if n not in result.obs.columns]
+            if missing:
+                raise AnalysisError(
+                    f"adjust= names {', '.join(missing)}, not in obs.\n"
+                    f"  obs has: {', '.join(map(str, result.obs.columns)) or '(nothing)'}")
+            extra = result.obs[names].apply(pd.to_numeric, errors="coerce")
+
+        # A constant column carries no information and makes the design
+        # singular; dropping it silently is better than a LinAlgError, but only
+        # if it is said out loud.
+        constant = [c for c in extra.columns if extra[c].nunique(dropna=True) < 2]
+        if constant:
+            extra = extra.drop(columns=constant)
+
     out: dict[str, pd.Series] = {}
     for cid in cols:
         y = result.scores[cid]
         ok = age.notna() & y.notna()
-        if ok.sum() < 3:
-            raise AnalysisError(f"{cid}: fewer than 3 samples with both age and a score")
+        for c in extra.columns:
+            ok &= extra[c].notna()
+        if ok.sum() < 3 + extra.shape[1]:
+            raise AnalysisError(
+                f"{cid}: {int(ok.sum())} usable sample(s) for "
+                f"{1 + extra.shape[1]} predictor(s); need at least "
+                f"{3 + extra.shape[1]}")
 
         if method == "absolute":
             out[cid] = y - age
         elif method == "residual":
-            out[cid] = _residual(y, age, ok)
+            if extra.shape[1]:
+                design = pd.concat([age.rename("__age"), extra], axis=1)
+                out[cid] = _regress_out(y, design, ok)
+            else:
+                out[cid] = _residual(y, age, ok)
         elif method == "within_group":
             if group is None or group not in result.obs.columns:
                 raise AnalysisError(
@@ -123,6 +218,10 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
 
     df = pd.DataFrame(out, index=result.scores.index)
     df.attrs["method"] = method
+    # Which convention AND which adjustment. An acceleration adjusted for cell
+    # composition is a different quantity from one that is not, and a frame
+    # that does not say which it is gets compared with the other one.
+    df.attrs["adjusted_for"] = list(extra.columns)
     return df
 
 

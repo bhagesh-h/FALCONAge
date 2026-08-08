@@ -1,0 +1,35 @@
+# registry.Clock { #falconage.registry.Clock }
+
+```python
+registry.Clock(
+    id,
+    name,
+    year,
+    species,
+    data_type,
+    generation,
+    tissue,
+    platform,
+    predicts,
+    training_target,
+    unit,
+    scale_type,
+    model_type,
+    population,
+    n_features,
+    requires_fp64,
+    availability,
+    citation,
+    doi,
+    notes,
+    coefficient_source,
+    preprocess=(),
+    postprocess=(),
+    formula=None,
+    requires_covariates=(),
+    requires_reference=False,
+    known_discrepancies=(),
+)
+```
+
+One registry entry.

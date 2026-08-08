@@ -217,54 +217,230 @@ report(res, "report.html", group = "condition")
 The HTML report is one self-contained file - inlined CSS, base64 figures, the table embedded - so
 it still works after somebody emails it, which is the only thing anybody does with a report.
 
-## Running the whole thing in Docker
 
-Copy-and-run, from a clone of the repository. Two images: `cpu` carries Python, R and the CLI;
-`cuda` adds torch built against CUDA 12.4. On Windows PowerShell replace `"$PWD"` with `"${PWD}"`.
+## Everything above, with nothing installed but Docker {#docker}
+
+This section assumes no Python, no R, and no prior experience with either. Docker is the only
+thing you install. Every command below can be copied one at a time, in order, and each one says
+what it does and what you should see.
+
+### Step 0 --- get Docker and check it works
+
+Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows, macOS) or
+Docker Engine (Linux), start it, then run:
 
 ```bash
-git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
+docker --version
+```
+
+You should get a version string. If instead you get "command not found" or "cannot connect to the
+Docker daemon", Docker is not installed or not running - fix that before going further, because
+nothing below will work.
+
+::: {.callout-note}
+## Which shell to type these into
+
+`"$PWD"` means "the folder I am in now". The spelling differs:
+
+| Where you are typing | Use |
+|---|---|
+| macOS Terminal, Linux, Git Bash, WSL | `"$PWD"` |
+| Windows PowerShell | `"${PWD}"` |
+| Windows `cmd.exe` | `"%cd%"` |
+
+Everything else is identical. If a command fails with a path error on Windows, this is why.
+:::
+
+### Step 1 --- get the code
+
+```bash
+git clone https://github.com/bhagesh-h/FALCONAge.git
+cd FALCONAge
+```
+
+Every later command is run from inside this `FALCONAge` folder.
+
+### Step 2 --- build the image
+
+One image carries Python, R, the CLI and all 20 bundled clocks. It takes a few minutes the first
+time and is then cached.
+
+```bash
 docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
 ```
 
-Fetch the benchmark corpus - 33 files, 586 MB, from GEO and Hugging Face. `plan` prints every URL
-and byte count without transferring anything, which is the difference between finding out now and
-finding out after half a gigabyte. It lands in the mounted directory, never inside an image.
+Check it:
+
+```bash
+docker run --rm falconage:1.0.0-cpu python -c "import falconage; print(falconage.__version__)"
+```
+
+### Step 3 --- see what the benchmark data is, before downloading it
+
+A second, deliberately tiny image fetches the test corpus. It is separate on purpose: fetching a
+fixture is the first thing you do when the package itself is broken, so it must not need the
+package.
 
 ```bash
 docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.0.0 .
+```
+
+Now the dry run. **This transfers nothing.** It prints every group, file count and byte total so
+you can decide before committing to half a gigabyte:
+
+```bash
 docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 plan
+```
+
+You should see:
+
+```
+group          files        size   what it is for
+------------------------------------------------------------------------------
+bench             11    368.4 MB   ComputAgeBench case/control methylation
+clinical           3      5.4 MB   NHANES blood chemistry with mortality linkage
+gestational        1     50.8 MB   Umbilical cord blood with gestational age
+epicv2             1     41.2 MB   EPIC v2 probe-suffix handling
+idat               8     60.4 MB   Raw IDATs, EPIC v1 and EPIC v2
+mammalian          4      9.3 MB   Mammalian methylation array, three species
+mouse              5     50.2 MB   Mouse blood RRBS across the lifespan
+------------------------------------------------------------------------------
+selected          33    585.7 MB
+```
+
+### Step 4 --- download it, then prove it arrived intact
+
+```bash
 docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 python
 docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 verify
 ```
 
-Then the suites and the full corpus run. The entrypoint steps aside when the first argument is an
-interpreter, so none of these needs `--entrypoint`:
+The first fetches 33 files from GEO and Hugging Face into `test/data/` on your own disk - never
+inside the image, so rebuilding never re-downloads. The second re-computes every SHA-256 against
+`checksums.sha256` and fails loudly on a single wrong byte.
+
+Only smaller pieces, if 586 MB is too much:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
-  python -m pytest python/tests -q
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 \
+  python test/data/fetch_test_data.py --groups clinical --out /data
+```
 
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
-  Rscript -e 'testthat::test_local("r")'
+::: {.callout-tip}
+## The same fetch, from R
 
+Not decoration: the R fetcher writes a byte-identical `checksums.sha256`, so the two languages
+are shown to agree on the input before any clock is scored.
+
+```bash
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 R
+```
+:::
+
+### Step 5 --- score it and get the outputs
+
+::: {.panel-tabset}
+
+#### Python, CPU
+
+```bash
 docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
   python test/run_all.py
 ```
 
-`test/run_all.py` writes one directory per input under `test/output/`, every figure under
-`test/output_figures/`, and rewrites the generated tables in the test README - so the numbers in
-that document cannot drift from the numbers the code produces.
+Every clock against every dataset. It writes one folder per input under `test/output/`, every
+figure under `test/output_figures/`, and rewrites the generated tables in `test/README.md` - so
+the numbers in that document are the numbers the code just produced and cannot drift from them.
 
-For the GPU, `--gpus all` is required and `--device cuda` with it; `auto` resolves to CPU even
-inside the CUDA image, for the reasons in [GPU support](../gpu.md).
+To check the install without the corpus, run the unit suite instead - seconds, no data needed:
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
+  python -m pytest python/tests -q
+```
+
+#### R
+
+The same image. R calls the same Python core through reticulate, so these are the same numbers,
+not a second implementation that agrees approximately.
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
+  Rscript -e 'testthat::test_local("r")'
+```
+
+That suite includes the R-versus-Python conformance tests, which assert equality at tolerance
+exactly zero.
+
+Scoring from R interactively:
+
+```bash
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.0.0-cpu R
+```
+
+```r
+library(FALCONAge)
+falconage_config()
+d   <- read_betas("test/data/bench/GSE40279.csv")
+res <- score(prepare(d), clocks = "compatible")
+summary(res)
+```
+
+#### Python, GPU
+
+Only worth it if you have an NVIDIA card. **Read [GPU support](../gpu.md) first**: for the clocks
+that ship today the GPU is *slower* than the CPU, which is why `device="auto"` resolves to CPU
+even inside this image.
+
+Build the CUDA image - larger, because it carries torch built against CUDA 12.4:
 
 ```bash
 docker build -f docker/Dockerfile.cuda -t falconage:1.0.0-cuda .
+```
+
+Check the card is visible inside a container before anything else:
+
+```bash
+docker run --rm --gpus all falconage:1.0.0-cuda nvidia-smi
+```
+
+No output or an error here means GPU passthrough is not set up, and every command below will
+fail. On Linux that is usually a missing `nvidia-container-toolkit`.
+
+```bash
 docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.0.0-cuda \
   python test/gpu_check.py
 ```
 
-`test/gpu_check.py` reproduces every number in the GPU page - device resolution, CPU-versus-GPU
-agreement, the speed table, and the profile that explains it. On a machine with no CUDA device it
-stops after the first step with an explanation rather than an error.
+This reproduces every number on the GPU page - device resolution, CPU-versus-GPU agreement, the
+speed table and the profile that explains it. On a machine with no CUDA device it stops after the
+first step with an explanation rather than an error, so it is safe to run anywhere.
+
+Scoring on the GPU needs `--gpus all` **and** `--device cuda`. Without the flag, `--device cuda`
+raises rather than falling back, so a run that asked for a GPU cannot quietly become a very slow
+success:
+
+```bash
+docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.0.0-cuda \
+  score --input test/data/prepared.h5ad --device cuda --outdir results
+```
+
+:::
+
+### Step 6 --- score your own data
+
+Put a beta matrix or a clinical table in a folder, mount it read-only, and mount somewhere for the
+results to land:
+
+```bash
+docker run --rm \
+  -v "$PWD/mydata:/data:ro" \
+  -v "$PWD/results:/results" \
+  -v falconage-cache:/opt/falconage/cache \
+  falconage:1.0.0-cpu \
+  score --input /data/betas.csv --clocks compatible --outdir /results
+```
+
+The named `falconage-cache` volume is worth adding from the start. Nothing in tier A needs it, but
+the PC clocks are several hundred megabytes each and re-fetching them on every container start is
+the difference between a two-minute run and a twenty-minute one.

@@ -1,0 +1,7 @@
+# plot.platform_comparison { #falconage.plot.platform_comparison }
+
+```python
+plot.platform_comparison(result, clock, *, platform_col='platform')
+```
+
+Score distribution split by array platform.

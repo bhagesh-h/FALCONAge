@@ -1,0 +1,7 @@
+# plot.acceleration_by_group { #falconage.plot.acceleration_by_group }
+
+```python
+plot.acceleration_by_group(acc, clock, obs, group, *, method=None)
+```
+
+Box and strip of acceleration by group -- the case/control workhorse.

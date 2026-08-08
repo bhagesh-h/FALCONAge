@@ -29,7 +29,22 @@
 // Quarto emits the logo block after the header text. Reordering here rather
 // than hand-writing an <img> keeps Quarto's per-page path rewriting, which is
 // what makes the logo resolve from guide/ and reference/ as well as the root.
-#quarto-sidebar {
+//
+// WHY THIS IS NOT A BARE `#quarto-sidebar { display: flex }`, WHICH IS WHAT IT
+// WAS. `order` needs a flex parent, and Quarto leaves the <nav> as a block, so
+// the flex had to be added here. But the sidebar is also a Bootstrap collapse:
+// below the sidebar breakpoint Quarto hides it behind a toggle using
+// `.collapse:not(.show) { display: none }`. An id selector is specificity
+// (1,0,0) and that rule is (0,2,0), so the bare version won -- the sidebar
+// stayed painted on every phone, on top of the article. Measured at 320, 360,
+// 390 and 768 px: 155 overlapping text pairs, the citation buttons and the
+// author line sitting across the prose. That was the "horribly overlapping on
+// small devices" report, and it was caused by this rule.
+//
+// So: flex when the sidebar is genuinely on screen, and never a word about
+// `display` when it is not.
+#quarto-sidebar.show,
+#quarto-sidebar:not(.collapse) {
   display: flex;
   flex-direction: column;
 }
@@ -129,4 +144,122 @@ main table {
   display: block;
   overflow-x: auto;
   max-width: 100%;
+}
+
+// =============================================================================
+// Small screens
+// =============================================================================
+//
+// Measured rather than guessed. The rendered site was loaded in headless
+// Chromium at 320, 360, 390 and 768 px and every element painted wider than the
+// viewport was listed. Six page/width combinations scrolled sideways and all of
+// them had the same cause: one long unbreakable token -- an inline `code` span
+// like `{age_years, age_months, age_days, ...}`, or a repository path used as
+// link text -- setting the min-content width of its container, which then set
+// the width of the whole document. science.qmd was 755 px wide on a 320 px
+// phone because of three such tokens.
+//
+// `anywhere` and not `break-word`, which is the usual reflex here. The two
+// wrap identically once a line is being laid out; only `anywhere` also shrinks
+// the element's min-content size, and min-content is exactly what was
+// propagating outward and dragging the page with it.
+main p,
+main li,
+main dd,
+main dt,
+main figcaption,
+main h1, main h2, main h3, main h4, main h5,
+main :not(pre) > code,
+main a {
+  overflow-wrap: anywhere;
+}
+
+// And the property that actually decides it for inline code. Quarto's
+// stylesheet ends with a bare `code { white-space: pre }`, and under `pre`
+// nothing wraps -- `overflow-wrap` is not consulted at all, so setting it alone
+// changed nothing. Measured before believing it: the offending spans computed
+// `white-space: pre, overflow-wrap: anywhere` and stayed 586 px wide in a
+// 206 px list item.
+//
+// Scoped to inline code with `:not(pre) >` so that fenced blocks keep their own
+// wrap/scroll behaviour, which Quarto's `code-overflow` option owns.
+main :not(pre) > code {
+  white-space: pre-wrap;
+}
+
+// A code block wraps rather than widens the page. Quarto's `code-overflow:
+// wrap` covers highlighted blocks; plain ``` fences and quartodoc's signature
+// blocks are not always caught by it.
+main pre,
+main pre code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+// Nothing images, figures or embeds can do should exceed the column.
+main img,
+main svg,
+main iframe,
+main video {
+  max-width: 100%;
+  height: auto;
+}
+
+// Below Quarto's sidebar breakpoint the docked column becomes a drawer that
+// spans the screen. `width: 100%` on the logo is right in a 250 px column and
+// absurd in a 360 px one -- a square mark rendered 360 px tall, pushing every
+// other thing in the drawer off the first screen. This is the "overlapping on
+// small devices" symptom.
+@media (max-width: 991.98px) {
+  // Quarto marks the sidebar logo `d-lg-inline d-none`, so a reader who opens
+  // the drawer on a phone gets navigation with no mark on it at all. Show it --
+  // but at a fixed small size, never `width: 100%`. At full drawer width a
+  // square logo is 390 px tall and pushes every link below the fold, which is
+  // the other half of what "horribly overlapping" described.
+  //
+  // `!important` because `.d-none` is a Bootstrap utility and utilities are
+  // `display: none !important` by definition; specificity cannot reach them.
+  // This was not obvious from the computed style either -- `width` from this
+  // block applied while `display` did not, which is the fingerprint of an
+  // `!important` on one property and the thing that identified the cause.
+  #quarto-sidebar img.sidebar-logo {
+    display: block !important;
+    width: 140px;
+    max-width: 40%;
+    margin: 0.25rem auto 0;
+  }
+  #quarto-sidebar .sidebar-header { margin-bottom: 0.5rem; }
+  #quarto-sidebar .quarto-sidebar-header { font-size: 0.9rem; }
+
+  // The citation buttons sit side by side at 250 px and wrap at 320 px; give
+  // them room to be tapped rather than squeezing two onto one line.
+  .falcon-copy {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.78rem;
+  }
+}
+
+// Phone proper. Quarto's default article padding costs a fifth of a 320 px
+// screen before any content is drawn.
+@media (max-width: 575.98px) {
+  main.content {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  // Long tables are unreadable at this width whatever is done to them; the
+  // honest presentation is a scrollable block with a visible edge, so it is
+  // apparent there is more to the right rather than the row just ending.
+  main table {
+    font-size: 0.82rem;
+  }
+
+  // Tabsets carrying "Python" and "R" wrap to two lines and look broken.
+  .panel-tabset .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .panel-tabset .nav-tabs .nav-link {
+    white-space: nowrap;
+  }
 }

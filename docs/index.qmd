@@ -108,6 +108,25 @@ clocks](science.qmd) sets out what is established and what is contested.
 
 ## Install
 
+### The short way: Docker
+
+Nothing to install but Docker itself, and it carries Python, R, the CLI and all 20 bundled clocks
+in one image. Three commands from an empty folder to a scored dataset:
+
+```bash
+git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
+docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
+docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu python -m pytest python/tests -q
+```
+
+That last line proves the install by running the suite. On Windows PowerShell write `"${PWD}"`.
+
+For the benchmark corpus, the GPU image, R, and a step-by-step version of all of it written for
+someone who has never used either language, see
+[Getting started → with nothing installed but Docker](guide/FALCONAge.qmd#docker).
+
+### The other way: install the packages
+
 FALCONAge is **not on PyPI or CRAN yet**. Both packages install from the GitHub repository, and
 both live in a subdirectory of it, so the commands name that subdirectory.
 

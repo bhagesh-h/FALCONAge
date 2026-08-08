@@ -1,0 +1,11 @@
+# plot.benchmark_error_bias { #falconage.plot.benchmark_error_bias }
+
+```python
+plot.benchmark_error_bias(bench)
+```
+
+MedAE against MedE, sized by the benchmark total.
+
+Neither axis is a ranking, and that is the point of drawing them together.
+A clock at the origin predicts chronological age well, which is the one
+thing a useful clock does not have to do.

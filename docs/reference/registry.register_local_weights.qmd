@@ -1,0 +1,13 @@
+# registry.register_local_weights { #falconage.registry.register_local_weights }
+
+```python
+registry.register_local_weights(clock_id, path, sha256=None)
+```
+
+Supply a coefficient file for a clock FALCONAge does not distribute.
+
+Convenience wrapper over ``load().register_local_weights`` so the call reads
+the same in both languages:
+
+>>> import falconage as fa
+>>> fa.registry.register_local_weights("grimage2", "~/licensed/grimage2.csv")

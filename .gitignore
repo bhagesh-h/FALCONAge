@@ -187,3 +187,5 @@ desktop.ini
 tmp/
 *.log
 !docker/*.log
+
+ROADMAP.md

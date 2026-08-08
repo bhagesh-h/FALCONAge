@@ -1,0 +1,12 @@
+# associate { #falconage.associate }
+
+```python
+associate(result, outcome, *, covariates=('age', 'sex'), clocks=None)
+```
+
+Ordinary least squares of each clock on an outcome, adjusted for covariates.
+
+Returns beta, standard error, t, p and the Benjamini-Hochberg q. OLS rather
+than a mixed model on purpose: the clock scores are the predictors here and
+the design is a single cross-section, so the extra machinery would buy
+nothing and hide the assumption.

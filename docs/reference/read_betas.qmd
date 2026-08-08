@@ -1,0 +1,13 @@
+# read_betas { #falconage.read_betas }
+
+```python
+read_betas(path, *, samples_are='auto', obs=None)
+```
+
+Read a beta matrix from CSV, TSV or parquet.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type   | Description                                                                                                                                                                                                                                                                       | Default   |
+|-------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|
+| samples_are | str    | ``"rows"``, ``"columns"``, or ``"auto"``. Auto looks at which axis carries probe-shaped identifiers, which is reliable precisely because ``cg`` ids are unmistakable -- guessing from the shape alone would get a 1000-sample 450K matrix right and a 500,000-probe cohort wrong. | `'auto'`  |
