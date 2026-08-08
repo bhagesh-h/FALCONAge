@@ -20,6 +20,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import base64
 import sys
 from pathlib import Path
 
@@ -85,6 +86,21 @@ def bibtex(spec: dict) -> str:
     ])
 
 
+def _b64(text: str) -> str:
+    """Base64 for a data- attribute.
+
+    The citation used to live in hidden <pre> elements the copy handler read by
+    id. Pandoc parses the sidebar `header:` as markdown, and a multi-line raw
+    HTML block with a boolean `hidden` attribute made it stop parsing partway
+    through -- the rendered page kept the title and silently dropped both <pre>
+    tags AND the buttons after them. Nothing errored; the block was just short.
+    That is why this is now one line with no hidden elements, no boolean
+    attributes and no newlines inside a tag: there is nothing left for the
+    markdown reader to trip on.
+    """
+    return base64.b64encode(text.encode("utf-8")).decode("ascii")
+
+
 def sidebar_header(spec: dict) -> str:
     """Logo, one line on what this is, and a citation you can paste.
 
@@ -113,15 +129,13 @@ def sidebar_header(spec: dict) -> str:
     # copy handler needs something to read.
     return (
         f'<p class="falcon-blurb">{" ".join(site["description"].split())}</p>\n'
-        '<div class="falcon-cite">\n'
-        '  <div class="falcon-cite-title">Cite FALCONAge</div>\n'
-        f'  <pre class="falcon-cite-text" id="cite-apa" hidden>{apa(spec)}</pre>\n'
-        f'  <pre class="falcon-cite-text" id="cite-bib" hidden>{bibtex(spec)}</pre>\n'
-        '  <div class="falcon-cite-buttons">\n'
-        '    <button class="falcon-copy" data-copy="cite-apa">Copy APA</button>\n'
-        '    <button class="falcon-copy" data-copy="cite-bib">Copy BibTeX</button>\n'
-        '  </div>\n'
-        '</div>\n'
+        '<div class="falcon-cite">'
+        '<div class="falcon-cite-title">Cite FALCONAge</div>'
+        '<div class="falcon-cite-buttons">'
+        f'<button class="falcon-copy" data-copy="{_b64(apa(spec))}">Copy APA</button>'
+        f'<button class="falcon-copy" data-copy="{_b64(bibtex(spec))}">Copy BibTeX</button>'
+        '</div>'
+        '</div>'
     )
 
 
@@ -345,30 +359,23 @@ def citation_block(spec: dict) -> str:
     code blocks because Quarto puts a copy button on those, which is the whole
     point -- a citation you have to select by hand gets retyped wrong.
     """
-    c = citation()
     site = spec["site"]
-    year = "2026"
-    title = ("FALCONAge: Multiomic Biological Age and Aging Clock Scoring "
-             "in Python and R")
-    surname = (c.get("author", "").split() or ["Hunakunti"])[-1]
-    initial = (c.get("author", "B")[:1])
+    # The same two strings the sidebar buttons copy, from the same functions.
+    # A page that shows one citation and a button that copies a different one
+    # is worse than either alone.
     return "\n".join([
         CITE_BEGIN,
         "",
+        "APA:",
+        "",
         "```",
-        f"{surname} {initial} ({year}). {title}.",
-        f"Version {c.get('version', '')}. {site['repo']}",
+        apa(spec),
         "```",
         "",
+        "BibTeX:",
+        "",
         "```bibtex",
-        f"@software{{falconage{year},",
-        f"  author  = {{{c.get('author', '')}}},",
-        f"  title   = {{{title}}},",
-        f"  year    = {{{year}}},",
-        f"  version = {{{c.get('version', '')}}},",
-        f"  url     = {{{site['repo']}}},",
-        f"  license = {{{c.get('license', '')}}}",
-        "}",
+        bibtex(spec),
         "```",
         "",
         'In R, `citation("FALCONAge")`. The machine-readable version is',

@@ -53,18 +53,13 @@ website:
     logo: logo.png
     logo-alt: FALCONAge logo
     logo-href: https://bhagesh-h.github.io/FALCONAge/
-    header: "<p class=\"falcon-blurb\">Biological age and aging-clock scoring from multiomic\
-      \ data, in Python and R, on CPU or GPU.</p>\n<div class=\"falcon-cite\">\n  <div class=\"\
-      falcon-cite-title\">Cite FALCONAge</div>\n  <pre class=\"falcon-cite-text\" id=\"cite-apa\"\
-      \ hidden>Hunakunti, B. (2026). FALCONAge: Multiomic biological age and aging clock scoring\
-      \ in Python and R (Version 1.0.0) [Computer software]. https://github.com/bhagesh-h/FALCONAge</pre>\n\
-      \  <pre class=\"falcon-cite-text\" id=\"cite-bib\" hidden>@software{falconage2026,\n\
-      \  author  = {Bhagesh Hunakunti},\n  title   = {FALCONAge: Multiomic Biological Age\
-      \ and Aging Clock Scoring in Python and R},\n  year    = {2026},\n  version = {1.0.0},\n\
-      \  url     = {https://github.com/bhagesh-h/FALCONAge},\n  license = {GPL-3.0-or-later}\n\
-      }</pre>\n  <div class=\"falcon-cite-buttons\">\n    <button class=\"falcon-copy\" data-copy=\"\
-      cite-apa\">Copy APA</button>\n    <button class=\"falcon-copy\" data-copy=\"cite-bib\"\
-      >Copy BibTeX</button>\n  </div>\n</div>\n"
+    header: '<p class="falcon-blurb">Biological age and aging-clock scoring from multiomic
+      data, in Python and R, on CPU or GPU.</p>
+
+      <div class="falcon-cite"><div class="falcon-cite-title">Cite FALCONAge</div><div class="falcon-cite-buttons"><button
+      class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjAuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
+      APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjAuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
+      BibTeX</button></div></div>'
     footer: "[Bhagesh Hunakunti](https://orcid.org/0000-0002-5957-8005)  \n[GPL-3.0-or-later](https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE)\
       \ · [source](https://github.com/bhagesh-h/FALCONAge)\n"
 format:

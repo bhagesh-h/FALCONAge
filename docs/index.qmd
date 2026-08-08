@@ -110,10 +110,13 @@ fa.registry.load().filter(availability="A")
 
 <!-- BEGIN GENERATED: citation -->
 
+APA:
+
 ```
-Hunakunti B (2026). FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R.
-Version 1.0.0. https://github.com/bhagesh-h/FALCONAge
+Hunakunti, B. (2026). FALCONAge: Multiomic biological age and aging clock scoring in Python and R (Version 1.0.0) [Computer software]. https://github.com/bhagesh-h/FALCONAge
 ```
+
+BibTeX:
 
 ```bibtex
 @software{falconage2026,

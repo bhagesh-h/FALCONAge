@@ -1,30 +1,41 @@
 <script>
-// Copy buttons for the sidebar citation blocks.
+// Copy buttons for the sidebar citation.
 //
-// Quarto's own code-copy only decorates code blocks inside the article body,
-// so the sidebar needs its own handler. This is deliberately dependency-free:
-// navigator.clipboard is available everywhere this site is readable, and the
-// execCommand path covers a page opened over plain http, where the async
-// clipboard API is unavailable because the context is not secure.
+// The text travels base64-encoded in the button's own data-copy attribute
+// rather than in a hidden element the handler looks up. Pandoc parses the
+// sidebar header as markdown, and a multi-line raw HTML block containing
+// <pre> elements with a boolean `hidden` attribute made it stop parsing
+// partway through: the buttons silently vanished from the rendered page with
+// no error anywhere. One line, one attribute, nothing for the markdown reader
+// to trip on.
+//
+// Dependency-free on purpose: navigator.clipboard is available wherever this
+// site is readable, and the execCommand path covers a page opened over plain
+// http, where the async clipboard API is unavailable because the context is
+// not secure.
 (function () {
+  function decode(value) {
+    var binary = atob(value);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    // The citation is mostly ASCII, but an author name need not be.
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+
   function flash(button, message) {
+    if (button.dataset.busy) return;
+    button.dataset.busy = "1";
     var original = button.textContent;
     button.textContent = message;
     button.classList.add("copied");
     setTimeout(function () {
       button.textContent = original;
       button.classList.remove("copied");
+      delete button.dataset.busy;
     }, 1400);
   }
 
-  function copy(text, button) {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(
-        function () { flash(button, "Copied"); },
-        function () { flash(button, "Press Ctrl+C"); }
-      );
-      return;
-    }
+  function fallback(text, button) {
     var scratch = document.createElement("textarea");
     scratch.value = text;
     scratch.setAttribute("readonly", "");
@@ -41,12 +52,23 @@
   }
 
   document.addEventListener("click", function (event) {
-    var button = event.target.closest("[data-copy]");
+    var button = event.target.closest(".falcon-copy[data-copy]");
     if (!button) return;
-    var source = document.getElementById(button.getAttribute("data-copy"));
-    if (!source) return;
     event.preventDefault();
-    copy(source.textContent.trim(), button);
+    var text;
+    try {
+      text = decode(button.getAttribute("data-copy"));
+    } catch (e) {
+      return;
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(
+        function () { flash(button, "Copied"); },
+        function () { fallback(text, button); }
+      );
+    } else {
+      fallback(text, button);
+    }
   });
 })();
 </script>

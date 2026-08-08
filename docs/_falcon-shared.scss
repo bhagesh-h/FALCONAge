@@ -78,11 +78,10 @@
   margin-bottom: 0.45rem;
 }
 
-// The two references live in the DOM for the copy handler and are never shown:
-// a narrow column is the wrong place to read a BibTeX entry, and the button is
-// the whole interaction. The full text is on the landing page.
-.falcon-cite-text { display: none !important; }
-
+// There is no rule hiding the citation text, because there is no citation text
+// in the sidebar to hide. It travels base64 in the button's data-copy
+// attribute -- see _b64() in build_docs.py for why. The readable version is on
+// the landing page.
 .falcon-cite-buttons {
   display: flex;
   flex-wrap: wrap;
