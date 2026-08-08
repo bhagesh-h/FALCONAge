@@ -1,0 +1,119 @@
+---
+title: "FALCONAge"
+subtitle: "Multiomic biological age and aging clock scoring, identical in Python and R"
+---
+
+An aging clock maps molecular measurements to a number on an age-like scale. What that number
+means depends entirely on what the model was trained to predict, and the field has at least six
+answers: chronological age, mortality, the rate of change across organ systems, causal versus
+reactive methylation, stem-cell division count, and organ-specific decline. A tool that returns
+"biological age = 57.3" without saying which of those it computed is not reporting a result.
+
+FALCONAge is built around that distinction. Every clock in the registry declares what it predicts,
+in what unit, on what platform, in which species and population, and on what `scale_type` — and
+the `scale_type` governs which downstream operations are permitted. Asking for age acceleration on
+DunedinPACE raises an error rather than subtracting a chronological age from a rate.
+
+## Install
+
+FALCONAge is **not on PyPI or CRAN yet**. Both packages install from the GitHub repository, and
+both live in a subdirectory of it, so the commands name that subdirectory.
+
+::: {.panel-tabset}
+
+### Python
+
+```bash
+pip install "falconage @ git+https://github.com/bhagesh-h/FALCONAge.git#subdirectory=python"
+```
+
+Pin a tag in anything you intend to reproduce — `...FALCONAge.git@v1.0.0#subdirectory=python`.
+`main` moves; a tag does not.
+
+For CUDA, install torch from PyTorch's own index first. Pip's default index serves a CUDA build on
+Linux and a CPU-only build on Windows under the same name:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu124
+```
+
+### R
+
+```r
+remotes::install_github("bhagesh-h/FALCONAge", subdir = "r")
+# or
+pak::pak("bhagesh-h/FALCONAge/r")
+
+library(FALCONAge)
+falconage_install()    # creates the managed Python environment, once
+falconage_config()     # what resolved: versions, devices, registry size
+```
+
+`falconage_install()` installs the Python core from the same GitHub tag the R package was built
+from, so the two halves cannot drift.
+
+:::
+
+## Score something
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+import falconage as fa
+
+data = fa.prepare(fa.read_betas("betas.csv"))
+res  = fa.score(data, clocks="compatible")
+
+res.summary()
+fa.acceleration(res, method="both")
+fa.plot.ba_vs_ca(res, "horvath2013")
+fa.report.write_report(res, "report.html")
+```
+
+### R
+
+```r
+library(FALCONAge)
+
+d   <- prepare(read_betas("betas.csv"))
+res <- score(d, clocks = "compatible")
+
+summary(res)
+acceleration(res, method = "both")
+plot_ba_vs_ca(res, "horvath2013")
+report(res, "report.html")
+```
+
+:::
+
+Both produce the same numbers, because both run the same code. The R package delegates all
+arithmetic to the Python core through reticulate, and the R suite asserts equality at tolerance
+exactly zero rather than approximate agreement.
+
+## What is in the catalogue
+
+161 clocks, in three availability tiers. The tiers are about redistribution rights, not about
+whether the algorithm works — every architecture is implemented and tested regardless of tier.
+
+| Tier | n | What you do |
+|---|---:|---|
+| **A** | 23 | Nothing. Twenty ship a coefficient file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
+| **B** | 110 | Catalogued, but no primary source for the numbers has been established, so nothing is bundled. |
+| **C** | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are research-use-only. |
+
+```python
+fa.registry.load().filter(availability="A")
+```
+
+## Where to go next
+
+- [Getting started](guide/FALCONAge.qmd) — install, score, interpret, in both languages.
+- [Choosing a clock](guide/clocks.qmd) — by the question you asked, by what the scale permits, and
+  by whether the coefficients transfer to your data at all.
+- [Clock catalogue](clocks.qmd) — all 161, searchable.
+- [Python reference](reference/index.qmd) · [R reference](r/index.html)
+- [GPU support](gpu.md) — what was verified on real hardware, and why `device="auto"` is CPU.
+
+The whole site is also downloadable as PDF or markdown; see the **Download** menu.

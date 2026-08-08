@@ -1,0 +1,154 @@
+# =============================================================================
+# One source of truth for the documentation's shape
+# =============================================================================
+#
+# Both reference trees are generated: quartodoc reads the Python docstrings,
+# pkgdown reads the roxygen blocks. Neither needs hand-writing. What DOES need
+# keeping in step is the grouping -- which functions sit under which heading --
+# because that is what a reader navigates by, and two YAML files maintained
+# separately drift within a release.
+#
+# So the grouping lives here, once, and build_docs.py emits both
+# docs/_quarto.yml and r/_pkgdown.yml from it. Editing either generated file by
+# hand is a mistake the next build silently reverts.
+#
+# Each group names its Python and R members separately, because the two APIs
+# are one-to-one in intent but not in spelling: Python has `fa.score(...)` and
+# `FalconResult.long()`, R has `score()` and `as.data.frame(form = "long")`.
+# Forcing identical names would make one language read like a translation of
+# the other, which is exactly what the reticulate bridge exists to avoid.
+# -----------------------------------------------------------------------------
+
+site:
+  title: FALCONAge
+  description: >-
+    Multiomic biological age and aging clock scoring, identical in Python and R.
+  url: https://bhagesh-h.github.io/FALCONAge/
+  repo: https://github.com/bhagesh-h/FALCONAge
+
+groups:
+  - title: Reading data
+    desc: >-
+      Every reader returns the same container, so nothing downstream can tell
+      which format the data arrived in.
+    python: [read, read_betas, read_series_matrix, read_clinical, read_rrbs_dir,
+             FalconData]
+    r: [read_betas, read_series_matrix, read_clinical, read_rrbs_dir,
+        falcon_data, obs, write_h5ad]
+
+  - title: Preprocessing
+    desc: >-
+      Getting a matrix into the shape every clock assumes: bare probe
+      identifiers, values in the beta range, a known platform. The EPIC v2 step
+      is mandatory rather than optional -- without it a v2 dataset overlaps
+      almost nothing and the clocks score imputed values.
+    python: [prepare, prepare_clinical, qc, preprocess.aggregate_replicate_probes,
+             preprocess.impute]
+    r: [prepare, qc]
+
+  - title: Scoring
+    desc: The predict loop, its result object, and the provenance it carries.
+    python: [score, combine, FalconResult]
+    r: [score, combine, coverage, manifest, write_results, as.data.frame.falcon_result]
+
+  - title: The clock catalogue
+    desc: >-
+      161 clocks in three availability tiers. Twenty-eight are scaffolds whose
+      coefficients are research-use-only; the registry says which, why, and
+      what open clock answers the same question.
+    python: [registry.load, registry.ClockRegistry, registry.Clock,
+             registry.register_local_weights]
+    r: [list_clocks, clock_info, cite_clock, compatible_clocks,
+        register_local_weights]
+
+  - title: Analysis
+    desc: >-
+      Age acceleration in its three conventions, association and survival
+      models, reliability, and the AA1/AA2 benchmark. Each is gated on the
+      clock's scale type -- acceleration on a pace-of-aging clock is a units
+      error, not a conservative choice.
+    python: [acceleration, associate, cox_hazard, agreement, icc, run_benchmark]
+    r: [acceleration, associate, cox_hazard, agreement, icc, run_benchmark]
+
+  - title: Clinical references
+    desc: >-
+      KDM and homeostatic dysregulation have no fixed coefficients: both are
+      defined relative to a reference cohort, and the manifest records which.
+    python: [models.fit_kdm, models.fit_hd, models.clinical.phenoage]
+    r: [fit_kdm, fit_hd]
+
+  - title: Figures and reports
+    desc: >-
+      Every plot returns its data as well as its figure, which is how the two
+      languages draw the same numbers with different engines. `clock_atlas` is
+      the exception in scale rather than in kind: one figure covering every
+      clock across every pooled study, for the case where a per-clock panel
+      would need forty of them.
+    python: [plot.ba_vs_ca, plot.acceleration_density, plot.clock_corr,
+             plot.clock_radar, plot.clock_chord, plot.clock_atlas,
+             plot.missingness, plot.benchmark_bars, report.write_report]
+    r: [plot_ba_vs_ca, plot_acceleration, plot_coverage, plot_agreement,
+        plot_clock_radar, plot_clock_chord, plot_clock_atlas,
+        falcon_palette, report]
+
+  - title: Downloading public data
+    desc: >-
+      Accession in, files and a normalised sample table out. Credentialed
+      archives are documented rather than automated -- the access agreement is
+      the user's, not the tool's.
+    python: [download, download.cache_info, download.clear_cache]
+    r: [download, cache_info, clear_cache]
+
+  - title: Configuration and setup
+    desc: What resolved, on this machine, in this environment.
+    python: [config, configure, core.resolve, core.describe, FalconConfig,
+             RunManifest]
+    r: [falconage_install, falconage_config, falconage_available]
+
+articles:
+  - title: Getting started
+    file: FALCONAge
+    desc: Install, score, interpret. Both languages.
+  - title: Choosing a clock
+    file: clocks
+    desc: >-
+      By the question you asked, by what the scale permits, and by whether the
+      clock's coefficients transfer to your data at all.
+
+# Pages that are neither a guide nor generated reference. They appear in the
+# Quarto navbar under "Background", and the pkgdown navbar links across to the
+# same rendered pages rather than duplicating five thousand lines into
+# r/vignettes/ -- which would put them in the CRAN tarball, where a reference
+# manual is welcome and a literature review is not.
+pages:
+  - title: The science of aging clocks
+    file: science.qmd
+    desc: >-
+      What the field knows to 2026: the biology each score encodes, the
+      chemistry of every input layer, every algorithm with its equations, the
+      published constants, and the eleven places where a paper and its own
+      circulating implementation disagree.
+  - title: Architecture
+    file: architecture.qmd
+    desc: >-
+      Which file computes what, why each decision went the way it did, and an
+      explicit accounting of where the specification is wider than v1.0.
+  - title: Clock catalogue
+    file: clocks.qmd
+    desc: All 161 entries, generated from the registry that scores them.
+  - title: GPU support
+    file: gpu.md
+    desc: >-
+      What was verified on real hardware, what had to be installed, and why
+      device="auto" resolves to CPU.
+
+# The offline copies docs/build_downloads.py produces. Listed here so the
+# navbar and the build agree on the filenames -- a Download menu whose links
+# 404 is worse than no menu.
+downloads:
+  - title: R reference manual (PDF)
+    file: FALCONAge-manual.pdf
+  - title: Python reference (PDF)
+    file: FALCONAge-python-reference.pdf
+  - title: Everything as markdown (ZIP)
+    file: FALCONAge-docs-markdown.zip
