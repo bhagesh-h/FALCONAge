@@ -65,8 +65,19 @@ jobs:
       # Both configs are generated from reference-groups.yml. Regenerating them
       # here rather than trusting the committed copies means a stale commit
       # cannot publish a site whose navigation disagrees with its own source.
-      - name: Regenerate both documentation configs
-        run: python docs/build_docs.py
+      # Both configs and the clock catalogue come from the same principle:
+      # generate, do not hand-maintain. Regenerating here rather than trusting
+      # the committed copies means a stale commit cannot publish a site whose
+      # navigation, or whose catalogue, disagrees with its own source.
+      #
+      # The catalogue in particular used to be a live {python} chunk, which
+      # made rendering the site depend on a Jupyter installation to run one
+      # loop over 161 dataclasses -- and failed 137 files into the render with
+      # a message four steps from the cause.
+      - name: Regenerate the configs and the clock catalogue
+        run: |
+          python docs/build_docs.py
+          python docs/build_catalogue.py
 
       - name: quartodoc
         run: quartodoc build --verbose

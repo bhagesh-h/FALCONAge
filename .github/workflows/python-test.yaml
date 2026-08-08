@@ -81,15 +81,22 @@ jobs:
           python -c "import falconage as fa; r = fa.registry.load(); \
             print(len(list(r)), 'clocks, schema', r.version)"
 
-      # Three generated files: both documentation configs, and r/NEWS.md from
-      # CHANGELOG.md. Editing any of them by hand looks fine until the next
-      # build reverts it, and a NEWS file that has drifted from the changelog is
-      # the one users read.
+      # Four generated files: both documentation configs, r/NEWS.md from
+      # CHANGELOG.md, and the clock catalogue from the registry. Editing any of
+      # them by hand looks fine until the next build reverts it; a NEWS file
+      # that has drifted from the changelog is the one users read; and a stale
+      # catalogue describes a registry the package does not ship.
+      #
+      # build_docs.py --check also fails when an exported R topic belongs to no
+      # reference group, which is what pkgdown refuses to build over. Catching
+      # it in this job takes a second; catching it in the docs job takes two
+      # minutes and happens after the site has already been half built.
       - name: Generated files are current
         run: |
           uv pip install --system pyyaml
           python docs/build_docs.py --check
           python docs/build_news.py --check
+          python docs/build_catalogue.py --check
 
       # The rule selection lives in python/pyproject.toml, with the reasoning.
       # Short version: pyflakes and syntax errors only. A style gate a single
