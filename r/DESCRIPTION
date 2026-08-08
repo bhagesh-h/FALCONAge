@@ -1,0 +1,40 @@
+Package: FALCONAge
+Title: Multiomic Biological Age and Aging Clock Scoring
+Version: 1.0.0
+Authors@R:
+    person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5957-8005"))
+Description: Scores DNA methylation and clinical chemistry data against a
+    catalogue of 161 published aging clocks, and provides the downstream
+    statistics the field expects: age acceleration in its three conventions,
+    survival and association models, technical reliability, and the AA1/AA2
+    benchmark. Numerical work is delegated to the 'falconage' Python package
+    through 'reticulate', so results from R and from Python are the same bits
+    rather than two implementations that agree approximately. Twenty-three
+    clocks carry coefficients inside the package and run offline; twenty-eight
+    are implemented as scaffolds whose research-use-only coefficients the user
+    supplies.
+License: GPL (>= 3)
+URL: https://github.com/bhagesh-h/FALCONAge,
+    https://bhagesh-h.github.io/FALCONAge/
+BugReports: https://github.com/bhagesh-h/FALCONAge/issues
+Depends:
+    R (>= 4.1)
+Imports:
+    reticulate (>= 1.34),
+    stats,
+    utils
+Suggests:
+    ggplot2,
+    knitr,
+    optparse,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+biocViews: Epigenetics, DNAMethylation, DifferentialMethylation,
+    MethylationArray, Software
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-GB
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
