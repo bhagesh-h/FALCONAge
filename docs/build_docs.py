@@ -52,7 +52,16 @@ def quarto_yaml(spec: dict) -> str:
         })
 
     doc = {
-        "project": {"type": "website", "output-dir": "_site"},
+        # `resources` is a PROJECT key, not a website one. Quarto validates the
+        # schema strictly and refuses the whole project when it is nested under
+        # `website:`, which is where it is easy to assume it belongs given that
+        # what it protects is the website's R subdirectory.
+        #
+        # What it does: pkgdown renders the R half into docs/r/ as finished
+        # HTML. Without this Quarto either tries to render those files itself
+        # or drops them from _site, and the "R reference" navbar link 404s.
+        "project": {"type": "website", "output-dir": "_site",
+                    "resources": ["r/**"]},
         "website": {
             "title": site["title"],
             "description": " ".join(site["description"].split()),
@@ -82,9 +91,6 @@ def quarto_yaml(spec: dict) -> str:
                 ],
             },
             "sidebar": {"style": "docked", "search": True},
-            # The R site is rendered by pkgdown into docs/r/ and served as
-            # static assets. Quarto must not try to render it.
-            "resources": ["r/**"],
         },
         "format": {"html": {
             "theme": ["cosmo"],

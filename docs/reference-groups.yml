@@ -161,10 +161,14 @@ pages:
 # The offline copies docs/build_downloads.py produces. Listed here so the
 # navbar and the build agree on the filenames -- a Download menu whose links
 # 404 is worse than no menu.
+#
+# Two artefacts, not three. A separate R reference manual would need `R CMD
+# Rd2pdf` and therefore a LaTeX install; the R help pages travel in the
+# markdown bundle instead, converted from pkgdown's HTML. Both PDFs collapsed
+# into one for the same reason the API pages are not in it: see the note at the
+# top of build_downloads.py.
 downloads:
-  - title: R reference manual (PDF)
-    file: FALCONAge-manual.pdf
-  - title: Python reference (PDF)
-    file: FALCONAge-python-reference.pdf
-  - title: Everything as markdown (ZIP)
+  - title: Documentation (PDF)
+    file: FALCONAge.pdf
+  - title: Documentation (markdown ZIP)
     file: FALCONAge-docs-markdown.zip

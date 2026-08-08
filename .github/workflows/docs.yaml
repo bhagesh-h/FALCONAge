@@ -115,10 +115,10 @@ jobs:
       # and the PDF binds the quartodoc output. --strict so a broken toolchain
       # fails the build here rather than publishing a Download menu whose links
       # 404.
+      # No LaTeX apt-install. The PDF goes through Typst, which Quarto bundles,
+      # and pandoc is already here from setup-pandoc for the markdown half.
       - name: PDF and markdown copies
-        run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends texinfo texlive-latex-base texlive-fonts-recommended
-          python docs/build_downloads.py --all --strict --out docs/_site/downloads
+        run: python docs/build_downloads.py --all --strict --out docs/_site/downloads
 
       - uses: actions/upload-artifact@v6
         with:

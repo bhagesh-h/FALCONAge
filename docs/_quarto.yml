@@ -3,6 +3,8 @@
 project:
   type: website
   output-dir: _site
+  resources:
+  - r/**
 website:
   title: FALCONAge
   description: Multiomic biological age and aging clock scoring, identical in Python and R.
@@ -38,19 +40,15 @@ website:
     right:
     - text: Download
       menu:
-      - text: R reference manual (PDF)
-        href: downloads/FALCONAge-manual.pdf
-      - text: Python reference (PDF)
-        href: downloads/FALCONAge-python-reference.pdf
-      - text: Everything as markdown (ZIP)
+      - text: Documentation (PDF)
+        href: downloads/FALCONAge.pdf
+      - text: Documentation (markdown ZIP)
         href: downloads/FALCONAge-docs-markdown.zip
     - icon: github
       href: https://github.com/bhagesh-h/FALCONAge
   sidebar:
     style: docked
     search: true
-  resources:
-  - r/**
 format:
   html:
     theme:

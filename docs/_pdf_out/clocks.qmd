@@ -1,0 +1,70 @@
+---
+title: "Clock catalogue"
+subtitle: "All 161, generated from the registry that scores them"
+execute:
+  echo: false
+  warning: false
+---
+
+This page is generated from `registry/clocks.yaml` at build time, so it cannot describe a
+catalogue different from the one the package ships. Every column below is a field the scoring code
+reads.
+
+`scale_type` is the load-bearing one. It is not a label - it decides which downstream operations
+FALCONAge will perform, and asking for age acceleration on a `pace_ratio` clock is refused rather
+than computed.
+
+```{python}
+# | output: asis
+import falconage as fa
+
+reg = fa.registry.load()
+clocks = sorted(reg, key=lambda c: (c.availability, c.id))
+
+print(f"**{len(clocks)} clocks**, registry schema `{reg.version}`.\n")
+
+TIER = {
+    "A": "Coefficients ship with the package, or the clock is a formula with none to ship. "
+         "Works offline, no network, no licence.",
+    "B": "Catalogued, but no primary source for the coefficients has been established, so "
+         "nothing is bundled. The metadata is real; the numbers are absent.",
+    "C": "The architecture is implemented and tested; the coefficients are research-use-only "
+         "and are not ours to distribute. Obtain a file and register it.",
+}
+
+for tier in ("A", "B", "C"):
+    rows = [c for c in clocks if c.availability == tier]
+    print(f"\n## Tier {tier} - {len(rows)} clocks\n")
+    print(TIER[tier] + "\n")
+    print("| Clock | Year | Predicts | Scale | Features | Platform |")
+    print("|---|---:|---|---|---:|---|")
+    for c in rows:
+        plat = ", ".join(c.platform) or "—"
+        print(f"| `{c.id}` | {c.year or '—'} | {c.name} | `{c.scale_type}` "
+              f"| {c.n_features or '—'} | {plat} |")
+```
+
+## Querying it from code
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+reg = fa.registry.load()
+reg.filter(availability="A", scale_type="age_years")
+reg.search("mortality")
+reg.compatible_with(data)
+reg.get("horvath2013")
+```
+
+### R
+
+```r
+list_clocks(tier = "A")
+list_clocks(search = "mortality")
+compatible_clocks(d)
+clock_info("horvath2013")
+```
+
+:::

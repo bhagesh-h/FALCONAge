@@ -1,36 +1,42 @@
 #!/usr/bin/env python3
-"""Build the offline copies of the documentation: two PDFs and a markdown bundle.
+"""Build the offline copies of the documentation: one PDF, one markdown bundle.
 
 WHY THESE EXIST. A documentation website is not something you can attach to a
-thesis, read on a plane, cite a page of, or diff between releases. The three
-artefacts here cover those cases, and every documentation build produces them so
-they cannot fall behind the site they came from.
+thesis, read on a plane, cite a page of, or diff between releases. Every
+documentation build produces these so they cannot fall behind the site.
 
-    FALCONAge-manual.pdf             the R reference manual, R CMD Rd2pdf
-    FALCONAge-python-reference.pdf   the guides and Python API, one Quarto book
-    FALCONAge-docs-markdown.zip      the whole thing as markdown, both languages
+    FALCONAge.pdf                    the whole site as one document
+    FALCONAge-docs-markdown.zip      the same, as markdown, plus the R reference
 
-WHY EACH BUILDS INDEPENDENTLY. They need different toolchains -- LaTeX for the
-first, Quarto and Typst for the second, pandoc for the third -- and a laptop
-usually has some of them. A missing toolchain costs you that one artefact and
-says so; it does not fail the run. CI has all three, so CI gets all three.
+WHY ONE COMBINED DOCUMENT RATHER THAN A QUARTO BOOK. Two reasons, both found by
+trying the book first. A `website` project renders one PDF per page, which is
+not a manual. A `book` project gives one document -- but books do not support
+the typst format, and typst is the whole point: it ships inside Quarto, so the
+PDF builds on a runner with no TeX distribution and in a fraction of the time.
+Requiring LaTeX would mean apt-installing a texlive subset and then discovering
+which further package `Rd2pdf` wanted, on someone else's CI minutes.
 
-WHY THE PYTHON PDF IS A BOOK AND THE SITE IS NOT. Rendering a Quarto *website*
-to PDF gives one PDF per page, which is not a manual. A book project over the
-same source files gives a single document with a contents page and cross
-references that resolve. So this generates a throwaway book config beside the
-site config rather than making the site a book, which would change the site.
+So the chapters are concatenated into one `.qmd` with their front matter
+stripped and their headings demoted by one level, and that single document is
+rendered twice: once to typst for the PDF, once to gfm for the markdown. No
+project type, no LaTeX, no book.
+
+WHY THERE IS NO SEPARATE R REFERENCE MANUAL. `R CMD Rd2pdf` produces the classic
+CRAN manual and needs a working LaTeX install to do it, which is the dependency
+this file exists to avoid. The R reference is in the markdown bundle instead,
+converted from pkgdown's HTML with pandoc, and the rendered R site is on the
+web already.
 
 Usage
 -----
     python docs/build_downloads.py --all
-    python docs/build_downloads.py --manual --out docs/_site/downloads
-    python docs/build_downloads.py --markdown
+    python docs/build_downloads.py --pdf --out docs/_site/downloads
 """
 
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -44,12 +50,30 @@ ROOT = HERE.parent
 GROUPS = HERE / "reference-groups.yml"
 DEFAULT_OUT = HERE / "_site" / "downloads"
 
-# The book's spine. Order is deliberate: what the thing is, how to use it, how to
-# choose, then the API. The reference chapters are appended from whatever
-# quartodoc generated, so a new section in reference-groups.yml appears here
-# without editing this file.
-FRONT = ["index.qmd", "guide/FALCONAge.qmd", "guide/clocks.qmd",
-         "clocks.qmd", "gpu.md", "science.qmd", "architecture.qmd"]
+# The spine: the pages a person reads, in the order they read them.
+#
+# WHY THE GENERATED API REFERENCE IS NOT IN HERE. It was, and binding all 67
+# pages produced a document nobody would read and a build nobody could
+# maintain. Sixty quartodoc pages share heading names -- every one has
+# "Parameters" and "Returns" -- and typst, unlike HTML, treats a duplicated or
+# dangling label as a hard error rather than a dead link. Chasing anchor
+# collisions across generated files is exactly the kind of upkeep that gets a
+# feature switched off six months later.
+#
+# The API reference is a lookup table, and a lookup table wants search, which
+# is what the website gives it. What is worth having on a plane is the
+# narrative: what the thing is, how to use it, how to choose a clock, and the
+# two long-form documents. Seven pages, all hand-written, all stable.
+FRONT = ["index.qmd", "guide/FALCONAge.qmd", "guide/clocks.qmd", "clocks.qmd",
+         "gpu.md", "science.qmd", "architecture.qmd"]
+
+FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.S)
+# `[text](#anchor)` -> `text`. Every page carries a hand-written contents list
+# whose anchors are generated from its own headings; demoting those headings
+# into a combined document changes the anchors, and typst errors on a link to a
+# label that does not exist. The combined document has its own table of
+# contents, so the per-page ones are redundant anyway.
+ANCHOR_LINK = re.compile(r"\[([^\]\[]*)\]\(#[^)]*\)")
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -61,115 +85,101 @@ def have(tool: str) -> bool:
     return shutil.which(tool) is not None
 
 
-# ---------------------------------------------------------------------------
-# 1. the R reference manual
-# ---------------------------------------------------------------------------
-def build_manual(out: Path) -> Path:
-    """`R CMD Rd2pdf` over r/, which is the layout CRAN itself publishes.
-
-    Not pkgdown's HTML converted to PDF: this reads man/*.Rd directly, so it
-    covers exactly the exported surface `?fn` covers, in the order and with the
-    sectioning an R user already knows how to read.
-    """
-    if not have("R"):
-        raise RuntimeError("R is not on PATH")
-    target = out / "FALCONAge-manual.pdf"
-    target.unlink(missing_ok=True)
-    run(["R", "CMD", "Rd2pdf", "--force", "--no-preview", "--batch",
-         f"--output={target}", str(ROOT / "r")], cwd=ROOT)
-    return target
+def demote(markdown: str) -> str:
+    """Push every ATX heading down one level, so each chapter's `#` becomes `##`
+    under the combined document's own title. Fenced code is left alone -- a `#`
+    at the start of a line inside a shell block is a comment, not a heading."""
+    out, fenced = [], False
+    for line in markdown.split("\n"):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+        elif not fenced and re.match(r"#{1,5} ", line):
+            line = "#" + line
+        out.append(line)
+    return "\n".join(out)
 
 
-# ---------------------------------------------------------------------------
-# 2. the Python reference as one PDF
-# ---------------------------------------------------------------------------
-def book_config(chapters: list[str]) -> str:
+def combine() -> Path:
+    """Concatenate the chapters into one .qmd and return its path."""
     site = yaml.safe_load(GROUPS.read_text(encoding="utf-8"))["site"]
-    doc = {
-        "project": {"type": "book", "output-dir": "_pdf_out"},
-        "book": {
-            "title": site["title"],
-            "subtitle": " ".join(site["description"].split()),
-            "author": "Bhagesh Hunakunti",
-            "chapters": ["index.qmd"] + [c for c in chapters if c != "index.qmd"],
-        },
-        # Typst rather than LaTeX: it ships inside Quarto, so the PDF builds on
-        # a runner with no TeX distribution and in about a tenth of the time.
-        "format": {"typst": {"toc": True, "papersize": "a4",
-                             "mainfont": "Libertinus Serif"}},
-        # The reference pages are generated by quartodoc into reference/; the
-        # book must not try to regenerate them.
-        "quartodoc": None,
-    }
-    doc = {k: v for k, v in doc.items() if v is not None}
-    return ("# GENERATED by docs/build_downloads.py. Throwaway: it exists only for\n"
-            "# the duration of a PDF build and is removed afterwards.\n"
-            + yaml.safe_dump(doc, sort_keys=False, allow_unicode=True))
+    chapters = [c for c in FRONT if (HERE / c).exists()]
+    if len(chapters) < 2:
+        raise RuntimeError(
+            "nothing to bind: none of " + ", ".join(FRONT) + " were found. "
+            "Run this from the repository, not from a partial checkout.")
+
+    parts = [
+        "---\n"
+        f'title: "{site["title"]}"\n'
+        f'subtitle: "{" ".join(site["description"].split())}"\n'
+        "author: Bhagesh Hunakunti\n"
+        "toc: true\n"
+        "toc-depth: 2\n"
+        "number-sections: false\n"
+        # Nothing here executes. clocks.qmd carries a live Python chunk that
+        # queries the registry; it already ran when the site was rendered, and
+        # running it again from a concatenated file with a different working
+        # directory is a way to fail for no benefit.
+        "execute:\n  enabled: false\n"
+        "---\n",
+        f"_Generated from the FALCONAge documentation site, {site['url']}_\n",
+    ]
+    for c in chapters:
+        text = (HERE / c).read_text(encoding="utf-8")
+        fm = FRONTMATTER.match(text)
+        title = ""
+        if fm:
+            meta = yaml.safe_load(fm.group(0).strip("-\n")) or {}
+            title = str(meta.get("title", "")).strip()
+            text = text[fm.end():]
+        if not title:
+            m = re.search(r"^#\s+(.+)$", text, re.M)
+            title = m.group(1).strip() if m else Path(c).stem
+            text = re.sub(r"^#\s+.+$", "", text, count=1, flags=re.M)
+        parts.append(f"\n\n# {title}\n\n" + ANCHOR_LINK.sub(r"\1", demote(text)))
+
+    combined = HERE / "_combined.qmd"
+    combined.write_text("\n".join(parts), encoding="utf-8", newline="\n")
+    print(f"  combined {len(chapters)} chapters into {combined.name}")
+    return combined
 
 
-def reference_chapters() -> list[str]:
-    ref = HERE / "reference"
-    if not ref.is_dir():
-        return []
-    index = ref / "index.qmd"
-    pages = sorted(p for p in ref.glob("*.qmd") if p != index)
-    return ([str(index.relative_to(HERE)).replace("\\", "/")] if index.exists() else []) \
-        + [str(p.relative_to(HERE)).replace("\\", "/") for p in pages]
-
-
-def build_python_pdf(out: Path) -> Path:
+def build_pdf(out: Path) -> Path:
     if not have("quarto"):
         raise RuntimeError("quarto is not on PATH")
-    chapters = [c for c in FRONT if (HERE / c).exists()] + reference_chapters()
-    if len(chapters) < 2:
-        raise RuntimeError("nothing to bind: run quartodoc first so reference/ exists")
-
-    cfg = HERE / "_quarto-pdf.yml"
-    cfg.write_text(book_config(chapters), encoding="utf-8", newline="\n")
+    src = combine()
     try:
-        # A profile would be tidier, but Quarto resolves the project TYPE from
-        # the base config before profiles are applied, so a website cannot
-        # become a book that way. A separate config file can.
-        run(["quarto", "render", "--config", cfg.name], cwd=HERE)
-        built = next((HERE / "_pdf_out").glob("*.pdf"))
-        target = out / "FALCONAge-python-reference.pdf"
-        shutil.copyfile(built, target)
+        run(["quarto", "render", src.name, "--to", "typst",
+             "--output", "FALCONAge.pdf"], cwd=HERE)
+        built = HERE / "FALCONAge.pdf"
+        target = out / "FALCONAge.pdf"
+        shutil.move(str(built), target)
         return target
     finally:
-        cfg.unlink(missing_ok=True)
-        shutil.rmtree(HERE / "_pdf_out", ignore_errors=True)
+        src.unlink(missing_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# 3. everything as markdown
-# ---------------------------------------------------------------------------
 def build_markdown(out: Path) -> Path:
     """The site as GitHub-flavoured markdown, both languages in one zip.
 
-    The Quarto half renders straight to gfm. The R half is converted from
-    pkgdown's HTML with pandoc rather than from the .Rd sources, because Rd is
-    a TeX dialect and every direct converter for it loses the usage block --
-    which is the part of a help page anybody actually reads.
+    The R half is converted from pkgdown's HTML rather than from the .Rd
+    sources, because Rd is a TeX dialect and every direct converter for it
+    loses the usage block -- the part of a help page anybody actually reads.
     """
     if not have("quarto"):
         raise RuntimeError("quarto is not on PATH")
     stage = HERE / "_md_out"
     shutil.rmtree(stage, ignore_errors=True)
+    stage.mkdir(parents=True)
 
-    chapters = [c for c in FRONT if (HERE / c).exists()] + reference_chapters()
-    cfg = HERE / "_quarto-md.yml"
-    doc = {"project": {"type": "book", "output-dir": "_md_out"},
-           "book": {"title": "FALCONAge", "chapters": chapters},
-           "format": {"gfm": {"toc": True}}}
-    cfg.write_text("# GENERATED by docs/build_downloads.py; removed after the build.\n"
-                   + yaml.safe_dump(doc, sort_keys=False, allow_unicode=True),
-                   encoding="utf-8", newline="\n")
+    src = combine()
     try:
-        run(["quarto", "render", "--config", cfg.name], cwd=HERE)
+        run(["quarto", "render", src.name, "--to", "gfm",
+             "--output", "FALCONAge.md"], cwd=HERE)
+        shutil.move(str(HERE / "FALCONAge.md"), stage / "FALCONAge.md")
     finally:
-        cfg.unlink(missing_ok=True)
+        src.unlink(missing_ok=True)
 
-    # The R side, from pkgdown's output if the site has been built.
     r_html = sorted((HERE / "r" / "reference").glob("*.html"))
     if r_html and have("pandoc"):
         r_md = stage / "r-reference"
@@ -179,13 +189,13 @@ def build_markdown(out: Path) -> Path:
                 continue
             run(["pandoc", "-f", "html", "-t", "gfm", "--wrap=none",
                  "-o", str(r_md / f"{page.stem}.md"), str(page)])
+        print(f"  converted {len(r_html) - 1} R help pages")
     else:
         print("  (no pkgdown output or no pandoc: skipping the R half)")
 
-    for extra in ("README.md", "CITATION.cff"):
-        src = ROOT / extra
-        if src.exists():
-            shutil.copyfile(src, stage / extra)
+    for extra in ("README.md", "CHANGELOG.md", "CITATION.cff"):
+        if (ROOT / extra).exists():
+            shutil.copyfile(ROOT / extra, stage / extra)
 
     target = out / "FALCONAge-docs-markdown.zip"
     target.unlink(missing_ok=True)
@@ -197,8 +207,7 @@ def build_markdown(out: Path) -> Path:
     return target
 
 
-BUILDERS = {"manual": build_manual, "python-pdf": build_python_pdf,
-            "markdown": build_markdown}
+BUILDERS = {"pdf": build_pdf, "markdown": build_markdown}
 
 
 def main(argv=None) -> int:
@@ -211,7 +220,7 @@ def main(argv=None) -> int:
                     help="exit non-zero if any requested artefact failed")
     args = ap.parse_args(argv)
 
-    wanted = [n for n in BUILDERS if args.all or getattr(args, n.replace("-", "_"))]
+    wanted = [n for n in BUILDERS if args.all or getattr(args, n)]
     if not wanted:
         ap.error("nothing requested; pass --all or one of "
                  + ", ".join(f"--{n}" for n in BUILDERS))
@@ -222,15 +231,12 @@ def main(argv=None) -> int:
         print(f"\n[{name}]")
         try:
             path = BUILDERS[name](args.out)
-            print(f"  wrote {path.relative_to(ROOT)}  "
-                  f"({path.stat().st_size / 1e6:.1f} MB)")
+            print(f"  wrote {path.name}  ({path.stat().st_size / 1e6:.1f} MB)")
         except Exception as exc:
             print(f"  SKIPPED: {exc}")
             failed.append(name)
 
-    made = [n for n in wanted if n not in failed]
-    print(f"\n{len(made)}/{len(wanted)} artefact(s) built into "
-          f"{args.out.relative_to(ROOT) if args.out.is_relative_to(ROOT) else args.out}")
+    print(f"\n{len(wanted) - len(failed)}/{len(wanted)} artefact(s) built into {args.out}")
     if failed:
         print("skipped: " + ", ".join(failed))
     return 1 if (failed and args.strict) else 0
