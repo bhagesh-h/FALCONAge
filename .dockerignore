@@ -1,0 +1,111 @@
+# =============================================================================
+# FALCONAge — build context exclusions
+# =============================================================================
+# Dockerfile.cpu ends with `COPY . /opt/falconage/src`. Without this file that
+# COPY drags in a working tree of well over a gigabyte -- upstream clones, notes,
+# whatever the corpus fetcher has already downloaded -- sent to the daemon on
+# every build and cached in every layer, for files no image reads.
+#
+# Docker applies these top to bottom and the last matching rule wins, so the
+# `!` re-admissions must follow their exclusions.
+# -----------------------------------------------------------------------------
+
+# ---- the repository root is allow-list only ----------------------------------
+# Same reasoning as .gitignore. `*` here matches every root entry, and only the
+# directories an image actually reads are re-admitted. A deny-list of working
+# material fails silently the first time something new appears in the root; this
+# fails by leaving a needed file out of the build, which the build then says so
+# about.
+#
+# Note that Docker's `*` -- unlike git's `/*` -- excludes root entries only
+# because there is no leading slash to anchor; the per-directory rules below
+# still apply inside what is re-admitted.
+*
+!colorscheme.yaml
+!docker/
+!python/
+!r/
+!test/
+
+# ---- version control ---------------------------------------------------------
+.git
+.gitignore
+.github
+.gitattributes
+
+# ---- test corpus -------------------------------------------------------------
+# The payloads are mounted at run time (-v ./test/data:/data), never baked in:
+# a public dataset inside an image is a redistribution nobody asked for, and it
+# would put the image over 1 GB for data that changes independently of the code.
+#
+# The manifest and the two fetchers ARE copied -- Dockerfile.testdata installs
+# them at /opt/testdata so the fetcher image runs without a mounted checkout.
+test/data/**
+test/output/**
+!test/data/datasets.yaml
+!test/data/fetch_test_data.py
+!test/data/fetch_test_data.R
+!test/data/README.md
+
+# ---- Python ------------------------------------------------------------------
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.venv
+**/venv
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.hypothesis
+**/.tox
+**/htmlcov
+**/.coverage
+python/build
+python/dist
+
+# ---- R -----------------------------------------------------------------------
+**/.Rproj.user
+**/.Rhistory
+**/.RData
+**/*.Rcheck
+**/*.tar.gz
+r/src/*.o
+r/src/*.so
+r/inst/doc
+
+# ---- documentation -----------------------------------------------------------
+# The images do not serve the docs; CI renders and publishes them separately.
+docs/_site
+docs/.quarto
+docs/reference
+docs/r
+**/.quarto
+
+# ---- caches and outputs ------------------------------------------------------
+# Weights belong in the named cache volume, not a layer. Baking a 2 GB
+# SystemsAge tensor into the image would also bake in its licence problem.
+.cache
+hf_cache
+**/*.safetensors
+**/*.pt
+**/*.pth
+results
+results_*
+**/*.h5ad
+scratch
+tmp
+
+# ---- editors and OS ----------------------------------------------------------
+.vscode
+.idea
+**/.DS_Store
+**/Thumbs.db
+**/desktop.ini
+**/*.swp
+
+# ---- the Dockerfiles themselves ---------------------------------------------
+# Kept OUT of the context deliberately: an image that contains its own build
+# recipe invalidates its own cache every time a comment in that recipe changes.
+# install_deps.R and entrypoint.sh are the exceptions -- the image runs them.
+docker/Dockerfile.*
+docker/docker-compose.yml
