@@ -16,7 +16,7 @@ website:
   - source
   navbar:
     left:
-    - text: Get started
+    - text: About
       file: index.qmd
     - text: Guides
       menu:

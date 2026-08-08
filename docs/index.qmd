@@ -2,16 +2,26 @@
 title: "FALCONAge"
 ---
 
-An aging clock maps molecular measurements to a number on an age-like scale. What that number
-means depends entirely on what the model was trained to predict, and the field has at least six
-answers: chronological age, mortality, the rate of change across organ systems, causal versus
-reactive methylation, stem-cell division count, and organ-specific decline. A tool that returns
-"biological age = 57.3" without saying which of those it computed is not reporting a result.
+FALCONAge is a package for scoring published aging clocks. It reads DNA methylation - as a beta
+matrix, a GEO series matrix, or RRBS coverage files - and clinical chemistry as a table of blood
+measurements. For each of the 161 clocks in its catalogue it matches the features that clock
+needs against the ones you have, applies the transforms and coefficients the clock's paper
+specifies, and returns a score per sample with what is needed to read it: the coefficient file's
+digest, the fraction of features found, the device and precision it ran in, and every warning
+raised on the way.
 
-FALCONAge is built around that distinction. Every clock in the registry declares what it predicts,
-in what unit, on what platform, in which species and population, and on what `scale_type` - and
-the `scale_type` governs which downstream operations are permitted. Asking for age acceleration on
-DunedinPACE raises an error rather than subtracting a chronological age from a rate.
+A clock returns a number on an age-like scale, and what that number means is fixed by the target
+the model was fitted to. Those targets are different quantities. Horvath 2013 predicts
+chronological age in years; ZhangMortality predicts a log hazard; DunedinPACE predicts a rate, in
+biological years per chronological year; epiTOC2 estimates cumulative stem-cell divisions; a
+deconvolution clock returns cell-type proportions. Reporting all five as "biological age" throws
+away the one thing needed to interpret any of them.
+
+So every registry entry declares a `scale_type` - one of eight - beside its unit, platform,
+species and the tissue its coefficients were fitted in, and the scale type decides which
+downstream operations are available. Age acceleration is a residual against chronological age: it
+is defined for a clock reported in years and undefined for a rate, so FALCONAge computes it for
+Horvath and raises an error for DunedinPACE rather than subtracting an age from a ratio.
 
 ## Install
 

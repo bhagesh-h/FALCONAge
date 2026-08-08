@@ -171,7 +171,11 @@ def quarto_yaml(spec: dict) -> str:
             "repo-actions": ["issue", "source"],
             "navbar": {
                 "left": [
-                    {"text": "Get started", "file": "index.qmd"},
+                    # "About", not "Get started": guide/FALCONAge.qmd is called
+                    # "Getting started" and is the walkthrough. Two entries a
+                    # menu apart with near-identical names is a coin toss for
+                    # the reader.
+                    {"text": "About", "file": "index.qmd"},
                     {"text": "Guides", "menu": [
                         {"text": a["title"], "file": f"guide/{a['file']}.qmd"}
                         for a in spec["articles"]]},
