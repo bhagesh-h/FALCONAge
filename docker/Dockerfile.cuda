@@ -1,5 +1,5 @@
 # =============================================================================
-# FALCONAge — reproducible CUDA environment
+# FALCONAge - reproducible CUDA environment
 # =============================================================================
 #
 # STATUS. Same as Dockerfile.cpu: builds once python/ and r/ exist. See that

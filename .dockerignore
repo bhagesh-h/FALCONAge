@@ -1,5 +1,5 @@
 # =============================================================================
-# FALCONAge — build context exclusions
+# FALCONAge - build context exclusions
 # =============================================================================
 # Dockerfile.cpu ends with `COPY . /opt/falconage/src`. Without this file that
 # COPY drags in a working tree of well over a gigabyte -- upstream clones, notes,

@@ -10,7 +10,7 @@ reactive methylation, stem-cell division count, and organ-specific decline. A to
 "biological age = 57.3" without saying which of those it computed is not reporting a result.
 
 FALCONAge is built around that distinction. Every clock in the registry declares what it predicts,
-in what unit, on what platform, in which species and population, and on what `scale_type` — and
+in what unit, on what platform, in which species and population, and on what `scale_type` - and
 the `scale_type` governs which downstream operations are permitted. Asking for age acceleration on
 DunedinPACE raises an error rather than subtracting a chronological age from a rate.
 
@@ -27,7 +27,7 @@ both live in a subdirectory of it, so the commands name that subdirectory.
 pip install "falconage @ git+https://github.com/bhagesh-h/FALCONAge.git#subdirectory=python"
 ```
 
-Pin a tag in anything you intend to reproduce — `...FALCONAge.git@v1.0.0#subdirectory=python`.
+Pin a tag in anything you intend to reproduce - `...FALCONAge.git@v1.0.0#subdirectory=python`.
 `main` moves; a tag does not.
 
 For CUDA, install torch from PyTorch's own index first. Pip's default index serves a CUDA build on
@@ -95,7 +95,7 @@ exactly zero rather than approximate agreement.
 ## What is in the catalogue
 
 161 clocks, in three availability tiers. The tiers are about redistribution rights, not about
-whether the algorithm works — every architecture is implemented and tested regardless of tier.
+whether the algorithm works - every architecture is implemented and tested regardless of tier.
 
 | Tier | n | What you do |
 |---|---:|---|
@@ -109,11 +109,11 @@ fa.registry.load().filter(availability="A")
 
 ## Where to go next
 
-- [Getting started](guide/FALCONAge.qmd) — install, score, interpret, in both languages.
-- [Choosing a clock](guide/clocks.qmd) — by the question you asked, by what the scale permits, and
+- [Getting started](guide/FALCONAge.qmd) - install, score, interpret, in both languages.
+- [Choosing a clock](guide/clocks.qmd) - by the question you asked, by what the scale permits, and
   by whether the coefficients transfer to your data at all.
-- [Clock catalogue](clocks.qmd) — all 161, searchable.
+- [Clock catalogue](clocks.qmd) - all 161, searchable.
 - [Python reference](reference/index.qmd) · [R reference](r/index.html)
-- [GPU support](gpu.md) — what was verified on real hardware, and why `device="auto"` is CPU.
+- [GPU support](gpu.md) - what was verified on real hardware, and why `device="auto"` is CPU.
 
 The whole site is also downloadable as PDF or markdown; see the **Download** menu.

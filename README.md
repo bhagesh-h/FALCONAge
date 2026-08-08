@@ -19,7 +19,7 @@ published aging clocks, and returns a score per sample with the units, the prove
 fraction of features that had to be imputed. The R and Python interfaces run the same numerical
 core, so they return the same numbers.
 
-Every clock algorithm is implemented from scratch against its published description — no clock
+Every clock algorithm is implemented from scratch against its published description - no clock
 implementation is imported from another package. Coefficients are a different matter: they are
 fitted data, not a procedure, and 28 clocks have coefficients that are research-use-only or have
 no traceable public source. Those ship as a complete, tested scaffold and need a coefficient file
@@ -36,20 +36,20 @@ result.
 
 FALCONAge is built around that distinction. Every clock in the registry declares what it
 predicts, in what unit, on what platform, in which species and population, and on what
-`scale_type` — and the `scale_type` governs which downstream operations are permitted. Asking for
+`scale_type` - and the `scale_type` governs which downstream operations are permitted. Asking for
 age acceleration on DunedinPACE raises an error rather than subtracting a chronological age from
 a rate.
 
 Four things it does:
 
-- **Download** public data by accession alone — GEO, ArrayExpress, SRA/ENA, Zenodo and Hugging
-  Face — returning files alongside a sample table with age and sex extracted from whatever
+- **Download** public data by accession alone - GEO, ArrayExpress, SRA/ENA, Zenodo and Hugging
+  Face - returning files alongside a sample table with age and sex extracted from whatever
   free-text field held them.
 - **Preprocess** raw IDATs or a public matrix into a scoreable one, with the normalisation choice
   recorded because it changes the answer.
 - **Score** any number of clocks in one call, on CPU or GPU, with per-clock missingness reported
   before the numbers rather than after.
-- **Analyse** — age acceleration in both conventions, Cox models with sex-standardised effect
+- **Analyse** - age acceleration in both conventions, Cox models with sex-standardised effect
   sizes, test-retest reliability, and the ComputAgeBench AA1/AA2 benchmark against
   aging-accelerating conditions.
 
@@ -59,8 +59,8 @@ Methylation preprocessing lives in R (minfi, sesame, ChAMP). Deep-learning clock
 inference live in Python. Most groups run both and reconcile the results by hand.
 
 FALCONAge has one numerical core, written in Python, and an R package that calls it through
-reticulate. The R interface is native — S3 classes, `data.frame` in and out, roxygen2
-documentation, ggplot2 figures — but the arithmetic happens in one place. The two languages
+reticulate. The R interface is native - S3 classes, `data.frame` in and out, roxygen2
+documentation, ggplot2 figures - but the arithmetic happens in one place. The two languages
 return identical values because they run identical code, and the test suite asserts bit equality
 rather than approximate agreement.
 
@@ -68,7 +68,7 @@ rather than approximate agreement.
 
 Two things in a clock are commonly conflated, and separating them decides most of what follows.
 
-The **architecture** is a procedure described in a paper — a dot product over selected CpGs, a
+The **architecture** is a procedure described in a paper - a dot product over selected CpGs, a
 principal-component rotation, a two-stage Cox model. Every one is implemented here from scratch
 from its published description: 15 preprocessing operations, 15 output transforms and 10 bespoke
 forward passes, all written against the equations rather than ported from another package.
@@ -78,7 +78,7 @@ weights, and there is no procedure that regenerates them without Horvath's train
 can only be obtained, and whether they can be redistributed varies by clock.
 
 FALCONAge sources them from the primary publication wherever one exists, rather than copying
-another package's file — which is also how the field acquired eleven documented disagreements
+another package's file - which is also how the field acquired eleven documented disagreements
 between what a paper reports and what its widely-used coefficient set contains. Where
 redistribution is not permitted, the architecture still ships and you supply the numbers.
 
@@ -112,7 +112,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cu124
 pip install "falconage @ git+https://github.com/bhagesh-h/FALCONAge.git#subdirectory=python"
 ```
 
-Pin a version by tagging the ref — `...FALCONAge.git@v1.0.0#subdirectory=python`. Do that in
+Pin a version by tagging the ref - `...FALCONAge.git@v1.0.0#subdirectory=python`. Do that in
 anything you intend to reproduce: `main` moves, a tag does not.
 
 For a checkout you intend to edit:
@@ -166,7 +166,7 @@ Installing gets you every clock's algorithm. It does not get you every clock's c
 because most of them are not the package's to distribute.
 
 - **23 clocks work offline immediately.** Twenty ship a coefficient file; the other three —
-  PhenoAge, KDM and homeostatic dysregulation — are formulas with no coefficients to ship.
+  PhenoAge, KDM and homeostatic dysregulation - are formulas with no coefficients to ship.
 - **110 are catalogued but score nothing yet.** Their metadata, feature counts and transform
   chains are recorded, but no primary source for the numbers has been established, so nothing is
   bundled. Copying a coefficient set out of another package without knowing where *that* package
@@ -182,7 +182,7 @@ falconage clocks list --tier C     # what needs a licence, and where to get it
 
 ### Docker
 
-No image is published yet. Build either one from the repository — both carry Python, R and the
+No image is published yet. Build either one from the repository - both carry Python, R and the
 CLI, and both run the build-time smoke test, so a broken image fails at build rather than at
 first use:
 
@@ -341,7 +341,7 @@ data = fa.preprocess_methylation(
 EPIC v2 probe IDs carry replicate suffixes (`cg00000029_TC21`). Without aggregation every clock
 sees zero overlapping features, so the module raises rather than returning an empty result.
 
-Clinical chemistry requires units. There is no default and no inference from magnitude — a
+Clinical chemistry requires units. There is no default and no inference from magnitude - a
 creatinine of 80 is plausible as µmol/L and absurd as mg/dL, and guessing is how an 88× error
 happens.
 
@@ -400,7 +400,7 @@ fa.run_benchmark(res, condition_col="condition", control="HC")
 
 ## 5. Clock catalogue
 
-161 clocks in v1.0 — the 159 DNA-methylation and clinical-chemistry entries in the catalogued
+161 clocks in v1.0 - the 159 DNA-methylation and clinical-chemistry entries in the catalogued
 registry, plus KDM and homeostatic dysregulation. Browse them:
 
 ```python
@@ -441,14 +441,14 @@ falconage clocks cite grimage2 --style bibtex
 ### Availability
 
 A clock is an architecture plus a coefficient set. FALCONAge writes every architecture from
-scratch, and every one is tested. Coefficients are fitted data and cannot be written — only
-obtained — so each clock falls into one of three tiers depending on what may be distributed.
+scratch, and every one is tested. Coefficients are fitted data and cannot be written - only
+obtained - so each clock falls into one of three tiers depending on what may be distributed.
 
 | Tier | n | What you do |
 |---|---|---|
-| **A — open** | 38 | Nothing. Coefficients ship with the package, extracted from the paper's own supplementary file or a permissively licensed author repository. |
-| **B — fetched on first use** | 95 | Nothing, but the first run of each clock needs network access. Coefficients are pulled from the authors' URL, cached, and the source licence is printed once. |
-| **C — permission required** | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are not ours to distribute. See §6. |
+| **A - open** | 38 | Nothing. Coefficients ship with the package, extracted from the paper's own supplementary file or a permissively licensed author repository. |
+| **B - fetched on first use** | 95 | Nothing, but the first run of each clock needs network access. Coefficients are pulled from the authors' URL, cached, and the source licence is printed once. |
+| **C - permission required** | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are not ours to distribute. See §6. |
 
 ```python
 fa.registry.filter(availability="A")          # works offline, no strings
@@ -466,7 +466,7 @@ single-cell and spatial in v1.3.
 ## 6. Clocks that need author permission
 
 Twenty-eight clocks ship as a **scaffold**: the model class, the feature list, the preprocess and
-postprocess chain, the expected tensor shapes, and a loader — everything except the numbers.
+postprocess chain, the expected tensor shapes, and a loader - everything except the numbers.
 Their coefficients are research-use-only, or have no traceable public source, and FALCONAge will
 not redistribute them.
 
@@ -512,8 +512,8 @@ res <- score(data, clocks = "grimage2")
 </tr>
 </table>
 
-Registration validates the file against the scaffold — feature count, expected shapes, no
-duplicate identifiers — and rejects a mismatch with the discrepancy named. That also makes it a
+Registration validates the file against the scaffold - feature count, expected shapes, no
+duplicate identifiers - and rejects a mismatch with the discrepancy named. That also makes it a
 way to check a coefficient set somebody handed you.
 
 Scoring one of these without registering anything is an error, not a silent skip, and it names
@@ -539,7 +539,7 @@ them and fails loudly.
 
 ### Could these be reimplemented instead?
 
-The architectures already are — the GrimAge two-stage Cox structure, the PC rotation and
+The architectures already are - the GrimAge two-stage Cox structure, the PC rotation and
 SystemsAge's seven-step forward pass are described well enough in their papers to write
 independently, and are written here from scratch.
 
@@ -547,7 +547,7 @@ The coefficients cannot be. They are the output of an elastic net fitted to Fram
 Women's Health Initiative and the Dunedin Study, none of which is open. Refitting the same
 architecture on different data gives a different clock that must not carry the same name. That is
 a real option and is on the roadmap for v1.5 as a FALCONAge-native mortality clock trained on the
-open ComputAgeBench split — a new contribution, not a substitute for GrimAge2.
+open ComputAgeBench split - a new contribution, not a substitute for GrimAge2.
 
 ## 7. Choosing a clock
 
@@ -556,7 +556,7 @@ answer.
 
 | Your question | Use | Unit | Notes |
 |---|---|---|---|
-| How old does this sample look? | Horvath 2013, SkinAndBlood, AltumAge, Zhang EN | years | High age correlation, weak mortality signal. Zhang BLUP is the most accurate at ~2.0 y RMSE and its acceleration no longer predicts mortality — accuracy and usefulness diverge here. |
+| How old does this sample look? | Horvath 2013, SkinAndBlood, AltumAge, Zhang EN | years | High age correlation, weak mortality signal. Zhang BLUP is the most accurate at ~2.0 y RMSE and its acceleration no longer predicts mortality - accuracy and usefulness diverge here. |
 | Who is at risk of dying? | GrimAge2, PhenoAge, CpGPTGrimAge3, SystemsAge | years | Second generation. Lower age accuracy, much stronger mortality association. GrimAge2 needs age and sex. |
 | How fast is this person ageing? | DunedinPACE | biological years per chronological year | A rate, centred at 1. Do **not** subtract chronological age from it. Responds fastest to intervention. |
 | Which organ system is ahead? | SystemsAge (11 systems) | years | One blood draw, eleven system ages plus a composite. |
@@ -567,19 +567,19 @@ answer.
 
 ### Legal operations by scale type
 
-Eight scale types, and the operations each permits. This is the table the code enforces — it is
+Eight scale types, and the operations each permits. This is the table the code enforces - it is
 `LEGAL_OPS` in `registry/registry.py`, and `clock.legal_operations` returns the row.
 
 | Scale type | Example | Acceleration | Residual | Correlate | Rank | Difference | Mean |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| `age_years` | Horvath 2013 | yes | yes | yes | — | yes | yes |
-| `gestational_weeks` | Knight, Bohlin | yes | yes | yes | — | yes | yes |
-| `telomere_kb` | DNAmTL | yes | — | yes | — | yes | yes |
-| `mortality_log_hazard` | ZhangMortality | **no** | — | yes | yes | — | yes |
-| `pace_ratio` | DunedinPACE | **no** | — | yes | yes | yes | yes |
-| `divisions` | epiTOC2, stemTOC | **no** | — | yes | yes | yes | yes |
-| `proportion` | deconvolution | **no** | — | yes | — | yes | yes (compositional) |
-| `relative_score` | mammalian relative age | **no** | — | yes | yes | — | — |
+| `age_years` | Horvath 2013 | yes | yes | yes | - | yes | yes |
+| `gestational_weeks` | Knight, Bohlin | yes | yes | yes | - | yes | yes |
+| `telomere_kb` | DNAmTL | yes | - | yes | - | yes | yes |
+| `mortality_log_hazard` | ZhangMortality | **no** | - | yes | yes | - | yes |
+| `pace_ratio` | DunedinPACE | **no** | - | yes | yes | yes | yes |
+| `divisions` | epiTOC2, stemTOC | **no** | - | yes | yes | yes | yes |
+| `proportion` | deconvolution | **no** | - | yes | - | yes | yes (compositional) |
+| `relative_score` | mammalian relative age | **no** | - | yes | yes | - | - |
 
 FALCONAge enforces these. `acceleration(res, method="absolute")` on a `pace_ratio` clock raises
 `IllegalOperationError` rather than returning a meaningless number. Averaging is permitted by the
@@ -618,21 +618,21 @@ multiplication to be worth a device, and choosing CUDA because a card exists wou
 case six times slower on every machine that has one, silently.
 
 Where it should pay off, none of which is tier A yet: the **PC clocks** (78,464 features, 78 MB to
-1.2 GB coefficient tensors — thirty times the current largest), **AltumAge**, which is a multilayer
+1.2 GB coefficient tensors - thirty times the current largest), **AltumAge**, which is a multilayer
 perceptron rather than a dot product, and **CpGPT**, a transformer where the GPU is not optional.
 [docs/gpu.md](docs/gpu.md) has the full verification: what was already installed, what had to be,
 device and dtype resolution, and the numerics.
 
-**CPU and GPU results are not bit-identical** — they differ by up to 1.3e-13 years (14 ulps),
+**CPU and GPU results are not bit-identical** - they differ by up to 1.3e-13 years (14 ulps),
 because numpy's BLAS and cuBLAS sum a dot product in different orders. The bit-identity FALCONAge
 claims is between *R and Python*, which share one core; it was never a claim about two devices.
 The run manifest records `device` and `dtype` so a number is reproducible against the manifest
 that produced it.
 
 FP64 is the default because that is what the gold-standard vectors are generated at. Single
-precision costs 7e-5 years on the same device — four orders of magnitude more than the device
+precision costs 7e-5 years on the same device - four orders of magnitude more than the device
 difference, still negligible against effects measured in years. Clocks whose registry entry sets
-`requires_fp64` — the PC clocks, whose high-dimensional rotations are ill-conditioned — are
+`requires_fp64` - the PC clocks, whose high-dimensional rotations are ill-conditioned - are
 promoted back to double with a warning, so `dtype="float32"` is safe to set globally.
 
 ## 9. Docker
@@ -656,7 +656,7 @@ docker build -f docker/Dockerfile.cuda -t falconage:1.0.0-cuda .   # ~9 GB, adds
 ### 9.2 Get the benchmark corpus
 
 A separate, tiny image, deliberately: the corpus is what the package is tested *against*, so an
-image that needed the package installed in order to fetch it would be circular — and fetching a
+image that needed the package installed in order to fetch it would be circular - and fetching a
 fixture is the first thing you do when the package is broken.
 
 33 files, 586 MB, from GEO and Hugging Face. It lands in the mounted directory, never inside an
@@ -701,7 +701,7 @@ docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
 ```
 
 `test/run_all.py` writes `test/output/<group>/<dataset>/`, the figures to `test/output_figures/`,
-and rewrites the generated tables in [test/README.md](test/README.md) — so the numbers in that
+and rewrites the generated tables in [test/README.md](test/README.md) - so the numbers in that
 document cannot drift from the numbers the code produces, because they are the same numbers.
 
 ### 9.4 GPU
@@ -740,7 +740,7 @@ Mount the cache volume. Nothing tier A needs it, but the PC clocks are several h
 each, and re-fetching them on every container start is the difference between a two-minute run and
 a twenty-minute one.
 
-To iterate on the source without rebuilding — the entrypoint puts the mounted tree ahead of the
+To iterate on the source without rebuilding - the entrypoint puts the mounted tree ahead of the
 installed copy, for R as well as Python, so the two cannot drift apart mid-session:
 
 ```bash
@@ -773,7 +773,7 @@ score for the same clock either used the same weights, or the manifest says they
 Twenty-five figure types, identical in Python and R because both read their colours, titles and
 one-line descriptions from the same `colorscheme.yaml`. Every plotting function returns its data
 frame as well as its figure, which is how two rendering engines draw the same numbers. A figure
-whose data is empty, flat or all zeros is not drawn at all — `NothingToPlot` is raised and the
+whose data is empty, flat or all zeros is not drawn at all - `NothingToPlot` is raised and the
 reason recorded, because an axis-free rectangle in a report reads as a measurement of nothing
 rather than an absence of measurement.
 
@@ -787,7 +787,7 @@ The figure to look at first, if you look at one:
 
 Six panels on a shared clock axis, ordered by benchmark total: what each clock predicts and on
 what scale, how many datasets it was scoreable on, its coverage, a dot per dataset for the
-case–control effect — filled where significant, hollow where not — then median absolute error and
+case–control effect - filled where significant, hollow where not - then median absolute error and
 the bias that discounts it.
 
 The ordering is the argument. The clocks that detect real conditions are not the clocks with the
@@ -800,7 +800,7 @@ because it would have no age acceleration left to detect anything with.
 
 Left, the familiar one, with the identity line always drawn. Right, the one with no precedent in
 the literature and the reason it earns its place: a correlation heatmap says two clocks agree, and
-this says how much of that agreement was built in — chord width is the number of CpGs the two
+this says how much of that agreement was built in - chord width is the number of CpGs the two
 clocks literally share. A pair with a thick chord and a high correlation has told you much less
 than a pair with a high correlation and no chord at all.
 
@@ -808,7 +808,7 @@ than a pair with a high correlation and no chord at all.
 
 Test a clock the way the field now expects: does it show higher age acceleration in people with
 aging-accelerating conditions than in healthy controls? Median absolute error against
-chronological age does not answer that — a perfect chronological oracle would be useless.
+chronological age does not answer that - a perfect chronological oracle would be useless.
 
 ```python
 bench = fa.run_benchmark(res, condition_col="condition", control="HC",
@@ -816,7 +816,7 @@ bench = fa.run_benchmark(res, condition_col="condition", control="HC",
 bench.summary
 ```
 
-Real output, from the ten-study corpus in [test/](test/README.md) — 13 of 102 comparisons
+Real output, from the ten-study corpus in [test/](test/README.md) - 13 of 102 comparisons
 significant at BH q < 0.05:
 
 ```
@@ -832,14 +832,14 @@ yingdamage          0    0  71.230  -28.486     0.0
 `AA2` counts datasets where the condition cohort accelerated significantly relative to its own
 controls; `AA1` counts datasets where it accelerated above zero with no control group; `MedE` is
 the systematic bias on healthy controls, measured on controls only, and it discounts the AA1
-credit — a clock that over-predicts everyone would otherwise sweep AA1.
+credit - a clock that over-predicts everyone would otherwise sweep AA1.
 
 ```
 total = AA2 + AA1 * (1 - max(0, MedE) / MedAE)
 ```
 
 Read the last two rows together. `zhangblup` has a MedAE of 30.6 years and a MedE of exactly the
-same, which means it is off by thirty years *in one direction* on every control — a calibration
+same, which means it is off by thirty years *in one direction* on every control - a calibration
 failure, not a noise problem, and its single AA2 hit should be read with that in mind.
 `yingdamage` detects nothing here at all. Neither is a bug: on this corpus, with these ten
 studies, that is what they do.
@@ -874,7 +874,7 @@ Ten things that produce a wrong number without producing an error anywhere else.
 
 1. **Units.** Albumin g/L against g/dL is 10×; creatinine µmol/L against mg/dL is 88×; CRP mg/L
    against mg/dL is 10× inside a logarithm. FALCONAge refuses to guess. Two published PhenoAge
-   parameterisations exist and are not interconvertible by rescaling inputs — pick with `units=`.
+   parameterisations exist and are not interconvertible by rescaling inputs - pick with `units=`.
 2. **EPIC v2 suffixes.** Aggregate replicate probes or every clock sees zero features.
 3. **DunedinPACE background probes.** The 19,827 non-scoring probes define the quantile mapping.
    Subsetting to the 173 scoring CpGs gives a plausible wrong answer.
@@ -895,7 +895,7 @@ Ten things that produce a wrong number without producing an error anywhere else.
     and paediatric clocks exist for a reason, and the registry's `population` field is enforced.
 
 Eleven clocks also carry documented disagreements between the published paper and the coefficient
-sets in circulation — Bohlin (96 CpGs published, 251 distributed), CVDWesterman (1,305 against
+sets in circulation - Bohlin (96 CpGs published, 251 distributed), CVDWesterman (1,305 against
 235), ZhangMortality (an integer quartile count against a continuous weighted sum), and others.
 FALCONAge records both readings and warns at score time rather than silently inheriting one side.
 
@@ -977,7 +977,7 @@ to each tagged release:
 
 | File | What it is |
 |---|---|
-| `FALCONAge-manual.pdf` | The R reference manual — every exported function, from the roxygen blocks, in the standard `R CMD Rd2pdf` layout CRAN uses. |
+| `FALCONAge-manual.pdf` | The R reference manual - every exported function, from the roxygen blocks, in the standard `R CMD Rd2pdf` layout CRAN uses. |
 | `FALCONAge-python-reference.pdf` | The Python API and both guides, rendered as one Quarto book through Typst. |
 | `FALCONAge-docs-markdown.zip` | The whole site as GitHub-flavoured markdown, plus the R help pages converted from `.Rd`. Greppable, diffable, and what to feed a search index. |
 
@@ -993,17 +993,17 @@ the markdown bundle needs Quarto alone.
 
 ## See also
 
-- [Documentation site](https://bhagesh-h.github.io/FALCONAge/) — guides, both API references, and
+- [Documentation site](https://bhagesh-h.github.io/FALCONAge/) - guides, both API references, and
   the searchable clock catalogue. Also downloadable as PDF or markdown; see §17.
-- [docs/gpu.md](docs/gpu.md) — the GPU verification: hardware, what was installed, numerics and
+- [docs/gpu.md](docs/gpu.md) - the GPU verification: hardware, what was installed, numerics and
   measured speed.
-- [test/README.md](test/README.md) — what the benchmark corpus is, and how to read every figure
+- [test/README.md](test/README.md) - what the benchmark corpus is, and how to read every figure
   and output table it produces.
-- [pyaging](https://github.com/lucascamillomd/pyaging) — the most complete existing clock
+- [pyaging](https://github.com/lucascamillomd/pyaging) - the most complete existing clock
   compendium, and the source of most FALCONAge gold-standard vectors.
-- [biolearn](https://bio-learn.github.io/) — the Biomarkers of Aging Consortium reference library.
-- [ComputAge](https://github.com/ComputationalAgingLab/ComputAge) — the AA1/AA2 benchmarking
+- [biolearn](https://bio-learn.github.io/) - the Biomarkers of Aging Consortium reference library.
+- [ComputAge](https://github.com/ComputationalAgingLab/ComputAge) - the AA1/AA2 benchmarking
   methodology and its 65-study dataset.
-- [methylCIPHER](https://github.com/HigginsChenLab/methylCIPHER) — the broadest R clock library.
-- [BioAge](https://github.com/dayoonkwon/BioAge) — the reference KDM, PhenoAge and homeostatic
+- [methylCIPHER](https://github.com/HigginsChenLab/methylCIPHER) - the broadest R clock library.
+- [BioAge](https://github.com/dayoonkwon/BioAge) - the reference KDM, PhenoAge and homeostatic
   dysregulation implementation.

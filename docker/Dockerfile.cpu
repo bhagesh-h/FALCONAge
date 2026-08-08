@@ -1,5 +1,5 @@
 # =============================================================================
-# FALCONAge — reproducible CPU environment
+# FALCONAge - reproducible CPU environment
 # =============================================================================
 #
 # STATUS. This recipe needs python/pyproject.toml, python/uv.lock and

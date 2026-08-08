@@ -1,5 +1,5 @@
 # =============================================================================
-# FALCONAge — public test corpus
+# FALCONAge - public test corpus
 # =============================================================================
 #
 # One manifest, two fetchers. fetch_test_data.py and fetch_test_data.R both read

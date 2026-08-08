@@ -42,7 +42,7 @@ Every clock carries a `scale_type`, and it decides which downstream operations a
 
 | Scale | Legal | Not legal |
 |---|---|---|
-| `age_years` | acceleration, residual, difference, correlation | — |
+| `age_years` | acceleration, residual, difference, correlation | - |
 | `gestational_weeks` | the same, in weeks | mixing with years |
 | `mortality_log_hazard` | correlation, rank, hazard ratio | acceleration: a log-hazard has no zero on the age scale |
 | `pace_ratio` | correlation, rank, difference | acceleration: it is already a rate |
@@ -59,7 +59,7 @@ A clock trained on 450K runs perfectly well on EPIC data that carries its probes
 which is what `compatible_clocks()` checks.
 
 But high coverage does not make a result meaningful. The mammalian methylation array was designed
-around CpGs conserved across mammals, and carries 96% of Horvath2013's 353 probes — so a zebra
+around CpGs conserved across mammals, and carries 96% of Horvath2013's 353 probes - so a zebra
 scores at *higher* coverage than many human 450K datasets and returns a confident number from a
 clock fitted on people. Nothing in the arithmetic can notice. Set `species` and FALCONAge warns:
 

@@ -10,7 +10,7 @@ This page is generated from `registry/clocks.yaml` at build time, so it cannot d
 catalogue different from the one the package ships. Every column below is a field the scoring code
 reads.
 
-`scale_type` is the load-bearing one. It is not a label — it decides which downstream operations
+`scale_type` is the load-bearing one. It is not a label - it decides which downstream operations
 FALCONAge will perform, and asking for age acceleration on a `pace_ratio` clock is refused rather
 than computed.
 
@@ -34,7 +34,7 @@ TIER = {
 
 for tier in ("A", "B", "C"):
     rows = [c for c in clocks if c.availability == tier]
-    print(f"\n## Tier {tier} — {len(rows)} clocks\n")
+    print(f"\n## Tier {tier} - {len(rows)} clocks\n")
     print(TIER[tier] + "\n")
     print("| Clock | Year | Predicts | Scale | Features | Platform |")
     print("|---|---:|---|---|---:|---|")

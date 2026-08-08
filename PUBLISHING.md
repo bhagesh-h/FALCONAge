@@ -1,7 +1,7 @@
 # Publishing FALCONAge
 
-Where each half of this package can be distributed, what each route needs, and — the part most
-release documents leave out — what is still missing for the routes not yet taken.
+Where each half of this package can be distributed, what each route needs, and - the part most
+release documents leave out - what is still missing for the routes not yet taken.
 
 Nothing here is on a registry today. `pip install falconage` and `install.packages("FALCONAge")`
 both find nothing, and the README says so. This file is the plan for changing that.
@@ -17,7 +17,7 @@ both find nothing, and the README says so. This file is the plan for changing th
 | **Bioconductor** | probably not | see below |
 | **GHCR (Docker)** | needs a decision | no image is published; both build from source |
 
-## 1. GitHub tags — the current channel
+## 1. GitHub tags - the current channel
 
 A tag is the whole distribution mechanism right now, and it is a real one: both package managers
 install from a git ref, and a tag is immutable in the way a branch is not.
@@ -35,11 +35,11 @@ tarball as CRAN would with `error_on = "warning"`, and attaches everything to th
 
 The three version checks exist because they have each failed somewhere. A tag that disagrees with
 the package version produces a release whose tarball installs as a different version than its
-name, which is unfixable afterwards — the tag is what a citation points at. A `CITATION.cff` left
+name, which is unfixable afterwards - the tag is what a citation points at. A `CITATION.cff` left
 at the previous version is worse than no citation file, because it is confidently wrong and
 GitHub renders it in the sidebar.
 
-## 2. r-universe — the next step, and nearly free
+## 2. r-universe - the next step, and nearly free
 
 r-universe builds and checks the package on Windows, macOS and Linux on every push, and gives
 users `install.packages("FALCONAge", repos = "https://bhagesh-h.r-universe.dev")` with binaries
@@ -53,7 +53,7 @@ Set-up is one file in a separate repository named `bhagesh-h.r-universe.dev`:
                "subdir": "r"}]}
 ```
 
-`subdir` matters — the R package is not at the repository root.
+`subdir` matters - the R package is not at the repository root.
 
 Nothing in `.github/workflows/` is needed for this, which is why it is documented here rather
 than automated.
@@ -97,14 +97,14 @@ The honest gap table. None of these is hard; together they are a week.
 | Reverse-dependency safety | n/a | nothing depends on it yet |
 
 The real question for CRAN is not any of the above. It is whether a package whose numerical core
-is a Python dependency belongs there at all. CRAN accepts reticulate packages — tensorflow and
-keras are on it — but the review is stricter and the maintenance burden is real: every CRAN check
+is a Python dependency belongs there at all. CRAN accepts reticulate packages - tensorflow and
+keras are on it - but the review is stricter and the maintenance burden is real: every CRAN check
 machine that cannot build the Python environment produces a NOTE you have to explain again at
 every release.
 
 ## 5. Bioconductor
 
-Plausible on subject matter — the `biocViews` in `DESCRIPTION` are real ones, and methylation
+Plausible on subject matter - the `biocViews` in `DESCRIPTION` are real ones, and methylation
 tooling is squarely Bioconductor's area. Two things argue against it.
 
 The package does not use Bioconductor classes. It takes a matrix and returns a data frame; there
@@ -121,7 +121,7 @@ maybe.
 ## 6. Docker images
 
 Both images build from source and neither is published. Publishing to GHCR is a small workflow —
-`docker/build-push-action` on a tag, `permissions: packages: write` — and the decision is about
+`docker/build-push-action` on a tag, `permissions: packages: write` - and the decision is about
 what it commits you to rather than about the difficulty.
 
 The CUDA image is about 9 GB. Publishing it means publishing a 9 GB artefact per release, and

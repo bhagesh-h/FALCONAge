@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # =============================================================================
-# FALCONAge — test corpus fetcher
+# FALCONAge - test corpus fetcher
 # =============================================================================
 #
 # WHY THIS IS A SEPARATE IMAGE AND NOT A STAGE OF Dockerfile.cpu. Three reasons,

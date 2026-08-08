@@ -25,7 +25,7 @@ On Windows PowerShell use `${PWD}` instead of `$PWD`. Through compose the mount 
 docker compose -f docker/docker-compose.yml run --rm testdata plan
 ```
 
-Without Docker, either script runs standalone — Python needs `PyYAML`, R needs
+Without Docker, either script runs standalone - Python needs `PyYAML`, R needs
 `yaml`, `jsonlite`, `curl`, `digest`:
 
 ```bash
@@ -40,7 +40,7 @@ same manifest, and they write a **byte-identical** `checksums.sha256` and `prove
 
 That is not decoration. FALCONAge proper wraps one Python numerical core from R, so the two
 languages cannot disagree about a clock score. The corpus is the one artefact that sits *outside*
-that guarantee — it is what the package is tested against, so a fetcher that depended on the
+that guarantee - it is what the package is tested against, so a fetcher that depended on the
 package would be circular. Two independent implementations that agree byte for byte is the
 substitute, and `docker build` asserts it:
 
@@ -86,7 +86,7 @@ Eight conditions with matched controls, two case-only cohorts, three array gener
 
 Chosen against three constraints at once. **Progeria** is the hard case, not the easy one:
 running the corpus shows every clock in the registry failing to separate HGPS from age-matched
-healthy, which is the published result rather than a bug — Horvath's own work found progeroid
+healthy, which is the published result rather than a bug - Horvath's own work found progeroid
 syndromes have near-normal DNAm age. It is in the corpus because a benchmark made only of
 conditions the clocks already detect measures nothing. **The two case-only sets** exist because
 AA1 and AA2 are different tests and a corpus with only matched designs never executes the AA1
@@ -117,13 +117,13 @@ pipeline whose choices are not recorded. This is the only path FALCONAge control
 it is the one that decides whether two labs' numbers are comparable.
 
 Two samples per platform is enough for correctness and not enough for a normalisation that
-estimates parameters across a plate — funnorm on n=2 is not funnorm. The full `RAW.tar` for either
+estimates parameters across a plate - funnorm on n=2 is not funnorm. The full `RAW.tar` for either
 series is several hundred megabytes and does not fit the budget.
 
 ### gestational
 
 GSE66459: 11 preterm and 11 term umbilical cord blood samples on 450K. A series matrix, so the
-characteristics and the betas arrive in one file — which also makes it the fixture for the
+characteristics and the betas arrive in one file - which also makes it the fixture for the
 series-matrix reader, the path roughly 60% of GEO methylation series need because they publish no
 IDATs.
 
@@ -138,7 +138,7 @@ Four whole-blood RRBS samples from GSE80672 (Petkovich), two at 0.67 and two at 
 
 The mouse clocks are not array clocks: they key on genomic coordinate, not `cg` identifier, and
 no array file here can stand in. This is also the corpus's only sequencing input, so it is the
-only thing that exercises coverage-weighted beta estimation — a site read four times and one read
+only thing that exercises coverage-weighted beta estimation - a site read four times and one read
 four hundred times are not the same measurement.
 
 > **Months, labelled years.** GEO records the age field as `age (years)` and the values run 0.67
@@ -148,7 +148,7 @@ four hundred times are not the same measurement.
 > contrived example.
 
 GSM2132960 is titled `M3503R` against `M3503` above it, with identical age, sex, strain, diet and
-genotype — a re-run of the same animal. GEO does not say so outright, so treat it as a
+genotype - a re-run of the same animal. GEO does not say so outright, so treat it as a
 near-duplicate rather than a certified technical replicate. It is still the only thing here that
 can put a number on a clock's own measurement noise instead of quoting the published ICC.
 
@@ -157,7 +157,7 @@ can put a number on a clock's own measurement noise instead of quoting the publi
 GSE330325, eight samples. EPIC v2 renamed its probes: `cg00000029` became `cg00000029_TC21`, and
 a clock matching on exact identifiers finds zero of its features and returns a confident number
 computed entirely from imputed values. Suffix aggregation is mandatory, not an optimisation, and
-the replicate structure — some probes appear two or three times with different suffixes — cannot
+the replicate structure - some probes appear two or three times with different suffixes - cannot
 be faked convincingly. This file also carries the metadata for the two EPIC v2 IDAT pairs above.
 
 ### mammalian
@@ -166,10 +166,10 @@ GSE184222 (wild ass and Grevy's zebra, 12 samples, ages 2.4–18.5 y) and GSE184
 17 samples), each as a normalised beta CSV plus a 2 kB series matrix. Human 450K data cannot
 exercise the mammalian clocks: the probe namespace is different and the species lookup has
 nothing to look up. GSE184224 is the cross-check that separates a species effect from an array
-effect — same probes, same pipeline, a species the human clocks also cover.
+effect - same probes, same pipeline, a species the human clocks also cover.
 
 > **Three species, not 348.** The Mammalian Methylation Consortium's full matrix (GSE223748) is a
-> single 4.2 GB file — four times this entire corpus for one group. It is out of budget, and named
+> single 4.2 GB file - four times this entire corpus for one group. It is out of budget, and named
 > here rather than quietly omitted.
 
 ### clinical
@@ -213,7 +213,7 @@ in place without the name changing. What the fetcher guarantees is that the byte
 changed *since you fetched them*, which is a weaker claim than verification and a real one.
 
 Sizes were read from the live listings on 2026-08-07. A size mismatch is a warning, not a
-failure — the honest response to a re-uploaded file is "the manifest is stale", not a refusal to
+failure - the honest response to a re-uploaded file is "the manifest is stale", not a refusal to
 work.
 
 ## Files the fetcher writes
@@ -232,10 +232,10 @@ the last one, which is the only thing anybody ever wants to do with it.
 
 The corpus is fetched, never redistributed. Terms belong to the publishers:
 
-- **ComputAgeBench** — CC-BY-SA-4.0. Cite Kriukov et al. 2024, bioRxiv 2024.06.06.597715.
-- **GEO** — public; individual submitters' and source publications' terms apply. Several of these
+- **ComputAgeBench** - CC-BY-SA-4.0. Cite Kriukov et al. 2024, bioRxiv 2024.06.06.597715.
+- **GEO** - public; individual submitters' and source publications' terms apply. Several of these
   series are human subject data reused under the consent the original study obtained.
-- **BioAge** — GPL-3.0 for the extraction and harmonisation. NHANES itself is US federal public
+- **BioAge** - GPL-3.0 for the extraction and harmonisation. NHANES itself is US federal public
   domain. Cite Kwon & Belsky 2021, GeroScience 43:2795–2808.
 
 ## Adding a dataset

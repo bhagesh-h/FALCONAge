@@ -34,7 +34,7 @@ falconage_config()    # what resolved: versions, devices, registry size
 ```
 
 `falconage_install()` fetches the Python core from the same GitHub tag this package was built
-from, so the two halves cannot drift — which matters here more than usual, because the test suite
+from, so the two halves cannot drift - which matters here more than usual, because the test suite
 asserts that R and Python return the same bits, and a mismatched pair fails that assertion in a
 way that reads as a numerical bug rather than as version skew.
 
@@ -91,7 +91,7 @@ acceleration(res, method = "within_group", group = "dataset")
 
 Absolute is interpretable in years and carries the clock's own bias: a clock five years high on
 everybody gives everybody five years of acceleration. Residual removes that bias, and removes any
-real cohort-wide effect with it. Within-group is what the AA2 benchmark needs — it asks whether
+real cohort-wide effect with it. Within-group is what the AA2 benchmark needs - it asks whether
 cases accelerate relative to *their own* controls.
 
 Ask for acceleration on a pace-of-aging clock and it refuses:
@@ -141,7 +141,7 @@ Units are required and never guessed. Albumin at 4.2 is g/dL and albumin at 42 i
 clinically normal, and PhenoAge fitted on one returns nonsense for the other. No range check can
 separate them, so the only correct behaviour is to ask.
 
-KDM and homeostatic dysregulation have no fixed coefficients at all — they are defined relative
+KDM and homeostatic dysregulation have no fixed coefficients at all - they are defined relative
 to a reference cohort:
 
 ```{r}

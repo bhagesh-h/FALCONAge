@@ -2,7 +2,7 @@
 
 Verified on real hardware on 2026-08-08. The short version: the GPU path works,
 it is numerically sound, and for the clocks that ship today it is **slower than
-the CPU** — so `device="auto"` resolves to CPU and the GPU is opt-in.
+the CPU** - so `device="auto"` resolves to CPU and the GPU is opt-in.
 
 ## The machine
 
@@ -11,7 +11,7 @@ the CPU** — so `device="auto"` resolves to CPU and the GPU is opt-in.
 | GPU | NVIDIA GeForce RTX 4060 Laptop, 8 GB, compute capability sm_89 (Ada) |
 | Driver | 610.88, CUDA UMD 13.3 |
 | Container runtime | Docker 29.6.1, GPU passthrough working via `--gpus all` |
-| Second adapter | AMD Radeon 780M (integrated; not used — FALCONAge has no ROCm path) |
+| Second adapter | AMD Radeon 780M (integrated; not used - FALCONAge has no ROCm path) |
 
 ## What was already present, and what had to be installed
 
@@ -21,9 +21,9 @@ Nothing was installed on the host. Everything went into a throwaway container.
 |---|---|---|
 | NVIDIA driver 610.88 | already installed | none |
 | CUDA user-mode driver 13.3 | already installed | none |
-| Docker GPU passthrough | already working | none — `docker run --gpus all nvidia/cuda:12.4.1-base nvidia-smi` returned the card first try |
-| CUDA toolkit on the host | **not installed, and not needed** | none — the torch wheel bundles its own runtime; only the driver has to be on the host |
-| `torch` with CUDA | **missing** — the CPU image ships without it on purpose | installed `torch 2.6.0+cu124` inside a container, from `docker/Dockerfile.cuda`. Nothing was added to the host |
+| Docker GPU passthrough | already working | none - `docker run --gpus all nvidia/cuda:12.4.1-base nvidia-smi` returned the card first try |
+| CUDA toolkit on the host | **not installed, and not needed** | none - the torch wheel bundles its own runtime; only the driver has to be on the host |
+| `torch` with CUDA | **missing** - the CPU image ships without it on purpose | installed `torch 2.6.0+cu124` inside a container, from `docker/Dockerfile.cuda`. Nothing was added to the host |
 | `nvidia-container-toolkit` | already configured | none |
 
 The driver reports CUDA 13.3 and the wheel is built against 12.4. That is the
@@ -69,7 +69,7 @@ orders, and floating-point addition is not associative. It is not a defect and
 it is not fixable without giving up the vendor kernels.
 
 **What this means for the conformance guarantee.** FALCONAge claims R and Python
-return the same bits. That claim is intact — both go through the same Python
+return the same bits. That claim is intact - both go through the same Python
 core, and the R suite asserts equality at tolerance exactly zero. It is a
 statement about the two *languages*, not about two *devices*. A CPU result and a
 GPU result agree to about 1e-13 and are not bit-identical. The run manifest
@@ -103,7 +103,7 @@ says why:
 ```
 
 The arithmetic is 3 ms. Everything else is aligning features and moving the
-matrix across PCIe — 2.4 GB of transfers at 16,384 samples, to save a few
+matrix across PCIe - 2.4 GB of transfers at 16,384 samples, to save a few
 milliseconds of compute. A linear clock is simply too small a matrix
 multiplication to be worth a device.
 
@@ -116,12 +116,12 @@ machine that has one, silently. The GPU is opt-in: `device="cuda"` or
 
 Not for the 23 tier A clocks. It should pay for itself on:
 
-- **the PC clocks** — 78,464 features and coefficient tensors of 78 MB to 1.2 GB.
+- **the PC clocks** - 78,464 features and coefficient tensors of 78 MB to 1.2 GB.
   Thirty times the feature count of the current largest, so the matmul stops
   being a rounding error.
-- **neural architectures** — AltumAge is a multilayer perceptron, not a dot
+- **neural architectures** - AltumAge is a multilayer perceptron, not a dot
   product, and has real depth to parallelise.
-- **CpGPT** — a transformer, where the GPU is not optional.
+- **CpGPT** - a transformer, where the GPU is not optional.
 
 None of those are tier A yet, which is exactly why this document can only report
 that the path is correct rather than that it is fast.
@@ -129,7 +129,7 @@ that the path is correct rather than that it is fast.
 ## A performance bug this found
 
 Profiling for the GPU comparison turned up something unrelated to GPUs. Feature
-alignment was looping `X.iloc[:, i]` once per feature — 2,666 pandas indexing
+alignment was looping `X.iloc[:, i]` once per feature - 2,666 pandas indexing
 calls for one eight-clock run, 76% of total runtime, against 0.5% for the
 arithmetic they fed. Replacing the loop with a single `reindex` made the **CPU
 path 2.1× faster** at 4,096 samples (0.358 s to 0.171 s), which benefits every
@@ -148,7 +148,7 @@ docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.0.0-cuda \
   python test/gpu_check.py
 ```
 
-`test/gpu_check.py` runs the five steps in the order above — what torch sees,
+`test/gpu_check.py` runs the five steps in the order above - what torch sees,
 device and dtype resolution, CPU-versus-GPU agreement, the speed and precision
 table, and the profile that explains it. Each step is meaningless if the one
 before it failed, so it stops rather than continuing. On a machine with no CUDA
