@@ -1,0 +1,358 @@
+# =============================================================================
+# FALCONAge — one visual specification, read by both languages
+# =============================================================================
+#
+# This file is the single input that decides what every figure looks like AND
+# what it says. Python's matplotlib layer and R's ggplot2 layer both read it at
+# call time, so a colour changed here changes both, and a caption reworded here
+# is reworded in both. Nothing about a figure's appearance or its text lives in
+# code.
+#
+# WHY THE TEXT IS HERE TOO, not just the colours. A figure that carries its own
+# title, subtitle and one-line description is readable when it is pasted into a
+# slide with no caption -- which is what happens to every figure eventually. If
+# that text lived in two implementations it would drift, and a reader comparing
+# an R figure with a Python one would be reading two different claims about the
+# same numbers.
+#
+# WHY OKABE-ITO. Several of these figures encode group membership in hue and
+# nothing else, so the palette has to survive deuteranopia and protanopia. The
+# Okabe-Ito eight is the standard choice and is ordered here so the first two
+# entries -- the ones a two-group comparison uses -- are the most separable pair
+# in the set.
+# =============================================================================
+
+schema_version: 1
+
+# -----------------------------------------------------------------------------
+# palette
+# -----------------------------------------------------------------------------
+palette:
+  # Categorical, in assignment order. Okabe-Ito.
+  categorical:
+    - "#0072B2"   # blue        -- first group, and the default single colour
+    - "#D55E00"   # vermillion  -- second group; maximally separable from blue
+    - "#009E73"   # bluish green
+    - "#CC79A7"   # reddish purple
+    - "#E69F00"   # orange
+    - "#56B4E9"   # sky blue
+    - "#F0E442"   # yellow
+    - "#000000"   # black
+
+  # Semantic roles. Used where a colour means something rather than merely
+  # distinguishing one thing from another.
+  semantic:
+    control: "#56B4E9"      # healthy comparison group
+    case: "#D55E00"         # condition group
+    accelerated: "#D55E00"  # positive age acceleration
+    decelerated: "#0072B2"  # negative age acceleration
+    neutral: "#7F7F7F"
+    pass: "#009E73"         # above threshold, usable
+    warn: "#E69F00"         # marginal
+    fail: "#D55E00"         # below threshold, refused
+    reference: "#404040"    # identity lines, zero lines, thresholds
+    highlight: "#CC79A7"
+
+  # Diverging, for correlation matrices and signed effects. Centred on zero.
+  diverging:
+    low: "#D55E00"
+    mid: "#FFFFFF"
+    high: "#0072B2"
+
+  # Sequential, for coverage and density. Perceptually ordered light to dark.
+  sequential:
+    - "#F7FBFF"
+    - "#C6DBEF"
+    - "#6BAED6"
+    - "#2171B5"
+    - "#08306B"
+
+  # Platform colours, so the same array is the same colour in every figure that
+  # splits by platform. Assigned by generation rather than arbitrarily.
+  platform:
+    27K: "#F0E442"
+    450K: "#0072B2"
+    EPICv1: "#009E73"
+    EPICv2: "#CC79A7"
+    MSA: "#56B4E9"
+    MammalMethylChip40: "#E69F00"
+    RRBS: "#D55E00"
+    unknown: "#7F7F7F"
+
+# -----------------------------------------------------------------------------
+# typography and geometry
+# -----------------------------------------------------------------------------
+theme:
+  base_size: 10
+  title_size: 12
+  subtitle_size: 9.5
+  caption_size: 8
+  point_size: 2.2
+  point_alpha: 0.85
+  line_width: 1.0
+  reference_line: "dashed"
+  grid_alpha: 0.25
+  dpi: 150
+  # Wide enough for a two-column figure at 90 mm, tall enough that a 20-clock
+  # panel is not squeezed.
+  width: 6.0
+  height: 4.2
+
+# -----------------------------------------------------------------------------
+# the figures
+# -----------------------------------------------------------------------------
+# Each entry supplies the three pieces of text every figure carries:
+#   title       what it is
+#   subtitle    what to look at, in one clause
+#   description one line under the axes saying what a reader should conclude
+#
+# `{}` fields are filled at render time from the data.
+# -----------------------------------------------------------------------------
+plots:
+
+  # ---- per-clock accuracy and calibration -----------------------------------
+  ba_vs_ca:
+    title: "Predicted against chronological age"
+    subtitle: "{clock} · n = {n} · r = {r} · MedAE = {medae} years"
+    description: >-
+      Distance from the dashed identity line is error, not acceleration; a clock
+      sitting parallel to it but offset is biased, which MedE quantifies.
+    xlab: "chronological age (years)"
+    ylab: "predicted ({unit})"
+
+  bland_altman:
+    title: "Agreement across the age range"
+    subtitle: "{clock} · bias = {bias} years · limits of agreement {lo} to {hi}"
+    description: >-
+      A trend in this cloud means the clock's error depends on age, which a
+      correlation coefficient cannot show and which invalidates a single MedAE.
+    xlab: "mean of predicted and chronological age (years)"
+    ylab: "predicted - chronological (years)"
+
+  calibration:
+    title: "Residual against chronological age"
+    subtitle: "{clock} · slope = {slope} · a flat line at zero is perfect calibration"
+    description: >-
+      A negative slope is regression to the mean: the clock over-ages the young
+      and under-ages the old, which is the most common artefact in this field.
+    xlab: "chronological age (years)"
+    ylab: "residual (years)"
+
+  # ---- age acceleration and group comparison --------------------------------
+  acceleration_by_group:
+    title: "Age acceleration by group"
+    subtitle: "{clock} · {method} convention · {groups}"
+    description: >-
+      Each point is one sample; the box is the median and interquartile range.
+      Read the separation between groups, not the distance from zero.
+    xlab: ""
+    ylab: "age acceleration (years)"
+
+  acceleration_density:
+    title: "Distribution of age acceleration"
+    subtitle: "{clock} · {method} convention · n = {n}"
+    description: >-
+      Counted, not smoothed: a kernel density on a dozen cases invents structure
+      that is not in the data.
+    xlab: "age acceleration (years)"
+    ylab: "samples"
+
+  acceleration_heatmap:
+    title: "Age acceleration across clocks and samples"
+    subtitle: "{n_clocks} clocks x {n_samples} samples · z-scored within clock"
+    description: >-
+      Rows that disagree are clocks measuring different things; a column that is
+      red everywhere is a sample, not a finding.
+    xlab: "sample"
+    ylab: "clock"
+
+  forest:
+    title: "Effect of condition on age acceleration"
+    subtitle: "{n} comparisons · point and 95% interval · BH-corrected"
+    description: >-
+      Intervals crossing zero are the honest majority. Width tracks sample size,
+      so a wide interval far from zero is a small study, not a large effect.
+    xlab: "difference in median acceleration (years)"
+    ylab: ""
+
+  trajectory:
+    title: "Longitudinal trajectories"
+    subtitle: "{clock} · {n} subjects with repeated measures"
+    description: >-
+      One line per subject. Crossing lines mean the clock ranks people
+      differently at different visits, which bounds how well it can track
+      an intervention.
+    xlab: "chronological age (years)"
+    ylab: "predicted ({unit})"
+
+  # ---- cross-clock ----------------------------------------------------------
+  clock_corr:
+    title: "Agreement between clocks"
+    subtitle: "Spearman rank correlation · {n_clocks} clocks · {n} samples"
+    description: >-
+      Rank, not Pearson: clocks on different scales have no meaningful linear
+      correlation. Blocks of agreement are usually shared training data.
+    xlab: ""
+    ylab: ""
+
+  clock_scatter_matrix:
+    title: "Clock against clock"
+    subtitle: "{n_clocks} clocks · every pair, on the rank scale"
+    description: >-
+      Clocks frequently disagree about who is old. Off-diagonal spread is the
+      size of that disagreement in the data in front of you.
+    xlab: ""
+    ylab: ""
+
+  clock_pca:
+    title: "Samples in clock space"
+    subtitle: "PCA of z-scored clock scores · PC1 {pc1}% · PC2 {pc2}%"
+    description: >-
+      PC1 is almost always chronological age. Structure on PC2 that follows a
+      batch and not a phenotype is a batch effect.
+    xlab: "PC1 ({pc1}%)"
+    ylab: "PC2 ({pc2}%)"
+
+  # ---- quality control ------------------------------------------------------
+  beta_density:
+    title: "Beta value distribution per sample"
+    subtitle: "{n} samples · {platform}"
+    description: >-
+      Two peaks near 0 and 1 is what a working array looks like. A sample with a
+      filled middle failed, and no downstream normalisation will fix it.
+    xlab: "beta"
+    ylab: "density"
+
+  coverage_bar:
+    title: "Feature coverage per clock"
+    subtitle: "{n_clocks} clocks · floor at {floor}% · {platform}"
+    description: >-
+      The plot to read before the scores. Below the dashed line a clock is
+      mostly scoring imputed values, which is why it was refused.
+    xlab: "fraction of the clock's features present"
+    ylab: ""
+
+  missingness:
+    title: "Missing values per sample"
+    subtitle: "{n} samples · median {median}% missing"
+    description: >-
+      One sample far to the right is a failed array; a shifted whole cohort is a
+      probe filter someone applied upstream.
+    xlab: "fraction of features missing"
+    ylab: "samples"
+
+  sex_check:
+    title: "Predicted against declared sex"
+    subtitle: "{n} samples · {mismatch} disagreement(s)"
+    description: >-
+      X-linked probe methylation separates the sexes cleanly on every platform.
+      A point in the wrong cluster is a sample sheet error, not biology.
+    xlab: "mean beta at X-linked probes"
+    ylab: "sample"
+
+  platform_comparison:
+    title: "Score distribution by platform"
+    subtitle: "{clock} · {n_platforms} platforms · {n} samples"
+    description: >-
+      A shift between platforms in the same tissue is a technical effect. It is
+      the reason cross-study comparisons need the platform as a covariate.
+    xlab: "platform"
+    ylab: "predicted ({unit})"
+
+  study_comparison:
+    title: "Score distribution by study"
+    subtitle: "{clock} · {n_studies} studies · {n} samples"
+    description: >-
+      Between-study spread is usually larger than the within-study effect being
+      tested, which is why AA2 compares cases with their own controls.
+    xlab: "study"
+    ylab: "predicted ({unit})"
+
+  # ---- benchmark ------------------------------------------------------------
+  benchmark_bars:
+    title: "Datasets detected per clock"
+    subtitle: "{n_clocks} clocks · {n_datasets} datasets · BH q < {alpha}"
+    description: >-
+      AA2 compares cases with their own controls; AA1 tests case-only cohorts
+      against zero. Ordered by the combined total, not by either alone.
+    xlab: "datasets with a significant result"
+    ylab: ""
+
+  benchmark_error_bias:
+    title: "Error against bias on healthy controls"
+    subtitle: "{n_clocks} clocks · point size is the benchmark total"
+    description: >-
+      Neither axis is a ranking. A clock at the origin merely predicts
+      chronological age well, which is the one thing a useful clock need not do.
+    xlab: "MedAE (years)"
+    ylab: "MedE, signed bias (years)"
+
+  benchmark_heatmap:
+    title: "Effect size per clock and dataset"
+    subtitle: "{n_clocks} clocks x {n_datasets} datasets · outlined cells are significant"
+    description: >-
+      Read the columns. A dataset that is blank across every clock is either a
+      condition the clocks cannot see or a cohort too small to show it.
+    xlab: "dataset"
+    ylab: "clock"
+
+  # ---- embeddings and timecourses (pyaging Fig 1B-F) ------------------------
+  clock_embedding:
+    title: "Sample embedding coloured by clock prediction"
+    subtitle: "{clock} on {method} of the clock score matrix · {n} samples"
+    description: >-
+      One embedding, recoloured per clock. Clocks whose colour gradients point
+      in different directions are ordering the same samples differently.
+    xlab: "{method}1"
+    ylab: "{method}2"
+
+  timecourse:
+    title: "Predicted age across a timecourse"
+    subtitle: "{n_clocks} clocks · scaled within clock · shaded band is a 95% bootstrap interval"
+    description: >-
+      Scaled within clock so curves on different scales are comparable; read the
+      shape and the crossing points, never the absolute height.
+    xlab: "{time_label}"
+    ylab: "scaled predicted age (z within clock)"
+
+  # ---- circos and radar (Science Advances 2023 circos; SystemsAge radar) -----
+  clock_chord:
+    title: "Feature sharing between clocks"
+    subtitle: "{n_clocks} clocks on the ring · {n_chords} pairs sharing at least {min_shared} CpGs"
+    description: >-
+      Chord width is the number of CpGs two clocks have in common. This is the
+      answer to the question the correlation heatmap raises: clocks agree partly
+      because they measure the same biology and partly because they are built
+      from the same probes.
+    xlab: ""
+    ylab: ""
+
+  clock_radar:
+    title: "Multi-clock profile"
+    subtitle: "{n_clocks} clocks · {label} · z-scored within clock against the cohort"
+    description: >-
+      One closed polygon per group, on a common z scale. A spike on one axis is
+      one clock disagreeing with the rest, which is a finding about the clock at
+      least as often as about the sample.
+    xlab: ""
+    ylab: ""
+
+  # ---- the pooled atlas -----------------------------------------------------
+  # The one figure that answers "which of these algorithms is measuring aging",
+  # which no per-clock panel can. Only drawn when several studies are pooled.
+  clock_atlas:
+    title: "Clock atlas: every algorithm across every pooled study"
+    subtitle: >-
+      {n_clocks} clocks · {n_datasets} studies · {n_samples} samples ·
+      {n_significant} of {n_comparisons} comparisons significant at BH q < 0.05
+    description: >-
+      Read panel D down the page. A row of hollow circles on zero is an algorithm
+      that detected nothing in any cohort; filled dots pushed right are the ones
+      that did, and a row with several says the effect held across studies rather
+      than in one. Panels B and C are diagnostics for reading D, not scores: a
+      clock that merely returned chronological age would be perfect in B, empty
+      in D, and useless. Panel F separates the two ways of finding nothing --
+      a clock that saw its features and detected no difference, from one that
+      never had the features to look with.
+    xlab: ""
+    ylab: ""
