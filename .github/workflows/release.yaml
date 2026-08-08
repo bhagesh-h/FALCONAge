@@ -1,0 +1,155 @@
+# Distribution.
+#
+# Neither package is on a registry yet, so a tagged release IS the distribution
+# channel: this workflow produces the artefacts both `pip install` and
+# `install_github` resolve against, checks them the way the registries would,
+# and attaches them to the release so a specific version can be installed by URL
+# and archived alongside a paper.
+#
+# The routes, in the order they become available:
+#
+#   1. GitHub, today. `pip install "falconage @ git+...@v1.0.0#subdirectory=python"`
+#      and `remotes::install_github("bhagesh-h/FALCONAge@v1.0.0", subdir = "r")`
+#      both work against a tag with no registry involved.
+#   2. r-universe -- no gatekeeper, one packages.json in a <user>.r-universe.dev
+#      repository, and R users get install.packages() with binaries for Windows,
+#      macOS and Linux. Nothing in this workflow is needed for it, which is why
+#      it is documented in PUBLISHING.md rather than automated here.
+#   3. PyPI and CRAN or Bioconductor. PyPI needs a trusted-publisher claim
+#      configured on the project before the job below can be enabled; CRAN and
+#      Bioconductor are human-reviewed submissions that cannot be automated.
+#      This workflow builds what each wants and runs the checks each gates on,
+#      so a submission is a matter of uploading what it already produced.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+name: release
+
+permissions:
+  contents: write
+
+jobs:
+  # ---- Python -----------------------------------------------------------------
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The tag and pyproject.toml must agree, or a release installs as a
+      # different version than its name -- unfixable afterwards, because the tag
+      # is what a citation points at.
+      - name: Check the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          import re, sys, tomllib, os
+          v = tomllib.loads(open("python/pyproject.toml","rb").read().decode())["project"]["version"]
+          tag = re.sub(r"^refs/tags/v", "", os.environ["GITHUB_REF"])
+          if v != tag:
+              sys.exit(f"tag v{tag} does not match pyproject version {v}")
+          print("version", v, "matches tag")
+        shell: python {0}
+
+      - run: pip install build twine
+      - run: python -m build python/
+      - run: twine check python/dist/*
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: python-dist
+          path: python/dist/*
+          retention-days: 30
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: python/dist/*
+          generate_release_notes: true
+
+  # ---- R -----------------------------------------------------------------------
+  r:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      _R_CHECK_FORCE_SUGGESTS_: false
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the Python core
+        run: |
+          pip install ./python[plot,anndata]
+          echo "RETICULATE_PYTHON=$(which python)" >> "$GITHUB_ENV"
+
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      # read.dcf() returns a matrix whose columns carry the field names, and
+      # indexing one cell by column name KEEPS that name -- so the value is
+      # c(Version = "1.0.0") rather than "1.0.0". identical() compares
+      # attributes and returns FALSE for two strings with the same bytes.
+      # as.character() strips the name, which is why it is here.
+      - name: Check the tag matches DESCRIPTION Version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          desc <- as.character(read.dcf("r/DESCRIPTION")[1, "Version"])
+          tag  <- sub("^refs/tags/v", "", Sys.getenv("GITHUB_REF"))
+          if (!identical(desc, tag))
+            stop(sprintf("tag v%s does not match DESCRIPTION Version %s", tag, desc))
+          cat("version", desc, "matches tag\n")
+        shell: Rscript {0}
+
+      # CITATION.cff carries the version too, and it is the file GitHub's "Cite
+      # this repository" button reads. A release whose citation names the
+      # previous version is worse than one with no citation file at all.
+      - name: Check CITATION.cff matches
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cff <- readLines("CITATION.cff")
+          v   <- trimws(sub("^version:", "", grep("^version:", cff, value = TRUE)[1]))
+          tag <- sub("^refs/tags/v", "", Sys.getenv("GITHUB_REF"))
+          if (!identical(v, tag))
+            stop(sprintf("tag v%s does not match CITATION.cff version %s", tag, v))
+          cat("CITATION.cff version", v, "matches tag\n")
+        shell: Rscript {0}
+
+      - name: Build the source tarball
+        run: R CMD build r
+
+      - name: Check as CRAN
+        run: |
+          tarball <- list.files(pattern = "[.]tar[.]gz$")[1]
+          res <- rcmdcheck::rcmdcheck(tarball, args = c("--no-manual", "--as-cran"),
+                                      error_on = "warning")
+          print(res)
+        shell: Rscript {0}
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: r-tarball
+          path: '*.tar.gz'
+          retention-days: 30
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: '*.tar.gz'
+          generate_release_notes: true

@@ -1,0 +1,123 @@
+# One site, two languages, three downloadable copies.
+#
+# WHY IT IS ONE WORKFLOW AND NOT TWO. Quarto renders the Python half and pkgdown
+# renders the R half, and the R half is published *inside* the Quarto site at
+# /r/. Two workflows deploying to the same gh-pages branch would race: whichever
+# finished second would replace the branch with a tree missing the other half,
+# and which half survived would depend on how long CRAN's binaries took that
+# morning. So both are built here, in order, and deployed once.
+#
+# WHY THERE IS NO `release` TRIGGER. Tagging a release on a commit already on
+# main fires the workflow twice within seconds. Both runs push to gh-pages, both
+# spawn GitHub's own pages-build-deployment, and Pages deployments serialise --
+# the second waits for the first and hits the ten-minute ceiling with "Timeout
+# reached, aborting!". A release of a commit already on main produces
+# byte-identical documentation, so the second build was never adding anything.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+name: docs
+
+permissions: read-all
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    # cancel-in-progress, not queueing. Two pushes in quick succession used to
+    # mean two builds and two deployments racing; now the newer push kills the
+    # older build, because the older site is about to be replaced anyway.
+    concurrency:
+      group: docs-${{ github.event_name != 'pull_request' || github.run_id }}
+      cancel-in-progress: true
+    # A hung build otherwise holds the concurrency group for the six-hour
+    # default and every later push queues behind it.
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      # ---- the Python half ----------------------------------------------------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the package and the doc toolchain
+        run: |
+          pip install ./python[plot,anndata]
+          pip install quartodoc pyyaml
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          tinytex: false      # the PDF goes through Typst, which Quarto bundles
+
+      # Both configs are generated from reference-groups.yml. Regenerating them
+      # here rather than trusting the committed copies means a stale commit
+      # cannot publish a site whose navigation disagrees with its own source.
+      - name: Regenerate both documentation configs
+        run: python docs/build_docs.py
+
+      - name: quartodoc
+        run: quartodoc build --verbose
+        working-directory: docs
+
+      # ---- the R half ---------------------------------------------------------
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r
+          extra-packages: any::pkgdown, local::.
+          needs: website
+
+      # reticulate has to find the interpreter the Python half was installed
+      # into, or every example that calls the core fails to evaluate and the
+      # reference pages render with tracebacks in them.
+      - name: Build the R site into docs/r/
+        env:
+          RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
+        run: pkgdown::build_site(pkg = "r", dest_dir = "../docs/r", new_process = FALSE, install = FALSE)
+        shell: Rscript {0}
+
+      # ---- the site -----------------------------------------------------------
+      - name: Render
+        run: quarto render
+        working-directory: docs
+
+      # ---- the downloadable copies -------------------------------------------
+      # After the render, because the markdown bundle converts pkgdown's HTML
+      # and the PDF binds the quartodoc output. --strict so a broken toolchain
+      # fails the build here rather than publishing a Download menu whose links
+      # 404.
+      - name: PDF and markdown copies
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends texinfo texlive-latex-base texlive-fonts-recommended
+          python docs/build_downloads.py --all --strict --out docs/_site/downloads
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: documentation-downloads
+          path: docs/_site/downloads/*
+          retention-days: 30
+
+      # single-commit REPLACES gh-pages with one commit each time instead of
+      # adding to its history. Deployed with clean: false, every build layers
+      # its output on the last: files the generators stopped producing are never
+      # removed, and the branch the Pages builder has to check out grows with
+      # every release. Nothing is lost by discarding that history -- gh-pages is
+      # build output, its source is in main, and the commit it came from is in
+      # the deploy message.
+      - uses: JamesIves/github-pages-deploy-action@v4.8.0
+        if: github.event_name != 'pull_request'
+        with:
+          branch: gh-pages
+          folder: docs/_site
+          single-commit: true

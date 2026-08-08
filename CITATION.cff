@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use FALCONAge, please cite it as below."
+type: software
+title: "FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R"
+abstract: >
+  Scores DNA methylation and clinical chemistry data against a catalogue of 161
+  published aging clocks and provides the downstream statistics the field
+  expects: age acceleration in its three conventions, survival and association
+  models, technical and biological reliability, and the AA1/AA2 case-control
+  benchmark. Every clock architecture is written from its published description
+  rather than ported from another package, and each registry entry declares the
+  scale its output lives on, which governs the operations the package will
+  permit -- subtracting a chronological age from a pace-of-aging clock is
+  refused rather than computed. Coefficients are treated separately from
+  architectures because they are fitted data with their own licences: those that
+  may be redistributed ship with the package, and the twenty-eight that may not
+  are implemented as tested scaffolds the user supplies numbers for. The R
+  interface delegates all arithmetic to the Python core through reticulate, so
+  a result obtained in one language is the same bits as a result obtained in the
+  other rather than two implementations that agree approximately.
+authors:
+  # CFF requires the ORCID as a full URL, not the bare digits. DESCRIPTION holds
+  # the same identifier in the form R expects, which is digits only.
+  # `affiliation:` is still unset; add it here if you want it in the citation.
+  - given-names: "Bhagesh"
+    family-names: "Hunakunti"
+    email: "bhunakun@uni-bonn.de"
+    orcid: "https://orcid.org/0000-0002-5957-8005"
+version: 1.0.0
+date-released: "2026-08-08"
+license: GPL-3.0-or-later
+repository-code: "https://github.com/bhagesh-h/FALCONAge"
+url: "https://bhagesh-h.github.io/FALCONAge/"
+keywords:
+  - biological age
+  - aging clock
+  - epigenetic clock
+  - DNA methylation
+  - age acceleration
+  - reproducible research
+  - Python
+  - R
+# The 161 clocks FALCONAge implements are due to their original authors, and a
+# result computed with one of them should cite that paper as well as this
+# package. They are not duplicated here because a CFF `references:` block wants
+# a complete author list per entry, and 161 incomplete ones in a
+# machine-readable file are worse than none. The registry carries the citation
+# and DOI for every clock instead, so the reference for whichever clocks a
+# particular analysis used can be produced from the analysis itself:
+#
+#   Python:  falconage.registry.load().get("grimage2").cite("bibtex")
+#   R:       cite_clock("grimage2", "bibtex")
+#   CLI:     falconage clocks cite grimage2 --style bibtex
+#
+# inst/CITATION carries the same entry as this file for `citation("FALCONAge")`.

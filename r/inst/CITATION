@@ -1,0 +1,22 @@
+citHeader("To cite FALCONAge in publications, use:")
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R",
+  author   = person("Bhagesh", "Hunakunti",
+                    comment = c(ORCID = "0000-0002-5957-8005")),
+  year     = "2026",
+  note     = sprintf("R package version %s", meta$Version),
+  url      = "https://github.com/bhagesh-h/FALCONAge"
+)
+
+citFooter(
+  "The clock this package computed for you is somebody else's work, and citing ",
+  "FALCONAge does not cite it. Every registry entry carries the primary ",
+  "reference and DOI, so the list for a given analysis can be produced from the ",
+  "analysis itself: vapply(colnames(as.data.frame(res)), cite_clock, \"\") ",
+  "returns one per clock scored. The AA1/AA2 benchmark methodology is due to Kriukov et al. ",
+  "(ComputAgeBench); the KDM, PhenoAge and homeostatic-dysregulation reference ",
+  "implementations this package was validated against are Kwon and Belsky ",
+  "(2021, GeroScience 43:2795-2808)."
+)

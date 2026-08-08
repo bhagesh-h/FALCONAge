@@ -1,0 +1,71 @@
+# The Python core: tests, lint, and the generated-config staleness check.
+#
+# WHY THE MATRIX IS SMALL. Three Python versions on one OS, not nine across
+# three. The package is pure Python over numpy and pandas; what breaks between
+# versions is the language and the dependency resolution, and both of those show
+# up on Linux first. macOS and Windows differ in path handling and line endings,
+# which the tests exercise explicitly rather than by being run there.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+name: python-test
+
+permissions: read-all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # --no-deps for the package itself, then the locked dependency set. The
+      # lock file is what the Docker images install from, so CI testing against
+      # a freshly resolved set would leave the images untested by anything.
+      - name: Install
+        run: |
+          uv pip install --system -r <(uv export --frozen --no-emit-project \
+            --no-hashes --directory python --format requirements-txt)
+          uv pip install --system --no-deps ./python
+          uv pip install --system pytest pytest-cov matplotlib anndata
+
+      - name: Test
+        run: pytest python/tests -q --cov=falconage --cov-report=term-missing
+
+      # The registry is data, and data has to be valid before anything that
+      # reads it is worth testing. This is the same check the pre-commit hook
+      # runs; having it here means a merge cannot land an entry the loader
+      # rejects.
+      - name: Validate the clock registry
+        run: python -c "import falconage as fa; r = fa.registry.load(); print(len(list(r)), 'clocks, schema', r.version)"
+
+      # Both documentation configs are generated. A pull request that edits one
+      # by hand looks fine until the next build silently reverts it.
+      - name: Documentation configs are current
+        run: |
+          uv pip install --system pyyaml
+          python docs/build_docs.py --check
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v5
+      - run: uvx ruff check python/src python/tests test
+      - run: uvx ruff format --check python/src

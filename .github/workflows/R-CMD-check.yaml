@@ -1,0 +1,85 @@
+# Single-platform R CMD check.
+#
+# WHY ONE RUNNER AND NOT THE USUAL THREE-OS MATRIX. Every job has to build a
+# working Python environment before a single R test can run, because the R
+# package is a reticulate wrapper and its entire test suite asserts bit equality
+# against the Python core. That setup is the expensive part, it is the part most
+# likely to differ between runners, and multiplying it by five gets you five
+# ways to fail at installing numpy rather than five platforms' worth of coverage.
+#
+# Ubuntu release with the Posit binary repository is where the dependencies
+# resolve as binaries, so it is the one kept. The package is pure R with no
+# compiled code; cross-platform coverage comes from r-universe (see
+# release.yaml), which builds and checks it on Windows, macOS and Linux.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+name: R-CMD-check
+
+permissions: read-all
+
+jobs:
+  R-CMD-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: r
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      # ggplot2 and patchwork are Suggests, and the figures degrade gracefully
+      # without them by design. Without this, R CMD check ERRORs on a missing
+      # suggested package rather than NOTEing, and fails the build for a
+      # dependency the package is explicitly built to run without.
+      _R_CHECK_FORCE_SUGGESTS_: false
+      # reticulate must use the interpreter this workflow prepared, not one it
+      # discovers. A discovered interpreter without falconage in it turns every
+      # test into the same unhelpful import error.
+      RETICULATE_PYTHON: /opt/hostedtoolcache/Python/venv/bin/python
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The Python core first. The R suite compares against it, so if this step
+      # is wrong every later failure is a red herring.
+      - name: Install the Python core
+        working-directory: .
+        run: |
+          python -m venv /opt/hostedtoolcache/Python/venv
+          /opt/hostedtoolcache/Python/venv/bin/pip install --upgrade pip
+          /opt/hostedtoolcache/Python/venv/bin/pip install ./python[plot,anndata]
+          /opt/hostedtoolcache/Python/venv/bin/python -c "import falconage; print(falconage.__version__)"
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: r
+          upload-snapshots: true
+          args: 'c("--no-manual", "--as-cran")'
+          build_args: 'c("--no-manual")'
+
+      # The check above runs the test suite, but a green check with the
+      # conformance file skipped is exactly the failure this package cannot
+      # afford: R and Python quietly returning different numbers. So it is run
+      # again on its own, where a skip is visible in the log.
+      - name: R and Python agree, bit for bit
+        run: Rscript -e 'testthat::test_local(filter = "conformance", stop_on_skip = TRUE)'
