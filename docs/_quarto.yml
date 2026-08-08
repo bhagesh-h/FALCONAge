@@ -18,16 +18,6 @@ website:
     left:
     - text: About
       file: index.qmd
-    - text: Guides
-      menu:
-      - text: Getting started
-        file: guide/FALCONAge.qmd
-      - text: Choosing a clock
-        file: guide/clocks.qmd
-    - text: Python reference
-      file: reference/index.qmd
-    - text: R reference
-      href: r/index.html
     - text: Background
       menu:
       - text: The science of aging clocks
@@ -38,6 +28,18 @@ website:
         file: clocks.qmd
       - text: GPU support
         file: gpu.md
+    - text: Guides
+      menu:
+      - text: Getting started
+        file: guide/FALCONAge.qmd
+      - text: Choosing a clock
+        file: guide/clocks.qmd
+    - text: Reference
+      menu:
+      - text: Python reference
+        file: reference/index.qmd
+      - text: R reference
+        href: r/index.html
     right:
     - text: Download
       menu:

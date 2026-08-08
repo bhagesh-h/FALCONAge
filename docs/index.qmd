@@ -2,26 +2,109 @@
 title: "FALCONAge"
 ---
 
-FALCONAge is a package for scoring published aging clocks. It reads DNA methylation - as a beta
-matrix, a GEO series matrix, or RRBS coverage files - and clinical chemistry as a table of blood
-measurements. For each of the 161 clocks in its catalogue it matches the features that clock
-needs against the ones you have, applies the transforms and coefficients the clock's paper
-specifies, and returns a score per sample with what is needed to read it: the coefficient file's
-digest, the fraction of features found, the device and precision it ran in, and every warning
-raised on the way.
+FALCONAge applies published aging clocks to your data and reports each result on a scale you can
+reason about.
 
-A clock returns a number on an age-like scale, and what that number means is fixed by the target
-the model was fitted to. Those targets are different quantities. Horvath 2013 predicts
-chronological age in years; ZhangMortality predicts a log hazard; DunedinPACE predicts a rate, in
-biological years per chronological year; epiTOC2 estimates cumulative stem-cell divisions; a
-deconvolution clock returns cell-type proportions. Reporting all five as "biological age" throws
-away the one thing needed to interpret any of them.
+**What goes in**
 
-So every registry entry declares a `scale_type` - one of eight - beside its unit, platform,
-species and the tissue its coefficients were fitted in, and the scale type decides which
-downstream operations are available. Age acceleration is a residual against chronological age: it
-is defined for a clock reported in years and undefined for a rate, so FALCONAge computes it for
-Horvath and raises an error for DunedinPACE rather than subtracting an age from a ratio.
+- DNA methylation as a beta matrix (CSV or Parquet), a GEO series matrix, or RRBS coverage files
+- Clinical chemistry as a table of blood measurements, with units declared rather than guessed
+
+**What comes out**
+
+- One score per sample per clock, for as many of the 161 catalogued clocks as your features support
+- A coverage figure per clock: the fraction of that clock's features your data actually carried
+- A run manifest - package and registry versions, the SHA-256 of every coefficient file used, the
+  device and floating-point precision, the imputation policy, and every warning raised
+
+**Where it runs** - one numerical core in Python, called from R through reticulate, on CPU or GPU.
+
+## A clock is a fitted model, and its training target is part of the answer
+
+An aging clock is a supervised model mapping molecular features to a scalar. What the scalar
+*means* is set by the outcome the model was regressed on, and the outcomes are not variants of one
+quantity:
+
+- **Chronological-age clocks** (Horvath 2013, Hannum 2013) are fitted to calendar age. Their error
+  bars are prediction error against a known truth.
+- **Mortality- and morbidity-trained clocks** (PhenoAge, GrimAge) are fitted to a survival-weighted
+  composite and then rescaled into years. The unit is years; the target was never age.
+- **Pace-of-aging clocks** (DunedinPACE) are fitted to the *rate of change* in organ-system
+  biomarkers tracked longitudinally. Belsky and colleagues draw the distinction directly:
+
+  > [Pace-of-aging measures capture] the rate of deterioration in system integrity occurring over a
+  > fixed time interval, whereas epigenetic clocks estimate the progress of aging up to a
+  > cross-section in time.
+  >
+  > --- [Belsky et al., *eLife* 2022](https://doi.org/10.7554/eLife.73420)
+
+- **Mitotic clocks** (epiTOC2, StemTOC) estimate cumulative stem-cell divisions. The quantity is a
+  count, not elapsed time.
+- **Causality-enriched clocks** (CausAge, DamAge, AdaptAge) restrict features to CpGs with
+  Mendelian-randomisation support, separating damaging from adaptive change
+  ([Ying et al., *Nature Aging* 2024](https://doi.org/10.1038/s43587-023-00557-0)).
+- **Deconvolution models** return cell-type proportions, which are a composition and must sum to
+  one.
+
+Reporting all six as "biological age" discards the information needed to interpret any of them.
+
+## The scale type is enforced, not annotated
+
+Every registry entry declares a `scale_type` alongside its unit, platform, species and the tissue
+its coefficients were fitted in. That field decides which downstream operations FALCONAge will
+perform:
+
+<!-- BEGIN GENERATED: scales -->
+
+| `scale_type` | n | What the number is | Units in the registry | Operations permitted |
+|---|---:|---|---|---|
+| `age_years` | 75 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
+| `relative_score` | 44 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
+| `proportion` | 18 | A composition. The estimates are fractions of a whole and are constrained to sum to one. | proportion | compositional, correlate, difference, mean |
+| `divisions` | 10 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
+| `gestational_weeks` | 8 | An age, before birth. | weeks, days, units per week | acceleration, correlate, difference, mean, residual |
+| `telomere_kb` | 2 | An estimated physical length. | kilobases, base pairs | acceleration, correlate, difference, mean |
+| `pace_ratio` | 2 | A rate: how much biological ageing per year of calendar time, at the moment of sampling. | biological years per chronological year | correlate, difference, mean, rank |
+| `mortality_log_hazard` | 2 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, unitless | correlate, hazard ratio, mean, rank |
+
+<!-- END GENERATED: scales -->
+
+Age acceleration is the residual of predicted age on chronological age. It is defined when the
+prediction is in years and undefined when it is a rate, so asking for it on DunedinPACE is an
+error with a message, not a number:
+
+```
+IllegalOperationError: 'acceleration' is not defined for dunedinpace, whose output is
+pace_ratio (biological years per chronological year).
+  Legal here: correlate, difference, mean, rank.
+  A pace of aging is already a rate; subtracting chronological age from it is a units
+  error, not a conservative choice.
+```
+
+## What FALCONAge refuses to do
+
+Each of these is a silent wrong answer somewhere else, so each is a hard failure here:
+
+- **Fill a missing probe with zero.** In beta space zero means completely unmethylated, which is a
+  real and extreme measurement. Absent features take the clock's published reference value, or the
+  cohort column mean, and the substitution is counted in the manifest.
+- **Guess clinical units.** PhenoAge has SI and conventional variants that disagree by years.
+  `units=` has no default.
+- **Score below the coverage floor.** A clock whose features are largely absent is skipped and
+  named, rather than scored on mostly-imputed input.
+- **Claim coverage means validity.** High feature coverage says the probes are present. It says
+  nothing about whether coefficients fitted in one tissue, species or population transfer to
+  yours; that judgement stays with you, and [Choosing a clock](guide/clocks.qmd) lays out the
+  grounds for it.
+
+## What it is not
+
+These are population-research instruments. Reliability varies sharply by clock, and technical
+reproducibility and biological stability are separate properties that do not track together - a
+clock can be highly repeatable on split samples and still move with a meal or a night's sleep.
+FALCONAge computes what the papers specify and records how it did so; it does not certify that a
+given clock is fit for a clinical decision about one person. [The science of aging
+clocks](science.qmd) sets out what is established and what is contested.
 
 ## Install
 

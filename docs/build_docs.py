@@ -170,20 +170,29 @@ def quarto_yaml(spec: dict) -> str:
             "repo-url": site["repo"],
             "repo-actions": ["issue", "source"],
             "navbar": {
+                # Ordered the way someone reads it: what the tool is, then the
+                # science it rests on, then how to drive it, then the API.
+                #
+                # "About", not "Get started": guide/FALCONAge.qmd is called
+                # "Getting started" and is the walkthrough. Two entries a menu
+                # apart with near-identical names is a coin toss for the reader.
                 "left": [
-                    # "About", not "Get started": guide/FALCONAge.qmd is called
-                    # "Getting started" and is the walkthrough. Two entries a
-                    # menu apart with near-identical names is a coin toss for
-                    # the reader.
                     {"text": "About", "file": "index.qmd"},
-                    {"text": "Guides", "menu": [
-                        {"text": a["title"], "file": f"guide/{a['file']}.qmd"}
-                        for a in spec["articles"]]},
-                    {"text": "Python reference", "file": "reference/index.qmd"},
-                    {"text": "R reference", "href": "r/index.html"},
                     {"text": "Background", "menu": [
                         {"text": p["title"], "file": p["file"]}
                         for p in spec.get("pages", [])]},
+                    {"text": "Guides", "menu": [
+                        {"text": a["title"], "file": f"guide/{a['file']}.qmd"}
+                        for a in spec["articles"]]},
+                    # One menu, two languages. They were top-level siblings, so
+                    # the same idea occupied two slots and neither said it had a
+                    # counterpart. `file` for the Python tree and `href` for R
+                    # because pkgdown's output is copied in as a resource rather
+                    # than rendered by Quarto.
+                    {"text": "Reference", "menu": [
+                        {"text": "Python reference", "file": "reference/index.qmd"},
+                        {"text": "R reference", "href": "r/index.html"},
+                    ]},
                 ],
                 "right": [
                     # href, not file: these are binaries copied into _site by
