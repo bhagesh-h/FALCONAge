@@ -193,14 +193,48 @@ def fit_kdm(reference: pd.DataFrame, markers: list[str], age_col: str = "age",
         )
     age = ref[age_col].to_numpy(dtype=np.float64)
     k, q, s, r = [], [], [], []
+    degenerate = []
     for m in markers:
         y = ref[m].to_numpy(dtype=np.float64)
         slope, intercept = np.polyfit(age, y, 1)
         resid = y - (slope * age + intercept)
+        sd = float(np.std(resid, ddof=2))
+        # A marker with no residual spread is not a perfect predictor, it is a
+        # column that does not vary -- a unit conversion that collapsed it, a
+        # single value carried down a spreadsheet, a lab that reported one
+        # figure for the whole cohort. Every KDM term divides by this, so one
+        # such marker turns k/s into an infinity, r into NaN through
+        # corrcoef of a constant, r_char into NaN and s_r into inf. The
+        # arithmetic then continues through nansum and returns a plausible
+        # number computed from a poisoned reference, which is the worst
+        # possible outcome and exactly what this package exists not to do.
+        #
+        # The comparison is relative, not `sd <= 0`. A genuinely constant
+        # column does not give a residual standard deviation of exactly zero:
+        # polyfit's least-squares solve leaves rounding noise around 1e-15, so
+        # an exact test passes the very case it exists to catch. Scaling by the
+        # column's own magnitude also keeps the test meaningful for a marker
+        # measured in millions and one measured in tenths.
+        scale = max(float(np.nanstd(y)), abs(float(np.nanmean(y))), 1.0)
+        if not np.isfinite(sd) or sd <= 1e-10 * scale:
+            degenerate.append(m)
         k.append(slope)
         q.append(intercept)
-        s.append(float(np.std(resid, ddof=2)))
+        s.append(sd)
         r.append(abs(float(np.corrcoef(age, y)[0, 1])))
+
+    if degenerate:
+        raise AnalysisError(
+            "KDM cannot use a marker that does not vary: "
+            + ", ".join(f"{m!r}" for m in degenerate)
+            + f"\n  Each has zero residual spread across the {len(ref)} reference "
+            "rows, so its contribution to the estimate is a division by zero.\n"
+            "  This is nearly always a data problem rather than a biological one "
+            "-- a unit conversion that\n  collapsed the column, or one value "
+            "filled down. Check the column, then either fix it or\n  leave it out "
+            "of `markers=`; KDM is defined for any panel size."
+        )
+
     k, q, s, r = (np.asarray(v, dtype=np.float64) for v in (k, q, s, r))
 
     ks = np.abs(k / s)

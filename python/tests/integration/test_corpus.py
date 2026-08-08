@@ -6,7 +6,6 @@ broke rather than "integration". Skipped wholesale when the corpus is absent.
 
 from __future__ import annotations
 
-import warnings
 
 import numpy as np
 import pandas as pd

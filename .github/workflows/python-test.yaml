@@ -1,21 +1,27 @@
-# The Python core: tests, lint, and the generated-config staleness check.
+# The Python core: tests, lint, and the generated-file staleness check, in one
+# job.
 #
-# WHY THERE IS NO MATRIX AT ALL. One Python version on one OS.
+# WHY ONE JOB AND ONE PYTHON VERSION. This is maintained by one person, and a
+# pipeline is only useful if a red badge means "you broke something" rather than
+# "the matrix is being the matrix again".
 #
-# The version tested is the version the lock file resolves and the version both
-# Docker images run, which is the only combination anything is actually shipped
-# on. Testing 3.10 and 3.13 alongside it tested the dependency resolver rather
-# than this package: the lock file pins one set, `uv export --frozen` reproduces
-# that set, and on any other interpreter the pinned wheels either do not exist
-# or do not match, so the job fails before reaching a single test. That is a
-# true statement about the lock file and a useless one about the code, and three
-# red badges where one would do teaches people to ignore the badge.
+# The version tested is the version the lock file resolves and both Docker
+# images run, which is the only combination anything ships on. A matrix over
+# 3.10 and 3.13 tested the dependency resolver rather than this package: the
+# lock pins one set, `uv export --frozen` reproduces it, and on any other
+# interpreter the pinned wheels either do not exist or do not match, so the job
+# fails before reaching a test. Three red badges where one would do teaches
+# people to ignore the badge.
 #
-# Broadening support is a real piece of work -- an unpinned resolution per
-# version, and a decision about what to do when a floor moves -- and it belongs
-# in its own change rather than as a matrix axis that has never once passed.
-# `requires-python` still declares >= 3.10; nothing here narrows what the
-# package claims, only what is verified.
+# `requires-python` still declares >= 3.10. Nothing here narrows what the
+# package claims, only what is verified; broadening that is real work -- an
+# unpinned resolution per version and a policy for moving floors -- and belongs
+# in its own change.
+#
+# There is no GPU job. GitHub's hosted runners have no CUDA device, so a GPU job
+# could only ever assert that torch reports no GPU, which is not a test of
+# anything. `test/gpu_check.py` is run by hand against real hardware and its
+# output is in docs/gpu.md.
 on:
   push:
     branches: [main]
@@ -29,7 +35,7 @@ permissions: read-all
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
 
@@ -41,15 +47,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      # --no-deps for the package itself, then the locked dependency set. The
-      # lock file is what the Docker images install from, so CI testing against
-      # a freshly resolved set would leave the images untested by anything.
       # The same locked set, and the same named extras, that both Docker images
-      # install. Resolving freshly here would leave the images tested by nothing
-      # -- and a green CI on a dependency set nobody ships is the specific kind
-      # of green that costs an afternoon later.
+      # install. Resolving freshly here would leave the images tested by
+      # nothing, and a green CI on a dependency set nobody ships is the specific
+      # kind of green that costs an afternoon later.
       #
-      # A temporary file rather than process substitution: `<(...)` is a bash
+      # A temporary file rather than `<(...)`: process substitution is a bash
       # feature, and a step that silently depends on the runner's default shell
       # breaks the day somebody sets `shell: sh`.
       - name: Install
@@ -59,33 +62,38 @@ jobs:
             --directory python --format requirements-txt > /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps ./python
-          uv pip install --system pytest pytest-cov
+          uv pip install --system pytest
 
+      # No coverage report. It printed 60 lines of site-packages paths on every
+      # run and nobody read them; `pytest --cov` locally is there when a
+      # coverage question is actually being asked.
+      #
+      # The corpus tests skip here -- 586 MB of GEO payloads are not worth
+      # fetching per push -- so this is the unit and property suite. The corpus
+      # is exercised by test/run_all.py before a release.
       - name: Test
-        run: pytest python/tests -q --cov=falconage --cov-report=term-missing
+        run: pytest python/tests -q
 
-      # The registry is data, and data has to be valid before anything that
-      # reads it is worth testing. This is the same check the pre-commit hook
-      # runs; having it here means a merge cannot land an entry the loader
-      # rejects.
-      - name: Validate the clock registry
-        run: python -c "import falconage as fa; r = fa.registry.load(); print(len(list(r)), 'clocks, schema', r.version)"
+      # The registry is data, and data has to load before anything that reads it
+      # is worth testing.
+      - name: The clock registry loads
+        run: |
+          python -c "import falconage as fa; r = fa.registry.load(); \
+            print(len(list(r)), 'clocks, schema', r.version)"
 
       # Three generated files: both documentation configs, and r/NEWS.md from
-      # CHANGELOG.md. A pull request that edits any of them by hand looks fine
-      # until the next build silently reverts it, and a NEWS file that has
-      # drifted from the changelog is the one users read.
+      # CHANGELOG.md. Editing any of them by hand looks fine until the next
+      # build reverts it, and a NEWS file that has drifted from the changelog is
+      # the one users read.
       - name: Generated files are current
         run: |
           uv pip install --system pyyaml
           python docs/build_docs.py --check
           python docs/build_news.py --check
 
-  lint:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v5
-      - run: uvx ruff check python/src python/tests test
-      - run: uvx ruff format --check python/src
+      # The rule selection lives in python/pyproject.toml, with the reasoning.
+      # Short version: pyflakes and syntax errors only. A style gate a single
+      # maintainer argues with weekly gets disabled, and the rules that catch
+      # real bugs go with it.
+      - name: Lint
+        run: uvx ruff check --config python/pyproject.toml python/src python/tests test docs

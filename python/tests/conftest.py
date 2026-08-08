@@ -41,13 +41,38 @@ def registry():
     return fa.registry.load()
 
 
-@pytest.fixture(scope="session")
+# WHY EACH FIXTURE GETS ITS OWN GENERATOR RATHER THAN SHARING ONE.
+#
+# A session-scoped Generator is stateful, so anything drawing from it moves the
+# stream for everything after. Two fixtures sharing one means the second one's
+# data depends on whether the first was ever built -- which depends on which
+# tests ran, which depends on what was skipped, which depends on whether the
+# 586 MB corpus is present. That is a fixture whose values differ between a
+# developer's machine and CI while both claim the same seed, and the symptom is
+# a statistical assertion that passes locally and fails in CI with no diff to
+# look at.
+#
+# One named seed per fixture. Independent, reproducible, and unaffected by test
+# selection or ordering.
+SEEDS = {"betas": 20260807, "clinical": 20260808, "misc": 20260809}
+
+
+def _rng(name: str) -> np.random.Generator:
+    return np.random.default_rng(SEEDS[name])
+
+
+@pytest.fixture
 def rng():
-    return np.random.default_rng(20260807)
+    """A fresh generator for tests that just need noise.
+
+    Function-scoped and re-seeded every time, so a test that draws from it
+    cannot change what any other test sees.
+    """
+    return _rng("misc")
 
 
 @pytest.fixture(scope="session")
-def synthetic_betas(registry, rng):
+def synthetic_betas(registry):
     """A methylation dataset carrying every feature the tier A clocks need.
 
     Built so coverage is exactly 1.0 for the bundled clocks: coverage failures
@@ -59,6 +84,7 @@ def synthetic_betas(registry, rng):
     enough for monotonicity properties, not enough to pretend the numbers mean
     anything biologically.
     """
+    rng = _rng("betas")
     feats: set[str] = set()
     for c in registry.filter(availability="A"):
         if c.formula:
@@ -85,8 +111,9 @@ def synthetic_betas(registry, rng):
 
 
 @pytest.fixture(scope="session")
-def synthetic_clinical(rng):
+def synthetic_clinical():
     """A clinical cohort in the units PhenoAge's coefficients expect."""
+    rng = _rng("clinical")
     n = 200
     age = rng.uniform(25, 85, n)
     ids = [f"C{i:03d}" for i in range(n)]
@@ -99,7 +126,12 @@ def synthetic_clinical(rng):
         "mean_cell_volume": rng.normal(89 + 0.03 * age, 4),
         "red_cell_distribution_width": rng.normal(12.8 + 0.012 * age, 0.7),
         "alkaline_phosphatase": rng.normal(70 + 0.20 * age, 15),
-        "white_blood_cell_count": rng.normal(6.5, 1.4),
+        # size=n, which the others get implicitly by passing an age-dependent
+        # array as the mean. Without it this returned ONE float and pandas
+        # broadcast it down the column, so the fixture's ninth marker was a
+        # constant -- carrying no information, and giving KDM a zero-variance
+        # marker to divide by.
+        "white_blood_cell_count": rng.normal(6.5, 1.4, size=n),
         "age": age,
     }, index=ids)
     obs = pd.DataFrame({"age": age, "sex": ["F" if i % 2 else "M" for i in range(n)]},

@@ -5,6 +5,30 @@
 
 ## Fixed
 
+- **Every bundled coefficient file's recorded SHA-256 was wrong on a Windows
+  checkout.** All twenty were CRLF on disk while their recorded digests described the LF form, so
+  the integrity check failed in any fresh environment and passed only in a stale one. That digest
+  is what `run_manifest.json` records, and the whole reproducibility claim rests on it — a
+  checkout that rewrites line endings changes the bytes, changes the digest and makes the manifest
+  say two identical runs used different coefficients. The tree is normalised to LF and
+  [`.gitattributes`](.gitattributes) now marks the coefficient files binary so git can never
+  convert them again, whatever `core.autocrlf` says.
+- **`fit_kdm()` returned a plausible number from a NaN-poisoned reference.** A marker with no
+  residual spread — a unit conversion that collapsed the column, one value filled down — makes
+  `k/s` an infinity, `corrcoef` of a constant a NaN and `r_char` a NaN, after which `nansum`
+  carries on and produces an answer. It now refuses, names the column, and says that KDM is
+  defined for any panel size so the fix is to drop it. The check is relative rather than
+  `sd == 0`, because least squares leaves about 1e-15 of rounding noise on a genuinely constant
+  column and an exact test passes the case it exists to catch.
+- **One of the nine markers in the clinical test fixture was a constant.**
+  `rng.normal(6.5, 1.4)` without `size=n` returns a single float, which pandas broadcast down the
+  column — so the fixture had been carrying eight informative markers and one flat one, and it was
+  that flat marker feeding the zero into KDM.
+- **Test fixtures shared one session-scoped random generator.** A `Generator` is stateful, so each
+  fixture's data depended on whether another had been built, which depended on which tests ran,
+  which depended on whether the 586 MB corpus was present. The result was a statistical assertion
+  that passed on a developer's machine and failed in CI with no diff to look at. Each fixture now
+  has its own named seed.
 - **`.gitignore` and `.dockerignore` were excluding nothing.** An earlier edit had replaced the
   path patterns with prose, which matches no file, so the private working material would have
   been committed by the first `git add .`. Both files are now allow-list-first: the repository

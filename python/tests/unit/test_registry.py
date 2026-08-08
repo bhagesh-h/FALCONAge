@@ -7,7 +7,6 @@ import hashlib
 import numpy as np
 import pytest
 
-import falconage as fa
 from falconage.core.errors import ClockNotFoundError, RegistryError, WeightsUnavailableError
 from falconage.registry.registry import DATA_DIR, LEGAL_OPS
 

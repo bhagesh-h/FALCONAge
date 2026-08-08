@@ -131,7 +131,6 @@ def test_alignment_none_leaves_nan(synthetic_betas):
 def test_all_nan_column_counts_as_absent(synthetic_betas):
     """Present as a column, absent as a measurement -- GEO series matrices carry
     these routinely."""
-    import pandas as pd
 
     X = synthetic_betas.X.copy()
     dead = X.columns[0]

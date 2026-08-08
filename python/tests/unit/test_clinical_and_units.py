@@ -103,13 +103,50 @@ MARKERS = ["albumin", "creatinine", "glucose", "crp", "lymphocyte_percent",
 
 
 def test_kdm_recovers_age_on_its_own_reference(synthetic_clinical):
-    """Scoring the reference cohort against itself must give back something very
-    close to chronological age -- that is what the estimator is for."""
+    """Scoring the reference cohort against itself must give back something
+    close to chronological age -- that is what the estimator is for.
+
+    The absolute threshold is deliberately loose. Across thirty seeds of this
+    cohort the correlation runs 0.80 to 0.93, so anything at or above about 0.9
+    is a threshold on the seed rather than on the estimator, and it fails the
+    day the fixture is regenerated. The previous version asserted 0.85 and did
+    exactly that.
+
+    The tight assertion is the third one, and it is the one that says KDM
+    works: combining nine weak markers has to beat the best single marker,
+    which correlates about 0.38 here. That held in 30/30 draws with a margin
+    never below 0.39, and it is the property that would actually break if the
+    estimator regressed.
+    """
     df = synthetic_clinical.X
     ref = clinical.fit_kdm(df, MARKERS)
     ba = clinical.kdm(df, ref)
-    assert ba.corr(df["age"]) > 0.85
+
+    r = ba.corr(df["age"])
+    assert r > 0.75, f"KDM correlated {r:.3f} with age on its own reference"
     assert abs(float((ba - df["age"]).median())) < 5.0
+
+    best_single = max(abs(df[m].corr(df["age"])) for m in MARKERS)
+    assert r > best_single + 0.2, (
+        f"KDM ({r:.3f}) barely beat the best single marker ({best_single:.3f}); "
+        "combining the panel is supposed to be worth something")
+
+
+def test_kdm_refuses_a_marker_that_does_not_vary(synthetic_clinical):
+    """A constant column is a data error, and it used to poison the answer.
+
+    Zero residual spread makes k/s an infinity, corrcoef of a constant a NaN,
+    and r_char a NaN -- after which nansum carries on and returns a plausible
+    number from a reference that is mostly not-a-number. Refusing is the only
+    safe behaviour, and the message has to name the column.
+    """
+    from falconage.core.errors import AnalysisError
+
+    df = synthetic_clinical.X.copy()
+    df["white_blood_cell_count"] = 6.5
+
+    with pytest.raises(AnalysisError, match="does not vary"):
+        clinical.fit_kdm(df, MARKERS)
 
 
 def test_kdm_needs_a_reference_large_enough_to_regress(synthetic_clinical):

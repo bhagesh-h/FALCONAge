@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 
 from ..core.container import FalconData
-from ..core.errors import DataError, PlatformError
+from ..core.errors import DataError
 
 #: Probe counts per Illumina platform, used to identify one from a matrix whose
 #: header says nothing. The windows are generous because real matrices are

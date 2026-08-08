@@ -79,7 +79,25 @@ jobs:
 
       # The check above runs the test suite, but a green check with the
       # conformance file skipped is exactly the failure this package cannot
-      # afford: R and Python quietly returning different numbers. So it is run
-      # again on its own, where a skip is visible in the log.
+      # afford: R and Python quietly returning different numbers. Every
+      # conformance test skips itself when the Python core is missing, which is
+      # right for a user and wrong for this job -- so it is run again here and
+      # a skip is treated as a failure.
+      #
+      # testthat has no `stop_on_skip`; the results object is what has to be
+      # inspected. `as.data.frame()` on it gives one row per test with a
+      # `skipped` count.
       - name: R and Python agree, bit for bit
-        run: Rscript -e 'testthat::test_local(filter = "conformance", stop_on_skip = TRUE)'
+        run: |
+          res <- testthat::test_local("r", filter = "conformance",
+                                      stop_on_failure = TRUE, reporter = "summary")
+          df <- as.data.frame(res)
+          if (nrow(df) == 0L)
+            stop("no conformance tests ran at all; the filter matched nothing")
+          n <- sum(df$skipped)
+          if (n > 0L)
+            stop(sprintf("%d conformance test(s) skipped -- the Python core is not
+  reachable from this R session, so R-versus-Python equality was never checked.
+  RETICULATE_PYTHON is %s", n, Sys.getenv("RETICULATE_PYTHON", "<unset>")))
+          cat(sprintf("%d conformance tests ran, none skipped\n", nrow(df)))
+        shell: Rscript {0}

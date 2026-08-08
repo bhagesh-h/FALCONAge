@@ -23,7 +23,12 @@ works today.
 
 from __future__ import annotations
 
-from . import analysis, core, download as _download_mod, io, models, plot, preprocess, registry, score as _score_mod
+# `download` and `score` name both a module and a function. The verb wins at
+# the top level -- fa.score(data) is the API -- so the modules are bound to
+# private aliases, which also keeps fa.download.cache_info reachable.
+from . import analysis, core, io, models, plot, preprocess, registry
+from . import download as _download_mod  # noqa: F401  (module, not the verb)
+from . import score as _score_mod  # noqa: F401  (module, not the verb)
 from ._version import REGISTRY_VERSION, __version__
 from .analysis import acceleration, agreement, associate, cox_hazard, icc, run_benchmark
 from .core import (

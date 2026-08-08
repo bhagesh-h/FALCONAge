@@ -88,5 +88,27 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+# WHY THE SELECTION IS THIS SMALL.
+#
+# `["E", "F", "W", "I", "UP", "B", "SIM"]` produced 66 findings and wanted 24
+# files reformatted, none of which was a bug. Most were stylistic preferences
+# this codebase has deliberately made differently -- explicit loops that read
+# better than the comprehension SIM suggests, `zip()` without strict= where the
+# lengths are established two lines above.
+#
+# A lint gate is worth having only if a red badge means "you broke something".
+# One that a single maintainer has to argue with weekly gets disabled, and then
+# the rules that DO catch bugs go with it. So: pyflakes, which finds unused
+# imports, unused locals, undefined names and f-strings missing their
+# placeholders, plus E9 for syntax and IO errors that stop ruff parsing at all.
+# Those found eight real pieces of cruft on their first run, including six
+# functions binding a handle they never used.
+#
+# `ruff format` is deliberately not run in CI either. Formatting is an opinion,
+# this codebase has one, and reformatting 24 files to satisfy a tool would bury
+# the comments that explain why the code is shaped the way it is.
+select = ["F", "E9"]
+
+[tool.ruff.format]
+# Available for anyone who wants it locally; not a gate.
+docstring-code-format = false

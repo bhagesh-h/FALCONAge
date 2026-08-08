@@ -29,9 +29,9 @@ import csv
 import difflib
 import functools
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import yaml

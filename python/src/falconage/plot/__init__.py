@@ -28,7 +28,7 @@ restyling a whole report is one file and both languages change together.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -219,7 +219,7 @@ def ba_vs_ca(result, clock: str, *, age_col: str = "age", group: str | None = No
     years high on everybody, which is what MedE measures and what quietly wins
     AA1 in a benchmark that does not discount for it.
     """
-    plt = _mpl()
+    _mpl()          # import, set the Agg backend, or raise
     age, y = _age(result, age_col), result.scores[clock]
     df = pd.DataFrame({"chronological": age, "predicted": y})
     if group and group in result.obs.columns:
@@ -311,7 +311,7 @@ def calibration(result, clock: str, *, age_col: str = "age"):
 def acceleration_by_group(acc: pd.DataFrame, clock: str, obs: pd.DataFrame,
                           group: str, *, method: str | None = None):
     """Box and strip of acceleration by group -- the case/control workhorse."""
-    plt = _mpl()
+    _mpl()          # import, set the Agg backend, or raise
     d = pd.DataFrame({"acceleration": acc[clock], "group": obs[group].astype(str)}).dropna()
     _require_signal(d["acceleration"], what="acceleration")
     levels = sorted(d["group"].unique())
@@ -381,7 +381,7 @@ def acceleration_heatmap(acc: pd.DataFrame, obs: pd.DataFrame | None = None,
     it one clock's variance dominates the whole colour map and the figure shows
     only that clock.
     """
-    plt = _mpl()
+    _mpl()          # import, set the Agg backend, or raise
     _require_signal(acc.to_numpy(), what="acceleration heatmap", min_n=4)
     z = acc.apply(lambda c: (c - c.mean()) / (c.std(ddof=0) or 1.0)).T
     order = z.index[np.argsort(-z.var(axis=1).to_numpy())]
@@ -512,7 +512,7 @@ def clock_corr(result, *, method: str = "spearman", cluster: bool = True):
     rows is what makes the blocks visible, and the blocks are usually shared
     training cohorts rather than shared biology.
     """
-    plt = _mpl()
+    _mpl()          # import, set the Agg backend, or raise
     if result.scores.shape[1] < 2:
         raise NothingToPlot("clock_corr: needs at least two clocks")
     m = _corr(result, method)
@@ -661,7 +661,6 @@ def beta_density(data, *, max_samples: int = 60, n_grid: int = 200):
     X = data.X
     if X.shape[0] > max_samples:
         X = X.sample(max_samples, random_state=0)
-    grid = np.linspace(0, 1, n_grid)
     rows = {}
     for sid, row in X.iterrows():
         v = row.to_numpy(dtype=float)
@@ -986,7 +985,7 @@ def clock_chord(result, *, min_shared: int = 5, max_clocks: int = 24):
     outer ring of colour-coded entities, chords in the interior weighted by the
     strength of the relationship.
     """
-    plt = _mpl()
+    _mpl()          # import, set the Agg backend, or raise
     reg = result.registry
     clocks = [c for c in result.scores.columns if reg.has_coefficients(c)][:max_clocks]
     feats = {c: set(reg.feature_ids(c)) for c in clocks}

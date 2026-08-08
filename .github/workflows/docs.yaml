@@ -89,10 +89,20 @@ jobs:
       # reticulate has to find the interpreter the Python half was installed
       # into, or every example that calls the core fails to evaluate and the
       # reference pages render with tracebacks in them.
+      # `override = list(destination = ...)`, not a `dest_dir` argument --
+      # build_site() has no such parameter and errors on it. The destination is
+      # a pkgdown *config* field, and `override` is how you set a config field
+      # without editing the file the build reads.
+      #
+      # The path is relative to the package directory, so ../docs/r from r/ is
+      # docs/r at the repository root, which is where the Quarto site expects
+      # the R half to appear.
       - name: Build the R site into docs/r/
         env:
           RETICULATE_PYTHON: ${{ env.pythonLocation }}/bin/python
-        run: pkgdown::build_site(pkg = "r", dest_dir = "../docs/r", new_process = FALSE, install = FALSE)
+        run: |
+          pkgdown::build_site(pkg = "r", new_process = FALSE, install = FALSE,
+                              override = list(destination = "../docs/r"))
         shell: Rscript {0}
 
       # ---- the site -----------------------------------------------------------

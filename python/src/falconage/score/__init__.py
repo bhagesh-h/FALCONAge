@@ -5,10 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Sequence
 
-import numpy as np
 import pandas as pd
 
-from .._version import REGISTRY_VERSION, __version__
+# Re-exported so a caller holding a result can reach the versions that made
+# it without importing two modules. Aliased to themselves so the re-export is
+# explicit rather than an import that only looks unused.
+from .._version import REGISTRY_VERSION as REGISTRY_VERSION
+from .._version import __version__ as __version__
 from ..core.backend import resolve
 from ..core.container import FalconData
 from ..core.errors import FalconError, FeatureCoverageError, ScoringError, WeightsUnavailableError
