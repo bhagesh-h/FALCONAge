@@ -1,0 +1,52 @@
+<script>
+// Copy buttons for the sidebar citation blocks.
+//
+// Quarto's own code-copy only decorates code blocks inside the article body,
+// so the sidebar needs its own handler. This is deliberately dependency-free:
+// navigator.clipboard is available everywhere this site is readable, and the
+// execCommand path covers a page opened over plain http, where the async
+// clipboard API is unavailable because the context is not secure.
+(function () {
+  function flash(button, message) {
+    var original = button.textContent;
+    button.textContent = message;
+    button.classList.add("copied");
+    setTimeout(function () {
+      button.textContent = original;
+      button.classList.remove("copied");
+    }, 1400);
+  }
+
+  function copy(text, button) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(
+        function () { flash(button, "Copied"); },
+        function () { flash(button, "Press Ctrl+C"); }
+      );
+      return;
+    }
+    var scratch = document.createElement("textarea");
+    scratch.value = text;
+    scratch.setAttribute("readonly", "");
+    scratch.style.position = "absolute";
+    scratch.style.left = "-9999px";
+    document.body.appendChild(scratch);
+    scratch.select();
+    try {
+      flash(button, document.execCommand("copy") ? "Copied" : "Press Ctrl+C");
+    } catch (e) {
+      flash(button, "Press Ctrl+C");
+    }
+    document.body.removeChild(scratch);
+  }
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-copy]");
+    if (!button) return;
+    var source = document.getElementById(button.getAttribute("data-copy"));
+    if (!source) return;
+    event.preventDefault();
+    copy(source.textContent.trim(), button);
+  });
+})();
+</script>

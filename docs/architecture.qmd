@@ -40,20 +40,20 @@ untestable against a real answer - which is the one thing this project does not 
 
 Contents
 
-1. [Scope, decisions and repository layout](#1-scope-decisions-and-repository-layout)
-2. [Core engine](#2-core-engine)
-3. [Clock registry](#3-clock-registry)
-4. [Algorithms - the complete operation catalogue](#4-algorithms--the-complete-operation-catalogue)
-5. [Download module](#5-download-module)
-6. [Preprocess module](#6-preprocess-module)
-7. [Scoring, analysis, plots, report](#7-scoring-analysis-plots-report)
-8. [R package](#8-r-package)
-9. [Docker](#9-docker)
-10. [Testing](#10-testing)
-11. [Documentation](#11-documentation)
-12. [CI/CD and publishing](#12-cicd-and-publishing)
-13. [Build order](#13-build-order)
-14. [Open questions](#14-open-questions)
+1. [Scope, decisions and repository layout](#scope-decisions-and-repository-layout)
+2. [Core engine](#core-engine)
+3. [Clock registry](#clock-registry)
+4. [Algorithms - the complete operation catalogue](#algorithms---the-complete-operation-catalogue)
+5. [Download module](#download-module)
+6. [Preprocess module](#preprocess-module)
+7. [Scoring, analysis, plots, report](#scoring-analysis-plots-report)
+8. [R package](#r-package)
+9. [Docker](#docker)
+10. [Testing](#testing)
+11. [Documentation](#documentation)
+12. [CI/CD and publishing](#cicd-and-publishing)
+13. [Build order](#build-order)
+14. [Open questions](#open-questions)
 
 ## 1. Scope, decisions and repository layout
 
@@ -909,7 +909,8 @@ specified. `xp` is the array module the device resolver handed back - numpy or t
 implementation serves both backends and the CPU path never imports torch. An `nn.Module` would
 have forced torch on every install for a 500-CpG dot product that numpy finishes before torch has
 finished importing. All are batched and vectorised; none contains a Python loop over samples.
-Source for each is [Appendix E](science.qmd#appendix-e--preprocess-and-postprocess-operation-inventory).
+Source for each is
+[Appendix E](science.qmd#appendix-e---preprocess-and-postprocess-operation-inventory).
 
 ```python
 def apply_chain(x, chain: Sequence[dict], table: dict, *, xp) -> Any:
@@ -2108,7 +2109,7 @@ will look for. Every example and every test that needs the core is wrapped in
 ### 8.7 Roxygen conventions
 
 Following the cyRAVEN register - see
-[R/thresholds.R](../burcu/UMAP/cyRAVEN/R/thresholds.R) for the model. Every exported function
+`R/thresholds.R` in that package for the model. Every exported function
 gets:
 
 - an opening paragraph saying **what** it does, then **why** it does it that way when the choice
@@ -2261,7 +2262,7 @@ articles:
 ## 9. Docker
 
 Two images from one Dockerfile family, following the cyRAVEN pattern in
-[inst/scripts/Dockerfile](../burcu/UMAP/cyRAVEN/inst/scripts/Dockerfile): pinned base, dependency
+its `inst/scripts/Dockerfile`: pinned base, dependency
 layer copied before source, dependencies read from the declaration rather than a second list, and
 a build-time smoke test so a broken image fails at build instead of an hour into an analysis.
 

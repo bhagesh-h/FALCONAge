@@ -59,29 +59,66 @@ def citation() -> dict:
             "license": doc.get("license", "")}
 
 
-def sidebar_contents(spec: dict) -> list:
-    """The persistent left-hand navigation.
+def apa(spec: dict) -> str:
+    """The APA 7 reference for a software entry."""
+    c = citation()
+    surname = (c.get("author", "").split() or ["Hunakunti"])[-1]
+    initials = "".join(f"{w[0]}." for w in c.get("author", "B").split()[:-1])
+    return (f"{surname}, {initials} (2026). "
+            f"FALCONAge: Multiomic biological age and aging clock scoring in "
+            f"Python and R (Version {c.get('version', '')}) [Computer software]. "
+            f"{spec['site']['repo']}")
 
-    Deliberately the same shape as the navbar rather than a per-page table of
-    contents: the navbar collapses on a phone and the "On this page" list on
-    the right already covers within-page movement. What the left column is for
-    is knowing where you are in the site without opening a menu.
+
+def bibtex(spec: dict) -> str:
+    c = citation()
+    return "\n".join([
+        "@software{falconage2026,",
+        f"  author  = {{{c.get('author', '')}}},",
+        "  title   = {FALCONAge: Multiomic Biological Age and Aging Clock "
+        "Scoring in Python and R},",
+        "  year    = {2026},",
+        f"  version = {{{c.get('version', '')}}},",
+        f"  url     = {{{spec['site']['repo']}}},",
+        f"  license = {{{c.get('license', '')}}}",
+        "}",
+    ])
+
+
+def sidebar_header(spec: dict) -> str:
+    """Logo, one line on what this is, and a citation you can paste.
+
+    WHY THERE IS NO NAVIGATION HERE. The first version repeated the navbar down
+    the left column, which is two copies of the same menu on a screen wide
+    enough to show both and no help on one that is not. The right-hand "On this
+    page" list already handles movement within a page. So the column carries
+    what the navbar cannot: what the tool is, and how to cite it.
+
+    WHY THE CITATION IS INLINE RATHER THAN A LINK. A link to CITATION.cff is a
+    file to open, parse and reformat. What a reader wants is the two strings
+    they are actually going to paste -- APA into a manuscript, BibTeX into a
+    .bib -- with a button that puts them on the clipboard.
     """
-    return [
-        {"text": "Get started", "file": "index.qmd"},
-        {"section": "Guides",
-         "contents": [{"text": a["title"], "file": f"guide/{a['file']}.qmd"}
-                      for a in spec["articles"]]},
-        {"section": "Reference",
-         "contents": [{"text": "Python", "file": "reference/index.qmd"},
-                      {"text": "R", "href": "r/index.html"}]},
-        {"section": "Background",
-         "contents": [{"text": p["title"], "file": p["file"]}
-                      for p in spec.get("pages", [])]},
-        {"section": "Download",
-         "contents": [{"text": d["title"], "href": f"downloads/{d['file']}"}
-                      for d in spec.get("downloads", [])]},
-    ]
+    site = spec["site"]
+    # The logo is emitted here rather than through the sidebar's `logo:` key.
+    # Quarto renders `header:` into `.quarto-sidebar-header` and the `logo:`
+    # into a `.sidebar-header` div AFTER it, so using the key puts the mark
+    # below the text -- the opposite of the asked-for order. Placing the <img>
+    # at the top of the header markdown is the only way to control it.
+    return (
+        f'<a class="falcon-logo-link" href="{site["url"]}">'
+        f'<img class="falcon-logo" src="logo.png" alt="{site["title"]} logo"></a>\n'
+        f'<p class="falcon-blurb">{" ".join(site["description"].split())}</p>\n'
+        '<div class="falcon-cite">\n'
+        '  <div class="falcon-cite-title">Cite FALCONAge</div>\n'
+        '  <div class="falcon-cite-label">APA</div>\n'
+        f'  <pre class="falcon-cite-text" id="cite-apa">{apa(spec)}</pre>\n'
+        '  <button class="falcon-copy" data-copy="cite-apa">Copy APA</button>\n'
+        '  <div class="falcon-cite-label">BibTeX</div>\n'
+        f'  <pre class="falcon-cite-text" id="cite-bib">{bibtex(spec)}</pre>\n'
+        '  <button class="falcon-copy" data-copy="cite-bib">Copy BibTeX</button>\n'
+        '</div>\n'
+    )
 
 
 def quarto_yaml(spec: dict) -> str:
@@ -148,19 +185,15 @@ def quarto_yaml(spec: dict) -> str:
             "sidebar": {
                 "style": "docked",
                 "search": True,
-                "logo": "logo.png",
-                "logo-alt": f"{site['title']} logo",
-                "logo-href": site["url"],
-                "header": (
-                    f"**{site['title']}** · v{cite.get('version', '')}\n\n"
-                    f"{' '.join(site['description'].split())}\n"
-                ),
-                "contents": sidebar_contents(spec),
+                # No `logo:` key -- sidebar_header() emits the <img> itself, so
+                # that the mark comes above the text rather than below it.
+                # Logo, then what it is, then how to cite it. No navigation:
+                # the navbar already carries it, and repeating it down the left
+                # is two copies of one menu. See sidebar_header().
+                "header": sidebar_header(spec),
                 "footer": (
                     f"[{cite.get('author', '')}]({cite.get('orcid', '')})  \n"
-                    f"{cite.get('license', '')} · "
-                    f"[cite this]({site['repo']}/blob/main/CITATION.cff)  \n"
-                    f"[source]({site['repo']})\n"
+                    f"{cite.get('license', '')} · [source]({site['repo']})\n"
                 ),
             },
         },
@@ -174,6 +207,9 @@ def quarto_yaml(spec: dict) -> str:
             "toc": True,
             "code-copy": True,
             "code-overflow": "wrap",
+            # The copy buttons on the sidebar citation. Quarto's own code-copy
+            # only decorates code blocks in the article body.
+            "include-after-body": "cite-copy.html",
             # Both languages appear in the same tabset on every guide page, so
             # a reader picking "R" once keeps R selected across the whole site.
             "code-annotations": "hover",
@@ -183,7 +219,21 @@ def quarto_yaml(spec: dict) -> str:
             "dir": "reference",
             "title": "Python reference",
             "style": "pkgdown",
-            "render_interlinks": True,
+            # Off, and it has to be. Interlinks turn a type annotation into a
+            # cross-reference by emitting `[](`pandas.DataFrame`)` for a Quarto
+            # *filter* to resolve later. That filter ships as a Quarto
+            # extension, installed separately with `quarto add machow/quartodoc`
+            # -- and without it the placeholder reaches the HTML verbatim, so
+            # every annotated parameter renders as a link whose href is a
+            # backtick-quoted type name. Twenty-nine of those on the reference
+            # pages, all 404.
+            #
+            # Adding the extension would mean vendoring a _extensions directory
+            # and keeping it in step with quartodoc. Plain code formatting for
+            # type names costs a reader nothing here: the types are numpy,
+            # pandas and this package's own, and the ones that are ours have
+            # their own page in the same reference.
+            "render_interlinks": False,
             "sections": sections,
         },
     }

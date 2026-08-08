@@ -25,9 +25,15 @@ jobs:
   R-CMD-check:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    defaults:
-      run:
-        working-directory: r
+    # No `defaults.run.working-directory`. It was set to `r`, which affects
+    # `run:` steps but not `uses:` steps -- the r-lib actions take a
+    # `working-directory` input instead and were already passing one. That left
+    # exactly two run steps under the default: one that overrode it back to the
+    # root, and one that silently inherited it and looked for `r/r`.
+    #
+    # A default that every step either overrides or trips over is worse than no
+    # default. Every path below is now relative to the repository root, which
+    # is what the other three workflows do and what a reader assumes.
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -50,7 +56,6 @@ jobs:
       # The Python core first. The R suite compares against it, so if this step
       # is wrong every later failure is a red herring.
       - name: Install the Python core
-        working-directory: .
         run: |
           python -m venv /opt/hostedtoolcache/Python/venv
           /opt/hostedtoolcache/Python/venv/bin/pip install --upgrade pip
