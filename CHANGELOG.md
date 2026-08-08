@@ -1,0 +1,140 @@
+# Changelog
+
+One changelog for both packages, because they are one thing: the R package delegates every
+number to the Python core, so a change to either is a change to both and two files would only
+ever disagree. `r/NEWS.md` is generated from this file by `docs/build_news.py` — edit here.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
+[semantic versioning](https://semver.org/spec/v2.0.0.html), with the clock registry carrying its
+own `registry_version` so a coefficient correction can be pinned independently of the code.
+
+## [Unreleased]
+
+### Fixed
+
+- **Every bundled coefficient file's recorded SHA-256 was wrong on a Windows
+  checkout.** All twenty were CRLF on disk while their recorded digests described the LF form, so
+  the integrity check failed in any fresh environment and passed only in a stale one. That digest
+  is what `run_manifest.json` records, and the whole reproducibility claim rests on it — a
+  checkout that rewrites line endings changes the bytes, changes the digest and makes the manifest
+  say two identical runs used different coefficients. The tree is normalised to LF and
+  [`.gitattributes`](.gitattributes) now marks the coefficient files binary so git can never
+  convert them again, whatever `core.autocrlf` says.
+- **`fit_kdm()` returned a plausible number from a NaN-poisoned reference.** A marker with no
+  residual spread — a unit conversion that collapsed the column, one value filled down — makes
+  `k/s` an infinity, `corrcoef` of a constant a NaN and `r_char` a NaN, after which `nansum`
+  carries on and produces an answer. It now refuses, names the column, and says that KDM is
+  defined for any panel size so the fix is to drop it. The check is relative rather than
+  `sd == 0`, because least squares leaves about 1e-15 of rounding noise on a genuinely constant
+  column and an exact test passes the case it exists to catch.
+- **One of the nine markers in the clinical test fixture was a constant.**
+  `rng.normal(6.5, 1.4)` without `size=n` returns a single float, which pandas broadcast down the
+  column — so the fixture had been carrying eight informative markers and one flat one, and it was
+  that flat marker feeding the zero into KDM.
+- **Test fixtures shared one session-scoped random generator.** A `Generator` is stateful, so each
+  fixture's data depended on whether another had been built, which depended on which tests ran,
+  which depended on whether the 586 MB corpus was present. The result was a statistical assertion
+  that passed on a developer's machine and failed in CI with no diff to look at. Each fixture now
+  has its own named seed.
+- **`.gitignore` and `.dockerignore` were excluding nothing.** An earlier edit had replaced the
+  path patterns with prose, which matches no file, so the private working material would have
+  been committed by the first `git add .`. Both files are now allow-list-first: the repository
+  root is excluded and the deliverables are re-admitted by name.
+- **Neither Docker image would build.** Four independent causes: `python/uv.lock` did not exist;
+  `BIOC_VERSION` pinned Bioconductor against an R version CRAN's apt repository no longer serves,
+  for a dependency this package does not have; R packages were compiling from source because
+  Posit's package manager serves binaries only to a client whose User-Agent names the
+  distribution, which R does not set by default; and a `force-include` in `pyproject.toml`
+  duplicated `clocks.yaml` in the wheel, which hatchling refuses and an editable install never
+  exercises. The CUDA image additionally bootstraps pip with `ensurepip`, because Ubuntu 22.04's
+  `python3-pip` is built for 3.10 and Python 3.12 cannot import it.
+- **The built images could not read their own corpus.** The locked export omitted the extras, so
+  `pyarrow`, `matplotlib` and `anndata` were absent and five integration tests failed on a
+  missing parquet engine.
+- **`clock_radar` drew its legend over its own axis labels.** The figure now sizes its canvas in
+  inches to its contents, with a band each for header, plot, legend and caption, and spike
+  padding computed per side from each label's angle. The radial tick locator is capped so its
+  labels cannot crowd on a narrow cohort, and the r-axis labels moved off theta = 0 where a spoke
+  already is.
+- **`NAMESPACE` exported four plot functions out of eighteen.** roxygen had not been regenerated
+  since several were added, leaving `plot_clock_atlas`, `plot_clock_radar`, `plot_clock_chord`
+  and others unreachable from a user's session. Now 56 exports.
+- **`falconage_install()` installed a package that does not exist.** It resolved
+  `falconage==<version>` from PyPI, where FALCONAge is not published. It now installs the core
+  from the GitHub tag matching the R package's version, so the two halves cannot drift.
+- `align()` looped `X.iloc[:, i]` once per feature — 2,666 pandas indexing calls for one
+  eight-clock run, 76% of total runtime against 0.5% for the arithmetic they fed. One `reindex`
+  instead made the CPU path **2.1× faster** at 4,096 samples, for every user, GPU or not.
+- The HTML report called a function that had been renamed, inside a `try` shared by every figure,
+  so one broken figure silently removed all of them and the report still rendered.
+
+### Changed
+
+- **`device="auto"` now resolves to CPU even when a CUDA device is present.** Measured on an
+  RTX 4060 over eight clocks and 2,340 features, the CPU wins at every size tested and by 6.5× at
+  16,384 samples: the dot products take 3 ms and the PCIe transfers take the rest. Choosing CUDA
+  because a card exists would make the common case six times slower on every machine that has
+  one, silently. The GPU is opt-in with `device="cuda"` or `FALCONAGE_DEVICE=cuda`, and should
+  earn its place on the PC clocks and on neural architectures.
+- `falconage_install()` gains `gpu=` and `cuda=`. The `gpu` extra alone is not enough: pip's
+  default index serves a CUDA build of torch on Linux and a CPU-only build on Windows under the
+  same version, so half of all machines would get an environment where `device="cuda"` cannot
+  resolve.
+- All installation instructions moved to GitHub, since neither package is on a registry yet.
+- `plot_clock_radar` in R now draws radial spike labels and a bottom legend, matching Python.
+- Python is tested on one version rather than three. The lock file pins one resolution and both
+  images run it; the other two matrix entries were testing the resolver, not this package.
+
+### Added
+
+- `test/gpu_check.py` — the script that produced every number in `docs/gpu.md`, running in the
+  shipping CUDA image. Stops after its first step with an explanation where there is no CUDA
+  device, so it is safe to run anywhere and safe to attach to a bug report.
+- `plot.clock_atlas` / `plot_clock_atlas` — one figure covering every clock across every pooled
+  study, ordered by benchmark total, for the case where a per-clock panel would need forty.
+- `CITATION.cff` and `inst/CITATION`, both pointing at the registry for the per-clock references,
+  because citing FALCONAge does not cite the clock it computed.
+- `PUBLISHING.md`, with an honest gap table for the four distribution routes not yet taken.
+- Four CI workflows: `python-test`, `R-CMD-check` (which builds a Python environment first, since
+  the R suite asserts against it), `docs`, and `release`.
+- Documentation downloads: the R reference manual as PDF, the Python reference as one Typst PDF,
+  and the whole site as markdown, linked from the site and attached to each release.
+- The two long-form notes are published as documentation: *The science of aging clocks* and
+  *Architecture*, the second opening with a table reconciling what shipped against what was
+  specified.
+
+### Documentation
+
+Corrections where the README described a package other than this one:
+
+- tier counts said 38 / 95 / 28; the registry says **23 / 110 / 28**
+- the scale-type table listed types the code does not have; replaced with the eight `LEGAL_OPS`
+  enforces
+- GDC and Figshare were advertised as download sources and are not implemented
+- the GPU section promised 120× from a benchmark of two *other* packages; replaced with what was
+  measured here
+- the benchmark example showed GrimAge2 scoring 26.9, and GrimAge2 is a tier C scaffold that
+  cannot score at all; replaced with real corpus output
+- the coverage example attributed 513 CpGs to `phenoage`, which is a clinical-chemistry clock
+  with none
+
+## [1.0.0] — 2026-08-08
+
+First release. 161 catalogued clocks in three availability tiers; 23 score offline today, 28 ship
+as tested scaffolds whose research-use-only coefficients the user supplies, and 110 carry
+metadata without traced coefficients.
+
+- DNA methylation and clinical chemistry, from IDATs, series matrices, beta matrices, RRBS and
+  tabular labs
+- Age acceleration in all three conventions, association and survival models, ICC with Fisher-Z
+  pooling, and the ComputAgeBench AA1/AA2 benchmark
+- 25 figures, identical in Python and R, all reading one `colorscheme.yaml`
+- `scale_type` on every registry entry, governing which downstream operations are permitted:
+  asking for age acceleration on a pace-of-aging clock raises rather than subtracting a
+  chronological age from a rate
+- A run manifest recording versions, device, dtype and the SHA-256 of every coefficient file used
+- One numerical core: R results are the same bits as Python results, asserted at tolerance
+  exactly zero
+
+[Unreleased]: https://github.com/bhagesh-h/FALCONAge/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/bhagesh-h/FALCONAge/releases/tag/v1.0.0

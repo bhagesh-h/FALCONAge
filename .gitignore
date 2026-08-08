@@ -186,5 +186,3 @@ desktop.ini
 tmp/
 *.log
 !docker/*.log
-
-CHANGELOG.md
