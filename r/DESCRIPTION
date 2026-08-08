@@ -16,7 +16,8 @@ Description: Scores DNA methylation and clinical chemistry data against a
     supplies.
 License: GPL (>= 3)
 URL: https://github.com/bhagesh-h/FALCONAge,
-    https://bhagesh-h.github.io/FALCONAge/
+    https://bhagesh-h.github.io/FALCONAge/,
+    https://bhagesh-h.github.io/FALCONAge/r
 BugReports: https://github.com/bhagesh-h/FALCONAge/issues
 Depends:
     R (>= 4.1)

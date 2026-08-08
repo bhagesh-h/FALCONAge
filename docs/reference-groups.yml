@@ -84,12 +84,28 @@ groups:
       the exception in scale rather than in kind: one figure covering every
       clock across every pooled study, for the case where a per-clock panel
       would need forty of them.
-    python: [plot.ba_vs_ca, plot.acceleration_density, plot.clock_corr,
-             plot.clock_radar, plot.clock_chord, plot.clock_atlas,
-             plot.missingness, plot.benchmark_bars, report.write_report]
-    r: [plot_ba_vs_ca, plot_acceleration, plot_coverage, plot_agreement,
-        plot_clock_radar, plot_clock_chord, plot_clock_atlas,
-        falcon_palette, report]
+    python: [plot.ba_vs_ca, plot.bland_altman, plot.calibration,
+             plot.acceleration_density, plot.acceleration_by_group,
+             plot.acceleration_heatmap, plot.forest,
+             plot.clock_corr, plot.clock_radar, plot.clock_chord,
+             plot.clock_pca, plot.clock_atlas,
+             plot.coverage_bar, plot.missingness, plot.beta_density,
+             plot.platform_comparison, plot.study_comparison,
+             plot.benchmark_bars, plot.benchmark_error_bias,
+             plot.benchmark_heatmap,
+             plot.palette, plot.save_all, report.write_report]
+    # pkgdown refuses to build when an exported topic is in no group, so this
+    # list is not optional documentation -- it is a build dependency. The
+    # coverage check in build_docs.py compares it against r/man/*.Rd and fails
+    # first, with a better message than pkgdown's.
+    r: [plot_ba_vs_ca, plot_bland_altman, plot_calibration,
+        plot_acceleration, plot_acceleration_by_group, plot_acceleration_heatmap,
+        plot_forest,
+        plot_agreement, plot_clock_radar, plot_clock_chord, plot_clock_pca,
+        plot_clock_atlas,
+        plot_coverage, plot_by_platform,
+        plot_benchmark, plot_benchmark_error_bias, plot_benchmark_heatmap,
+        falcon_palette, falcon_scheme, falcon_theme, report]
 
   - title: Downloading public data
     desc: >-

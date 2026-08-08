@@ -96,13 +96,25 @@ reference:
     case where a per-clock panel would need forty of them.'
   contents:
   - plot_ba_vs_ca
+  - plot_bland_altman
+  - plot_calibration
   - plot_acceleration
-  - plot_coverage
+  - plot_acceleration_by_group
+  - plot_acceleration_heatmap
+  - plot_forest
   - plot_agreement
   - plot_clock_radar
   - plot_clock_chord
+  - plot_clock_pca
   - plot_clock_atlas
+  - plot_coverage
+  - plot_by_platform
+  - plot_benchmark
+  - plot_benchmark_error_bias
+  - plot_benchmark_heatmap
   - falcon_palette
+  - falcon_scheme
+  - falcon_theme
   - report
 - title: Downloading public data
   desc: Accession in, files and a normalised sample table out. Credentialed archives are documented

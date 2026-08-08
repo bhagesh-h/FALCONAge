@@ -126,13 +126,27 @@ quartodoc:
       the case where a per-clock panel would need forty of them.'
     contents:
     - plot.ba_vs_ca
+    - plot.bland_altman
+    - plot.calibration
     - plot.acceleration_density
+    - plot.acceleration_by_group
+    - plot.acceleration_heatmap
+    - plot.forest
     - plot.clock_corr
     - plot.clock_radar
     - plot.clock_chord
+    - plot.clock_pca
     - plot.clock_atlas
+    - plot.coverage_bar
     - plot.missingness
+    - plot.beta_density
+    - plot.platform_comparison
+    - plot.study_comparison
     - plot.benchmark_bars
+    - plot.benchmark_error_bias
+    - plot.benchmark_heatmap
+    - plot.palette
+    - plot.save_all
     - report.write_report
   - title: Downloading public data
     desc: Accession in, files and a normalised sample table out. Credentialed archives are

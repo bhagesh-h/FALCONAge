@@ -1,7 +1,0 @@
-# registry.load { #falconage.registry.load }
-
-```python
-registry.load(path=None)
-```
-
-Load the packaged registry. Cached for the life of the process.

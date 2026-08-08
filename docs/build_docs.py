@@ -170,6 +170,29 @@ def coverage_report(spec: dict) -> list[str]:
     return out
 
 
+def ungrouped_r_topics(spec: dict) -> list[str]:
+    """Exported R topics that no group claims. This one IS an error.
+
+    pkgdown refuses to build a site when a public topic is in no reference
+    group, and it discovers this two minutes into the docs job with a message
+    that names the topics but not the file to put them in. Catching it here
+    turns a CI failure into a line of output from a script that runs in a
+    second.
+
+    The comparison is against ``r/man/*.Rd`` rather than NAMESPACE, because a
+    topic is what pkgdown indexes: several S3 methods share one ``.Rd`` through
+    ``@rdname`` and must not be listed separately, and anything carrying
+    ``\\keyword{internal}`` is deliberately excluded from the index.
+    """
+    man = ROOT / "r" / "man"
+    if not man.is_dir():
+        return []
+    public = {p.stem for p in man.glob("*.Rd")
+              if "\\keyword{internal}" not in p.read_text(encoding="utf-8")}
+    listed = {n for g in spec["groups"] for n in (g.get("r") or [])}
+    return sorted(public - listed)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--check", action="store_true",
@@ -184,13 +207,26 @@ def main(argv=None) -> int:
         if not path.exists() or path.read_text(encoding="utf-8") != text:
             stale.append(path)
 
+    orphans = ungrouped_r_topics(spec)
+
     if args.check:
+        bad = False
         if stale:
             print("stale, regenerate with docs/build_docs.py:")
             for p in stale:
                 print(f"  {p.relative_to(ROOT)}")
+            bad = True
+        if orphans:
+            print(f"{len(orphans)} exported R topic(s) belong to no reference group.")
+            print("pkgdown will refuse to build the site until each is either")
+            print("added to a group in docs/reference-groups.yml or marked")
+            print("@keywords internal:")
+            for t in orphans:
+                print(f"  {t}")
+            bad = True
+        if bad:
             return 1
-        print("both configs are current")
+        print("both configs are current; every exported R topic is grouped")
         return 0
 
     for path, text in outputs.items():
@@ -198,11 +234,17 @@ def main(argv=None) -> int:
         path.write_text(text, encoding="utf-8", newline="\n")
         print(f"wrote {path.relative_to(ROOT)}")
 
+    if orphans:
+        print(f"\nWARNING: {len(orphans)} exported R topic(s) in no group. "
+              "pkgdown will refuse to build:")
+        for t in orphans:
+            print(f"  {t}")
+
     asym = coverage_report(spec)
     if asym:
         print("\ngroups present in one language only:")
         print("\n".join(asym))
-    return 0
+    return 1 if orphans else 0
 
 
 if __name__ == "__main__":
