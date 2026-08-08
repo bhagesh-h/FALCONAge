@@ -1,0 +1,133 @@
+// =============================================================================
+// Layout rules shared by both themes
+// =============================================================================
+//
+// Imported by theme-light.scss and theme-dark.scss, which differ only in the
+// palette variables this file reads. That is the whole point: the two used to
+// be separate copies kept in step by hand, and they drifted -- dark was built
+// on Bootswatch `darkly` (Lato) against light's `cosmo` (Source Sans Pro), so
+// switching themes changed every typographic metric on the page and the layout
+// visibly grew. Both now sit on cosmo, and every rule below is written once.
+//
+// Variables each theme must define before importing:
+//   $falcon-brand        the logo colour, for the wordmark
+//   $falcon-accent       the link/button colour, contrast-safe on that ground
+//   $falcon-hairline     a low-contrast border
+//   $falcon-wash         a faint fill, for buttons on hover
+//   $falcon-invert       text colour on a solid $falcon-brand fill
+// -----------------------------------------------------------------------------
+
+// The wordmark, at the logo's own colour rather than the link colour.
+.navbar-brand,
+.sidebar-title,
+#quarto-sidebar .sidebar-header strong {
+  color: $falcon-brand !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+// Quarto emits the logo block after the header text. Reordering here rather
+// than hand-writing an <img> keeps Quarto's per-page path rewriting, which is
+// what makes the logo resolve from guide/ and reference/ as well as the root.
+#quarto-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+#quarto-sidebar .sidebar-header { order: -2; }        // logo
+#quarto-sidebar .quarto-sidebar-header { order: -1; } // blurb and cite
+
+#quarto-sidebar .sidebar-header {
+  padding: 0;
+  margin: 0 0 0.9rem;
+}
+#quarto-sidebar .sidebar-logo-link,
+#quarto-sidebar a.sidebar-logo-link {
+  display: block;
+  width: 100%;
+  padding: 0;
+}
+#quarto-sidebar img.sidebar-logo {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;   // Quarto caps this at 100px, which crops a square mark
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+
+#quarto-sidebar .quarto-sidebar-header {
+  padding: 0.25rem 0 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+// One line, doing the job the navbar cannot: saying what this is.
+.falcon-blurb {
+  margin: 0 0 1rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.falcon-cite-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-bottom: 0.45rem;
+}
+
+// The two references live in the DOM for the copy handler and are never shown:
+// a narrow column is the wrong place to read a BibTeX entry, and the button is
+// the whole interaction. The full text is on the landing page.
+.falcon-cite-text { display: none !important; }
+
+.falcon-cite-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.falcon-copy {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  color: $falcon-accent;
+  background: transparent;
+  border: 1px solid $falcon-hairline;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.falcon-copy:hover { background: $falcon-wash; }
+.falcon-copy.copied {
+  color: $falcon-invert;
+  background: $falcon-brand;
+  border-color: $falcon-brand;
+}
+
+// Separated by space, not by a rule. The pages already carry enough horizontal
+// lines from heading styling, and a second stacked near it reads as a mistake.
+#quarto-sidebar .sidebar-footer {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 1.6rem;
+}
+
+// One divider per section, never two. Quarto's theme underlines h2, and the
+// long-form pages were written as plain markdown with `---` between sections;
+// both together gave a doubled rule. The rules are gone from the source, and
+// this stops anything reintroducing one.
+main hr,
+main .quarto-title-block + hr {
+  display: none;
+}
+
+// Wide tables are the norm here -- the clock catalogue is 161 rows of six
+// columns. Let them scroll rather than force the page to.
+.cell-output-display > table,
+.table-responsive,
+main table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

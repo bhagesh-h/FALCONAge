@@ -9,7 +9,8 @@ template:
     link-color: '#a84800'
 home:
   title: FALCONAge for R
-  description: Multiomic biological age and aging clock scoring, identical in Python and R.
+  description: Biological age and aging-clock scoring from multiomic data, in Python and R,
+    on CPU or GPU.
 navbar:
   structure:
     left:

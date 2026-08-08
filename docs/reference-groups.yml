@@ -21,8 +21,13 @@
 
 site:
   title: FALCONAge
+  # One description, used everywhere: the HTML meta tag, the sidebar blurb, the
+  # pkgdown home page and the subtitle of the combined PDF. The landing page
+  # deliberately does NOT repeat it -- the sidebar is on that page too, and the
+  # same sentence twice above the fold reads as a templating mistake.
   description: >-
-    Multiomic biological age and aging clock scoring, identical in Python and R.
+    Biological age and aging-clock scoring from multiomic data, in Python and R,
+    on CPU or GPU.
   url: https://bhagesh-h.github.io/FALCONAge/
   repo: https://github.com/bhagesh-h/FALCONAge
 

@@ -1,6 +1,5 @@
 ---
 title: "FALCONAge"
-subtitle: "Multiomic biological age and aging clock scoring, identical in Python and R"
 ---
 
 An aging clock maps molecular measurements to a number on an age-like scale. What that number

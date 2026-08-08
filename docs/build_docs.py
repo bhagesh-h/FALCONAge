@@ -100,23 +100,27 @@ def sidebar_header(spec: dict) -> str:
     .bib -- with a button that puts them on the clipboard.
     """
     site = spec["site"]
-    # The logo is emitted here rather than through the sidebar's `logo:` key.
-    # Quarto renders `header:` into `.quarto-sidebar-header` and the `logo:`
-    # into a `.sidebar-header` div AFTER it, so using the key puts the mark
-    # below the text -- the opposite of the asked-for order. Placing the <img>
-    # at the top of the header markdown is the only way to control it.
+    # No <img> here. An earlier version emitted one to control the order, and
+    # `src="logo.png"` is relative to the page: correct at the site root and a
+    # 404 on everything under guide/ and reference/, which is most of the site.
+    # Quarto's own `logo:` key rewrites the path per page depth -- ./logo.png,
+    # ../logo.png -- so the key does the job and CSS `order` puts the block
+    # above this text. Ordering is a layout problem; it should be solved in the
+    # stylesheet, not by hand-writing an image tag with a broken path.
+    #
+    # The citation text is in the DOM but hidden: the reader wants the button,
+    # not two reference formats taking up a screen of a narrow column, and the
+    # copy handler needs something to read.
     return (
-        f'<a class="falcon-logo-link" href="{site["url"]}">'
-        f'<img class="falcon-logo" src="logo.png" alt="{site["title"]} logo"></a>\n'
         f'<p class="falcon-blurb">{" ".join(site["description"].split())}</p>\n'
         '<div class="falcon-cite">\n'
         '  <div class="falcon-cite-title">Cite FALCONAge</div>\n'
-        '  <div class="falcon-cite-label">APA</div>\n'
-        f'  <pre class="falcon-cite-text" id="cite-apa">{apa(spec)}</pre>\n'
-        '  <button class="falcon-copy" data-copy="cite-apa">Copy APA</button>\n'
-        '  <div class="falcon-cite-label">BibTeX</div>\n'
-        f'  <pre class="falcon-cite-text" id="cite-bib">{bibtex(spec)}</pre>\n'
-        '  <button class="falcon-copy" data-copy="cite-bib">Copy BibTeX</button>\n'
+        f'  <pre class="falcon-cite-text" id="cite-apa" hidden>{apa(spec)}</pre>\n'
+        f'  <pre class="falcon-cite-text" id="cite-bib" hidden>{bibtex(spec)}</pre>\n'
+        '  <div class="falcon-cite-buttons">\n'
+        '    <button class="falcon-copy" data-copy="cite-apa">Copy APA</button>\n'
+        '    <button class="falcon-copy" data-copy="cite-bib">Copy BibTeX</button>\n'
+        '  </div>\n'
         '</div>\n'
     )
 
@@ -185,25 +189,39 @@ def quarto_yaml(spec: dict) -> str:
             "sidebar": {
                 "style": "docked",
                 "search": True,
-                # No `logo:` key -- sidebar_header() emits the <img> itself, so
-                # that the mark comes above the text rather than below it.
+                # Quarto emits this into a block AFTER `header:`; the
+                # stylesheet reorders it to the top. Using the key rather than
+                # a hand-written <img> is what makes the path correct at every
+                # page depth.
+                "logo": "logo.png",
+                "logo-alt": f"{site['title']} logo",
+                "logo-href": site["url"],
                 # Logo, then what it is, then how to cite it. No navigation:
                 # the navbar already carries it, and repeating it down the left
                 # is two copies of one menu. See sidebar_header().
                 "header": sidebar_header(spec),
+                # The licence links to the file rather than naming a string:
+                # "GPL-3.0-or-later" is an identifier, and the thing a reader
+                # actually wants is the terms.
                 "footer": (
                     f"[{cite.get('author', '')}]({cite.get('orcid', '')})  \n"
-                    f"{cite.get('license', '')} · [source]({site['repo']})\n"
+                    f"[{cite.get('license', '')}]({site['repo']}/blob/main/LICENSE)"
+                    f" · [source]({site['repo']})\n"
                 ),
             },
         },
         "format": {"html": {
             # Declaring both a light and a dark theme is what makes Quarto put
             # the toggle in the navbar; there is no separate switch to turn on.
-            # The two SCSS files derive everything from the logo colour, which
-            # was sampled from logo.png rather than chosen.
+            #
+            # BOTH sit on cosmo. The dark side was on `darkly`, and a Bootswatch
+            # theme is not a colour scheme -- darkly sets Lato where cosmo sets
+            # Source Sans Pro, with different metrics throughout, so toggling
+            # changed every measurement on the page and the layout grew. One
+            # base, one set of layout rules in _falcon-shared.scss which both
+            # SCSS files import, and the dark file changes colour only.
             "theme": {"light": ["cosmo", "theme-light.scss"],
-                      "dark": ["darkly", "theme-dark.scss"]},
+                      "dark": ["cosmo", "theme-dark.scss"]},
             "toc": True,
             "code-copy": True,
             "code-overflow": "wrap",

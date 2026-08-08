@@ -1,135 +1,102 @@
 /*-- scss:defaults --*/
-// FALCONAge brand, dark.
+// FALCONAge brand, dark. Layered on Bootswatch cosmo -- the SAME base as the
+// light theme, which is the point.
 //
-// Same hue as the light theme, lifted for contrast. #e06000 on a dark ground
-// is 3.0:1 and unreadable as body text; #ff8c42 is 7.4:1 on #1c1c1e, which is
-// comfortable, and it still reads as the logo colour rather than as yellow.
-$falcon-orange:       #ff8c42;
-$falcon-orange-muted: #ff7a24;
-$falcon-bg:           #1c1c1e;
-$falcon-surface:      #26262a;
-$falcon-fg:           #e6e6e6;
+// This was previously built on `darkly`. Bootswatch themes are not colour
+// schemes, they are whole themes: darkly sets Lato where cosmo sets Source
+// Sans Pro, with different metrics throughout, so toggling changed every
+// measurement on the page and the layout visibly grew. One base, one set of
+// layout rules in _falcon-shared.scss, and this file changes colour only.
+//
+// Same hue as the light theme, lifted for contrast: #e06000 on a dark ground
+// is 3.0:1 and unreadable as body text; #ff8c42 is 7.4:1 on #1c1c1e.
+$falcon-orange: #ff8c42;
+$falcon-bg:      #1c1c1e;
+$falcon-surface: #26262a;
+$falcon-raised:  #2f2f34;
+$falcon-fg:      #e6e6e6;
+$falcon-dim:     #a8a8ad;
 
-$primary:     $falcon-orange;
-$body-bg:     $falcon-bg;
-$body-color:  $falcon-fg;
-$link-color:  $falcon-orange;
+$primary:    $falcon-orange;
+$body-bg:    $falcon-bg;
+$body-color: $falcon-fg;
+$link-color: $falcon-orange;
+$link-hover-color: lighten($falcon-orange, 8%);
+
+// Cosmo is a light theme, so every surface Bootstrap paints has to be told
+// otherwise. Missing one shows up as a white card on a dark page.
+$border-color:       rgba(255, 255, 255, 0.15);
+$secondary-bg:       $falcon-surface;
+$tertiary-bg:        $falcon-raised;
+$secondary-color:    $falcon-dim;
+$card-bg:            $falcon-surface;
+$card-border-color:  $border-color;
+$list-group-bg:      $falcon-surface;
+$dropdown-bg:        $falcon-surface;
+$dropdown-link-color: $falcon-fg;
+$dropdown-link-hover-bg: $falcon-raised;
+$dropdown-border-color: $border-color;
+$input-bg:           $falcon-surface;
+$input-color:        $falcon-fg;
+$input-border-color: $border-color;
+$input-placeholder-color: $falcon-dim;
+$table-color:        $falcon-fg;
+$table-border-color: $border-color;
+$code-color:         #ff9d5c;
+$code-bg:            rgba(255, 255, 255, 0.07);
+$pre-color:          $falcon-fg;
+$hr-color:           $border-color;
 
 $navbar-bg: $falcon-surface;
 $navbar-fg: $falcon-fg;
+$navbar-light-color: $falcon-fg;
+$navbar-light-hover-color: $falcon-orange;
+$navbar-light-active-color: $falcon-orange;
+$navbar-light-brand-color: $falcon-orange;
 
 $font-family-monospace: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 
+// The names _falcon-shared.scss reads.
+$falcon-brand:    $falcon-orange;
+$falcon-accent:   $falcon-orange;
+$falcon-hairline: rgba(255, 255, 255, 0.22);
+$falcon-wash:     rgba(255, 255, 255, 0.08);
+$falcon-invert:   $falcon-bg;
+
 /*-- scss:rules --*/
-.navbar-brand,
-.sidebar-title,
-#quarto-sidebar .sidebar-header strong {
-  color: $falcon-orange !important;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
+@import "falcon-shared";
 
-#quarto-sidebar .sidebar-header {
-  padding: 0.5rem 0 0.5rem;
-  font-size: 0.86rem;
-  line-height: 1.45;
-}
-
-// Full-width logo, as in the light theme.
-#quarto-sidebar img.sidebar-logo,
-#quarto-sidebar .sidebar-logo img {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  margin: 0 0 0.75rem;
-}
-#quarto-sidebar .sidebar-logo-link {
-  display: block;
-  width: 100%;
-}
-
-.falcon-blurb {
-  margin: 0 0 1rem;
-  font-size: 0.86rem;
-  line-height: 1.45;
-  opacity: 0.88;
-}
-
-.falcon-cite-title {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.6;
-  margin-bottom: 0.4rem;
-}
-.falcon-cite-label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  opacity: 0.55;
-  margin: 0.6rem 0 0.2rem;
-}
-.falcon-cite-text {
-  font-size: 0.7rem;
-  line-height: 1.35;
-  padding: 0.45rem 0.5rem;
-  margin: 0;
-  max-height: 9.5rem;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
-  border: none;
+// Surfaces cosmo paints light in its own rules rather than through a variable.
+body,
+#quarto-content,
+.quarto-container,
+main.content {
+  background-color: $falcon-bg;
   color: $falcon-fg;
 }
-.falcon-copy {
-  margin-top: 0.35rem;
-  font-size: 0.7rem;
-  padding: 0.2rem 0.6rem;
-  color: $falcon-orange;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 4px;
-  cursor: pointer;
-}
-.falcon-copy:hover { background: rgba(255, 255, 255, 0.08); }
-.falcon-copy.copied {
-  color: #1c1c1e;
-  background: $falcon-orange;
-  border-color: $falcon-orange;
-}
-#quarto-sidebar .sidebar-footer {
-  font-size: 0.8rem;
-  opacity: 0.7;
-  margin-top: 1.6rem;
-}
 
-.sidebar-item-section > .sidebar-item-container > .sidebar-item-text {
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  opacity: 0.65;
-}
-
-// As in the light theme: one divider per section, never two.
-main hr,
-main .quarto-title-block + hr {
-  display: none;
-}
-
-.cell-output-display > table,
-.table-responsive,
-main table {
-  display: block;
-  overflow-x: auto;
-  max-width: 100%;
+#quarto-sidebar,
+#quarto-margin-sidebar,
+.sidebar-navigation {
+  background-color: $falcon-bg;
+  color: $falcon-fg;
 }
 
 // Tables need a visible edge on a dark ground or they dissolve into the page.
-main table th {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+main table th { border-bottom: 1px solid rgba(255, 255, 255, 0.22); }
+main table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+main table > :not(caption) > * > * { background-color: transparent; }
+
+// Code blocks, which cosmo gives a near-white fill.
+div.sourceCode,
+pre.sourceCode,
+pre:not(.sourceCode) {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: $border-color;
 }
-main table td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+// The right-hand "On this page" list and the search box.
+#TOC, .toc-actions, #quarto-search .aa-Form {
+  color: $falcon-fg;
+  border-color: $border-color;
 }
