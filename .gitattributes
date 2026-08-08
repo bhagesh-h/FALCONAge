@@ -1,0 +1,66 @@
+# =============================================================================
+# FALCONAge — line endings, and why they are load-bearing here
+# =============================================================================
+#
+# In most repositories line endings are a cosmetic argument. In this one they
+# are part of a file's identity: every coefficient file's SHA-256 goes into
+# `run_manifest.json`, and the whole reproducibility claim is that two runs
+# reporting the same score either used the same coefficients or the manifest
+# says they did not. A checkout that rewrites LF to CRLF changes those bytes,
+# changes the digest, and turns that claim into a lie — silently, on Windows,
+# by default, because `core.autocrlf` is on there.
+#
+# This is not hypothetical. All twenty bundled coefficient files were found
+# rewritten to CRLF on a Windows working tree while their recorded digests
+# still described the LF form, so every digest check failed on a fresh
+# environment and passed on a stale one.
+# -----------------------------------------------------------------------------
+
+# Normalise text in the repository to LF, in the index and on checkout, on
+# every platform. Editors have handled LF for twenty years; digests have not
+# handled being changed underneath them for any of that time.
+* text=auto eol=lf
+
+# The coefficient files are marked binary outright, which is stronger than
+# `eol=lf`: it tells git never to inspect or convert them at all, whatever a
+# user's core.autocrlf says and whatever heuristic `text=auto` would apply.
+# They are numeric data whose bytes are checksummed, not prose.
+python/src/falconage/registry/data/coefficients/*.csv -text
+python/src/falconage/registry/data/coefficients_report.json -text
+
+# Gold-standard vectors and fixtures, for the same reason: a test that asserts
+# on exact bytes must be given exact bytes.
+python/tests/**/*.csv -text
+r/inst/extdata/** -text
+
+# Genuinely binary, so no heuristic gets a say.
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+*.h5ad binary
+*.parquet binary
+*.idat binary
+*.safetensors binary
+
+# Shell scripts run inside Linux containers. A CRLF shebang line is the classic
+# "bad interpreter: /bin/sh^M" failure, and it happens at container start where
+# the error is least legible.
+*.sh text eol=lf
+docker/entrypoint.sh text eol=lf
+
+# Diff hunk headers that name the enclosing function, for the two languages
+# where that is worth having.
+*.py diff=python
+*.R  diff=r
+*.Rmd diff=r
+
+# Generated: collapsed in pull requests, and excluded from language statistics
+# so the repository is not reported as mostly YAML.
+python/uv.lock linguist-generated=true
+docs/_quarto.yml linguist-generated=true
+r/_pkgdown.yml linguist-generated=true
+r/NEWS.md linguist-generated=true
+r/man/** linguist-generated=true
+python/src/falconage/registry/data/clocks.yaml linguist-documentation=true
