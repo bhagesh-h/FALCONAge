@@ -1,0 +1,75 @@
+/*-- scss:defaults --*/
+// FALCONAge brand, dark.
+//
+// Same hue as the light theme, lifted for contrast. #e06000 on a dark ground
+// is 3.0:1 and unreadable as body text; #ff8c42 is 7.4:1 on #1c1c1e, which is
+// comfortable, and it still reads as the logo colour rather than as yellow.
+$falcon-orange:       #ff8c42;
+$falcon-orange-muted: #ff7a24;
+$falcon-bg:           #1c1c1e;
+$falcon-surface:      #26262a;
+$falcon-fg:           #e6e6e6;
+
+$primary:     $falcon-orange;
+$body-bg:     $falcon-bg;
+$body-color:  $falcon-fg;
+$link-color:  $falcon-orange;
+
+$navbar-bg: $falcon-surface;
+$navbar-fg: $falcon-fg;
+
+$font-family-monospace: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+/*-- scss:rules --*/
+.navbar-brand,
+.sidebar-title,
+#quarto-sidebar .sidebar-header strong {
+  color: $falcon-orange !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+#quarto-sidebar .sidebar-header {
+  padding: 0.75rem 0 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+#quarto-sidebar img.sidebar-logo {
+  max-width: 132px;
+  margin: 0 auto 0.6rem;
+  display: block;
+}
+#quarto-sidebar .sidebar-footer {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 1.6rem;
+}
+
+.sidebar-item-section > .sidebar-item-container > .sidebar-item-text {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+}
+
+// As in the light theme: one divider per section, never two.
+main hr,
+main .quarto-title-block + hr {
+  display: none;
+}
+
+.cell-output-display > table,
+.table-responsive,
+main table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+// Tables need a visible edge on a dark ground or they dissolve into the page.
+main table th {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+}
+main table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}

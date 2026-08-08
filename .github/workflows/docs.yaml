@@ -1,4 +1,4 @@
-# One site, two languages, three downloadable copies.
+# One site, two languages, two downloadable copies.
 #
 # WHY IT IS ONE WORKFLOW AND NOT TWO. Quarto renders the Python half and pkgdown
 # renders the R half, and the R half is published *inside* the Quarto site at
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v6
 
       # ---- the Python half ----------------------------------------------------
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -62,9 +62,6 @@ jobs:
         with:
           tinytex: false      # the PDF goes through Typst, which Quarto bundles
 
-      # Both configs are generated from reference-groups.yml. Regenerating them
-      # here rather than trusting the committed copies means a stale commit
-      # cannot publish a site whose navigation disagrees with its own source.
       # Both configs and the clock catalogue come from the same principle:
       # generate, do not hand-maintain. Regenerating here rather than trusting
       # the committed copies means a stale commit cannot publish a site whose
@@ -97,13 +94,16 @@ jobs:
           extra-packages: any::pkgdown, local::.
           needs: website
 
-      # reticulate has to find the interpreter the Python half was installed
-      # into, or every example that calls the core fails to evaluate and the
-      # reference pages render with tracebacks in them.
-      # `override = list(destination = ...)`, not a `dest_dir` argument --
-      # build_site() has no such parameter and errors on it. The destination is
-      # a pkgdown *config* field, and `override` is how you set a config field
-      # without editing the file the build reads.
+      # Two things worth knowing here.
+      #
+      # RETICULATE_PYTHON has to point at the interpreter the Python half was
+      # installed into, or every example that calls the core fails to evaluate
+      # and the reference pages render with tracebacks in them.
+      #
+      # The destination is set with `override = list(destination = ...)`, not a
+      # `dest_dir` argument -- build_site() has no such parameter and errors on
+      # it. The destination is a pkgdown *config* field, and `override` is how
+      # you set a config field without editing the file the build reads.
       #
       # The path is relative to the package directory, so ../docs/r from r/ is
       # docs/r at the repository root, which is where the Quarto site expects
@@ -122,12 +122,12 @@ jobs:
         working-directory: docs
 
       # ---- the downloadable copies -------------------------------------------
-      # After the render, because the markdown bundle converts pkgdown's HTML
-      # and the PDF binds the quartodoc output. --strict so a broken toolchain
-      # fails the build here rather than publishing a Download menu whose links
-      # 404.
-      # No LaTeX apt-install. The PDF goes through Typst, which Quarto bundles,
-      # and pandoc is already here from setup-pandoc for the markdown half.
+      # After the render, because the markdown bundle converts pkgdown's HTML.
+      # --strict so a broken toolchain fails the build here rather than
+      # publishing a Download menu whose links 404.
+      #
+      # No LaTeX apt-install: the PDF goes through Typst, which Quarto bundles,
+      # and pandoc is already here from setup-pandoc.
       - name: PDF and markdown copies
         run: python docs/build_downloads.py --all --strict --out docs/_site/downloads
 

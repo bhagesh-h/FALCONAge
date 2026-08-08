@@ -49,10 +49,57 @@ website:
   sidebar:
     style: docked
     search: true
+    logo: logo.png
+    logo-alt: FALCONAge logo
+    logo-href: https://bhagesh-h.github.io/FALCONAge/
+    header: '**FALCONAge** · v1.0.0
+
+
+      Multiomic biological age and aging clock scoring, identical in Python and R.
+
+      '
+    contents:
+    - text: Get started
+      file: index.qmd
+    - section: Guides
+      contents:
+      - text: Getting started
+        file: guide/FALCONAge.qmd
+      - text: Choosing a clock
+        file: guide/clocks.qmd
+    - section: Reference
+      contents:
+      - text: Python
+        file: reference/index.qmd
+      - text: R
+        href: r/index.html
+    - section: Background
+      contents:
+      - text: The science of aging clocks
+        file: science.qmd
+      - text: Architecture
+        file: architecture.qmd
+      - text: Clock catalogue
+        file: clocks.qmd
+      - text: GPU support
+        file: gpu.md
+    - section: Download
+      contents:
+      - text: Documentation (PDF)
+        href: downloads/FALCONAge.pdf
+      - text: Documentation (markdown ZIP)
+        href: downloads/FALCONAge-docs-markdown.zip
+    footer: "[Bhagesh Hunakunti](https://orcid.org/0000-0002-5957-8005)  \nGPL-3.0-or-later\
+      \ · [cite this](https://github.com/bhagesh-h/FALCONAge/blob/main/CITATION.cff)  \n[source](https://github.com/bhagesh-h/FALCONAge)\n"
 format:
   html:
     theme:
-    - cosmo
+      light:
+      - cosmo
+      - theme-light.scss
+      dark:
+      - darkly
+      - theme-dark.scss
     toc: true
     code-copy: true
     code-overflow: wrap

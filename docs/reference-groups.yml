@@ -121,6 +121,78 @@ groups:
              RunManifest]
     r: [falconage_install, falconage_config, falconage_available]
 
+# =============================================================================
+# The R-to-Python correspondence
+# =============================================================================
+#
+# Which R function is the same computation as which Python one. This CANNOT be
+# derived from the lists above: they are ordered by subject, not by
+# correspondence, and the two languages have different numbers of entries per
+# group. A first attempt paired them positionally and produced a table claiming
+# `report()` was `fa.plot.palette()`, which is worse than having no table.
+#
+# So it is stated once, here, and build_docs.py checks every name against the
+# group it sits in -- a typo or a rename fails the build rather than rendering
+# a wrong row.
+#
+# Anything not named here is genuinely one-sided and is rendered as such. That
+# is information too: it is how a reader learns that `obs()` has no Python
+# counterpart because Python reaches the same field as an attribute.
+pairs:
+  Reading data:
+    - [read_betas, read_betas]
+    - [read_series_matrix, read_series_matrix]
+    - [read_clinical, read_clinical]
+    - [read_rrbs_dir, read_rrbs_dir]
+    - [falcon_data, FalconData]
+  Preprocessing:
+    - [prepare, prepare]
+    - [qc, qc]
+  Scoring:
+    - [score, score]
+    - [combine, combine]
+    - [as.data.frame.falcon_result, FalconResult]
+  The clock catalogue:
+    - [list_clocks, registry.ClockRegistry]
+    - [clock_info, registry.Clock]
+    - [register_local_weights, registry.register_local_weights]
+  Analysis:
+    - [acceleration, acceleration]
+    - [associate, associate]
+    - [cox_hazard, cox_hazard]
+    - [agreement, agreement]
+    - [icc, icc]
+    - [run_benchmark, run_benchmark]
+  Clinical references:
+    - [fit_kdm, models.fit_kdm]
+    - [fit_hd, models.fit_hd]
+  Figures and reports:
+    - [plot_ba_vs_ca, plot.ba_vs_ca]
+    - [plot_bland_altman, plot.bland_altman]
+    - [plot_calibration, plot.calibration]
+    - [plot_acceleration, plot.acceleration_density]
+    - [plot_acceleration_by_group, plot.acceleration_by_group]
+    - [plot_acceleration_heatmap, plot.acceleration_heatmap]
+    - [plot_forest, plot.forest]
+    - [plot_agreement, plot.clock_corr]
+    - [plot_clock_radar, plot.clock_radar]
+    - [plot_clock_chord, plot.clock_chord]
+    - [plot_clock_pca, plot.clock_pca]
+    - [plot_clock_atlas, plot.clock_atlas]
+    - [plot_coverage, plot.coverage_bar]
+    - [plot_by_platform, plot.platform_comparison]
+    - [plot_benchmark, plot.benchmark_bars]
+    - [plot_benchmark_error_bias, plot.benchmark_error_bias]
+    - [plot_benchmark_heatmap, plot.benchmark_heatmap]
+    - [falcon_palette, plot.palette]
+    - [report, report.write_report]
+  Downloading public data:
+    - [download, download]
+    - [cache_info, download.cache_info]
+    - [clear_cache, download.clear_cache]
+  Configuration and setup:
+    - [falconage_config, config]
+
 articles:
   - title: Getting started
     file: FALCONAge

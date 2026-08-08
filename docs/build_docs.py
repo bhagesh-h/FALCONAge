@@ -39,8 +39,54 @@ def load():
     return yaml.safe_load(GROUPS.read_text(encoding="utf-8"))
 
 
+def citation() -> dict:
+    """Author, version and licence, read from CITATION.cff.
+
+    The sidebar shows who wrote this and under what licence, and that
+    information already exists in exactly one machine-readable place. Copying it
+    into the site config would give two copies to keep in step across a release,
+    and the one that goes stale would be the one rendered on every page.
+    """
+    cff = ROOT / "CITATION.cff"
+    if not cff.exists():
+        return {}
+    doc = yaml.safe_load(cff.read_text(encoding="utf-8")) or {}
+    author = (doc.get("authors") or [{}])[0]
+    name = " ".join(x for x in (author.get("given-names"),
+                                author.get("family-names")) if x)
+    return {"author": name, "orcid": author.get("orcid", ""),
+            "version": str(doc.get("version", "")),
+            "license": doc.get("license", "")}
+
+
+def sidebar_contents(spec: dict) -> list:
+    """The persistent left-hand navigation.
+
+    Deliberately the same shape as the navbar rather than a per-page table of
+    contents: the navbar collapses on a phone and the "On this page" list on
+    the right already covers within-page movement. What the left column is for
+    is knowing where you are in the site without opening a menu.
+    """
+    return [
+        {"text": "Get started", "file": "index.qmd"},
+        {"section": "Guides",
+         "contents": [{"text": a["title"], "file": f"guide/{a['file']}.qmd"}
+                      for a in spec["articles"]]},
+        {"section": "Reference",
+         "contents": [{"text": "Python", "file": "reference/index.qmd"},
+                      {"text": "R", "href": "r/index.html"}]},
+        {"section": "Background",
+         "contents": [{"text": p["title"], "file": p["file"]}
+                      for p in spec.get("pages", [])]},
+        {"section": "Download",
+         "contents": [{"text": d["title"], "href": f"downloads/{d['file']}"}
+                      for d in spec.get("downloads", [])]},
+    ]
+
+
 def quarto_yaml(spec: dict) -> str:
     site = spec["site"]
+    cite = citation()
     sections = []
     for g in spec["groups"]:
         if not g.get("python"):
@@ -90,10 +136,41 @@ def quarto_yaml(spec: dict) -> str:
                     {"icon": "github", "href": site["repo"]},
                 ],
             },
-            "sidebar": {"style": "docked", "search": True},
+            # WHY THE SIDEBAR CARRIES CONTENT AND NOT JUST A SEARCH BOX.
+            # `style: docked` reserves a left column on every page. With no
+            # `contents` Quarto puts the search box in it and leaves the rest
+            # blank, which is a fifth of the viewport spent on nothing.
+            #
+            # So it holds what a reader wants persistently: the logo, one line
+            # saying what the tool is, the whole site's navigation, and who
+            # wrote it. `header` and `footer` take markdown, which is the only
+            # place Quarto lets arbitrary prose into the sidebar.
+            "sidebar": {
+                "style": "docked",
+                "search": True,
+                "logo": "logo.png",
+                "logo-alt": f"{site['title']} logo",
+                "logo-href": site["url"],
+                "header": (
+                    f"**{site['title']}** · v{cite.get('version', '')}\n\n"
+                    f"{' '.join(site['description'].split())}\n"
+                ),
+                "contents": sidebar_contents(spec),
+                "footer": (
+                    f"[{cite.get('author', '')}]({cite.get('orcid', '')})  \n"
+                    f"{cite.get('license', '')} · "
+                    f"[cite this]({site['repo']}/blob/main/CITATION.cff)  \n"
+                    f"[source]({site['repo']})\n"
+                ),
+            },
         },
         "format": {"html": {
-            "theme": ["cosmo"],
+            # Declaring both a light and a dark theme is what makes Quarto put
+            # the toggle in the navbar; there is no separate switch to turn on.
+            # The two SCSS files derive everything from the logo colour, which
+            # was sampled from logo.png rather than chosen.
+            "theme": {"light": ["cosmo", "theme-light.scss"],
+                      "dark": ["darkly", "theme-dark.scss"]},
             "toc": True,
             "code-copy": True,
             "code-overflow": "wrap",
@@ -128,7 +205,15 @@ def pkgdown_yaml(spec: dict) -> str:
 
     doc = {
         "url": site["url"] + "r/",
-        "template": {"bootstrap": 5, "bslib": {"primary": "#0072B2"}},
+        # The same logo orange as the Quarto half, and pkgdown's own dark-mode
+        # switch so the two sites behave alike when a reader crosses between
+        # them. #a84800 is the darker shade: pkgdown uses `primary` for body
+        # links, where the logo colour itself is only 3.4:1 on white.
+        "template": {
+            "bootstrap": 5,
+            "light-switch": True,
+            "bslib": {"primary": "#a84800", "link-color": "#a84800"},
+        },
         "home": {"title": f"{site['title']} for R",
                  "description": " ".join(site["description"].split())},
         # The background pages are rendered once, by Quarto, and linked to from
@@ -176,6 +261,148 @@ def coverage_report(spec: dict) -> list[str]:
     return out
 
 
+R_README = ROOT / "r" / "README.md"
+INDEX = HERE / "index.qmd"
+MAP_BEGIN = "<!-- BEGIN GENERATED: api-map -->"
+MAP_END = "<!-- END GENERATED: api-map -->"
+CITE_BEGIN = "<!-- BEGIN GENERATED: citation -->"
+CITE_END = "<!-- END GENERATED: citation -->"
+
+
+def citation_block(spec: dict) -> str:
+    """A copy-paste citation, in the two forms anyone actually needs.
+
+    Written from CITATION.cff so the version and the author cannot disagree
+    with the file GitHub's "Cite this repository" button reads. Both are fenced
+    code blocks because Quarto puts a copy button on those, which is the whole
+    point -- a citation you have to select by hand gets retyped wrong.
+    """
+    c = citation()
+    site = spec["site"]
+    year = "2026"
+    title = ("FALCONAge: Multiomic Biological Age and Aging Clock Scoring "
+             "in Python and R")
+    surname = (c.get("author", "").split() or ["Hunakunti"])[-1]
+    initial = (c.get("author", "B")[:1])
+    return "\n".join([
+        CITE_BEGIN,
+        "",
+        "```",
+        f"{surname} {initial} ({year}). {title}.",
+        f"Version {c.get('version', '')}. {site['repo']}",
+        "```",
+        "",
+        "```bibtex",
+        f"@software{{falconage{year},",
+        f"  author  = {{{c.get('author', '')}}},",
+        f"  title   = {{{title}}},",
+        f"  year    = {{{year}}},",
+        f"  version = {{{c.get('version', '')}}},",
+        f"  url     = {{{site['repo']}}},",
+        f"  license = {{{c.get('license', '')}}}",
+        "}",
+        "```",
+        "",
+        'In R, `citation("FALCONAge")`. The machine-readable version is',
+        f"[CITATION.cff]({site['repo']}/blob/main/CITATION.cff), which is what",
+        "GitHub's *Cite this repository* button reads.",
+        "",
+        "The clock FALCONAge computed for you is somebody else's work, and citing",
+        "FALCONAge does not cite it. Every registry entry carries its primary",
+        "reference, so the list for an analysis comes out of the analysis:",
+        "",
+        "::: {.panel-tabset}",
+        "",
+        "### Python",
+        "",
+        "```python",
+        'fa.registry.load().get("grimage2").cite("bibtex")',
+        "```",
+        "",
+        "### R",
+        "",
+        "```r",
+        'cite_clock("grimage2", "bibtex")',
+        "```",
+        "",
+        ":::",
+        "",
+        CITE_END,
+    ])
+
+
+def fill_block(path: Path, begin: str, end: str, body: str) -> str | None:
+    """Replace a marked region in a hand-written file, or None if absent."""
+    if not path.exists():
+        return None
+    text = path.read_text(encoding="utf-8")
+    if begin not in text or end not in text:
+        return None
+    head, _, rest = text.partition(begin)
+    _, _, tail = rest.partition(end)
+    return head + body + tail
+
+
+def api_map(spec: dict) -> str:
+    """The R-to-Python correspondence table, from the explicit `pairs` block.
+
+    Paired entries first, then whatever each side has that the other does not.
+    Positional pairing was tried and is wrong: the lists are ordered by subject
+    and differ in length, so it produced rows claiming `report()` was
+    `fa.plot.palette()`.
+    """
+    pairs = spec.get("pairs") or {}
+    lines = [MAP_BEGIN, "", "| | R | Python |", "|---|---|---|"]
+    for g in spec["groups"]:
+        r, py = list(g.get("r") or []), list(g.get("python") or [])
+        rows = [(a, b) for a, b in pairs.get(g["title"], [])]
+        paired_r = {a for a, _ in rows}
+        paired_py = {b for _, b in rows}
+        rows += [(x, None) for x in r if x not in paired_r]
+        rows += [(None, x) for x in py if x not in paired_py]
+        if not rows:
+            continue
+        for i, (rn, pn) in enumerate(rows):
+            group = f"**{g['title']}**" if i == 0 else ""
+            lines.append(f"| {group} | {f'`{rn}()`' if rn else '—'} "
+                         f"| {f'`fa.{pn}()`' if pn else '—'} |")
+    lines += ["", MAP_END]
+    return "\n".join(lines)
+
+
+def bad_pairs(spec: dict) -> list[str]:
+    """Names in `pairs` that do not appear in the group they are filed under.
+
+    Without this the table silently keeps rendering a function that has been
+    renamed or moved, which is the failure mode the whole generated-file
+    arrangement exists to prevent.
+    """
+    out = []
+    by_title = {g["title"]: g for g in spec["groups"]}
+    for title, rows in (spec.get("pairs") or {}).items():
+        g = by_title.get(title)
+        if g is None:
+            out.append(f"pairs has a group {title!r} that is not in groups")
+            continue
+        r, py = set(g.get("r") or []), set(g.get("python") or [])
+        for a, b in rows:
+            if a not in r:
+                out.append(f"{title}: R {a!r} is not in that group's r: list")
+            if b not in py:
+                out.append(f"{title}: Python {b!r} is not in that group's python: list")
+    return out
+
+
+def r_readme(spec: dict) -> str | None:
+    """The R README with its generated mapping block filled in."""
+    return fill_block(R_README, MAP_BEGIN, MAP_END, api_map(spec))
+
+
+def index_page(spec: dict) -> str | None:
+    """The landing page with its generated citation block filled in."""
+    return fill_block(INDEX, CITE_BEGIN, CITE_END, citation_block(spec))
+
+
 def ungrouped_r_topics(spec: dict) -> list[str]:
     """Exported R topics that no group claims. This one IS an error.
 
@@ -207,6 +434,9 @@ def main(argv=None) -> int:
 
     spec = load()
     outputs = {QUARTO: quarto_yaml(spec), PKGDOWN: pkgdown_yaml(spec)}
+    for path, text in ((R_README, r_readme(spec)), (INDEX, index_page(spec))):
+        if text is not None:
+            outputs[path] = text
 
     stale = []
     for path, text in outputs.items():
@@ -214,6 +444,12 @@ def main(argv=None) -> int:
             stale.append(path)
 
     orphans = ungrouped_r_topics(spec)
+    mispairs = bad_pairs(spec)
+    if mispairs:
+        print("the R-to-Python pairing names functions that are not in their group:")
+        for m in mispairs:
+            print(f"  {m}")
+        return 1
 
     if args.check:
         bad = False

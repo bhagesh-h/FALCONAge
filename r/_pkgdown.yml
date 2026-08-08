@@ -3,8 +3,10 @@
 url: https://bhagesh-h.github.io/FALCONAge/r/
 template:
   bootstrap: 5
+  light-switch: true
   bslib:
-    primary: '#0072B2'
+    primary: '#a84800'
+    link-color: '#a84800'
 home:
   title: FALCONAge for R
   description: Multiomic biological age and aging clock scoring, identical in Python and R.

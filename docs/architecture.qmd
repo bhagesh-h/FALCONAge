@@ -55,8 +55,6 @@ Contents
 13. [Build order](#13-build-order)
 14. [Open questions](#14-open-questions)
 
----
-
 ## 1. Scope, decisions and repository layout
 
 ### 1.1 What v1.0 delivers
@@ -349,8 +347,6 @@ function because nothing is fetched at run time.
 There is no top-level `registry/` directory and no `tests/vectors/` tree; the catalogue ships
 inside the package and the gold-standard vectors live beside the tests that assert on them.
 
----
-
 ## 2. Core engine
 
 ### 2.1 Device and dtype
@@ -566,8 +562,6 @@ FalconError
 Every error carries `.remedy`, a one-sentence statement of what to do about it, which the R
 bridge surfaces as the condition message and the CLI prints after the traceback.
 
----
-
 ## 3. Clock registry
 
 ### 3.1 Why the registry is a separate artefact
@@ -757,7 +751,6 @@ dataset and it returns the clocks whose species, platform and feature coverage a
 sorted by coverage. This replaces the current field practice of running everything and reading
 the missingness column afterwards.
 
-
 ### 3.6 Coefficient provenance and the three availability tiers
 
 A clock is two things: an **architecture**, which is a procedure described in a paper, and a
@@ -892,8 +885,6 @@ Rules:
   sets are the exception - PhenoAge is ten numbers - so that path works with no network at all.
 - **Licence surfacing**: tier B prints the source licence once per clock per session on first
   fetch. Tier C prints the obtain-it-yourself instructions.
-
----
 
 ## 4. Algorithms - the complete operation catalogue
 
@@ -1212,7 +1203,6 @@ At load time the registry entry's `preprocess` and `postprocess` lists are compi
 These checks run in `registry/validate.py` in CI and again at load time, so a malformed registry
 entry fails before it produces a number.
 
-
 ### 4.7 Scaffold-only clocks
 
 Twenty-eight clocks are tier C: their architecture is described in a published paper and is
@@ -1346,8 +1336,6 @@ architecture on different data produces a different clock that must not carry th
 That path is real and is scoped as a v1.5 milestone (§13), where a FALCONAge-native mortality
 clock trained on the open ComputAgeBench split would be a new contribution rather than a
 substitute.
-
----
 
 ## 5. Download module
 
@@ -1532,8 +1520,6 @@ falconage download 10.5281/zenodo.18763485
 falconage probe GSE40279                           # what is in this series?
 ```
 
----
-
 ## 6. Preprocess module
 
 ### 6.1 Contract
@@ -1676,8 +1662,6 @@ falconage preprocess methylation betas.csv --platform illumina_450k --out prepar
 falconage preprocess clinical labs.csv --units units.yaml --out prepared.h5ad
 falconage qc prepared.h5ad --report qc.html
 ```
-
----
 
 ## 7. Scoring, analysis, plots, report
 
@@ -1877,8 +1861,6 @@ falconage clocks list --data-type dna_methylation --generation second
 falconage clocks info grimage2
 falconage clocks cite grimage2 --style bibtex
 ```
-
----
 
 ## 8. R package
 
@@ -2276,8 +2258,6 @@ articles:
   contents: [gpu, benchmarking]
 ```
 
----
-
 ## 9. Docker
 
 Two images from one Dockerfile family, following the cyRAVEN pattern in
@@ -2468,8 +2448,6 @@ The named cache volume is not cosmetic: the PC clocks are several hundred megaby
 re-downloading them on every container start is the difference between a two-minute run and a
 twenty-minute one.
 
----
-
 ## 10. Testing
 
 ### 10.1 Gold-standard vectors
@@ -2583,8 +2561,6 @@ parsing throughput; peak memory for the largest PC clock.
 90% line coverage on `models/`, `score/` and `registry/`, which are where a wrong number comes
 from; 75% elsewhere. Coverage on `download/` is deliberately lower because most of it is network
 error handling exercised by mocks rather than by real transfers.
-
----
 
 ## 11. Documentation
 
@@ -2736,8 +2712,6 @@ numpydoc in Python, roxygen2 in R, deliberately parallel:
 Both carry the same rationale text where a function exists in both languages, so a reader gets
 the same explanation whichever site they land on.
 
----
-
 ## 12. CI/CD and publishing
 
 ### 12.1 Workflows
@@ -2806,8 +2780,6 @@ subscription.
 
 **Zenodo** - DOI minted from each GitHub release, which is what a methods section cites.
 
----
-
 ## 13. Build order
 
 Fourteen milestones. Each has an exit criterion that is testable, not a feeling.
@@ -2835,8 +2807,6 @@ Milestones 1–7 are the critical path; 4b gates 5 and 7, because a clock cannot
 its coefficients have a traced source. 8–10 can proceed in parallel once 2 and 3 land; 11 needs 7;
 12 and 13 need 11. Milestone 15 is post-1.0 and is the answer to "can the permission-gated clocks
 be replaced rather than licensed" - not with the same clocks, but with open ones.
-
----
 
 ## 14. Open questions
 

@@ -1,0 +1,82 @@
+/*-- scss:defaults --*/
+// FALCONAge brand, light.
+//
+// #e06000 is not a taste decision: it is the logo, sampled. 88% of the
+// non-grey pixels in logo.png are within one quantisation step of it, hue 26.
+// Everything below is derived from that one value so the site and the mark
+// cannot drift apart.
+$falcon-orange:      #e06000;
+$falcon-orange-dark: #a84800;   // 4.7:1 on white -- the one safe for body links
+$falcon-ink:         #1a1a1a;
+
+// Links take the darker shade. The logo orange is 3.4:1 on white, which passes
+// for large text and fails for a sentence, and most links here sit in
+// sentences.
+$primary:   $falcon-orange-dark;
+$body-color: $falcon-ink;
+$link-color: $falcon-orange-dark;
+
+$navbar-bg: #ffffff;
+$navbar-fg: $falcon-ink;
+
+// Tabular figures everywhere. Half this site is numbers in tables, and
+// proportional digits make a column of them impossible to compare down.
+$font-family-monospace: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+/*-- scss:rules --*/
+// The wordmark, at the logo's own colour rather than the link colour.
+.navbar-brand,
+.sidebar-title,
+#quarto-sidebar .sidebar-header strong {
+  color: $falcon-orange !important;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+// The sidebar is a persistent column, so it gets a quieter treatment than the
+// content: smaller type, a rule to separate it, and the logo given room.
+#quarto-sidebar .sidebar-header {
+  padding: 0.75rem 0 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+#quarto-sidebar img.sidebar-logo {
+  max-width: 132px;
+  margin: 0 auto 0.6rem;
+  display: block;
+}
+// Separated by space, not by a rule. The pages already carry enough
+// horizontal lines from heading styling, and a second one stacked near it
+// reads as a mistake.
+#quarto-sidebar .sidebar-footer {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 1.6rem;
+}
+
+// One divider per section, not two. Quarto's default theme underlines h2, and
+// the long-form pages were written as plain markdown with `---` between
+// sections; both together gave a doubled rule. The rules are gone from the
+// source, and this stops anything reintroducing one.
+main hr,
+main .quarto-title-block + hr {
+  display: none;
+}
+
+// Section headings in the sidebar, so four groups read as four groups.
+.sidebar-item-section > .sidebar-item-container > .sidebar-item-text {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+}
+
+// Wide tables are the norm here -- the clock catalogue is 161 rows of six
+// columns. Let them scroll rather than force the page to.
+.cell-output-display > table,
+.table-responsive,
+main table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

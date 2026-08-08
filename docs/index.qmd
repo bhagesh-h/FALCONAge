@@ -107,6 +107,52 @@ whether the algorithm works - every architecture is implemented and tested regar
 fa.registry.load().filter(availability="A")
 ```
 
+## Citation
+
+<!-- BEGIN GENERATED: citation -->
+
+```
+Hunakunti B (2026). FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R.
+Version 1.0.0. https://github.com/bhagesh-h/FALCONAge
+```
+
+```bibtex
+@software{falconage2026,
+  author  = {Bhagesh Hunakunti},
+  title   = {FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R},
+  year    = {2026},
+  version = {1.0.0},
+  url     = {https://github.com/bhagesh-h/FALCONAge},
+  license = {GPL-3.0-or-later}
+}
+```
+
+In R, `citation("FALCONAge")`. The machine-readable version is
+[CITATION.cff](https://github.com/bhagesh-h/FALCONAge/blob/main/CITATION.cff), which is what
+GitHub's *Cite this repository* button reads.
+
+The clock FALCONAge computed for you is somebody else's work, and citing
+FALCONAge does not cite it. Every registry entry carries its primary
+reference, so the list for an analysis comes out of the analysis:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.registry.load().get("grimage2").cite("bibtex")
+```
+
+### R
+
+```r
+cite_clock("grimage2", "bibtex")
+```
+
+:::
+
+<!-- END GENERATED: citation -->
+
 ## Where to go next
 
 - [Getting started](guide/FALCONAge.qmd) - install, score, interpret, in both languages.

@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -96,8 +96,10 @@ jobs:
             stop("no conformance tests ran at all; the filter matched nothing")
           n <- sum(df$skipped)
           if (n > 0L)
-            stop(sprintf("%d conformance test(s) skipped -- the Python core is not
-  reachable from this R session, so R-versus-Python equality was never checked.
-  RETICULATE_PYTHON is %s", n, Sys.getenv("RETICULATE_PYTHON", "<unset>")))
+            stop(sprintf(paste0("%d conformance test(s) skipped: the Python ",
+                                "core is not reachable from this R session, so ",
+                                "R-versus-Python equality was never checked. ",
+                                "RETICULATE_PYTHON is %s"),
+                         n, Sys.getenv("RETICULATE_PYTHON", "<unset>")))
           cat(sprintf("%d conformance tests ran, none skipped\n", nrow(df)))
         shell: Rscript {0}
