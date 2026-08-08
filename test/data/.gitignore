@@ -1,0 +1,12 @@
+# Belt and braces. The root .gitignore already denies everything under
+# test/data/ except the four tracked files; this repeats it locally so the rule
+# survives someone copying this directory somewhere else, and so `git status`
+# inside it behaves the same way.
+#
+# Downloaded payloads and everything the fetchers write:
+*
+!.gitignore
+!README.md
+!datasets.yaml
+!fetch_test_data.py
+!fetch_test_data.R

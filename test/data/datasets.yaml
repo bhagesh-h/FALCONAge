@@ -1,0 +1,494 @@
+# =============================================================================
+# FALCONAge — public test corpus
+# =============================================================================
+#
+# One manifest, two fetchers. fetch_test_data.py and fetch_test_data.R both read
+# this file and must produce a byte-identical checksums.sha256 from it; that
+# equality is the corpus-level version of the R/Python conformance gate in
+# the design notes, and Dockerfile.testdata asserts it at build.
+#
+# Nothing here is redistributed. Every entry is a URL at the original publisher,
+# and everything the fetchers write is excluded by .gitignore. The corpus is
+# reproducible from this file, not stored alongside it.
+#
+# CHECKSUMS. Hugging Face publishes the SHA-256 of every LFS object, so the
+# eleven ComputAgeBench files carry a real one and a mismatch is a hard error.
+# GEO and GitHub publish none, so those entries carry only an expected size: the
+# fetcher warns on a size mismatch, records the SHA-256 it observed, and checks
+# every later run against that recorded value. Trust on first use, stated
+# plainly rather than dressed up as verification.
+#
+# BUDGET. 585,710,669 bytes over 33 files, against a declared ceiling of 1 GB.
+# The fetcher refuses a selection that would cross the ceiling and prints the
+# arithmetic; raise it with --max-bytes if you mean to.
+# -----------------------------------------------------------------------------
+
+schema_version: 1
+
+# The ceiling, in bytes. SI gigabytes, not gibibytes -- the smaller reading, so
+# a corpus that satisfies this satisfies either.
+budget_bytes: 1000000000
+
+# Sum of every `bytes:` below. --self-test asserts the files add up to this, so
+# a hand-edited entry that drifts from its source is caught at build rather than
+# halfway through a download.
+expected_total_bytes: 585710669
+expected_total_files: 33
+
+# -----------------------------------------------------------------------------
+# Where the data comes from, and under what terms
+# -----------------------------------------------------------------------------
+sources:
+
+  computage_bench:
+    name: ComputAgeBench
+    homepage: https://huggingface.co/datasets/computage/computage_bench
+    licence: CC-BY-SA-4.0
+    checksums: published
+    revision: 3cf52681537b303a5b7e21df03a3ae0a94ed497e
+    citation: >-
+      Kriukov D, Efimov E, Kuzmina EA, Khrameeva EE, Dylov DV (2024).
+      ComputAgeBench: Epigenetic Aging Clocks Benchmark. bioRxiv 2024.06.06.597715.
+    note: >-
+      Pinned to a commit, not to main. The published benchmark is a fixed set of
+      65 studies; a moving reference would let the corpus change under a result
+      that cites it.
+
+  geo:
+    name: NCBI Gene Expression Omnibus
+    homepage: https://www.ncbi.nlm.nih.gov/geo/
+    licence: >-
+      Public. NCBI places no restriction on use or reproduction; individual
+      submitters' terms and the source publications' terms still apply, and
+      several of these series are human subject data reused under the consent
+      the original study obtained.
+    checksums: none
+    note: >-
+      GEO publishes file sizes in filelist.txt but no digests, and a submitter
+      can replace a supplementary file in place without changing its name. Every
+      size below was read from the live listing on 2026-08-07.
+
+  bioage:
+    name: BioAge (Kwon & Belsky)
+    homepage: https://github.com/dayoonkwon/BioAge
+    licence: GPL-3.0
+    checksums: none
+    citation: >-
+      Kwon D, Belsky DW (2021). A toolkit for quantification of biological age
+      from blood chemistry and organ performance tests: the BioAge R package.
+      GeroScience 43, 2795-2808.
+    note: >-
+      These .rda files are NHANES III and NHANES IV extracts. NHANES itself is a
+      US federal public-domain dataset; the extraction, harmonisation and
+      variable naming are the BioAge authors' work and are GPL-3.
+
+# -----------------------------------------------------------------------------
+# Groups. Fetch all of them, or name the ones you need:
+#   --groups bench,clinical
+# -----------------------------------------------------------------------------
+groups:
+
+  # ===========================================================================
+  - id: bench
+    default: true
+    title: ComputAgeBench case/control methylation
+    bytes: 368410440
+    samples: 261
+    platforms: [27K, 450K, EPICv1]
+    why: >-
+      The AA1/AA2 benchmark in README section 11 asks whether a clock reports
+      higher age acceleration in people with an aging-accelerating condition
+      than in their own controls. That question needs case/control cohorts, not
+      an age-diverse healthy panel, and it needs several of them: a clock that
+      wins on one dataset has won nothing. These ten are the smallest studies in
+      the published 65-study benchmark that still span three array generations
+      and eight conditions.
+    covers: >-
+      Every clock that takes human blood methylation and returns a number --
+      first and second generation, causal, mitotic, telomere, lifestyle,
+      disease-risk, frailty, single-CpG, deconvolution, sex dosage. That is the
+      bulk of the 161.
+    caveats: >-
+      Stored as float32. Fine for benchmarking, wrong for gold-standard vectors:
+      the 1e-6 FP64 assertions in the design notes need a source
+      carrying full double precision, which these do not.
+    files:
+      - path: bench/computage_bench_meta.tsv
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/computage_bench_meta.tsv
+        bytes: 635321
+        note: >-
+          Sample table for all 65 studies: SampleID, DatasetID, PlatformID,
+          Tissue, CellType, Gender, Age, Condition, Class. One file covers every
+          parquet below, so condition labels and ages never have to be scraped
+          out of GEO characteristics strings.
+
+      - path: bench/GSE182991.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE182991.parquet
+        bytes: 93697978
+        sha256: "04c9b1bc248f014dc4cbc552a3108cffcaf839b98077505857941506b60ce579"
+        note: >-
+          Hutchinson-Gilford progeria, 15 cases and 12 controls, EPICv1, ages
+          0-41. The strongest positive control in the corpus: if a second
+          generation clock cannot separate progeria from age-matched healthy,
+          it is not measuring aging. Also the only set with paediatric ages, so
+          PedBE has something to run on.
+
+      - path: bench/GSE130030.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE130030.parquet
+        bytes: 55401798
+        sha256: "cca7d12761f62590a04b761152bc3b780b0318d6524f1933bf02473c6393928c"
+        note: "Multiple sclerosis, 14 cases and 14 controls, 450K, ages 20-65, both sexes."
+
+      - path: bench/GSE71841.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE71841.parquet
+        bytes: 49304302
+        sha256: "c20fc1a7f48b9fa5c298ddd0f5494d03a28ddb7b97e2e0031a5ceb2cf7f45a53"
+        note: "Rheumatoid arthritis, 12 and 12, 450K, ages 23-57. Balanced design, both sexes."
+
+      - path: bench/GSE118468.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE118468.parquet
+        bytes: 43522120
+        sha256: "e7fd70e0e9f61aea3d0c4da320971bd3c82216e1b0528382bfdacd89386492f7"
+        note: >-
+          COPD, 15 cases and 6 controls, 450K, ages 49-82. Deliberately
+          unbalanced: a 15-vs-6 comparison is where a benchmark that ignores
+          group sizes starts reporting significance it has not earned.
+
+      - path: bench/GSE214297.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE214297.parquet
+        bytes: 36015533
+        sha256: "92b1e5ec89143c80eba4f5e1b2dbe9f8cf5ba14ca9696cd6df7e9d81e3148f68"
+        note: >-
+          Congenital generalised lipodystrophy, 7 and 9, EPICv1, ages 1-48. The
+          second EPIC set, which the 12-cell EPIC deconvolution panels need --
+          they have no 450K equivalent.
+
+      - path: bench/GSE151355.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE151355.parquet
+        bytes: 41455804
+        sha256: "b9d1fe7dcdfff62625786afbe69795c4aafc46d3842dfd6b9a5cc573a4560e82"
+        note: >-
+          Parkinson's disease, 20 cases and NO controls, 450K, ages 74-91. Here
+          for exactly that reason: AA1 is the test for a dataset with no control
+          arm, and without a case-only set the AA1 path never executes.
+
+      - path: bench/GSE107143.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE107143.parquet
+        bytes: 31998800
+        sha256: "647939966e7ca22b6f925e68c986a3b29762c9f9d723b4e934883b54af451949"
+        note: "Ankylosing spondylitis, 8 and 8, 450K, ages 32-88, male only."
+
+      - path: bench/GSE56606.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE56606.parquet
+        bytes: 9946499
+        sha256: "8c947ba4aed3db1d6ea72a2a7398d0e55305fd586452d46a987bb1c0e807ecc8"
+        note: >-
+          Type 1 diabetes, 27 cases and 63 controls, 27K, ages 16-68. The
+          largest sample count in the corpus for a tenth of the bytes, because
+          27K carries 27,578 probes against 450K's 485,512. Its real job is
+          coverage failure: most modern clocks lose most of their features on
+          27K, and the per-clock missingness report has to say so rather than
+          impute its way to a confident wrong answer.
+
+      - path: bench/GSE49909.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE49909.parquet
+        bytes: 5597073
+        sha256: "c47861e39ab766253cfea05a1501bebb313a08aecf30ce42a0b8aecd25d60c20"
+        note: "Obesity, 9 cases and 40 controls, 27K, ages 29-85, both sexes."
+
+      - path: bench/GSE62867.parquet
+        source: computage_bench
+        url: https://huggingface.co/datasets/computage/computage_bench/resolve/3cf52681537b303a5b7e21df03a3ae0a94ed497e/data/benchmark/computage_bench_data_GSE62867.parquet
+        bytes: 835212
+        sha256: "7c7a49263dceea78e22128b614fa4293f4e65334c68a9901df703e161fdcddbc"
+        note: >-
+          Ischaemic heart disease, 6 cases, no controls, 27K. 835 kB and six
+          samples: the fixture for a unit test that wants real data and a
+          one-second runtime.
+
+  # ===========================================================================
+  - id: clinical
+    default: true
+    title: NHANES blood chemistry with mortality linkage
+    bytes: 5350559
+    samples: 0            # tens of thousands across two cohorts; counted at load, not asserted here
+    platforms: [clinical_chemistry]
+    why: >-
+      PhenoAge, Klemera-Doubal and homeostatic dysregulation take blood
+      chemistry, not methylation, and were fitted on NHANES III with NHANES IV
+      as the validation cohort. Nothing in the methylation groups can exercise
+      them; nothing else in the corpus can exercise the unit registry either,
+      and units are where clinical clocks go wrong most often.
+    covers: >-
+      PhenoAge (both the SI and the conventional-unit variant), KDM, homeostatic
+      dysregulation, and the mortality-linked survival analysis in README
+      section 4.4.
+    caveats: >-
+      NHANES3_HDTrain is the healthy young reference subset the homeostatic
+      dysregulation Mahalanobis distance is computed against. HD without it is
+      not HD -- the statistic is defined relative to a reference population, and
+      substituting the sample's own distribution silently changes what is being
+      measured.
+    files:
+      - path: clinical/NHANES3.rda
+        source: bioage
+        url: https://raw.githubusercontent.com/dayoonkwon/BioAge/master/data/NHANES3.rda
+        bytes: 1371332
+        note: "NHANES III, the training cohort, with the mortality linkage."
+      - path: clinical/NHANES4.rda
+        source: bioage
+        url: https://raw.githubusercontent.com/dayoonkwon/BioAge/master/data/NHANES4.rda
+        bytes: 3768941
+        note: "NHANES IV (1999-2018), the validation cohort."
+      - path: clinical/NHANES3_HDTrain.rda
+        source: bioage
+        url: https://raw.githubusercontent.com/dayoonkwon/BioAge/master/data/NHANES3_HDTrain.rda
+        bytes: 210286
+        note: "Healthy 20-30 year old reference subset for the HD Mahalanobis centre and covariance."
+
+  # ===========================================================================
+  - id: gestational
+    default: true
+    title: Umbilical cord blood with gestational age
+    bytes: 50802169
+    samples: 22
+    platforms: [450K]
+    why: >-
+      Seven clocks in the catalogue predict gestational age rather than
+      chronological age, and their input is cord blood measured in days of
+      gestation. Running them on adult blood produces a number with no meaning,
+      which is worse than an error, so the corpus has to carry a set they can
+      legitimately be scored on.
+    covers: "Knight, Bohlin, Mayne, Lee (control / robust / refined-robust), EPICGA, and PedBE."
+    caveats: >-
+      Gestational age is recorded in DAYS here, 185 to about 280, while every
+      one of these clocks predicts WEEKS. That conversion is exactly the kind of
+      silent factor-of-seven the units module exists to refuse to guess, and
+      this file is its test case.
+    files:
+      - path: gestational/GSE66459_series_matrix.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE66nnn/GSE66459/matrix/GSE66459_series_matrix.txt.gz
+        bytes: 50802169
+        note: >-
+          11 preterm and 11 term deliveries, 450K. A series matrix, so the
+          sample characteristics (gestational_age in days, sex, tissue, mode of
+          labour onset) and the beta values arrive in one file -- which is also
+          why this is the fixture for the series-matrix reader in preprocess,
+          the path about 60% of GEO methylation series need because they publish
+          no IDATs.
+
+  # ===========================================================================
+  - id: epicv2
+    default: true
+    title: EPIC v2 probe-suffix handling
+    bytes: 41174247
+    samples: 8
+    platforms: [EPICv2]
+    why: >-
+      EPIC v2 renamed its probes. cg00000029 became cg00000029_TC21, and a clock
+      matching on exact identifiers therefore finds zero of its features and
+      returns a confident number computed entirely from imputed values. Suffix
+      aggregation is mandatory, not an optimisation, and it needs real EPIC v2
+      identifiers to test against -- the replicate structure (some probes appear
+      two or three times with different suffixes) cannot be faked convincingly.
+    covers: >-
+      aggregate_replicate_probes and detect_platform in preprocess/methylation,
+      and the coverage warning every clock raises on a platform it was not
+      trained for.
+    caveats: >-
+      Glycogen storage disease type 1a and controls, 8 samples. Chosen for its
+      platform and its size, not its phenotype; it is not a benchmark set and
+      should not be used as one.
+    files:
+      - path: epicv2/GSE330325_series_matrix.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE330nnn/GSE330325/matrix/GSE330325_series_matrix.txt.gz
+        bytes: 41174247
+        note: >-
+          Also carries the sample metadata for the two EPIC v2 IDAT pairs in the
+          idat group, which come from this same series.
+
+  # ===========================================================================
+  - id: idat
+    default: true
+    title: Raw IDATs, EPIC v1 and EPIC v2
+    bytes: 60439467
+    samples: 4
+    platforms: [EPICv1, EPICv2]
+    why: >-
+      Every other methylation file here is somebody else's beta matrix,
+      normalised by a pipeline whose choices are not recorded. The IDAT path --
+      parse, noob, BMIQ, detection-p, cross-reactive and SNP probe masks -- is
+      the only one FALCONAge controls end to end, and it is the one that decides
+      whether two labs' numbers are comparable. Four samples is enough to test
+      it and 60 MB is what four samples cost.
+    covers: >-
+      preprocess/methylation/{idat, noob, bmiq, sesame, quality, platform},
+      and the two-channel Grn/Red pairing that a naive per-file loop gets wrong.
+    caveats: >-
+      Two samples per platform. Enough for correctness, not enough for a
+      normalisation that estimates its parameters across a plate -- funnorm on
+      n=2 is not funnorm. Fetch a full RAW.tar from either series if you need
+      that; both are several hundred megabytes and neither fits the budget here.
+    files:
+      - path: idat/epicv1/GSM5548192_204081560090_R03C01_Grn.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM5548nnn/GSM5548192/suppl/GSM5548192_204081560090_R03C01_Grn.idat.gz
+        bytes: 7369742
+        note: "GSE182991, the progeria series. Sample metadata is in the ComputAgeBench table."
+      - path: idat/epicv1/GSM5548192_204081560090_R03C01_Red.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM5548nnn/GSM5548192/suppl/GSM5548192_204081560090_R03C01_Red.idat.gz
+        bytes: 7548287
+      - path: idat/epicv1/GSM5548193_204081560090_R06C01_Grn.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM5548nnn/GSM5548193/suppl/GSM5548193_204081560090_R06C01_Grn.idat.gz
+        bytes: 7384159
+      - path: idat/epicv1/GSM5548193_204081560090_R06C01_Red.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM5548nnn/GSM5548193/suppl/GSM5548193_204081560090_R06C01_Red.idat.gz
+        bytes: 7522633
+      - path: idat/epicv2/GSM9723838_207219750060_R05C01_Grn.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9723nnn/GSM9723838/suppl/GSM9723838_207219750060_R05C01_Grn.idat.gz
+        bytes: 7693013
+        note: "GSE330325, matching the series matrix in the epicv2 group."
+      - path: idat/epicv2/GSM9723838_207219750060_R05C01_Red.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9723nnn/GSM9723838/suppl/GSM9723838_207219750060_R05C01_Red.idat.gz
+        bytes: 7613600
+      - path: idat/epicv2/GSM9723839_207219750060_R06C01_Grn.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9723nnn/GSM9723839/suppl/GSM9723839_207219750060_R06C01_Grn.idat.gz
+        bytes: 7708389
+      - path: idat/epicv2/GSM9723839_207219750060_R06C01_Red.idat.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM9723nnn/GSM9723839/suppl/GSM9723839_207219750060_R06C01_Red.idat.gz
+        bytes: 7599644
+
+  # ===========================================================================
+  - id: mammalian
+    default: true
+    title: Mammalian methylation array, three species
+    bytes: 9310142
+    samples: 29
+    platforms: [MammalMethylChip40]
+    why: >-
+      MammalianLifespan, MammalianFemale and the three EnsembleAge clocks take
+      the 37,554-probe mammalian array and a species annotation, and return
+      relative age against that species' maximum lifespan. Human 450K data
+      cannot exercise them: the probe namespace is different and the species
+      lookup has nothing to look up.
+    covers: >-
+      MammalianLifespan, MammalianFemale, EnsembleAge x3, the species-lookup
+      transforms in models/species.py, and the relative-age scale type.
+    caveats: >-
+      Two non-human species (Equus africanus somaliensis and Equus grevyi) plus
+      human cells. The Mammalian Methylation Consortium's full matrix covers 348
+      species, and it is a single 4.2 GB file -- four times this entire corpus
+      for one group, so it is out of budget and named here rather than quietly
+      omitted. Ages are in years with a decimal fraction, and the series carries
+      a confidenceinageestimate field that is not 100 for every sample.
+    files:
+      - path: mammalian/GSE184222_datBetaNormalized.csv.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE184nnn/GSE184222/suppl/GSE184222_datBetaNormalized.csv.gz
+        bytes: 3874010
+        note: "Wild ass and Grevy's zebra, 12 samples, ages 2.4-18.5 years, both sexes."
+      - path: mammalian/GSE184222_series_matrix.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE184nnn/GSE184222/matrix/GSE184222_series_matrix.txt.gz
+        bytes: 2219
+        note: >-
+          Metadata only, 2.2 kB. These series publish betas as a supplementary
+          CSV and leave the series matrix as a header, so both files are needed
+          and the pair is the fixture for the metadata-and-values-are-separate
+          case in the GEO downloader.
+      - path: mammalian/GSE184224_datBetaNormalized.csv.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE184nnn/GSE184224/suppl/GSE184224_datBetaNormalized.csv.gz
+        bytes: 5431777
+        note: >-
+          Human cells on the mammalian array, 17 samples. The cross-check that
+          separates a species effect from an array effect: same probes, same
+          pipeline, a species the human clocks also cover.
+      - path: mammalian/GSE184224_series_matrix.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE184nnn/GSE184224/matrix/GSE184224_series_matrix.txt.gz
+        bytes: 2136
+
+  # ===========================================================================
+  - id: mouse
+    default: true
+    title: Mouse blood RRBS across the lifespan
+    bytes: 50223645
+    samples: 4
+    platforms: [RRBS]
+    why: >-
+      The mouse clocks are not array clocks. Petkovich, Meer, Stubbs and
+      Thompson take reduced-representation bisulfite sequencing keyed by genomic
+      coordinate (chr:position), not by cg identifier, and no array file in this
+      corpus can stand in for that. This is also the corpus's only sequencing
+      input, so it is the only thing that exercises coverage-weighted beta
+      estimation -- an RRBS site read four times and one read four hundred times
+      are not the same measurement, and a pipeline that treats them alike is
+      wrong in a way an array pipeline never has to worry about.
+    covers: >-
+      Petkovich, Meer, Stubbs, Thompson, the RRBS reader, and coordinate-keyed
+      feature alignment.
+    caveats: >-
+      GEO labels the age field "age (years)" and the values run 0.67 to 35.
+      Those are MONTHS. A mouse does not live 35 years, and a clock handed 35 as
+      a year value will report a 33-year acceleration and look precise doing it.
+      This is the corpus's best argument for the design notes --
+      units are declared, never inferred -- and it is a real published series,
+      not a contrived example.
+    files:
+      - path: mouse/GSE80672_series_matrix.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/series/GSE80nnn/GSE80672/matrix/GSE80672_series_matrix.txt.gz
+        bytes: 12740
+        note: >-
+          Metadata for all 255 samples in the series: age, sex, strain, diet,
+          genetic condition. 12.7 kB, so the whole cohort's design is available
+          even though only four samples' data are fetched.
+      - path: mouse/GSM2132712_20D02.overlap.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2132nnn/GSM2132712/suppl/GSM2132712_20D02.overlap.txt.gz
+        bytes: 11849652
+        note: "C57BL/6, 0.67 months, male, standard diet, wild type."
+      - path: mouse/GSM2132713_20D03.overlap.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2132nnn/GSM2132713/suppl/GSM2132713_20D03.overlap.txt.gz
+        bytes: 12851935
+        note: "C57BL/6, 0.67 months, male, standard diet, wild type."
+      - path: mouse/GSM2132959_M3503.overlap.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2132nnn/GSM2132959/suppl/GSM2132959_M3503.overlap.txt.gz
+        bytes: 13167557
+        note: >-
+          C57BL/6, 35 months, male, standard diet, wild type. Paired with the
+          0.67-month samples this is a 52-fold age range in four files, which is
+          enough for a monotonicity property test.
+      - path: mouse/GSM2132960_M3503R.overlap.txt.gz
+        source: geo
+        url: https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2132nnn/GSM2132960/suppl/GSM2132960_M3503R.overlap.txt.gz
+        bytes: 12341761
+        note: >-
+          Titled M3503R against the M3503 above it, with identical age, sex,
+          strain, diet and genotype in the series metadata -- a re-run of the
+          same animal. GEO does not state that in so many words, so treat it as
+          a near-duplicate pair rather than a certified technical replicate; it
+          is still the only thing in the corpus that can put a number on a
+          clock's own measurement noise instead of quoting the published ICC.

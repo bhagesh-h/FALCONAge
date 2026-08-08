@@ -1,0 +1,192 @@
+{
+  "extracted": [
+    {
+      "clock": "dnamphenoage",
+      "n": 513,
+      "sha256": "84efd3c5581d5a49d958e4e85508a48113dc2fc4c6c36cb5c7e24e160b38a810",
+      "bytes": 11992,
+      "source": "Levine 2018 Supplement 2 Table S6",
+      "primary": true
+    },
+    {
+      "clock": "dnamtl",
+      "n": 140,
+      "sha256": "8c3f097cfc2f070905f6e311f18dae375e566b432c2f6ff6a5c5ba4ec3ba1096",
+      "bytes": 3301,
+      "source": "ComputAge models_library/DNAmTL.csv",
+      "primary": false
+    },
+    {
+      "clock": "dunedinpoam38",
+      "n": 46,
+      "sha256": "1bd227b3222cfcadec0a62622120ff6e78d56e9adfeff27e7fbc6b113b6cdc7f",
+      "bytes": 1392,
+      "source": "ComputAge models_library/DunedinPoAm38.csv",
+      "primary": false
+    },
+    {
+      "clock": "hannum",
+      "n": 71,
+      "sha256": "58d84337d3100888358763cd79c29a776e5cfdc675af99c14a339595aceaf375",
+      "bytes": 1196,
+      "source": "ComputAge models_library/Hannum.csv",
+      "primary": false
+    },
+    {
+      "clock": "horvath2013",
+      "n": 353,
+      "sha256": "a54cdb931c85763ed8e28be68fa926b4e602be168df505683ea5c6b2ba3a5319",
+      "bytes": 8311,
+      "source": "Horvath 2013 Additional File 3",
+      "primary": true
+    },
+    {
+      "clock": "hrsinchphenoage",
+      "n": 959,
+      "sha256": "e10c893bb11cfea3687b83ef982038179b1bf9175b81e6b0a7dc3da1557e61c9",
+      "bytes": 27796,
+      "source": "ComputAge models_library/HRSInCHPhenoAge.csv",
+      "primary": false
+    },
+    {
+      "clock": "knight",
+      "n": 148,
+      "sha256": "b06d261cafaec9cc58460b9b88454a477c197781a8d7f606a74713e6ab7ae7e5",
+      "bytes": 3484,
+      "source": "ComputAge models_library/Knight.csv",
+      "primary": false
+    },
+    {
+      "clock": "leecontrol",
+      "n": 546,
+      "sha256": "22c21c97ef9c5293ec219b30acb0b366a7d9128eb696a75b11165546f125591e",
+      "bytes": 12780,
+      "source": "ComputAge models_library/LeeControl.csv",
+      "primary": false
+    },
+    {
+      "clock": "leerefinedrobust",
+      "n": 395,
+      "sha256": "d7d98c85b53fe53cf9e5009c04e056efc42e7329d5587f3fcaea1ab2b16a7877",
+      "bytes": 9267,
+      "source": "ComputAge models_library/LeeRefinedRobust.csv",
+      "primary": false
+    },
+    {
+      "clock": "leerobust",
+      "n": 558,
+      "sha256": "8f2824c472504f6001a9bfbe9e9f62ad24004713c8a90fe1f5fe1f53669138cb",
+      "bytes": 13104,
+      "source": "ComputAge models_library/LeeRobust.csv",
+      "primary": false
+    },
+    {
+      "clock": "lin",
+      "n": 99,
+      "sha256": "551964cfbfee6e19f793610e97ba6d48183096ad2259424f647141ec63bbd9f0",
+      "bytes": 2190,
+      "source": "ComputAge models_library/Lin.csv",
+      "primary": false
+    },
+    {
+      "clock": "pedbe",
+      "n": 94,
+      "sha256": "51ad198067f0caa3e41a8e7df32e33dcdc2e2270ee78072a6c52c9b7b4228187",
+      "bytes": 2851,
+      "source": "ComputAge models_library/PEDBE.csv",
+      "primary": false
+    },
+    {
+      "clock": "skinandblood",
+      "n": 391,
+      "sha256": "c698aee4488d204b5ea44f1fde2b3f5502a7800dee7deac3a4bd457bdd3a08a1",
+      "bytes": 9163,
+      "source": "ComputAge models_library/Horvath2.csv",
+      "primary": false
+    },
+    {
+      "clock": "vidalbralo",
+      "n": 8,
+      "sha256": "76eebb2ef6ae605476746107c16cd3c3425055aacad87da06f650d3882e3589c",
+      "bytes": 155,
+      "source": "ComputAge models_library/VidalBralo.csv",
+      "primary": false
+    },
+    {
+      "clock": "yingadaptage",
+      "n": 999,
+      "sha256": "c844962e50847593de78b22742e69665ad767756a94806573a906914334e22ee",
+      "bytes": 23832,
+      "source": "ComputAge models_library/YingAdaptAge.csv",
+      "primary": false
+    },
+    {
+      "clock": "yingcausage",
+      "n": 585,
+      "sha256": "c57f2e5622743c2fadce96c6bde990ce6c65a430601f3c4ef6b19c5c125a3947",
+      "bytes": 13698,
+      "source": "ComputAge models_library/YingCausAge.csv",
+      "primary": false
+    },
+    {
+      "clock": "yingdamage",
+      "n": 1089,
+      "sha256": "e3b2019563f150436119047622d4cce714949919ae871bfd6c1ce24588ec09e4",
+      "bytes": 25245,
+      "source": "ComputAge models_library/YingDamAge.csv",
+      "primary": false
+    },
+    {
+      "clock": "zhangblup",
+      "n": 319607,
+      "sha256": "8d3dca6222c40ce95f022a0f4176fa643d43d875d68ac83198fdedcd725a8858",
+      "bytes": 9941618,
+      "source": "ComputAge models_library/Zhang19_BLUP.csv",
+      "primary": false
+    },
+    {
+      "clock": "zhangen",
+      "n": 514,
+      "sha256": "12ef266a40345a98878f2e52c0fa1bd67fa2390c5ed5712d20eeec5493fc8d28",
+      "bytes": 15243,
+      "source": "ComputAge models_library/Zhang19_EN.csv",
+      "primary": false
+    },
+    {
+      "clock": "zhangmortality",
+      "n": 10,
+      "sha256": "ebf3915e5f08ec8d1cf4b84d6017088cb87fea2b9cedd1cc781589847293a177",
+      "bytes": 221,
+      "source": "ComputAge models_library/Zhang17.csv",
+      "primary": false
+    }
+  ],
+  "cross_check": [
+    {
+      "clockId": "horvath2013",
+      "caFile": "Horvath1.csv",
+      "nPrimary": 353,
+      "nPackage": 353,
+      "onlyPrimary": 0,
+      "onlyPackage": 0,
+      "valueDiffs": 0,
+      "maxAbs": 0
+    },
+    {
+      "clockId": "dnamphenoage",
+      "caFile": "PhenoAge.csv",
+      "nPrimary": 513,
+      "nPackage": 513,
+      "onlyPrimary": 0,
+      "onlyPackage": 0,
+      "valueDiffs": 0,
+      "maxAbs": 0
+    }
+  ],
+  "refused": [
+    "GrimAgeV1.csv",
+    "GrimAgeV2.csv",
+    "DunedinPACE.csv",
+    "DunedinPACE_Gold_Means.csv"
+  ]
+}

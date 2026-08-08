@@ -1,0 +1,16 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+# pkgdown config and its output. The site is built by CI from a clean checkout;
+# a copy inside the tarball only ever goes stale, and R CMD check lists any
+# unrecognised top-level file as non-standard.
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^\.Rhistory$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+# GitHub reads CITATION.cff from the REPOSITORY to render its "Cite this
+# repository" box, never from the tarball. inst/CITATION is the copy that ships
+# and is what citation("FALCONAge") reads.
+^CITATION\.cff$

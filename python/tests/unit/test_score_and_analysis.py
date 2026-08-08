@@ -1,0 +1,235 @@
+"""Scoring, the manifest, and the downstream statistics."""
+
+from __future__ import annotations
+
+import json
+
+import numpy as np
+import pandas as pd
+import pytest
+
+import falconage as fa
+from falconage.core.errors import (
+    FeatureCoverageError,
+    IllegalOperationError,
+    WeightsUnavailableError,
+)
+
+
+# ---------------------------------------------------------------------------
+# scoring
+# ---------------------------------------------------------------------------
+def test_score_compatible_runs_the_tier_a_clocks(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks="compatible")
+    assert res.scores.shape[0] == synthetic_betas.n_samples
+    assert res.scores.shape[1] >= 15
+    assert res.scores.notna().all().all()
+    assert set(res.scores.columns) >= {"horvath2013", "hannum", "dnamphenoage"}
+
+
+def test_score_records_a_complete_manifest(synthetic_betas, tmp_path):
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "hannum"])
+    m = res.manifest
+    assert m.falconage_version == fa.__version__
+    assert m.dtype == "float64"
+    assert set(m.weights) == {"horvath2013", "hannum"}
+    assert len(m.weights["horvath2013"]["sha256"]) == 64
+    assert m.finished_utc
+
+    p = m.write(tmp_path / "run_manifest.json")
+    doc = json.loads(p.read_text())
+    assert doc["weights"]["horvath2013"]["provenance"].startswith("Horvath 2013")
+
+
+def test_explicit_scaffold_request_raises_rather_than_skipping(synthetic_betas):
+    """A named clock that cannot run is an error; a silent skip leaves a column
+    quietly missing from the results table."""
+    with pytest.raises(WeightsUnavailableError):
+        fa.score(synthetic_betas, clocks=["grimage2"])
+
+
+def test_compatible_skips_scaffolds_and_says_why(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks="compatible")
+    assert "grimage2" in res.skipped
+    assert "scaffold" in res.skipped["grimage2"]
+
+
+def test_coverage_floor_is_enforced(synthetic_betas):
+    thin = synthetic_betas.subset(features=list(synthetic_betas.features[:200]))
+    with pytest.raises(FeatureCoverageError, match="below the"):
+        fa.score(thin, clocks=["horvath2013"], min_coverage=0.9)
+
+
+def test_coverage_is_recorded_per_clock(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    cov = res.coverage["horvath2013"]
+    assert cov["coverage"] == pytest.approx(1.0)
+    assert cov["n_imputed"] == 0
+
+
+def test_long_form_carries_the_scale(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "dnamtl"])
+    lf = res.long()
+    assert set(lf["scale_type"]) == {"age_years", "telomere_kb"}
+    assert lf.shape[0] == synthetic_betas.n_samples * 2
+
+
+def test_results_round_trip_to_disk(synthetic_betas, tmp_path):
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "hannum"])
+    written = res.write(tmp_path)
+    assert {"scores", "scores_wide", "qc", "manifest"} <= set(written)
+    back = pd.read_csv(written["scores_wide"], index_col=0)
+    np.testing.assert_allclose(back["horvath2013"].to_numpy(),
+                               res.scores["horvath2013"].to_numpy(), rtol=1e-12)
+
+
+def test_h5ad_round_trip_preserves_everything(synthetic_betas, tmp_path):
+    pytest.importorskip("anndata")
+    p = synthetic_betas.write_h5ad(tmp_path / "d.h5ad")
+    back = fa.FalconData.read_h5ad(p)
+    assert back.modality == synthetic_betas.modality
+    assert back.platform == synthetic_betas.platform
+    np.testing.assert_allclose(back.X.to_numpy(), synthetic_betas.X.to_numpy(), rtol=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# acceleration
+# ---------------------------------------------------------------------------
+def test_the_three_acceleration_conventions_differ(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    absolute = fa.acceleration(res, method="absolute")["horvath2013"]
+    residual = fa.acceleration(res, method="residual")["horvath2013"]
+    assert residual.mean() == pytest.approx(0.0, abs=1e-9), "residuals centre at zero"
+    assert not np.allclose(absolute, residual)
+
+
+def test_within_group_acceleration_centres_each_group(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013"])
+    acc = fa.acceleration(res, method="within_group", group="condition")
+    for _, g in acc["horvath2013"].groupby(res.obs["condition"]):
+        assert g.mean() == pytest.approx(0.0, abs=1e-8)
+
+
+def test_acceleration_refuses_a_pace_clock_when_named(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["dunedinpoam38"])
+    with pytest.raises(IllegalOperationError, match="already a rate"):
+        fa.acceleration(res, clocks=["dunedinpoam38"])
+
+
+def test_acceleration_filters_silently_when_not_named(synthetic_betas):
+    """Not naming clocks means 'the ones this makes sense for'."""
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "dunedinpoam38"])
+    acc = fa.acceleration(res)
+    assert list(acc.columns) == ["horvath2013"]
+
+
+def test_acceleration_needs_an_age_column(synthetic_betas):
+    from falconage.core.errors import AnalysisError
+
+    d = fa.FalconData(X=synthetic_betas.X, obs=pd.DataFrame(index=synthetic_betas.X.index),
+                      modality="dna_methylation")
+    res = fa.score(d, clocks=["horvath2013"])
+    with pytest.raises(AnalysisError, match="needs chronological age"):
+        fa.acceleration(res)
+
+
+# ---------------------------------------------------------------------------
+# association, survival, reliability, benchmark
+# ---------------------------------------------------------------------------
+def test_associate_returns_bh_corrected_p(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "hannum", "lin"])
+    out = fa.associate(res, outcome="age", covariates=())
+    assert set(out.columns) >= {"beta", "se", "p", "q"}
+    assert (out["q"] >= out["p"] - 1e-12).all(), "BH q is never below its p"
+
+
+def test_cox_hazard_finds_a_planted_signal(rng):
+    """A synthetic survival dataset where the score genuinely predicts the event."""
+    n = 300
+    score = rng.normal(size=n)
+    t = rng.exponential(scale=np.exp(-0.8 * score))
+    e = (t < np.quantile(t, 0.7)).astype(int)
+    obs = pd.DataFrame({"time": t, "event": e}, index=[f"s{i}" for i in range(n)])
+
+    class Stub:
+        pass
+
+    r = Stub()
+    r.scores = pd.DataFrame({"planted": score}, index=obs.index)
+    r.obs = obs
+    out = fa.cox_hazard(r, time_col="time", event_col="event")
+    assert out.loc["planted", "hr"] > 1.2
+    assert out.loc["planted", "p"] < 1e-4
+
+
+def test_icc_is_one_for_identical_repeats():
+    df = pd.DataFrame({"subject": ["a", "a", "b", "b", "c", "c"],
+                       "value": [1.0, 1.0, 5.0, 5.0, 9.0, 9.0]})
+    assert fa.icc(df, "subject", "value") == pytest.approx(1.0, abs=1e-9)
+
+
+def test_icc_is_near_zero_when_repeats_are_noise(rng):
+    df = pd.DataFrame({"subject": np.repeat(list("abcdefghij"), 2),
+                       "value": rng.normal(size=20)})
+    assert fa.icc(df, "subject", "value") < 0.5
+
+
+def test_pool_icc_uses_fisher_z():
+    from falconage.analysis import pool_icc
+
+    # tanh(mean(atanh([0.9, 0.5]))) is above the plain mean of 0.7
+    assert pool_icc([0.9, 0.5]) > 0.7
+
+
+def test_benchmark_detects_a_planted_acceleration(synthetic_betas):
+    """Shift the case group's methylation towards older values and the AA2 test
+    must find it."""
+    X = synthetic_betas.X.copy()
+    case = synthetic_betas.obs["condition"] == "CASE"
+    reg = fa.registry.load()
+    feats, coefs = reg.coefficients("horvath2013")
+    for f, c in zip(feats, coefs):
+        if f in X.columns and abs(c) > 1e-6:
+            X.loc[case, f] = np.clip(X.loc[case, f] + 0.06 * np.sign(c), 0.001, 0.999)
+
+    d = fa.FalconData(X=X, obs=synthetic_betas.obs, modality="dna_methylation",
+                      platform="450K")
+    res = fa.score(d, clocks=["horvath2013", "hannum"])
+    b = fa.run_benchmark(res, condition_col="condition", control="HC",
+                         dataset_col="dataset")
+    assert b.summary().loc["horvath2013", "AA2"] == 1
+    row = b.per_dataset.query("clock == 'horvath2013'").iloc[0]
+    assert row["delta"] > 0 and row["q"] < 0.05
+
+
+def test_benchmark_total_discounts_a_biased_clock():
+    """The MedE discount is what stops a clock that over-predicts everybody from
+    sweeping AA1. Checked as arithmetic on the published formula."""
+    aa2, aa1, medae, mede = 3, 4, 8.0, 4.0
+    total = aa2 + aa1 * (1 - max(0.0, mede) / medae)
+    assert total == pytest.approx(5.0)
+    # a clock with no bias keeps the whole AA1 credit
+    assert aa2 + aa1 * (1 - max(0.0, -4.0) / medae) == pytest.approx(7.0)
+
+
+def test_benchmark_excludes_non_age_scales(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "dnamtl", "zhangmortality"])
+    b = fa.run_benchmark(res, condition_col="condition", control="HC")
+    assert "dnamtl" not in b.summary().index
+    assert "zhangmortality" not in b.summary().index
+
+
+def test_agreement_is_a_square_correlation_matrix(synthetic_betas):
+    res = fa.score(synthetic_betas, clocks=["horvath2013", "hannum", "lin"])
+    m = fa.agreement(res)
+    assert m.shape == (3, 3)
+    np.testing.assert_allclose(np.diag(m), 1.0)
+
+
+def test_combine_keeps_per_dataset_coverage(synthetic_betas):
+    a = fa.score(synthetic_betas, clocks=["horvath2013"])
+    thin = synthetic_betas.subset(features=list(synthetic_betas.features)[:-100])
+    b = fa.score(thin, clocks=["horvath2013"], min_coverage=0.5)
+    c = fa.combine([a, b], keys=["full", "thin"])
+    assert c.scores.shape[0] == a.scores.shape[0] * 2
+    assert c.coverage["horvath2013"]["coverage"] <= a.coverage["horvath2013"]["coverage"]

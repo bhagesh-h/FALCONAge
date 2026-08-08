@@ -1,0 +1,156 @@
+# =============================================================================
+# Browsing the registry
+# =============================================================================
+
+#' List the clock catalogue
+#'
+#' @param tier `"A"`, `"B"` or `"C"`, or `NULL` for all. A ships with
+#'   coefficients and runs offline; B is catalogued but has no traced primary
+#'   source yet; C is a scaffold whose coefficients are research-use-only.
+#' @param data_type `"dna_methylation"` or `"clinical_chemistry"`.
+#' @param generation `"first"`, `"second"`, `"pace"`, `"causal"`, `"mitotic"`,
+#'   `"system"` or `"other"`.
+#' @param untraced Only clocks with no established primary source.
+#' @param search Substring match over id, name, what it predicts, and citation.
+#'
+#' @return A data frame, one row per clock.
+#' @examples
+#' \dontrun{
+#' list_clocks(tier = "A")
+#' list_clocks(search = "mortality")
+#' list_clocks(tier = "C")   # the ones needing author permission
+#' }
+#' @export
+list_clocks <- function(tier = NULL, data_type = NULL, generation = NULL,
+                        untraced = FALSE, search = NULL) {
+  reg <- py_do(fa()$registry$load())
+  df <- as_df(reg$summary())
+  if (!is.null(tier))       df <- df[df$availability == tier, , drop = FALSE]
+  if (!is.null(data_type))  df <- df[df$data_type == data_type, , drop = FALSE]
+  if (!is.null(generation)) df <- df[df$generation == generation, , drop = FALSE]
+  if (isTRUE(untraced))     df <- df[!df$traced, , drop = FALSE]
+  if (!is.null(search)) {
+    hits <- vapply(reticulate::py_to_r(reg$search(search)),
+                   function(c) reticulate::py_to_r(c$id), character(1))
+    df <- df[rownames(df) %in% hits, , drop = FALSE]
+  }
+  df
+}
+
+#' Everything the registry knows about one clock
+#'
+#' For a tier C clock this also prints why its coefficients are not distributed,
+#' where to obtain them, and which open clocks answer the same question.
+#'
+#' @param clock_id A clock identifier.
+#' @return A named list, invisibly. Printed for reading.
+#' @examples
+#' \dontrun{
+#' clock_info("horvath2013")
+#' clock_info("grimage2")
+#' }
+#' @export
+clock_info <- function(clock_id) {
+  reg <- py_do(fa()$registry$load())
+  c <- py_do(reg$get(clock_id))
+  cs <- c$coefficient_source
+  bi <- reticulate::import_builtins(convert = FALSE)
+  g <- function(x) reticulate::py_to_r(x)
+  # legal_operations is a Python set, and a set proxy has no ordering for R to
+  # sort by; sorted() on the Python side turns it into a list first.
+  gset <- function(x) as.character(unlist_na(g(bi$sorted(x))))
+
+  out <- list(
+    id = g(c$id), name = g(c$name), year = g(c$year), species = g(c$species),
+    data_type = g(c$data_type), generation = g(c$generation),
+    predicts = unlist(g(c$predicts)), unit = unlist(g(c$unit)),
+    scale_type = g(c$scale_type), legal_operations = gset(c$legal_operations),
+    platform = unlist(g(c$platform)), tissue = unlist(g(c$tissue)),
+    n_features = g(c$n_features), availability = g(c$availability),
+    provenance = g(cs$provenance), primary_source_traced = g(cs$primary_source_traced),
+    citation = g(c$citation), doi = g(c$doi), notes = g(c$notes))
+
+  cat(out$id, " -- ", out$name, "\n", sep = "")
+  cat("  year         ", out$year, "\n")
+  cat("  species      ", out$species, "\n")
+  cat("  predicts     ", paste(out$predicts, collapse = ", "),
+      " (", paste(out$unit, collapse = ", "), ")\n", sep = "")
+  cat("  scale type   ", out$scale_type, "\n")
+  cat("  legal ops    ", paste(out$legal_operations, collapse = ", "), "\n")
+  cat("  platform     ", paste(out$platform, collapse = ", "), "\n")
+  cat("  features     ", out$n_features %||% "unknown", "\n")
+  cat("  availability ", "tier ", out$availability, "\n", sep = "")
+  cat("  provenance   ", out$provenance, "\n")
+  cat("  traced       ", out$primary_source_traced, "\n")
+  if (identical(out$availability, "C")) {
+    cat("\n", reticulate::py_to_r(reg$unavailable_message(clock_id)), "\n", sep = "")
+  }
+  if (nzchar(out$notes)) cat("\n  ", out$notes, "\n", sep = "")
+  cat("\n  ", out$citation, " ", out$doi, "\n", sep = "")
+  invisible(out)
+}
+
+#' Cite a clock
+#'
+#' @param clock_id A clock identifier.
+#' @param style `"plain"` or `"bibtex"`.
+#' @return A character string.
+#' @examples
+#' \dontrun{
+#' cite_clock("horvath2013")
+#' cat(cite_clock("dnamphenoage", "bibtex"))
+#' }
+#' @export
+cite_clock <- function(clock_id, style = c("plain", "bibtex")) {
+  reg <- py_do(fa()$registry$load())
+  reticulate::py_to_r(reg$get(clock_id)$cite(match.arg(style)))
+}
+
+#' Supply a coefficient file for a clock FALCONAge does not distribute
+#'
+#' Twenty-eight clocks ship as scaffolds: the model, the feature list, the
+#' preprocess and postprocess chain, the expected shapes -- everything except
+#' the numbers, which are research-use-only. Once you hold a licensed file, this
+#' registers it.
+#'
+#' Registration validates the file against the scaffold and rejects a mismatch
+#' with the discrepancy named, which also makes it a way to check a coefficient
+#' set somebody handed you. The digest goes into the run manifest as
+#' `user_supplied`, so a result computed from a licensed copy is distinguishable
+#' from one computed from a redistributed set.
+#'
+#' @param clock_id A clock identifier, e.g. `"grimage2"`.
+#' @param path A CSV with `feature_id,coefficient` columns.
+#' @param sha256 Optional expected digest; a mismatch is an error.
+#' @return The file's SHA-256, invisibly.
+#' @examples
+#' \dontrun{
+#' register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
+#' score(d, clocks = "grimage2")
+#' }
+#' @export
+register_local_weights <- function(clock_id, path, sha256 = NULL) {
+  reg <- py_do(fa()$registry$load())
+  invisible(reticulate::py_to_r(py_do(
+    reg$register_local_weights(clock_id, path.expand(path), or_none(sha256)))))
+}
+
+#' Which clocks this dataset can actually be scored on
+#'
+#' Compatibility is coverage, not platform. A clock trained on 450K runs
+#' perfectly well on EPIC data that carries its probes, and fails on 450K data
+#' filtered down to 20,000 probes -- only the feature list can answer it.
+#'
+#' @param data A `falcon_data`.
+#' @param min_coverage Fraction of a clock's features that must be present.
+#' @return A character vector of clock ids.
+#' @examples
+#' \dontrun{
+#' compatible_clocks(d)
+#' }
+#' @export
+compatible_clocks <- function(data, min_coverage = 0.8) {
+  reg <- py_do(fa()$registry$load())
+  cs <- reticulate::py_to_r(reg$compatible_with(data$py, min_coverage = min_coverage))
+  vapply(cs, function(c) reticulate::py_to_r(c$id), character(1))
+}

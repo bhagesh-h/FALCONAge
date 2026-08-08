@@ -1,0 +1,105 @@
+"""Turn raw or public data into something a clock can be scored on."""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+
+from ..core.container import FalconData
+from ..core.units import MARKERS, canonical_name, check_plausible, convert, require_units
+from .methylation import (
+    QCReport,
+    aggregate_replicate_probes,
+    clip_betas,
+    ensure_platform,
+    harmonise_probe_ids,
+    prepare,
+    qc,
+)
+
+__all__ = [
+    "QCReport", "aggregate_replicate_probes", "clip_betas", "ensure_platform",
+    "harmonise_probe_ids", "impute", "prepare", "prepare_clinical", "qc",
+]
+
+
+def prepare_clinical(data: FalconData, units: dict[str, str] | None = None,
+                     *, target: dict[str, str] | None = None) -> FalconData:
+    """Rename to canonical markers and convert to the units the models expect.
+
+    Raises :class:`~falconage.core.errors.UnitsNotDeclaredError` when ``units``
+    is missing or incomplete, with the dict to supply. That refusal is the point
+    of the module -- see :mod:`falconage.core.units`.
+    """
+    from ..models.clinical import PHENOAGE_UNITS
+
+    tgt = target or PHENOAGE_UNITS
+    declared = require_units(units, list(data.X.columns))
+
+    cols: dict[str, np.ndarray] = {}
+    notes: list[str] = []
+    for col in data.X.columns:
+        key = str(col).strip().lower().replace(" ", "_").replace("-", "_")
+        try:
+            name = canonical_name(key)
+        except Exception:
+            continue                       # not a recognised marker; pass through below
+        want = tgt.get(name, MARKERS[name].canonical)
+        have = declared.get(name, want)
+        v = convert(data.X[col].to_numpy(dtype=np.float64), have, want)
+        cols[name] = v
+        if have != want:
+            notes.append(f"{name}: {have} -> {want}")
+        w = check_plausible(name, v)
+        if w:
+            notes.append("WARNING " + w)
+
+    if not cols:
+        from ..core.errors import DataError
+
+        raise DataError(
+            "no recognised clinical markers in " + ", ".join(map(str, data.X.columns[:8]))
+            + f"\n  known: {', '.join(sorted(MARKERS))}"
+        )
+
+    X = pd.DataFrame(cols, index=data.X.index)
+    # Age lives in obs as well as X: the models take it as a term, the analyses
+    # take it as a covariate, and having it in one place only guarantees one of
+    # them goes looking in the wrong place.
+    obs = data.obs.copy()
+    if "age" in X.columns and "age" not in obs.columns:
+        obs["age"] = X["age"]
+
+    out = FalconData(X=X, obs=obs, modality="clinical_chemistry",
+                     units={k: tgt.get(k, MARKERS[k].canonical) for k in cols},
+                     uns=dict(data.uns))
+    out.uns["unit_conversions"] = notes
+    return out
+
+
+def impute(data: FalconData, how: str = "median") -> FalconData:
+    """Dataset-level imputation, applied before any clock sees the matrix.
+
+    This is the coarsest of the three imputation stages and the one to reach
+    for last. Clock-level imputation (in :func:`falconage.models.linear.align`)
+    knows which features a given clock needs and can use the values that
+    clock's authors published; this one only knows the column.
+
+    ``how="none"`` is a no-op, and is the right choice when you want the
+    coverage check to fail rather than to be papered over.
+    """
+    if how == "none":
+        return data
+    X = data.X
+    if how == "median":
+        filled = X.fillna(X.median(axis=0))
+    elif how == "mean":
+        filled = X.fillna(X.mean(axis=0))
+    else:
+        raise ValueError("how must be 'median', 'mean' or 'none'")
+    # A column that is entirely NaN has no median; leave it NaN so coverage
+    # counts it absent rather than filling the whole matrix with one number.
+    out = FalconData(X=filled, obs=data.obs, modality=data.modality, units=data.units,
+                     platform=data.platform, uns=dict(data.uns))
+    out.uns["dataset_imputation"] = how
+    return out
