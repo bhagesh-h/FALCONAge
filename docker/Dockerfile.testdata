@@ -1,0 +1,159 @@
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# FALCONAge — test corpus fetcher
+# =============================================================================
+#
+# WHY THIS IS A SEPARATE IMAGE AND NOT A STAGE OF Dockerfile.cpu. Three reasons,
+# and the first is decisive:
+#
+#   1. It has to work before FALCONAge exists. The corpus this fetches is what
+#      the package will be tested against; an image that needed the package
+#      installed in order to download the package's test data would be circular.
+#      This one builds and runs today, against an empty python/ and r/.
+#   2. It has to keep working when FALCONAge is broken. Fetching a fixture is
+#      the first thing you do when debugging a failure, and it must not be the
+#      second thing the failure takes down.
+#   3. It is tiny. No torch, no anndata, no 2 GB of weights -- four small R
+#      packages, one Python package, and the standard library.
+#
+# It shares the python:3.12-slim-bookworm base and the CRAN apt setup with
+# Dockerfile.cpu, so on a machine that has built either one the other reuses
+# those layers.
+#
+# BUILD, from the repository root:
+#   docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.0.0 .
+#
+# RUN. The corpus lands in the mounted directory, never inside the image.
+#   docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 plan
+#   docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 python
+#   docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 verify
+#
+#   On Windows PowerShell replace "$PWD" with "${PWD}".
+#
+# Or through compose, which sets the mount for you:
+#   docker compose -f docker/docker-compose.yml run --rm testdata plan
+# -----------------------------------------------------------------------------
+FROM python:3.12-slim-bookworm
+
+LABEL org.opencontainers.image.title="FALCONAge test corpus fetcher" \
+      org.opencontainers.image.description="Downloads the public benchmarking corpus described in test/data/datasets.yaml" \
+      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="1.0.0"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    DEBIAN_FRONTEND=noninteractive
+
+# libcurl and libssl are for the R `curl` package, which is what gives the R
+# fetcher resumable ranged downloads. Base R's download.file() cannot resume a
+# partial transfer portably, and a 94 MB parquet that has to restart from zero
+# on a dropped connection is how a five-minute fetch becomes an hour.
+#
+# R COMES FROM DEBIAN, NOT FROM CRAN, and that is the one place this image
+# deliberately diverges from Dockerfile.cpu. bookworm ships R 4.2.2 against the
+# package image's 4.4.3. Reaching 4.4.3 means adding the CRAN apt repository,
+# whose Debian signing key is not published as a file -- it has to come from a
+# keyserver at build time, which is a network dependency on a third party that
+# can and does fail. This image's entire justification is that it builds and
+# runs when nothing else does. Downloading files and computing SHA-256 works
+# identically on 4.2.2, so it buys the reliability and skips the version.
+# The four R packages come from Debian too, as r-cran-* binaries, for the same
+# reason R does: no compiler in the image, no CRAN mirror to be unreachable, no
+# Posit snapshot date to go stale, and the versions are frozen by the bookworm
+# release rather than by a URL somebody has to remember to bump.
+#   yaml     -> reads the same datasets.yaml the Python side reads
+#   jsonlite -> writes provenance.json
+#   curl     -> ranged, resumable HTTP
+#   digest   -> SHA-256 of a file without shelling out or pulling in openssl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl \
+        r-base-core \
+        r-cran-yaml r-cran-jsonlite r-cran-curl r-cran-digest \
+    && rm -rf /var/lib/apt/lists/* \
+    && Rscript -e "for (p in c('yaml','jsonlite','curl','digest')) \
+                     if (!requireNamespace(p, quietly = TRUE)) { message('FAILED: ', p); quit(status = 1L) }; \
+                   cat('R', as.character(getRversion()), '+ yaml jsonlite curl digest\n')"
+
+# PyYAML is the only Python dependency: HTTP, hashing, argument parsing and JSON
+# all come from the standard library. Fewer wheels is fewer things that can be
+# yanked from PyPI between now and the next rebuild.
+RUN pip install --no-cache-dir "PyYAML==6.0.2"
+
+# The manifest and both fetchers are baked in, so the image runs standalone with
+# nothing mounted but the output directory. Mount a checkout over /opt/testdata
+# to iterate on the scripts without rebuilding.
+COPY test/data/datasets.yaml test/data/fetch_test_data.py test/data/fetch_test_data.R /opt/testdata/
+
+# ---- dispatcher --------------------------------------------------------------
+# `docker run <image> python` rather than
+# `docker run <image> python3 /opt/testdata/fetch_test_data.py --out /data`.
+# The `both` verb is the parity check: fetch with Python, verify with R. The two
+# implementations agree or the container exits non-zero.
+COPY <<'DISPATCH' /usr/local/bin/fetch-test-data
+#!/bin/sh
+set -e
+
+OUT="${FALCONAGE_TESTDATA_OUT:-/data}"
+SRC="${FALCONAGE_TESTDATA_SRC:-/opt/testdata}"
+verb="${1:-help}"
+[ $# -gt 0 ] && shift
+
+py()  { python3 "$SRC/fetch_test_data.py" --manifest "$SRC/datasets.yaml" --out "$OUT" "$@"; }
+rr()  { Rscript  "$SRC/fetch_test_data.R"  --manifest "$SRC/datasets.yaml" --out "$OUT" "$@"; }
+
+case "$verb" in
+  python|py)  py "$@" ;;
+  R|r)        rr "$@" ;;
+  plan)       py --dry-run "$@" ;;
+  verify)     py --verify "$@" ;;
+  both)
+    echo "== fetching with the Python implementation"
+    py "$@"
+    echo
+    echo "== verifying the result with the R implementation"
+    rr --verify "$@"
+    echo
+    echo "both implementations agree on $OUT/checksums.sha256"
+    ;;
+  shell|sh)   exec /bin/sh ;;
+  help|-h|--help)
+    cat <<'USAGE'
+FALCONAge test corpus fetcher
+
+  plan [opts]     show what would be downloaded, and how much, without doing it
+  python [opts]   fetch with the Python implementation
+  R [opts]        fetch with the R implementation
+  both [opts]     fetch with Python, then verify the result with R
+  verify [opts]   re-check what is already on disk against the manifest
+  shell           drop into a shell
+
+Options are passed through to the fetcher; --help on either shows them.
+Output goes to $FALCONAGE_TESTDATA_OUT (default /data), which must be mounted.
+USAGE
+    ;;
+  *) echo "unknown verb: $verb (try 'help')" >&2; exit 2 ;;
+esac
+DISPATCH
+RUN chmod 0755 /usr/local/bin/fetch-test-data
+
+# ---- build-time verification -------------------------------------------------
+# The manifest parses under both YAML readers, and both fetchers agree on how
+# many files it describes and how many bytes they come to. A manifest that R and
+# Python read differently is the one failure this image cannot detect at run
+# time -- both sides would report success on different corpora -- so it is
+# checked here, at build, where a mismatch stops the image existing.
+RUN python3 /opt/testdata/fetch_test_data.py --manifest /opt/testdata/datasets.yaml --self-test \
+ && Rscript /opt/testdata/fetch_test_data.R --manifest /opt/testdata/datasets.yaml --self-test
+
+RUN useradd --create-home --uid 1000 falcon && mkdir -p /data && chown falcon:falcon /data
+USER falcon
+
+VOLUME ["/data"]
+WORKDIR /data
+ENTRYPOINT ["/usr/local/bin/fetch-test-data"]
+CMD ["help"]

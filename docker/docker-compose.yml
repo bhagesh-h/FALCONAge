@@ -1,0 +1,97 @@
+# =============================================================================
+# FALCONAge — compose definitions
+# =============================================================================
+#
+# Run from the repository root so the relative paths below resolve:
+#
+#   docker compose -f docker/docker-compose.yml build testdata
+#   docker compose -f docker/docker-compose.yml run --rm testdata plan
+#   docker compose -f docker/docker-compose.yml run --rm testdata both
+#
+#   docker compose -f docker/docker-compose.yml run --rm falconage \
+#     score --input /data/prepared.h5ad --clocks compatible --outdir /results
+#
+#   docker compose -f docker/docker-compose.yml run --rm falconage-gpu \
+#     score --input /data/prepared.h5ad --device cuda --outdir /results
+#
+# The falconage and falconage-gpu services need python/ and r/ to exist before
+# they can build; testdata does not, and is what runs today.
+# -----------------------------------------------------------------------------
+
+name: falconage
+
+services:
+
+  # ---- CPU -------------------------------------------------------------------
+  falconage:
+    image: falconage:1.0.0-cpu
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cpu
+    volumes:
+      # The corpus goes in read-only. Nothing in a scoring run should be able to
+      # modify its own inputs, and a fetcher and a scorer racing on the same
+      # directory is a debugging session nobody needs.
+      - ../test/data:/data:ro
+      - ../results:/results
+      - falconage-cache:/opt/falconage/cache
+    environment:
+      OMP_NUM_THREADS: 8
+      FALCONAGE_VERBOSE: inform
+
+  # ---- CUDA ------------------------------------------------------------------
+  falconage-gpu:
+    image: falconage:1.0.0-cuda
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ../test/data:/data:ro
+      - ../results:/results
+      - falconage-cache:/opt/falconage/cache
+    environment:
+      OMP_NUM_THREADS: 8
+      FALCONAGE_DEVICE: cuda
+      FALCONAGE_VERBOSE: inform
+
+  # ---- development -----------------------------------------------------------
+  # The same CPU image with a checkout mounted over it. Edit on the host, run in
+  # the container, no rebuild. See docker/entrypoint.sh for how FALCONAGE_SOURCE
+  # takes precedence over the installed copy.
+  falconage-dev:
+    image: falconage:1.0.0-cpu
+    volumes:
+      - ..:/src:ro
+      - ../test/data:/data:ro
+      - ../results:/results
+      - falconage-cache:/opt/falconage/cache
+    environment:
+      FALCONAGE_SOURCE: /src
+      FALCONAGE_VERBOSE: debug
+
+  # ---- test corpus -----------------------------------------------------------
+  # Read-write, unlike every other mount here: this is the one service whose job
+  # is to put files in test/data/.
+  testdata:
+    image: falconage-testdata:1.0.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.testdata
+    volumes:
+      - ../test/data:/data
+    environment:
+      FALCONAGE_TESTDATA_OUT: /data
+
+volumes:
+  # Named, not bind-mounted, and shared by all three package services. The PC
+  # clocks are 78-1216 MB each and SystemsAge is 2 GB per variant; re-fetching
+  # them on every container start is the difference between a two-minute run and
+  # a twenty-minute one.
+  falconage-cache:

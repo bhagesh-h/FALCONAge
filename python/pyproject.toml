@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "falconage"
+dynamic = ["version"]
+description = "Multiomic biological age and aging clock scoring, identical in Python and R"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Bhagesh Hunakunti", email = "bhunakun@uni-bonn.de" }]
+keywords = ["aging", "epigenetic clock", "DNA methylation", "biological age", "geroscience"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+# The base install is deliberately small. numpy carries the whole numerical
+# core in FP64; torch is an extra, not a requirement, because a user scoring
+# forty samples of blood chemistry should not download 800 MB of CUDA kernels
+# to do it. The op implementations are written against an array-module handle
+# (falconage.core.backend), so the same code runs on either.
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scipy>=1.10",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+gpu = ["torch>=2.0"]
+methylation = ["pyarrow>=14.0"]     # parquet betas
+plot = ["matplotlib>=3.7"]
+anndata = ["anndata>=0.10", "h5py>=3.8"]
+cli = ["typer>=0.12"]
+all = ["falconage[gpu,methylation,plot,anndata,cli]"]
+dev = [
+  "falconage[methylation,plot,anndata,cli]",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "hypothesis>=6.100",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+falconage = "falconage.cli.app:main"
+
+[project.urls]
+Homepage = "https://github.com/bhagesh-h/FALCONAge"
+Documentation = "https://bhagesh-h.github.io/FALCONAge/"
+Source = "https://github.com/bhagesh-h/FALCONAge"
+Issues = "https://github.com/bhagesh-h/FALCONAge/issues"
+
+[tool.hatch.version]
+path = "src/falconage/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/falconage"]
+
+# The registry travels inside the wheel. A clock catalogue that has to be
+# downloaded is a catalogue that is unavailable offline and different between
+# two machines, which is the opposite of what registry_version is for.
+#
+# No force-include is needed, and adding one breaks the build: `packages` above
+# already carries every file under src/falconage that is not VCS-ignored,
+# registry/data/clocks.yaml included, and hatchling refuses to write the same
+# archive path twice. The failure only appears when a real wheel is built --
+# an editable install never runs the wheel builder -- so it stayed hidden until
+# the Docker image tried it.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "network: needs internet access",
+  "corpus: needs the test corpus in test/data (see test/data/README.md)",
+  "slow: takes more than a second",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

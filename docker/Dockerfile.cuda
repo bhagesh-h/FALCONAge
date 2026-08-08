@@ -1,0 +1,187 @@
+# =============================================================================
+# FALCONAge — reproducible CUDA environment
+# =============================================================================
+#
+# STATUS. Same as Dockerfile.cpu: builds once python/ and r/ exist. See that
+# file for the reasoning behind the pinned base, the dependency-layer ordering
+# and the build-time smoke test; only the differences are annotated here.
+#
+# WHAT DIFFERS FROM THE CPU IMAGE. Three things, and nothing else:
+#   1. an NVIDIA runtime base instead of python:slim (so Python is apt-installed
+#      rather than inherited),
+#   2. torch installed from the cu124 wheel index, which the lock file cannot
+#      express because it pins the CPU build,
+#   3. a build-time CUDA report that is allowed to say "no GPU" -- the builder
+#      has none -- but must print the CUDA version torch was compiled against.
+#
+# Versions this image reproduces:
+#   CUDA 12.4.1 · Python 3.12.3 · torch 2.6.0+cu124 · numpy 2.2.1
+#   pandas 2.2.3 · anndata 0.11.3 · scikit-learn 1.6.1 · R 4.4.3
+#
+# BUILD, from the repository root:
+#   docker build -f docker/Dockerfile.cuda -t falconage:1.0.0-cuda .
+#
+# RUN. --gpus all is required, and --device cuda with it: "auto" resolves to CPU
+# even inside this image, for the reason below. Without --gpus all, torch sees
+# no device and --device cuda raises rather than falling back, so a run that
+# was asked for a GPU cannot quietly become a very slow success.
+#   docker run --rm --gpus all \
+#     -v "$PWD/test/data:/data:ro" -v "$PWD/results:/results" \
+#     -v falconage-cache:/opt/falconage/cache \
+#     falconage:1.0.0-cuda \
+#     score --input /data/prepared.h5ad --device cuda --outdir /results
+#
+# WHAT ACTUALLY GETS FASTER, MEASURED. Not the clocks that ship today. On an
+# RTX 4060 with eight tier A clocks over 2,340 features, CPU beat CUDA at every
+# size tested and by 6.5x at 16,384 samples (0.58 s against 3.74 s): the dot
+# products take 3 ms and the PCIe transfers take the rest. This image is here
+# for the PC clocks (78,464 features), AltumAge and CpGPT, none of which are
+# tier A yet, and for anyone who wants to verify that for themselves. Full
+# numbers in docs/gpu.md; README section 8 has the summary.
+#
+# FP64 ON CONSUMER CARDS. GeForce silicon runs double precision at 1/32 to 1/64
+# of single-precision throughput. The ill-conditioned PC rotations still need
+# FP64 (registry flag requires_fp64), so those clocks stay slow on a 4090 and
+# fast on an A100. --dtype float32 is available and is a per-clock decision the
+# registry documents, not a global switch to flip blindly.
+# -----------------------------------------------------------------------------
+
+# ---- base --------------------------------------------------------------------
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS base
+
+LABEL org.opencontainers.image.title="FALCONAge (CUDA)" \
+      org.opencontainers.image.description="Multiomic biological age and aging clock scoring, GPU build" \
+      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.base.name="nvidia/cuda:12.4.1-runtime-ubuntu22.04"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    OMP_NUM_THREADS=4 \
+    OPENBLAS_NUM_THREADS=4 \
+    MKL_NUM_THREADS=4 \
+    HF_HOME=/opt/falconage/cache \
+    FALCONAGE_CACHE=/opt/falconage/cache \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    DEBIAN_FRONTEND=noninteractive \
+    # Without this the container gets whatever the host driver exposes by
+    # default, which on some runtimes is no compute capability at all.
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# The CUDA base is Ubuntu, so Python comes from apt rather than being inherited.
+# 22.04 ships 3.10; the deadsnakes PPA supplies the 3.12 the version table names.
+#
+# WHY pip IS BOOTSTRAPPED RATHER THAN apt-INSTALLED. `python3-pip` on 22.04 is
+# built for 3.10 and installs into /usr/lib/python3/dist-packages, which 3.12
+# then puts on its path and cannot import: Python 3.12 removed distutils, and
+# that pip imports it at module load. The result is a `python -m pip` that dies
+# with ModuleNotFoundError before it has parsed an argument. ensurepip ships
+# inside python3.12-venv and installs a pip built for the interpreter running
+# it, which is the only version that can be right.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        software-properties-common ca-certificates curl gnupg dirmngr \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        python3.12 python3.12-dev python3.12-venv \
+        libhdf5-dev libcurl4-openssl-dev libssl-dev libxml2-dev \
+        libgomp1 zlib1g-dev libbz2-dev liblzma-dev \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
+    && ln -sf /usr/bin/python3.12 /usr/local/bin/python \
+    && python -m ensurepip --upgrade \
+    && python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/falconage
+
+# ---- Python dependency layer -------------------------------------------------
+# torch first, from the cu124 index, and pinned. It has to precede the lock file
+# export because the lock pins torch==2.6.0 (the CPU build); installing it here
+# means the later --require-hashes pass finds the requirement already satisfied
+# by the CUDA wheel rather than replacing it with the CPU one.
+# Named extras, as in the CPU image: the base dependency set cannot read a
+# parquet beta matrix, draw a figure or open an .h5ad. gpu is excluded here too
+# -- torch comes from the cu124 index above, which the lock file cannot express
+# because it pins the CPU build, and the grep below drops the pinned line so pip
+# cannot undo it.
+COPY python/pyproject.toml python/uv.lock /opt/falconage/python/
+RUN python -m pip install --no-cache-dir --upgrade pip \
+ && python -m pip install --no-cache-dir \
+      --index-url https://download.pytorch.org/whl/cu124 \
+      torch==2.6.0+cu124 \
+ && python -m pip install --no-cache-dir uv==0.5.18 \
+ && cd /opt/falconage/python \
+ && uv export --frozen --no-dev --no-emit-project \
+      --extra methylation --extra plot --extra anndata --extra cli \
+      --format requirements-txt > /tmp/requirements.txt \
+ && grep -v '^torch==' /tmp/requirements.txt > /tmp/requirements-nocuda.txt \
+ && python -m pip install --no-cache-dir -r /tmp/requirements-nocuda.txt \
+ && rm /tmp/requirements.txt /tmp/requirements-nocuda.txt
+
+# ---- R layer -----------------------------------------------------------------
+FROM base AS with-r
+
+RUN curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+      | gpg --dearmor -o /usr/share/keyrings/cran.gpg \
+ && echo "deb [signed-by=/usr/share/keyrings/cran.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" \
+      > /etc/apt/sources.list.d/cran.list \
+ && apt-get update && apt-get install -y --no-install-recommends \
+        r-base-core r-base-dev r-recommended \
+        libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+        libharfbuzz-dev libfribidi-dev libuv1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Unset for the same reason as the CPU image: no Bioconductor dependency is
+# declared, and a pin tied to an R minor version can only break when R moves.
+ENV R_REPOS=https://packagemanager.posit.co/cran/__linux__/jammy/2026-08-01
+
+COPY r/DESCRIPTION /opt/falconage/r/DESCRIPTION
+COPY docker/install_deps.R /opt/falconage/install_deps.R
+RUN Rscript /opt/falconage/install_deps.R /opt/falconage/r/DESCRIPTION
+
+# ---- source ------------------------------------------------------------------
+FROM with-r AS final
+
+COPY . /opt/falconage/src
+
+# pytest as in the CPU image, and for the same reason: this is the image the
+# GPU numbers in docs/gpu.md were measured in, so it has to be able to re-run
+# both the suite and test/gpu_check.py that produced them.
+RUN python -m pip install --no-cache-dir --no-deps /opt/falconage/src/python \
+ && python -m pip install --no-cache-dir pytest \
+ && R CMD INSTALL --no-multiarch --with-keep.source /opt/falconage/src/r \
+ && install -m 0755 /opt/falconage/src/docker/entrypoint.sh /opt/falconage/entrypoint.sh
+
+ENV RETICULATE_PYTHON=/usr/local/bin/python \
+    FALCONAGE_DEVICE=auto
+
+# ---- build-time verification -------------------------------------------------
+# The CUDA line reports rather than asserts. There is no GPU on a build agent,
+# so `is_available() == True` cannot be required -- but a torch that was built
+# without CUDA at all prints version.cuda as None, and THAT is a broken image
+# worth failing on. The assertion is on the compiled version, not the device.
+RUN falconage --version \
+ && falconage clocks list --limit 5 \
+ && falconage config \
+ && python -c "import torch; \
+assert torch.version.cuda is not None, 'torch has no CUDA build -- wrong wheel index'; \
+print(f'torch {torch.__version__} · compiled against CUDA {torch.version.cuda} · ' \
+      f'device visible at build: {torch.cuda.is_available()}')" \
+ && python -c "import falconage; r = falconage.registry.load(); \
+assert len(r.list()) == 161, f'registry has {len(r.list())} clocks, expected 161'; \
+print('falconage', falconage.__version__, '·', len(r.list()), 'clocks')" \
+ && Rscript -e "library(FALCONAge); stopifnot(falconage_available()); print(falconage_config())"
+
+RUN useradd --create-home --uid 1000 falcon \
+ && mkdir -p /results /opt/falconage/cache /work \
+ && chown -R falcon:falcon /results /opt/falconage/cache /work
+USER falcon
+
+VOLUME ["/results", "/opt/falconage/cache"]
+WORKDIR /work
+ENTRYPOINT ["/opt/falconage/entrypoint.sh"]
+CMD ["--help"]

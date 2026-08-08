@@ -1,0 +1,196 @@
+# =============================================================================
+# FALCONAge — reproducible CPU environment
+# =============================================================================
+#
+# STATUS. This recipe needs python/pyproject.toml, python/uv.lock and
+# r/DESCRIPTION. The image that builds without any of them is
+# docker/Dockerfile.testdata, which fetches the public test corpus and depends
+# on nothing in the package.
+#
+# WHY A PINNED BASE. Clock coefficients are fixed, but the arithmetic around
+# them is not: a different BLAS changes the last bits of a 78,464-dimensional PC
+# rotation, and a different scikit-learn changes what SimpleImputer stores.
+# Neither moves a published age by a year, but both make two runs of the same
+# data disagree in the seventh decimal, which is exactly what the gold-standard
+# tests assert on. `latest` re-rolls that silently on every rebuild.
+#
+# Versions this image reproduces:
+#   Python 3.12.8 · torch 2.6.0 (CPU) · numpy 2.2.1 · pandas 2.2.3
+#   anndata 0.11.3 · scikit-learn 1.6.1 · R 4.4.3 · reticulate 1.40.0
+#
+# BUILD, from the repository root (the context must be the root, not docker/):
+#   docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
+#
+# RUN. Nothing is baked in: no data, no cohort, no credentials, no weights.
+#   docker run --rm \
+#     -v "$PWD/test/data:/data:ro" -v "$PWD/results:/results" \
+#     -v falconage-cache:/opt/falconage/cache \
+#     falconage:1.0.0-cpu \
+#     score --input /data/prepared.h5ad --clocks compatible --outdir /results
+#
+#   On Windows PowerShell replace "$PWD" with "${PWD}".
+#
+# ITERATING WITHOUT REBUILDING. Mount a checkout and set FALCONAGE_SOURCE; the
+# entrypoint runs that tree instead of the installed copy. A rebuild is still
+# needed when the source starts requiring a package the image does not have.
+#     -v "$PWD:/src:ro" -e FALCONAGE_SOURCE=/src
+# -----------------------------------------------------------------------------
+
+# ---- base --------------------------------------------------------------------
+FROM python:3.12-slim-bookworm AS base
+
+LABEL org.opencontainers.image.title="FALCONAge" \
+      org.opencontainers.image.description="Multiomic biological age and aging clock scoring" \
+      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.base.name="python:3.12-slim-bookworm"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    # torch and numpy are OpenMP-threaded. Left alone they take every core on
+    # the host, which is antisocial on a shared machine and thermally throttles
+    # a laptop into being slower than four threads would have been. Override
+    # with -e OMP_NUM_THREADS=8.
+    OMP_NUM_THREADS=4 \
+    OPENBLAS_NUM_THREADS=4 \
+    MKL_NUM_THREADS=4 \
+    # Weights land here. Mount a host directory or a named volume over it to
+    # keep them between runs: the PC clocks are 78-1216 MB each and SystemsAge
+    # is 2 GB, so a cold cache is the difference between a two-minute run and a
+    # twenty-minute one.
+    HF_HOME=/opt/falconage/cache \
+    FALCONAGE_CACHE=/opt/falconage/cache \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# Each library is here because a named wheel needs it, not as a blanket
+# build-essential block:
+#   libhdf5      -> h5py, which anndata writes .h5ad through
+#   libcurl/ssl  -> the download module
+#   libxml2      -> lxml, used by the GEO MINiML parser
+#   libgomp1     -> the OpenMP runtime torch and numpy link against
+#   zlib/bz2/lzma-> the compression codecs GEO and parquet payloads arrive in
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libhdf5-dev libcurl4-openssl-dev libssl-dev libxml2-dev \
+        libgomp1 zlib1g-dev libbz2-dev liblzma-dev \
+        ca-certificates curl gnupg dirmngr \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/falconage
+
+# ---- Python dependency layer -------------------------------------------------
+# Only the declaration, before any source. This layer costs several minutes;
+# rebuilding it on every edit to src/ is the single biggest waste in a naive
+# Dockerfile.
+#
+# The build fails here if python/uv.lock is absent, and that is the intended
+# behaviour: an image resolved from an unpinned pyproject.toml is not the image
+# the version table above describes.
+#
+# The extras are named explicitly. `uv export` without them gives the base
+# dependency set, which cannot read a parquet beta matrix, cannot draw a figure
+# and cannot open an .h5ad -- so the image would build, pass its smoke test, and
+# then fail on the first corpus dataset. gpu is deliberately absent: the CUDA
+# image installs torch from PyTorch's own wheel index, and this one has no use
+# for 800 MB it will never call.
+COPY python/pyproject.toml python/uv.lock /opt/falconage/python/
+RUN pip install --no-cache-dir uv==0.5.18 \
+ && cd /opt/falconage/python \
+ && uv export --frozen --no-dev --no-emit-project \
+      --extra methylation --extra plot --extra anndata --extra cli \
+      --format requirements-txt > /tmp/requirements.txt \
+ && pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt \
+ && rm /tmp/requirements.txt
+
+# ---- R layer -----------------------------------------------------------------
+FROM base AS with-r
+
+# Debian bookworm ships R 4.2.2; the version table says 4.4.3, so the CRAN apt
+# repository has to be added.
+#
+# The key comes from a keyserver by fingerprint, not from a URL. CRAN publishes
+# its Ubuntu key as a downloadable .asc file but not its Debian one -- there is
+# no marutter_pubkey.asc under bin/linux/debian/, only the keyserver
+# instructions -- so this is the documented route rather than a preference.
+# Pinning the full 0xB8F25A8A73EACF41 fingerprint is what makes it safe: a
+# keyserver serves whatever anyone uploaded, and a short ID can collide.
+# apt-key is deliberately not used; it is deprecated and would trust this key
+# for every repository rather than only for CRAN's.
+RUN gpg --batch --keyserver keyserver.ubuntu.com --recv-keys 0xB8F25A8A73EACF41 \
+ && gpg --batch --export 0xB8F25A8A73EACF41 > /usr/share/keyrings/cran.gpg \
+ && echo "deb [signed-by=/usr/share/keyrings/cran.gpg] https://cloud.r-project.org/bin/linux/debian bookworm-cran40/" \
+      > /etc/apt/sources.list.d/cran.list \
+ && apt-get update && apt-get install -y --no-install-recommends \
+        r-base-core r-base-dev r-recommended \
+        libfontconfig1-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+        libharfbuzz-dev libfribidi-dev libuv1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# A dated Posit snapshot, not `latest`. Binary packages (no compilation, minutes
+# instead of an hour) AND a fixed resolution, so a rebuild in six months gets
+# the same ggplot2 rather than whatever shipped since.
+# BIOC_VERSION is deliberately unset. FALCONAge declares no Bioconductor
+# dependency, and a Bioconductor release is tied to an R minor version -- so a
+# pin here would break the build the day CRAN's apt repository moves R forward,
+# in exchange for pinning nothing. install_deps.R honours the variable when a
+# Bioconductor dependency appears; until then there is nothing to pin.
+ENV R_REPOS=https://packagemanager.posit.co/cran/__linux__/bookworm/2026-08-01
+
+# install_deps.R parses r/DESCRIPTION instead of repeating the package list, so
+# the image can never install a different set than the package declares.
+COPY r/DESCRIPTION /opt/falconage/r/DESCRIPTION
+COPY docker/install_deps.R /opt/falconage/install_deps.R
+RUN Rscript /opt/falconage/install_deps.R /opt/falconage/r/DESCRIPTION
+
+# ---- source ------------------------------------------------------------------
+FROM with-r AS final
+
+COPY . /opt/falconage/src
+
+# --no-deps: everything the lock file names is already installed above. Without
+# it pip would re-resolve against PyPI at build time and quietly upgrade past
+# the pinned set.
+#
+# pytest is the one exception, added deliberately. An image that can run the
+# build-time smoke test but not the suite is an image you cannot use to answer
+# "does it fail for you too" -- which is the first question on every bug report,
+# and the whole reason to pin an environment. It costs about five megabytes.
+RUN pip install --no-cache-dir --no-deps /opt/falconage/src/python \
+ && pip install --no-cache-dir pytest \
+ && R CMD INSTALL --no-multiarch --with-keep.source /opt/falconage/src/r \
+ && install -m 0755 /opt/falconage/src/docker/entrypoint.sh /opt/falconage/entrypoint.sh
+
+# reticulate must find the interpreter that already has the core installed,
+# rather than trying to build an environment inside a container whose filesystem
+# is usually mounted read-only.
+ENV RETICULATE_PYTHON=/usr/local/bin/python \
+    FALCONAGE_DEVICE=cpu
+
+# ---- build-time verification -------------------------------------------------
+# A broken image fails HERE, not an hour into someone's analysis. This exercises
+# the CLI parser, the registry load, the R bridge, and every import both sides
+# need. `clocks list` in particular proves the packaged registry YAML survived
+# the wheel build, which a plain `import falconage` does not.
+RUN falconage --version \
+ && falconage clocks list --limit 5 \
+ && falconage config \
+ && python -c "import falconage; r = falconage.registry.load(); \
+assert len(r.list()) == 161, f'registry has {len(r.list())} clocks, expected 161'; \
+print('falconage', falconage.__version__, '·', len(r.list()), 'clocks')" \
+ && Rscript -e "library(FALCONAge); stopifnot(falconage_available()); print(falconage_config())"
+
+# A non-root user by default. Nothing here needs root, and a container that
+# writes to a bind-mounted results/ as root leaves the host owner unable to
+# delete their own output.
+RUN useradd --create-home --uid 1000 falcon \
+ && mkdir -p /results /opt/falconage/cache /work \
+ && chown -R falcon:falcon /results /opt/falconage/cache /work
+USER falcon
+
+VOLUME ["/results", "/opt/falconage/cache"]
+WORKDIR /work
+ENTRYPOINT ["/opt/falconage/entrypoint.sh"]
+CMD ["--help"]
