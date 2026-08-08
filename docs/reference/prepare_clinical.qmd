@@ -1,0 +1,11 @@
+# prepare_clinical { #falconage.prepare_clinical }
+
+```python
+prepare_clinical(data, units=None, *, target=None)
+```
+
+Rename to canonical markers and convert to the units the models expect.
+
+Raises :class:`~falconage.core.errors.UnitsNotDeclaredError` when ``units``
+is missing or incomplete, with the dict to supply. That refusal is the point
+of the module -- see :mod:`falconage.core.units`.

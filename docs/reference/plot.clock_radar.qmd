@@ -1,0 +1,11 @@
+# plot.clock_radar { #falconage.plot.clock_radar }
+
+```python
+plot.clock_radar(result, *, group=None, clocks=None, max_clocks=12)
+```
+
+Closed-polygon profile across clocks, one polygon per group.
+
+Z-scored within clock against the cohort, because the axes are otherwise in
+incompatible units and the polygon would be a picture of the scales rather
+than of the samples.

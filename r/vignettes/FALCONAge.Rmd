@@ -21,7 +21,10 @@ that agree approximately.
 FALCONAge is not on CRAN yet, so both halves install from GitHub. The R package is in the `r/`
 subdirectory of the repository, hence `subdir`:
 
-```{r}
+A plain fence rather than an R chunk, so `remotes` and `pak` do not become declared dependencies
+of a package that only mentions them:
+
+```r
 remotes::install_github("bhagesh-h/FALCONAge", subdir = "r")
 # or, resolving dependencies better and taking the subdirectory inline:
 pak::pak("bhagesh-h/FALCONAge/r")

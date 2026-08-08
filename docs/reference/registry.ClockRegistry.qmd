@@ -1,0 +1,109 @@
+# registry.ClockRegistry { #falconage.registry.ClockRegistry }
+
+```python
+registry.ClockRegistry(clocks, version, path)
+```
+
+Loaded catalogue. Immutable except for user-registered local weights.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [coefficients](#falconage.registry.ClockRegistry.coefficients) | Feature ids and coefficients, in the file's order. |
+| [compatible_with](#falconage.registry.ClockRegistry.compatible_with) | Clocks this dataset can actually be scored on. |
+| [filter](#falconage.registry.ClockRegistry.filter) | Exact-match filter; tuple-valued fields match on membership. |
+| [register_local_weights](#falconage.registry.ClockRegistry.register_local_weights) | Supply a coefficient file the package does not distribute. |
+| [search](#falconage.registry.ClockRegistry.search) | Substring match over id, name, predicts, notes and citation. |
+| [unavailable_message](#falconage.registry.ClockRegistry.unavailable_message) | The text a user sees when a clock cannot be scored. Worth care. |
+| [untraced](#falconage.registry.ClockRegistry.untraced) | Clocks whose coefficients have no established primary source. |
+| [weight_record](#falconage.registry.ClockRegistry.weight_record) | What the run manifest records about this clock's coefficients. |
+
+### coefficients { #falconage.registry.ClockRegistry.coefficients }
+
+```python
+registry.ClockRegistry.coefficients(clock_id)
+```
+
+Feature ids and coefficients, in the file's order.
+
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type                                                                       | Description                                                                                                               |
+|--------|----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+|        | [WeightsUnavailableError](`falconage.core.errors.WeightsUnavailableError`) | For a tier C clock with nothing registered, or a tier B clock whose fetch has not happened. The message names the remedy. |
+
+### compatible_with { #falconage.registry.ClockRegistry.compatible_with }
+
+```python
+registry.ClockRegistry.compatible_with(data, *, min_coverage=0.8)
+```
+
+Clocks this dataset can actually be scored on.
+
+Compatibility is coverage, not platform. A clock trained on 450K runs
+perfectly well on EPIC data that happens to carry its probes, and fails
+on 450K data that has been filtered down to 20,000 probes. Only the
+feature list can answer the question, so tier A clocks are checked
+against it and tier B/C clocks are reported by declared platform, with
+the difference made explicit in the reason string.
+
+### filter { #falconage.registry.ClockRegistry.filter }
+
+```python
+registry.ClockRegistry.filter(**criteria)
+```
+
+Exact-match filter; tuple-valued fields match on membership.
+
+>>> reg.filter(availability="A", scale_type="age_years")
+
+### register_local_weights { #falconage.registry.ClockRegistry.register_local_weights }
+
+```python
+registry.ClockRegistry.register_local_weights(clock_id, path, sha256=None)
+```
+
+Supply a coefficient file the package does not distribute.
+
+Validates against the scaffold -- two columns, no duplicate feature ids,
+finite values, and the declared feature count when the registry has one.
+A file that does not match is rejected with the mismatch named, which
+also makes this the way to check a coefficient set somebody handed you.
+
+Returns the SHA-256 of the accepted file; it goes into the run manifest
+as ``weights_source: user_supplied``, so a result computed from a
+licensed copy is distinguishable from one computed from a redistributed
+set.
+
+### search { #falconage.registry.ClockRegistry.search }
+
+```python
+registry.ClockRegistry.search(term)
+```
+
+Substring match over id, name, predicts, notes and citation.
+
+### unavailable_message { #falconage.registry.ClockRegistry.unavailable_message }
+
+```python
+registry.ClockRegistry.unavailable_message(clock_id)
+```
+
+The text a user sees when a clock cannot be scored. Worth care.
+
+### untraced { #falconage.registry.ClockRegistry.untraced }
+
+```python
+registry.ClockRegistry.untraced()
+```
+
+Clocks whose coefficients have no established primary source.
+
+### weight_record { #falconage.registry.ClockRegistry.weight_record }
+
+```python
+registry.ClockRegistry.weight_record(clock_id)
+```
+
+What the run manifest records about this clock's coefficients.

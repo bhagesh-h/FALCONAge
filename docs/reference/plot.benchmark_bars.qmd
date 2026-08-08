@@ -1,0 +1,7 @@
+# plot.benchmark_bars { #falconage.plot.benchmark_bars }
+
+```python
+plot.benchmark_bars(bench, *, alpha=0.05)
+```
+
+AA2 and AA1 counts per clock, ordered by the combined total.

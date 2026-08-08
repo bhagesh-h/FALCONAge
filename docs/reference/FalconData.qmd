@@ -1,0 +1,61 @@
+# FalconData { #falconage.FalconData }
+
+```python
+FalconData(
+    X,
+    obs,
+    modality,
+    units=dict(),
+    platform=None,
+    species='Homo sapiens',
+    uns=dict(),
+)
+```
+
+A scoreable dataset.
+
+## Attributes {.doc-section .doc-section-attributes}
+
+| Name     | Type                                            | Description                                                                                                                                                                                                   |
+|----------|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| X        | [pd](`pandas`).[DataFrame](`pandas.DataFrame`)  | samples x features. Row index is the sample id, column index is the exact feature identifier the clocks match on (``cg`` probe ids for arrays, ``chr:pos`` for RRBS, canonical marker names for chemistry).   |
+| obs      | [pd](`pandas`).[DataFrame](`pandas.DataFrame`)  | Per-sample annotation, indexed identically to ``X``. Conventional columns are ``age``, ``sex``, ``tissue``, ``condition`` -- conventional, not required, and each is only needed by the analyses that use it. |
+| modality | [Modality](`falconage.core.container.Modality`) | What the numbers are. Governs which clocks are compatible and which preprocessing has already been applied.                                                                                                   |
+| units    | [dict](`dict`)\[[str](`str`), [str](`str`)\]    | For clinical chemistry only: canonical marker name to unit string. Empty for methylation, where beta is dimensionless by construction.                                                                        |
+| platform | [str](`str`) \| None                            | For methylation: ``27K``, ``450K``, ``EPICv1``, ``EPICv2``, ``MSA``, ``MammalMethylChip40``, or ``None`` when unknown.                                                                                        |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [coverage](#falconage.FalconData.coverage) | Fraction of ``features`` present and not entirely missing. |
+| [to_anndata](#falconage.FalconData.to_anndata) | Convert to AnnData. Needs the ``anndata`` extra. |
+| [write_h5ad](#falconage.FalconData.write_h5ad) | Write the interchange format both languages read. |
+
+### coverage { #falconage.FalconData.coverage }
+
+```python
+FalconData.coverage(features)
+```
+
+Fraction of ``features`` present and not entirely missing.
+
+Presence alone is not enough: GEO series matrices routinely carry a
+probe column that is NaN for every sample, and counting that as covered
+is how a clock reports 80% coverage of features it cannot actually see.
+
+### to_anndata { #falconage.FalconData.to_anndata }
+
+```python
+FalconData.to_anndata()
+```
+
+Convert to AnnData. Needs the ``anndata`` extra.
+
+### write_h5ad { #falconage.FalconData.write_h5ad }
+
+```python
+FalconData.write_h5ad(path)
+```
+
+Write the interchange format both languages read.

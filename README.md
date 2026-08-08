@@ -606,16 +606,16 @@ three runs:
 
 | Samples | CPU float64 | CUDA float64 | CUDA float32 |
 |---:|---:|---:|---:|
-| 128 | **0.051 s** | 0.061 s | 0.057 s |
-| 1,024 | **0.086 s** | 0.094 s | 0.094 s |
-| 4,096 | **0.171 s** | 0.473 s | 0.264 s |
-| 16,384 | **0.576 s** | 3.742 s | 2.818 s |
+| 128 | **0.009 s** | 0.011 s | 0.013 s |
+| 1,024 | **0.032 s** | 0.053 s | 0.051 s |
+| 4,096 | **0.143 s** | 0.307 s | 0.190 s |
+| 16,384 | **0.506 s** | 2.328 s | 1.726 s |
 
 The gap *widens* with size, which is the opposite of the usual shape, and profiling says why: at
-4,096 samples the dot products take 3 ms on the GPU and 69 ms on the CPU, while moving the matrix
-across PCIe takes hundreds. A linear clock over a few thousand features is too small a matrix
+4,096 samples the aligned matrix takes 134 ms to build and the dot products take 5 ms on the CPU
+against 10 ms on the GPU, most of which is the transfer rather than the multiply. A linear clock over a few thousand features is too small a matrix
 multiplication to be worth a device, and choosing CUDA because a card exists would make the common
-case six times slower on every machine that has one, silently.
+case several times slower on every machine that has one, silently.
 
 Where it should pay off, none of which is tier A yet: the **PC clocks** (78,464 features, 78 MB to
 1.2 GB coefficient tensors - thirty times the current largest), **AltumAge**, which is a multilayer

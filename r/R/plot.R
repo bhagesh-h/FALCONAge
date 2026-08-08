@@ -169,7 +169,7 @@ falcon_theme <- function() {
   f <- if (dir == "h") ggplot2::geom_hline else ggplot2::geom_vline
   args <- list(colour = .sem("reference"), linewidth = .thm("line_width") * 0.4,
                linetype = .thm("reference_line"))
-  do.call(f, c(setNames(list(at), if (dir == "h") "yintercept" else "xintercept"), args))
+  do.call(f, c(stats::setNames(list(at), if (dir == "h") "yintercept" else "xintercept"), args))
 }
 
 .unit_of <- function(x, clock) {
@@ -432,7 +432,10 @@ plot_forest <- function(bench, top = NULL) {
     stats::ave(abs(d$delta), d$clock, FUN = function(v) max(v, na.rm = TRUE)) * 0.8
   d$lo <- d$delta - 1.96 * se
   d$hi <- d$delta + 1.96 * se
-  d$label <- paste(d$clock, d$dataset, d$condition, sep = " · ")
+  # The separator is a middle dot, written as an escape rather than as the character
+  # itself: R CMD check rejects non-ASCII bytes in R source, and an escape
+  # survives every locale a check machine might run under. Renders identically.
+  d$label <- paste(d$clock, d$dataset, d$condition, sep = " \u00b7 ")
   d <- d[order(d$delta), , drop = FALSE]
   if (!is.null(top) && nrow(d) > top) {
     d <- rbind(utils::head(d, top %/% 2), utils::tail(d, top - top %/% 2))

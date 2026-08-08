@@ -130,8 +130,10 @@ def resolve(device: Device = "auto", dtype: DType | None = None,
         # For the shipping catalogue that is at most a few thousand features,
         # and the arithmetic is microseconds; the cost is moving the aligned
         # matrix across PCIe. Benchmarked on an RTX 4060 with 16,384 samples and
-        # eight clocks, CPU took 0.58 s and CUDA 3.74 s -- the device made it six
-        # times SLOWER, because 2.4 GB of transfers bought 3 ms of compute.
+        # eight clocks, CPU took 0.51 s and CUDA 2.33 s -- the device made it
+        # 4.6x SLOWER, because 2.4 GB of transfers bought nothing: at 4,096
+        # samples the dot products are 5 ms on the CPU against 10 ms on the GPU,
+        # and building the aligned matrix costs 134 ms either way.
         #
         # Choosing CUDA here would make the common case worse on every machine
         # that happens to have a card, silently. So the GPU is opt-in:

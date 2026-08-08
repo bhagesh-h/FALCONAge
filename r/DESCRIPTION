@@ -21,13 +21,16 @@ BugReports: https://github.com/bhagesh-h/FALCONAge/issues
 Depends:
     R (>= 4.1)
 Imports:
+    grDevices,
     reticulate (>= 1.34),
     stats,
-    utils
+    utils,
+    yaml
 Suggests:
     ggplot2,
     knitr,
     optparse,
+    patchwork,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr

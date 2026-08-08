@@ -33,8 +33,8 @@
 #
 # WHAT ACTUALLY GETS FASTER, MEASURED. Not the clocks that ship today. On an
 # RTX 4060 with eight tier A clocks over 2,340 features, CPU beat CUDA at every
-# size tested and by 6.5x at 16,384 samples (0.58 s against 3.74 s): the dot
-# products take 3 ms and the PCIe transfers take the rest. This image is here
+# size tested and by 4.6x at 16,384 samples (0.51 s against 2.33 s): the dot
+# products are milliseconds and the PCIe transfers take the rest. This image is here
 # for the PC clocks (78,464 features), AltumAge and CpGPT, none of which are
 # tier A yet, and for anyone who wants to verify that for themselves. Full
 # numbers in docs/gpu.md; README section 8 has the summary.

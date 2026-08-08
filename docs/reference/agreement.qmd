@@ -1,0 +1,12 @@
+# agreement { #falconage.agreement }
+
+```python
+agreement(result, method='spearman')
+```
+
+Between-clock correlation.
+
+Spearman by default. Two clocks on different scales -- years and a
+log-hazard -- have no meaningful Pearson correlation but a perfectly
+meaningful rank one, and mixing scales in a correlation matrix is the normal
+case rather than the exception.

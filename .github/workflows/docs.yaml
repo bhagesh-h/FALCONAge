@@ -45,10 +45,18 @@ jobs:
         with:
           python-version: '3.12'
 
+      # griffe is pinned below 2 deliberately. quartodoc 0.11 calls griffe's
+      # numpydoc parser with `allow_section_blank_line`, an argument griffe 2
+      # removed, so an unpinned install resolves a pair that raises TypeError
+      # partway through writing the reference index -- after enough output to
+      # look like it is working. quartodoc's own metadata does not exclude
+      # griffe 2, so pip will happily pick it; this is the pin quartodoc is
+      # missing rather than a preference of ours. Drop it once quartodoc
+      # releases against griffe 2.
       - name: Install the package and the doc toolchain
         run: |
           pip install ./python[plot,anndata]
-          pip install quartodoc pyyaml
+          pip install quartodoc 'griffe<2' pyyaml
 
       - uses: quarto-dev/quarto-actions/setup@v2
         with:

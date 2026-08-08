@@ -1,10 +1,21 @@
 # The Python core: tests, lint, and the generated-config staleness check.
 #
-# WHY THE MATRIX IS SMALL. Three Python versions on one OS, not nine across
-# three. The package is pure Python over numpy and pandas; what breaks between
-# versions is the language and the dependency resolution, and both of those show
-# up on Linux first. macOS and Windows differ in path handling and line endings,
-# which the tests exercise explicitly rather than by being run there.
+# WHY THERE IS NO MATRIX AT ALL. One Python version on one OS.
+#
+# The version tested is the version the lock file resolves and the version both
+# Docker images run, which is the only combination anything is actually shipped
+# on. Testing 3.10 and 3.13 alongside it tested the dependency resolver rather
+# than this package: the lock file pins one set, `uv export --frozen` reproduces
+# that set, and on any other interpreter the pinned wheels either do not exist
+# or do not match, so the job fails before reaching a single test. That is a
+# true statement about the lock file and a useless one about the code, and three
+# red badges where one would do teaches people to ignore the badge.
+#
+# Broadening support is a real piece of work -- an unpinned resolution per
+# version, and a decision about what to do when a floor moves -- and it belongs
+# in its own change rather than as a matrix axis that has never once passed.
+# `requires-python` still declares >= 3.10; nothing here narrows what the
+# package claims, only what is verified.
 on:
   push:
     branches: [main]
@@ -19,10 +30,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ['3.10', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v6
 
@@ -32,17 +39,27 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: '3.12'
 
       # --no-deps for the package itself, then the locked dependency set. The
       # lock file is what the Docker images install from, so CI testing against
       # a freshly resolved set would leave the images untested by anything.
+      # The same locked set, and the same named extras, that both Docker images
+      # install. Resolving freshly here would leave the images tested by nothing
+      # -- and a green CI on a dependency set nobody ships is the specific kind
+      # of green that costs an afternoon later.
+      #
+      # A temporary file rather than process substitution: `<(...)` is a bash
+      # feature, and a step that silently depends on the runner's default shell
+      # breaks the day somebody sets `shell: sh`.
       - name: Install
         run: |
-          uv pip install --system -r <(uv export --frozen --no-emit-project \
-            --no-hashes --directory python --format requirements-txt)
+          uv export --frozen --no-dev --no-emit-project --no-hashes \
+            --extra methylation --extra plot --extra anndata --extra cli \
+            --directory python --format requirements-txt > /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps ./python
-          uv pip install --system pytest pytest-cov matplotlib anndata
+          uv pip install --system pytest pytest-cov
 
       - name: Test
         run: pytest python/tests -q --cov=falconage --cov-report=term-missing
@@ -54,12 +71,15 @@ jobs:
       - name: Validate the clock registry
         run: python -c "import falconage as fa; r = fa.registry.load(); print(len(list(r)), 'clocks, schema', r.version)"
 
-      # Both documentation configs are generated. A pull request that edits one
-      # by hand looks fine until the next build silently reverts it.
-      - name: Documentation configs are current
+      # Three generated files: both documentation configs, and r/NEWS.md from
+      # CHANGELOG.md. A pull request that edits any of them by hand looks fine
+      # until the next build silently reverts it, and a NEWS file that has
+      # drifted from the changelog is the one users read.
+      - name: Generated files are current
         run: |
           uv pip install --system pyyaml
           python docs/build_docs.py --check
+          python docs/build_news.py --check
 
   lint:
     runs-on: ubuntu-latest

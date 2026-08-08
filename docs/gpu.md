@@ -83,32 +83,41 @@ the right way round.
 
 ## 3. Speed: the GPU makes the shipping clocks slower
 
-Eight clocks, 2,340 distinct features, RTX 4060, best of three runs.
+Eight clocks, 2,340 distinct features, RTX 4060, best of three runs, measured
+inside `falconage:1.0.0-cuda` - the image the command at the foot of this page
+builds. These are numbers you can reproduce, not numbers from a throwaway
+environment.
 
 | samples | CPU float64 | CUDA float64 | CUDA float32 | verdict |
 |---:|---:|---:|---:|---|
-| 128 | 0.051 s | 0.061 s | 0.057 s | CPU wins |
-| 1,024 | 0.086 s | 0.094 s | 0.094 s | CPU wins |
-| 4,096 | 0.171 s | 0.473 s | 0.264 s | CPU wins by 2.8× |
-| 16,384 | 0.576 s | 3.742 s | 2.818 s | CPU wins by 6.5× |
+| 128 | **0.009 s** | 0.011 s | 0.013 s | CPU wins |
+| 1,024 | **0.032 s** | 0.053 s | 0.051 s | CPU wins by 1.6x |
+| 4,096 | **0.143 s** | 0.307 s | 0.190 s | CPU wins by 2.1x |
+| 16,384 | **0.506 s** | 2.328 s | 1.726 s | CPU wins by 4.6x |
 
 The gap *widens* with size, which is the opposite of the usual shape. Profiling
 says why:
 
 ```
 4096 samples x 2340 features, 8 clocks
-  feature alignment (pandas, CPU only)    0.161 s
-  the dot products, on the GPU            0.003 s
-  the dot products, on the CPU            0.069 s
+  feature alignment (pandas, CPU only)    0.134 s
+  the dot products, on the GPU            0.010 s
+  the dot products, on the CPU            0.005 s
 ```
 
-The arithmetic is 3 ms. Everything else is aligning features and moving the
-matrix across PCIe - 2.4 GB of transfers at 16,384 samples, to save a few
-milliseconds of compute. A linear clock is simply too small a matrix
-multiplication to be worth a device.
+Alignment is 28x the arithmetic it feeds, and at this size that arithmetic is
+*faster on the CPU*: the GPU's 10 ms is mostly transfer, not multiply. At
+16,384 samples it is 2.4 GB moved across PCIe to save nothing. A linear clock
+over a few thousand features is simply too small a matrix multiplication to be
+worth a device.
+
+An earlier revision of this page reported 6.5x at 16,384 rather than 4.6x,
+measured in a stripped test image with a different numpy. Neither the shape of
+the answer nor the conclusion changed, but the figures above are what the
+shipping image gives, and that is the only version worth quoting.
 
 So `device="auto"` resolves to **CPU**, even when a GPU is present. Picking CUDA
-because a card exists would make the common case six times slower on every
+because a card exists would make the common case several times slower on every
 machine that has one, silently. The GPU is opt-in: `device="cuda"` or
 `FALCONAGE_DEVICE=cuda`.
 

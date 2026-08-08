@@ -1566,21 +1566,21 @@ here - eight tier A linear clocks over 2,340 features, on an RTX 4060, best of t
 
 | Samples | CPU float64 | CUDA float64 | CUDA float32 |
 |---:|---:|---:|---:|
-| 128 | **0.051 s** | 0.061 s | 0.057 s |
-| 1,024 | **0.086 s** | 0.094 s | 0.094 s |
-| 4,096 | **0.171 s** | 0.473 s | 0.264 s |
-| 16,384 | **0.576 s** | 3.742 s | 2.818 s |
+| 128 | **0.009 s** | 0.011 s | 0.013 s |
+| 1,024 | **0.032 s** | 0.053 s | 0.051 s |
+| 4,096 | **0.143 s** | 0.307 s | 0.190 s |
+| 16,384 | **0.506 s** | 2.328 s | 1.726 s |
 
 The gap widens with size, which is the reverse of the usual shape, and profiling says why: at
-4,096 samples the dot products take 3 ms on the GPU and 69 ms on the CPU, and moving the aligned
-matrix across PCIe takes hundreds. A dot product over a few thousand features is too small a
+4,096 samples the aligned matrix takes 134 ms to build and the dot products take 5 ms on the CPU
+against 10 ms on the GPU, most of which is transfer rather than multiply. A dot product over a few thousand features is too small a
 matrix multiplication to be worth a device, and the list in §14.1 is a list of things that are
 *not* what a first-generation linear clock does.
 
 So the expected pattern holds only where the list in §14.1 does: the PC rotations (item 2, thirty
 times the feature count), neural architectures, and the single-cell paths where
 rapids-singlecell reports ~15× over the best CPU path and ScaleSC 20–100× over Scanpy. For the
-2,340-feature case, `device="auto"` resolving to CUDA would make the common case six times slower
+2,340-feature case, `device="auto"` resolving to CUDA would make the common case several times slower
 on every machine that has a card.
 
 Two other findings worth recording. **CPU and GPU do not agree bit for bit** - up to 1.3e-13
