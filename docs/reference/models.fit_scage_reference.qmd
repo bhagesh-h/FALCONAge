@@ -1,0 +1,20 @@
+# models.fit_scage_reference { #falconage.models.fit_scage_reference }
+
+```python
+models.fit_scage_reference(
+    data,
+    *,
+    age_col='age',
+    min_abs_r=0.2,
+    max_sites=30000,
+)
+```
+
+Fit the per-CpG age models on a bulk reference cohort.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name      | Type   | Description                                                                                                                                                                     | Default   |
+|-----------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|
+| min_abs_r | float  | Keep only sites whose absolute correlation with age clears this. Including every site drowns the signal in slopes that are noise.                                               | `0.2`     |
+| max_sites | int    | Cap, applied after ranking by ``\|r\|``. Thirty thousand informative sites is far more than any single cell will cover, and the likelihood is a sum over the covered ones only. | `30000`   |

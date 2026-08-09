@@ -1,0 +1,13 @@
+# models.read_rotation { #falconage.models.read_rotation }
+
+```python
+models.read_rotation(path)
+```
+
+Load a rotation from ``.npz``.
+
+Four arrays: ``features`` (string), ``centre``, ``rotation``,
+``coefficients``. A CSV of feature/coefficient pairs -- the format every
+other clock here uses -- cannot express a 78,464 x 121 matrix in any form
+worth parsing, so this is a deliberately different door rather than an
+overloaded one.

@@ -7,6 +7,11 @@ import pandas as pd
 
 from ..core.container import FalconData
 from ..core.units import MARKERS, canonical_name, check_plausible, convert, require_units
+from .batch import BatchError, BatchReference, apply_batch_reference, fit_batch_reference
+from .bmiq import BetaMixture, bmiq, fit_beta_mixture
+from .idat import RawSignal, dye_bias, idat_to_betas, noob, poobah, read_idat_dir
+from .manifest import fetch_manifest, load_manifest, manifest_record
+from .masks import apply_mask, load_mask, mask_report, masked_probes
 from .methylation import (
     QCReport,
     aggregate_replicate_probes,
@@ -16,11 +21,23 @@ from .methylation import (
     prepare,
     qc,
 )
+from .proteomic import prepare_proteomic, read_olink, read_somascan
+from .transcriptomic import (median_centre, prepare_transcriptomic, read_counts,
+                             rle_normalise, yugene)
 
 __all__ = [
-    "QCReport", "aggregate_replicate_probes", "clip_betas", "ensure_platform",
-    "harmonise_probe_ids", "impute", "prepare", "prepare_clinical", "probe_loss",
-    "qc",
+    "BatchError", "BatchReference", "BetaMixture", "QCReport", "RawSignal",
+    "bmiq", "fit_beta_mixture",
+    "aggregate_replicate_probes",
+    "apply_batch_reference", "apply_mask", "clip_betas", "dye_bias", "ensure_platform",
+    "load_mask", "mask_report", "masked_probes",
+    "fetch_manifest", "fit_batch_reference",
+    "harmonise_probe_ids", "idat_to_betas", "impute", "load_manifest",
+    "manifest_record", "noob", "poobah",
+    "prepare", "prepare_clinical", "probe_loss",
+    "median_centre", "prepare_proteomic", "prepare_transcriptomic",
+    "qc", "read_counts", "read_idat_dir", "read_olink", "read_somascan",
+    "rle_normalise", "yugene",
 ]
 
 
@@ -106,6 +123,42 @@ def impute(data: FalconData, how: str = "median") -> FalconData:
     return out
 
 
+def _load_platform_bias() -> dict[tuple[str, str], dict]:
+    """The measured cost of probe loss, keyed by (clock, platform).
+
+    Cached for the process. Empty when the table has not been derived, which is
+    the honest state for a build that has never seen the corpus -- an absent row
+    means "not measured", never "no bias".
+    """
+    global _PLATFORM_BIAS
+    if _PLATFORM_BIAS is None:
+        from ..registry.registry import DATA_DIR
+
+        p = DATA_DIR / "platform_bias.csv"
+        if not p.exists():
+            _PLATFORM_BIAS = {}
+        else:
+            df = pd.read_csv(p, comment="#")
+            _PLATFORM_BIAS = {
+                (str(r.clock), str(r.platform)): {
+                    "median_shift": float(r.median_shift),
+                    "ci_lo": float(r.ci_lo), "ci_hi": float(r.ci_hi),
+                    "probes_retained": int(r.probes_retained),
+                    "probes_total": int(r.probes_total),
+                    "unit": str(r.unit),
+                }
+                for r in df.itertuples()
+            }
+    return _PLATFORM_BIAS
+
+
+_PLATFORM_BIAS: dict[tuple[str, str], dict] | None = None
+
+#: Above this, in the clock's own unit, the shift is worth interrupting a run
+#: for. One year on an age clock is the smallest difference anybody reports.
+BIAS_WARN = 1.0
+
+
 def probe_loss(data: FalconData, clocks: str | list[str] = "all",
                *, registry=None, top: int = 3) -> pd.DataFrame:
     """What each clock has lost on this dataset, before scoring anything.
@@ -172,6 +225,7 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
             continue
 
         al = align(data, list(feats), imputation="none", coefficients=coefs)
+        bias = _load_platform_bias().get((cid, data.platform or ""), {})
         rows.append({
             "clock": cid,
             "tier": c.availability,
@@ -180,6 +234,9 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
             "coverage": round(al.coverage, 4),
             "mass_coverage": (np.nan if al.mass_coverage is None
                               else round(al.mass_coverage, 4)),
+            "bias_years": bias.get("median_shift", np.nan),
+            "bias_ci": (f"{bias['ci_lo']:g} to {bias['ci_hi']:g}"
+                        if bias else ""),
             "heaviest_absent": ", ".join(
                 f"{f} ({s:.1%})" for f, s in al.missing_mass[:top]) or "",
         })

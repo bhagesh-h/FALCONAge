@@ -15,9 +15,12 @@ from .._version import __version__ as __version__
 from ..core.backend import resolve
 from ..core.container import FalconData
 from ..core.errors import FalconError, FeatureCoverageError, ScoringError, WeightsUnavailableError
+from ..core import preanalytical
 from ..core.logging import WarningCollector, get_logger
 from ..core.manifest import RunManifest
 from ..models import build
+from ..preprocess import BIAS_WARN
+from ..preprocess import _load_platform_bias as _platform_bias
 from ..registry import load as load_registry
 
 __all__ = ["FalconResult", "combine", "score"]
@@ -40,6 +43,11 @@ class FalconResult:
     registry: Any
     coverage: dict[str, dict[str, Any]] = field(default_factory=dict)
     skipped: dict[str, str] = field(default_factory=dict)
+    #: Technical standard errors, once :func:`falconage.technical_se` has been
+    #: called on this result. Cached here rather than recomputed because
+    #: ``summary()`` and the report both want it and the propagation needs the
+    #: matrix, which the result does not hold.
+    se: pd.DataFrame | None = None
 
     # -- shapes ------------------------------------------------------------
     def wide(self) -> pd.DataFrame:
@@ -90,6 +98,9 @@ class FalconResult:
         d["coverage"] = [self.coverage.get(c, {}).get("coverage") for c in d.index]
         d["mass_coverage"] = [self.coverage.get(c, {}).get("mass_coverage")
                               for c in d.index]
+        if self.se is not None:
+            d["technical_se"] = [float(self.se[c].median()) if c in self.se else None
+                                 for c in d.index]
         return d
 
     # -- how to read it ----------------------------------------------------
@@ -126,6 +137,7 @@ class FalconResult:
                 "scale_type": c.scale_type,
                 "unit": ", ".join(c.unit) or "",
                 "legal_operations": ", ".join(sorted(c.legal_operations)),
+                "trained_on": ", ".join(c.tissue) or "",
                 "coverage": cov.get("coverage"),
                 "mass_coverage": cov.get("mass_coverage"),
                 "technical_icc": r.technical_icc,
@@ -133,8 +145,23 @@ class FalconResult:
                 "reliability_note": r.note,
                 "caveats": " ".join(c.known_discrepancies),
                 "tier": c.availability,
+                "published_associations": _evidence_line(cid),
             })
         return pd.DataFrame(rows).set_index("clock")
+
+    def evidence(self, clock: str | None = None) -> pd.DataFrame:
+        """Published effect sizes for the clocks in this result.
+
+        The step between a number and something a reader can act on. See
+        :func:`falconage.registry.evidence`; every row carries its DOI.
+        """
+        from ..registry import evidence as _ev
+
+        if clock is not None:
+            return _ev(clock)
+        frames = [_ev(cid) for cid in self.scores.columns]
+        frames = [f for f in frames if not f.empty]
+        return pd.concat(frames) if frames else _ev("__none__")
 
     def __repr__(self) -> str:  # pragma: no cover - display only
         return (f"FalconResult({self.scores.shape[0]} samples x "
@@ -172,6 +199,81 @@ def _resolve_clocks(registry, data, clocks, min_coverage: float) -> tuple[list[s
     if isinstance(clocks, str):
         clocks = [clocks]
     return list(clocks), skipped
+
+
+def _evidence_line(clock_id: str) -> str:
+    """A one-line digest of the published effect sizes, for the interpretation
+    table. The full rows, with their DOIs, are in ``result.evidence()``."""
+    from ..registry import evidence as _ev
+
+    df = _ev(clock_id)
+    if df.empty:
+        return ""
+    hard = df[df["measure"].isin(("hazard_ratio", "r2", "count"))]
+    if hard.empty:
+        return str(df.iloc[0]["note"]).split(".")[0]
+    bits = [f"{r.outcome}: {r.measure.replace('_', ' ')} {r.value:g}"
+            + (f" per {r.per}" if r.per else "")
+            for r in hard.head(3).itertuples()]
+    return "; ".join(bits)
+
+
+def _specimens(data: FalconData) -> list[str] | None:
+    """Distinct specimen labels in this run, or ``None`` if none were given.
+
+    Returns the raw labels rather than the normalised ones so a warning can
+    quote what the user actually wrote. An empty list (column present, every
+    value blank) is treated the same as an absent column: nothing to check.
+    """
+    if "tissue" not in data.obs.columns:
+        return None
+    vals = data.obs["tissue"].dropna().astype(str).str.strip()
+    vals = [v for v in dict.fromkeys(vals) if v and v.lower() not in
+            ("na", "nan", "none", "unknown", "not specified", "-")]
+    return vals or None
+
+
+def _hard_refusal(specimens: Sequence[str], clock) -> bool:
+    """Is any specimen in a family no clock's policy can wave through?"""
+    return bool(_hard_families(specimens, clock))
+
+
+def _hard_families(specimens: Sequence[str], clock) -> set:
+    from ..core import tissue as tissue_mod
+
+    fams = {tissue_mod.family(tissue_mod.normalise(s)) for s in specimens}
+    clock_fams = {tissue_mod.family(tissue_mod.normalise(t)) for t in clock.tissue}
+    return (fams & tissue_mod.ALWAYS_REFUSE) - clock_fams
+
+
+def _hard_message(specimens: Sequence[str], clock) -> str:
+    fams = ", ".join(sorted(_hard_families(specimens, clock)))
+    return (f"fitted on {', '.join(clock.tissue) or 'an unstated tissue'}, scored "
+            f"on {fams}. Cell-free DNA is a fragment population shed from many "
+            "tissues, not a tissue; array clocks applied to it directly perform "
+            "poorly (bioRxiv 2025.11.27.690895)")
+
+
+def _tissue_verdict(clock, specimens: Sequence[str]) -> tuple[str, str]:
+    """Worst verdict across the specimens present, and the message for it.
+
+    Worst rather than first: a run mixing saliva and whole blood must report the
+    saliva, and reporting the blood because it sorted earlier would be the exact
+    failure this check exists to prevent.
+    """
+    from ..core import tissue as tissue_mod
+
+    rank = {"exact": 0, "unrestricted": 0, "unrecognised": 1, "family": 2, "mismatch": 3}
+    worst, worst_msg = "exact", ""
+    for s in specimens:
+        r = tissue_mod.compare(s, clock.tissue)
+        if rank[r["verdict"]] > rank[worst]:
+            worst, worst_msg = r["verdict"], r["message"]
+    # "unrecognised" is already reported once for the run; repeating it per
+    # clock would bury the mismatches that matter among 20 identical lines.
+    if worst == "unrecognised":
+        return worst, ""
+    return worst, worst_msg
 
 
 def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
@@ -225,6 +327,20 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
     scores: dict[str, pd.Series] = {}
     coverage: dict[str, dict[str, Any]] = {}
 
+    # Specimen types present in this run, resolved once. A clock's coefficients
+    # were fitted on a tissue; applied to another they still return a number.
+    # Saliva against buffy coat in the same people differs by 3.83-16.46 years
+    # while the two matrices still correlate at r = 0.88-0.92, so nothing
+    # downstream of the arithmetic can notice.
+    specimens = _specimens(data)
+    if specimens is None:
+        warns.warn(
+            "no 'tissue' column in obs, so no clock's specimen assumption was "
+            "checked. Scoring a blood clock on saliva has been measured at "
+            "3.83-16.46 years of error and would be silent here. Set "
+            "data.obs['tissue'] to enable the check.",
+            category="tissue")
+
     for cid in wanted:
         c = reg.get(cid)
         spec = resolve(device, dtype, requires_fp64=c.requires_fp64)
@@ -248,6 +364,36 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             skipped[cid] = msg.splitlines()[0]
             warns.warn(msg.splitlines()[0], clock=cid, category="cohort")
             continue
+
+        # Specimen check. Same shape as the cohort check above and for the same
+        # reason: it is a declared property of the clock, not something the
+        # arithmetic can discover.
+        if specimens:
+            verdict, msg = _tissue_verdict(c, specimens)
+            # A few specimen families are a refusal whatever the clock says, and
+            # the check runs before the verdict rather than inside it. A
+            # multi-tissue clock's compare() returns "unrestricted", which is
+            # the right answer for a tissue and the wrong one for cell-free DNA:
+            # cfDNA is not a tissue the clock generalises to, it is a fragment
+            # population shed from many of them, and array clocks are published
+            # to perform poorly on it (bioRxiv 2025.11.27.690895).
+            hard = _hard_refusal(specimens, c)
+            if hard:
+                msg = msg or _hard_message(specimens, c)
+            if hard or (verdict == "mismatch" and c.tissue_policy == "refuse"):
+                full = (f"{cid}: {msg}\n"
+                        "  This clock is refused off its training tissue rather "
+                        "than warned about, because the substitution is a "
+                        "category error and not an offset.\n"
+                        "  Set tissue_policy: warn in the registry, or score a "
+                        "clock trained on this specimen.")
+                if explicit:
+                    raise ScoringError(full)
+                skipped[cid] = f"{msg} (tissue_policy=refuse)"
+                warns.warn(skipped[cid], clock=cid, category="tissue")
+                continue
+            if msg and c.tissue_policy != "allow":
+                warns.warn(msg, clock=cid, category="tissue")
 
         try:
             model = build(reg, cid)
@@ -310,6 +456,21 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
                              "n_present": c.n_features or 0,
                              "n_imputed": 0, "imputation": "n/a"}
 
+        # Probe loss, priced. Coverage says how much of the model is absent;
+        # this says what that costs in the clock's own unit, measured by masking
+        # full 450K matrices down to each platform's probe set and re-scoring.
+        # Reported, never subtracted -- an automatic offset would be a second
+        # number nobody can trace.
+        bias = _platform_bias().get((cid, data.platform or ""))
+        if bias and abs(bias["median_shift"]) >= BIAS_WARN:
+            warns.warn(
+                f"probes absent from {data.platform} shift this clock by a "
+                f"median {bias['median_shift']:+g} {bias['unit'] or 'unit'} "
+                f"(95% CI {bias['ci_lo']:+g} to {bias['ci_hi']:+g}), measured on "
+                f"{bias['probes_retained']}/{bias['probes_total']} probes "
+                "retained. Not corrected for; see probe_loss().",
+                clock=cid, category="platform_bias")
+
         for d in c.known_discrepancies:
             warns.warn(d, clock=cid, category="discrepancy")
 
@@ -320,6 +481,7 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
 
     df = pd.DataFrame(scores, index=data.sample_ids)
     manifest.coverage = coverage
+    manifest.preanalytical = preanalytical.audit(data.obs)
     manifest.skipped = skipped
     manifest.warnings = warns.records
     manifest.config = {"clocks": clocks if isinstance(clocks, str) else list(clocks),

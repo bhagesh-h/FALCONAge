@@ -1,0 +1,25 @@
+# plot.score_interval { #falconage.plot.score_interval }
+
+```python
+plot.score_interval(
+    result,
+    clock,
+    *,
+    se=None,
+    conformal=None,
+    age_col='age',
+    max_samples=40,
+)
+```
+
+One clock's scores with their intervals, sample by sample.
+
+The plot that changes what a score means. Each sample is a point with a bar;
+two samples whose bars overlap are not distinguishable by this clock on this
+assay, whatever their point estimates say.
+
+Pass ``se`` from :func:`falconage.technical_se` for measurement error, or
+``conformal`` from :func:`falconage.conformal_interval` for prediction
+error, or both -- they are drawn as an inner and an outer bar, because they
+answer different questions and conflating them is the mistake the pair
+exists to prevent.

@@ -1,0 +1,13 @@
+# preprocess.read_somascan { #falconage.preprocess.read_somascan }
+
+```python
+preprocess.read_somascan(path, *, index_col=0, log2=True, obs=None)
+```
+
+A SomaScan RFU matrix.
+
+``log2=True`` by default, because every published SomaScan aging model this
+package knows of was fitted on log-transformed RFU, and handing a linear
+matrix to a model fitted on logs is a silent order-of-magnitude error rather
+than a visible one. The transform is recorded in ``uns`` so the run says
+which scale it scored on.

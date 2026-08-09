@@ -195,6 +195,137 @@ def cmd_cache(args) -> int:
     return 2
 
 
+
+
+def cmd_power(args) -> int:
+    """How many samples, before any array is run."""
+    import falconage as fa
+
+    result = None
+    if args.pilot:
+        data = fa.read(args.pilot)
+        if data.modality == "dna_methylation":
+            data = fa.prepare(data)
+        result = fa.score(data, clocks=[args.clock], min_coverage=args.min_coverage)
+        fa.technical_se(result, data)
+
+    p = fa.power(args.clock, effect=args.effect, sd=args.sd, result=result,
+                 icc=args.icc, alpha=args.alpha, power=args.target_power,
+                 replicates=args.replicates)
+    _p(f"{p.clock}: to see {p.effect:g} at {p.power:.0%} power (alpha {p.alpha})")
+    _p(f"  n per group   {p.n_per_group}")
+    _p(f"  n total       {p.n_total}")
+    _p(f"  sd used       {p.sd:.4g}   ({p.assumptions})")
+    if p.icc is None:
+        _p("  reliability   not established for this clock; the n above is not "
+           "adjusted for measurement error")
+    else:
+        _p(f"  technical ICC {p.icc:.3f}   ({p.icc_source})")
+        if p.n_if_perfectly_measured is not None:
+            waste = p.n_total - 2 * p.n_if_perfectly_measured
+            _p(f"  of which      {waste} sample(s) exist only to average out the assay")
+    if p.replicates > 1:
+        _p(f"  replicates    {p.replicates} per sample, assumed averaged")
+    return 0
+
+
+def cmd_consensus(args) -> int:
+    """Does a group difference survive the multi-clock rule?"""
+    import falconage as fa
+
+    data = fa.read(args.input)
+    if data.modality == "dna_methylation":
+        data = fa.prepare(data)
+    res = fa.score(data, clocks=args.clocks, min_coverage=args.min_coverage)
+    rep = fa.consensus(res, args.group_col, reference=args.reference,
+                       alpha=args.alpha)
+    _p(f"verdict: {rep.verdict}")
+    _p(f"  {rep.why}")
+    _p("")
+    _p(rep.table[["generation", "basis", "delta", "cohens_d", "p", "q_bh",
+                  "p_bonferroni", "sig_bonferroni"]].round(5).to_string())
+    if args.outdir:
+        d = Path(args.outdir)
+        d.mkdir(parents=True, exist_ok=True)
+        rep.table.to_csv(d / "consensus.csv")
+        (d / "consensus_verdict.txt").write_text(f"{rep.verdict}\n{rep.why}\n",
+                                                 encoding="utf-8")
+        _p(f"\nwrote {d}/consensus.csv")
+    return 0 if rep.verdict != "unsupported" else 3
+
+
+def cmd_report(args) -> int:
+    """Read, check, score, quantify, interpret, and write one HTML file.
+
+    The command a laboratory runs. Everything else in this CLI is a piece of
+    it, exposed separately for people who want the pieces.
+    """
+    import falconage as fa
+
+    out = Path(args.outdir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    data = fa.read(args.input)
+    if data.modality == "dna_methylation":
+        data = fa.prepare(data)
+    _p(f"read {data.n_samples} sample(s) x {data.n_features} feature(s)"
+       + (f" on {data.platform}" if data.platform else ""))
+
+    if data.modality == "dna_methylation":
+        report = fa.qc(data)
+        report.per_sample.to_csv(out / "qc_per_sample.csv")
+        for w in report.warnings:
+            _p(f"  QC: {w}")
+
+    clocks = args.clocks
+    if clocks not in ("compatible", "all"):
+        clocks = [c.strip() for c in clocks.split(",") if c.strip()]
+    res = fa.score(data, clocks=clocks, min_coverage=args.min_coverage)
+    _p(f"scored {res.scores.shape[1]} clock(s); {len(res.skipped)} skipped")
+
+    se = conf = cons = None
+    try:
+        se = fa.technical_se(res, data)
+        se.se.to_csv(out / "technical_se.csv")
+        se.diagnostics.to_csv(out / "reliability_diagnostics.csv")
+    except Exception as exc:                      # noqa: BLE001
+        _p(f"  technical_se unavailable: {exc}")
+    try:
+        conf = fa.conformal_interval(res, level=args.level)
+        conf.to_csv(out / "conformal_interval.csv", index=False)
+    except Exception as exc:                      # noqa: BLE001
+        _p(f"  conformal interval unavailable: {exc}")
+    if args.group_col and args.group_col in res.obs.columns:
+        try:
+            cons = fa.consensus(res, args.group_col, reference=args.reference)
+            _p(f"  consensus: {cons.verdict}")
+        except Exception as exc:                  # noqa: BLE001
+            _p(f"  consensus unavailable: {exc}")
+
+    res.write(out)
+    res.interpretation().to_csv(out / "interpretation.csv")
+    res.evidence().to_csv(out / "evidence.csv", index=False)
+
+    if not args.no_figures:
+        from falconage import plot as fplot
+
+        acc = None
+        if "age" in res.obs.columns:
+            try:
+                acc = fa.acceleration(res, method="residual")
+            except Exception:                     # noqa: BLE001
+                acc = None
+        w = fplot.save_all(res, out / "figures", data=data, acc=acc,
+                           group=args.group_col, se=se, conformal=conf,
+                           consensus=cons)
+        _p(f"  {len(w)} figure(s)")
+
+    from falconage.report import write_report
+
+    html = write_report(res, out / "report.html", group=args.group_col)
+    _p(f"\nwrote {html}")
+    return 0
+
 # ---------------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(
@@ -259,6 +390,46 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("action", choices=["ls", "rm"])
     p.add_argument("--yes", action="store_true")
     p.set_defaults(fn=cmd_cache)
+
+    # The verb that runs before any array does. It needs no data file, which is
+    # the point: it is the earliest moment this package can be useful.
+    p = sub.add_parser("power", help="how many samples to see an effect")
+    p.add_argument("--clock", required=True)
+    p.add_argument("--effect", type=float, required=True,
+                   help="the difference worth detecting, in the clock's own unit")
+    p.add_argument("--sd", type=float, default=None,
+                   help="population SD; measured from --pilot when given")
+    p.add_argument("--pilot", default=None,
+                   help="a scored pilot dataset, to measure sd and the ICC from")
+    p.add_argument("--icc", type=float, default=None)
+    p.add_argument("--alpha", type=float, default=0.05)
+    p.add_argument("--target-power", type=float, default=0.80)
+    p.add_argument("--replicates", type=int, default=1)
+    p.add_argument("--min-coverage", type=float, default=0.8)
+    p.set_defaults(fn=cmd_power)
+
+    p = sub.add_parser("consensus",
+                       help="does a group difference hold up across clocks?")
+    p.add_argument("input")
+    p.add_argument("--group-col", default="condition")
+    p.add_argument("--reference", default=None)
+    p.add_argument("--clocks", default="compatible")
+    p.add_argument("--alpha", type=float, default=0.05)
+    p.add_argument("--min-coverage", type=float, default=0.8)
+    p.add_argument("--outdir", default=None)
+    p.set_defaults(fn=cmd_consensus)
+
+    p = sub.add_parser("report",
+                       help="one command: read, QC, score, quantify, write HTML")
+    p.add_argument("input")
+    p.add_argument("--outdir", default="falconage_report")
+    p.add_argument("--clocks", default="compatible")
+    p.add_argument("--group-col", default=None)
+    p.add_argument("--reference", default=None)
+    p.add_argument("--level", type=float, default=0.90)
+    p.add_argument("--min-coverage", type=float, default=0.8)
+    p.add_argument("--no-figures", action="store_true")
+    p.set_defaults(fn=cmd_report)
 
     return ap
 

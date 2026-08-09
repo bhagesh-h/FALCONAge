@@ -1,8 +1,10 @@
 """Clock catalogue, availability tiers and coefficient resolution."""
 
-from .registry import LEGAL_OPS, Clock, ClockRegistry, CoefficientSource, load
+from .registry import (LEGAL_OPS, Clock, ClockRegistry, CoefficientSource, evidence,
+                       load)
 
-__all__ = ["LEGAL_OPS", "Clock", "ClockRegistry", "CoefficientSource", "load"]
+__all__ = ["LEGAL_OPS", "Clock", "ClockRegistry", "CoefficientSource", "evidence",
+           "load"]
 
 
 def register_local_weights(clock_id: str, path, sha256: str | None = None) -> str:

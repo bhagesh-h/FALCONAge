@@ -1,0 +1,13 @@
+# preprocess.read_counts { #falconage.preprocess.read_counts }
+
+```python
+preprocess.read_counts(path, *, index_col=0, genes_in_rows=True, obs=None)
+```
+
+A bulk RNA-seq count matrix.
+
+``genes_in_rows`` because that is how every quantifier writes one and how
+GEO distributes them, while everything downstream here is samples x
+features. Transposed on the way in rather than left to the caller: a matrix
+the wrong way round produces a clock score for each gene, which is a
+plausible-looking table of nonsense.

@@ -26,12 +26,12 @@ from __future__ import annotations
 # `download` and `score` name both a module and a function. The verb wins at
 # the top level -- fa.score(data) is the API -- so the modules are bound to
 # private aliases, which also keeps fa.download.cache_info reachable.
-from . import analysis, core, io, models, plot, preprocess, registry, report
+from . import analysis, core, io, models, plot, preprocess, registry, report, uncertainty
 from . import download as _download_mod  # noqa: F401  (module, not the verb)
 from . import score as _score_mod  # noqa: F401  (module, not the verb)
 from ._version import REGISTRY_VERSION, __version__
-from .analysis import (acceleration, agreement, associate, cell_composition, cox_hazard,
-                       icc, run_benchmark)
+from .analysis import (acceleration, agreement, associate, cell_composition, consensus,
+                       cox_hazard, detectable_effect, icc, power, run_benchmark)
 from .core import (
     FalconConfig,
     FalconData,
@@ -42,20 +42,32 @@ from .core import (
     describe,
 )
 from .download import download
-from .io import read, read_betas, read_clinical, read_rrbs_dir, read_series_matrix, write_results
-from .preprocess import prepare, prepare_clinical, probe_loss, qc
+from .io import (list_computage_bench, read, read_bedmethyl, read_bedmethyl_dir,
+                 read_betas, read_clinical, read_computage_bench, read_panel,
+                 read_rrbs_dir, read_series_matrix, write_results)
+from .preprocess import (apply_batch_reference, fit_batch_reference, idat_to_betas,
+                         prepare, prepare_clinical, probe_loss, qc, read_idat_dir)
 from .score import FalconResult, combine, score
+from .uncertainty import (conformal_interval, icc_from_replicates, interval,
+                          technical_se)
 
 __all__ = [
     "FalconConfig", "FalconData", "FalconError", "FalconResult", "REGISTRY_VERSION",
     "RunManifest", "WeightsUnavailableError", "__version__", "acceleration",
-    "cell_composition",
-    "agreement", "analysis", "associate", "combine", "configure", "core", "cox_hazard",
-    "describe", "download", "icc", "io", "models", "plot", "prepare",
-    "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_betas",
+    "apply_batch_reference", "cell_composition", "fit_batch_reference",
+    "idat_to_betas", "read_idat_dir",
+    "agreement", "analysis", "associate", "combine", "configure",
+    "conformal_interval", "consensus",
+    "core", "cox_hazard", "detectable_effect",
+    "describe", "download", "icc", "icc_from_replicates", "interval", "io",
+    "list_computage_bench", "read_computage_bench",
+    "models", "plot", "power", "prepare",
+    "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_bedmethyl",
+    "read_bedmethyl_dir", "read_betas",
     "report",
-    "read_clinical",
+    "read_clinical", "read_panel",
     "read_rrbs_dir", "read_series_matrix", "registry", "run_benchmark", "score",
+    "technical_se", "uncertainty",
     "write_results",
 ]
 

@@ -99,6 +99,41 @@ jobs:
           python docs/build_catalogue.py --check
           python docs/build_gallery.py --check
 
+      # The three derived data artefacts. Each needs an input CI does not have
+      # -- a 72 MB published spreadsheet for the reliability table, the 586 MB
+      # corpus for the other two -- so they cannot be regenerated here. What CAN
+      # be checked without either is that the shipped files parse, cover the
+      # clocks they claim to, and carry the provenance the manifest records.
+      # A stale artefact is caught by the local --check before it is committed;
+      # this catches a corrupt or truncated one.
+      - name: Derived registry artefacts load
+        run: |
+          python - <<'PY'
+          import falconage as fa
+          from falconage.preprocess import _load_platform_bias
+
+          icc = fa.uncertainty.load_probe_icc()
+          assert len(icc) > 250_000, len(icc)
+          src = fa.uncertainty.probe_icc_source()
+          assert src["licence"] == "CC BY 4.0" and len(src["sha256"]) == 64
+          print(f"probe_icc: {len(icc)} probes, {src['sha256'][:12]}")
+
+          bias = _load_platform_bias()
+          assert {"EPICv1", "EPICv2"} <= {p for _, p in bias}
+          print(f"platform_bias: {len(bias)} clock x platform rows")
+
+          cal = fa.uncertainty.load_conformal()
+          assert not cal.empty
+          # Only the shipped rows; the banded rows are diagnostics at n >= 20.
+          allrows = cal[cal["age_band"] == "all"]
+          assert allrows["n_calibration"].min() >= 40, allrows["n_calibration"].min()
+          print(f"conformal: {cal['clock'].nunique()} clocks")
+
+          ev = fa.registry.evidence()
+          assert (ev["doi"].str.len() > 0).all(), "an evidence row without a DOI"
+          print(f"evidence: {len(ev)} rows, all with a DOI")
+          PY
+
       # Prose is not executed, so a function name in a fenced code block is
       # just text and stays wrong forever. The README's quick start told people
       # to call fa.report(), fa.cox(), fa.probe(), fa.preprocess_methylation()

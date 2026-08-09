@@ -20,6 +20,7 @@ score.FalconResult(
     registry,
     coverage=dict(),
     skipped=dict(),
+    se=None,
 )
 ```
 
@@ -33,8 +34,20 @@ written to disk and read back is self-describing.
 
 | Name | Description |
 | --- | --- |
+| [evidence](#falconage.score.FalconResult.evidence) | Published effect sizes for the clocks in this result. |
 | [interpretation](#falconage.score.FalconResult.interpretation) | One row per clock: what the number is, and what may be done with it. |
 | [long](#falconage.score.FalconResult.long) | One row per sample per clock, with the scale and provenance attached. |
+
+##### evidence { #falconage.score.FalconResult.evidence }
+
+```python
+score.FalconResult.evidence(clock=None)
+```
+
+Published effect sizes for the clocks in this result.
+
+The step between a number and something a reader can act on. See
+:func:`falconage.registry.evidence`; every row carries its DOI.
 
 ##### interpretation { #falconage.score.FalconResult.interpretation }
 

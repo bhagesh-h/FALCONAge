@@ -1,0 +1,21 @@
+# preprocess.prepare_transcriptomic { #falconage.preprocess.prepare_transcriptomic }
+
+```python
+preprocess.prepare_transcriptomic(
+    data,
+    *,
+    orthologues=None,
+    genes=None,
+    centre=True,
+)
+```
+
+Run the whole chain, in order, recording each step.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type                                  | Description                                                                                                                                                                                                                                                                            | Default   |
+|-------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|
+| orthologues | dict\[str, str\] \| pd.Series \| None | Source gene id to the model's gene id, for scoring one species with a model fitted in another. Applied first, and one-to-one only: a many-to-one map would silently sum paralogues into one column, and which paralogue a clock's coefficient refers to is not recoverable afterwards. | `None`    |
+| genes       | list\[str\] \| None                   | The model's gene list. Absent genes are padded with NaN rather than dropped, so coverage reporting downstream sees them missing instead of never knowing they were expected.                                                                                                           | `None`    |
+| centre      | bool                                  | The per-dataset median centring. ``False`` leaves it out, which is only right if you are going to do it yourself over the correct cohort.                                                                                                                                              | `True`    |

@@ -1,7 +1,15 @@
 # FalconResult { #falconage.FalconResult }
 
 ```python
-FalconResult(scores, obs, manifest, registry, coverage=dict(), skipped=dict())
+FalconResult(
+    scores,
+    obs,
+    manifest,
+    registry,
+    coverage=dict(),
+    skipped=dict(),
+    se=None,
+)
 ```
 
 Scores plus everything needed to say where they came from.
@@ -14,8 +22,20 @@ written to disk and read back is self-describing.
 
 | Name | Description |
 | --- | --- |
+| [evidence](#falconage.FalconResult.evidence) | Published effect sizes for the clocks in this result. |
 | [interpretation](#falconage.FalconResult.interpretation) | One row per clock: what the number is, and what may be done with it. |
 | [long](#falconage.FalconResult.long) | One row per sample per clock, with the scale and provenance attached. |
+
+### evidence { #falconage.FalconResult.evidence }
+
+```python
+FalconResult.evidence(clock=None)
+```
+
+Published effect sizes for the clocks in this result.
+
+The step between a number and something a reader can act on. See
+:func:`falconage.registry.evidence`; every row carries its DOI.
 
 ### interpretation { #falconage.FalconResult.interpretation }
 

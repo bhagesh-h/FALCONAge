@@ -59,6 +59,26 @@ reference:
   - prepare
   - qc
   - probe_loss
+  - fit_batch_reference
+  - apply_batch_reference
+- title: Uncertainty
+  desc: 'How much of a score is the assay, and how far it is likely to be from the truth.
+    Two different questions with two different answers, kept apart on purpose: technical replicates
+    of the same DNA differ by up to nine years on prominent clocks, and a point estimate says
+    nothing about either.'
+  contents:
+  - technical_se
+  - interval
+  - conformal_interval
+  - icc_from_replicates
+- title: Study design
+  desc: The commands that come before the first array and after the last one. How many samples
+    an effect needs, given the clock's own reliability; and whether a difference that turned
+    up survives the multi-clock rule that a re-analysis of six intervention datasets says
+    it must.
+  contents:
+  - power_n
+  - consensus
 - title: Scoring
   desc: The predict loop, its result object, and the provenance it carries.
   contents:

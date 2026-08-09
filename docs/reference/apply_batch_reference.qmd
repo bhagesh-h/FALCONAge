@@ -1,0 +1,12 @@
+# apply_batch_reference { #falconage.apply_batch_reference }
+
+```python
+apply_batch_reference(data, ref, *, batch_col, min_batch=MIN_BATCH)
+```
+
+Correct a dataset against frozen parameters, one batch at a time.
+
+Every batch is standardised against the reference's global parameters and
+shrunk with the reference's priors, so a batch's corrected values depend on
+that batch and the reference alone. Adding a plate cannot move an earlier
+one -- there is no path through the arithmetic by which it could.

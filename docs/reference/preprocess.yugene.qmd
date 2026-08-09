@@ -1,0 +1,12 @@
+# preprocess.yugene { #falconage.preprocess.yugene }
+
+```python
+preprocess.yugene(X)
+```
+
+The YuGene cumulative-proportion transform, per sample.
+
+For each sample, a gene's value becomes one minus the cumulative share of
+that sample's total expression held by genes ranked above it. It is
+rank-based, so it is invariant to any monotone rescaling of a sample, which
+is what makes values comparable across platforms that quantify differently.

@@ -113,6 +113,60 @@ If you are measuring change within a person, prefer a clock with a published bio
 principal-component version — those were rebuilt specifically to suppress the single-probe noise
 that makes repeat measurements disagree.
 
+### Measure it on your own cohort
+
+A published ICC is somebody else's laboratory. Since v1.1 you can measure yours:
+
+```python
+se = fa.technical_se(res, data)
+se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
+```
+
+Measurement error is propagated from each probe's published test-retest reliability through the
+clock's own weights, so the answer is per clock and per sample. On the package's own test corpus
+Horvath 2013 comes out at ±1.58 years with an implied cohort ICC of 0.98, DunedinPoAm38 is the
+least repeatable at 0.72, and the 319,607-probe BLUP clock reaches 1.00 — a model spread across
+the whole array averages the noise away, which is the same mechanism that makes PC clocks robust.
+
+Two numbers to read out of that table:
+
+`se_over_sd`
+  : measurement error as a fraction of the spread between your own samples. Above 1, the clock
+    cannot distinguish two of your samples however different their point estimates look.
+
+`implied_cohort_icc`
+  : the reliability *this* cohort implies, which is comparable with a published figure and often
+    lower — a narrow age range leaves less between-sample variance for the same assay noise.
+
+If you have run technical duplicates, `fa.icc_from_replicates(data, "subject")` gives per-probe
+reliability from your own plates instead of a published cohort's, and `technical_se(icc=...)` will
+use it.
+
+### Then ask how many samples you need
+
+```python
+fa.power("horvath2013", effect=0.5, result=pilot)
+```
+
+Reliability is not decoration in that answer. At ICC 0.9 a tenth of the sample size exists only to
+average out the instrument, and the function says so. It refuses to default the standard
+deviation, because n scales with its square.
+
+## Specimen type comes before all of this
+
+Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91 people**, while the two
+methylation matrices still correlated at r = 0.88–0.92. A correlation check on the input passes
+and the output is a decade out.
+
+Set `obs["tissue"]`. FALCONAge compares it against what each clock was fitted on: pan-tissue
+clocks say nothing, most warn with the measured discordance, and twelve — three placenta clocks,
+cord blood, neonatal blood spots, buccal, three brain-cortex clocks — refuse, because a placenta
+clock on blood is a category error rather than an offset. Cell-free DNA is refused by every clock;
+it is not a tissue.
+
+A run with no `tissue` column gets one warning saying the check did not run. That is the honest
+state, and it is what the previous silence was hiding.
+
 ## Availability
 
 | Tier | n | What you do |

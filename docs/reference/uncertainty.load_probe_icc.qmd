@@ -1,0 +1,10 @@
+# uncertainty.load_probe_icc { #falconage.uncertainty.load_probe_icc }
+
+```python
+uncertainty.load_probe_icc()
+```
+
+Per-probe test-retest ICC, indexed by feature id.
+
+Cached for the process. The file is 1.7 MB gzipped and about 284,000 rows;
+parsing it per call would dominate a scoring run.

@@ -1,0 +1,19 @@
+# read_panel { #falconage.read_panel }
+
+```python
+read_panel(path, *, cpgs=None, index_col=0, platform='targeted panel', obs=None)
+```
+
+A targeted assay: pyrosequencing, EpiTYPER, amplicon, ddPCR.
+
+What most laboratories can actually afford, and the input path an
+array-shaped reader makes awkward. A panel is a *declared* set of CpGs, so
+the reader takes that declaration and checks the file against it rather than
+inferring the panel from whichever columns happen to be present -- a typo in
+a probe name would otherwise become a missing probe, and a missing probe
+becomes an imputed one.
+
+Nothing here lowers the coverage floor. A panel covering six of Horvath's
+353 probes must fail loudly; ``score`` already refuses below
+``min_coverage``, and the point of this reader is to reach that refusal with
+an accurate feature list rather than to get around it.

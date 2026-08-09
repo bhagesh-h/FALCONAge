@@ -1,0 +1,28 @@
+# conformal_interval { #falconage.conformal_interval }
+
+```python
+conformal_interval(result, *, level=0.9, clocks=None)
+```
+
+How far the prediction is likely to be from chronological age.
+
+A different question from :func:`technical_se`, with a larger answer.
+Technical error asks how much the *assay* would move the number on a repeat;
+this asks how wrong the number is likely to be, which includes everything
+the clock never learned.
+
+Split conformal: the half-width is a quantile of the absolute residual on a
+calibration set of healthy blood samples with known ages, so on any sample
+exchangeable with that cohort the interval contains the truth at the stated
+rate. No distribution is assumed and the guarantee is finite-sample.
+
+Two things it will tell you that are easy to miss:
+
+* ``median_bias`` -- a clock systematically above or below chronological age
+  on the calibration cohort. Ying's DamAge and AdaptAge are tens of years
+  off because they are causality-partitioned components on an age-like
+  scale, not age predictors.
+* ``exchangeable`` -- always ``False`` here, and deliberately. The coverage
+  guarantee is conditional on the new samples being drawn like the
+  calibration ones: adult, blood, overwhelmingly European ancestry. Nothing
+  in this function can verify that, so it declines to imply it.

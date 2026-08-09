@@ -1,0 +1,45 @@
+# power { #falconage.power }
+
+```python
+power(
+    clock,
+    *,
+    effect,
+    sd=None,
+    result=None,
+    icc=None,
+    alpha=0.05,
+    power=0.8,
+    replicates=1,
+    registry=None,
+)
+```
+
+How many samples to see an effect of this size on this clock.
+
+The first thing a laboratory needs, and it is needed before any array is
+run. Two independent groups, two-sided:
+
+    n per group = 2 (z_{1-alpha/2} + z_{power})^2 sigma^2 / delta^2
+
+WHY RELIABILITY IS PART OF THE ANSWER. The sigma a user measures already
+contains the assay's noise. Splitting it out with the clock's test-retest
+ICC says how much of the sample size is buying signal and how much is
+averaging out the instrument -- which is the arithmetic behind the finding
+that the original clocks need 3-16 replicates per condition where their PC
+versions need 1-2 (Nat Aging 2022, s43587-022-00248-2).
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type          | Description                                                                                                                                                                                                        | Default    |
+|------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| effect     | float         | The difference worth detecting, in the clock's own units. No default: a power calculation with an assumed effect size is a way of writing down an assumption without noticing.                                     | _required_ |
+| sd         | float \| None | Population SD of the score. Taken from ``result`` when one is given.                                                                                                                                               | `None`     |
+| result     |               | A scored :class:`~falconage.score.FalconResult` from a pilot. Supplies ``sd``, and -- if :func:`falconage.technical_se` has been called on it -- a measured ICC for *this* laboratory rather than a published one. | `None`     |
+| replicates | int           | Assay each sample this many times and average. Reduces the error variance by the same factor, so it trades array cost against sample recruitment.                                                                  | `1`        |
+
+## Raises {.doc-section .doc-section-raises}
+
+| Name   | Type          | Description                                                                                                                                                                   |
+|--------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|        | AnalysisError | When no ``sd`` is available. There is no sensible default: the answer scales with its square, so a guessed SD is a guessed sample size reported to three significant figures. |

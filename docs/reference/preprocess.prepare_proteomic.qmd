@@ -1,0 +1,20 @@
+# preprocess.prepare_proteomic { #falconage.preprocess.prepare_proteomic }
+
+```python
+preprocess.prepare_proteomic(data, *, reference=None, standardise='reference')
+```
+
+Put a proteomic matrix on the scale a clock's coefficients expect.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type                 | Description                                                                                                                                                                                                                                                                                        | Default       |
+|-------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| reference   | pd.DataFrame \| None | Two columns, ``mean`` and ``sd``, indexed by protein: the *training cohort's* statistics, which travel with the model. This is the correct input and the default path.                                                                                                                             | `None`        |
+| standardise | str                  | ``"reference"`` uses the frame above. ``"cohort"`` computes the mean and SD from the data in front of you -- available, refused for a single sample, and recorded in ``uns`` as a deviation, because it makes every score depend on who else was in the batch. ``"none"`` leaves the matrix alone. | `'reference'` |
+
+## Raises {.doc-section .doc-section-raises}
+
+| Name   | Type      | Description                                                                                                                                                                               |
+|--------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|        | DataError | For ``standardise="reference"`` with no reference given. There is no sensible fallback: silently switching to the cohort would produce the exact failure the parameter exists to prevent. |

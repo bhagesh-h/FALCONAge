@@ -1,0 +1,20 @@
+# preprocess.mask_report { #falconage.preprocess.mask_report }
+
+```python
+preprocess.mask_report(
+    platform,
+    *,
+    clocks='scoreable',
+    kind='general',
+    registry=None,
+)
+```
+
+What applying this mask would cost each clock.
+
+One row per clock: how many of its probes the mask flags, and -- the number
+that decides it -- what share of the model's total ``|coefficient|`` those
+probes carry. Two clocks losing the same probe count are not in the same
+position if one of them leans on the probes it is losing.
+
+Run this before :func:`apply_mask`, not after.

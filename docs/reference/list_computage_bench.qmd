@@ -1,0 +1,11 @@
+# list_computage_bench { #falconage.list_computage_bench }
+
+```python
+list_computage_bench(root=None)
+```
+
+What is in the benchmark: one row per study.
+
+Use this to choose before downloading. With ``root`` set it also reports
+which studies are present locally, so a run can be scoped to what is on
+disk instead of failing partway through.

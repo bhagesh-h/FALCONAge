@@ -214,13 +214,55 @@ Two peaks near 0 and 1 is what a working array looks like. A sample with a fille
 
 `plot.beta_density()` in Python.
 
+### Platform
+
+![Platform](figures/gallery/platform.png)
+
+`plot.platform()` in Python.
+
 ### Study
 
 ![Study](figures/gallery/study.png)
 
 `plot.study()` in Python.
 
+## Other
+
+Figures not yet placed in a section above.
+
+### Does the difference hold up across clocks?
+
+![Does the difference hold up across clocks?](figures/gallery/consensus_plot.png)
+
+One bar per clock, coloured by generation; * survives Benjamini-Hochberg and ** survives Bonferroni across the tests actually run. The shape is the finding, not any one bar. A real change lights up across generations; a single lit bar among twenty dark ones is the published signature of a false positive, and five of six re-analysed intervention datasets looked exactly like that.
+
+`plot.consensus_plot()` in Python.
+
+### What probe loss costs, in years
+
+![What probe loss costs, in years](figures/gallery/platform_bias.png)
+
+Full 450K matrices masked down to each platform's probe set and rescored; the bar is the median shift and the whisker a bootstrap interval. A bar at zero is a clock that lost nothing. The long bars are sparse clocks whose missing probes were the ones they lean on, which is why a correlation check passes while the intercept moves. Reported, never subtracted.
+
+`plot.platform_bias()` in Python.
+
+### How much of each score is the assay
+
+![How much of each score is the assay](figures/gallery/reliability_forest.png)
+
+Measurement error propagated from published per-probe reliability through each clock's own weights. The ICC beside each bar is what this cohort implies, not a published figure: green above 0.8, amber below it, red where the assay noise is as large as the spread between these samples -- a clock that cannot tell them apart, however confident its point estimate.
+
+`plot.reliability_forest()` in Python.
+
+### Scores with the uncertainty they carry
+
+![Scores with the uncertainty they carry](figures/gallery/score_interval.png)
+
+Two samples whose bars overlap are not distinguishable by this clock on this assay. The narrow bar is measurement error -- what a repeat of the same DNA would do. The wide grey bar, where present, is the conformal prediction interval against chronological age, which is a larger question and has a larger answer. Neither is a confidence interval on a diagnosis.
+
+`plot.score_interval()` in Python.
+
 
 ---
 
-21 figures. Every one is also written per dataset under `test/output_figures/<group>/<dataset>/` when the full corpus run is executed; the gallery keeps one representative of each type so a reader does not have to fetch 586 MB to see them.
+26 figures. Every one is also written per dataset under `test/output_figures/<group>/<dataset>/` when the full corpus run is executed; the gallery keeps one representative of each type so a reader does not have to fetch 586 MB to see them.

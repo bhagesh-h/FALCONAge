@@ -30,6 +30,7 @@ registry.Clock(
     requires_reference=False,
     requires_cohort=False,
     min_samples=1,
+    tissue_policy='warn',
     known_discrepancies=(),
     reliability=Reliability(),
 )

@@ -77,7 +77,12 @@ test_that("a GEO series matrix reads and scores from R", {
   expect_equal(nrow(obs(d)), 22L)
   expect_true("gestational_age_days" %in% names(obs(d)))
 
-  res <- score(d, clocks = c("knight", "leecontrol"))
+  # GSE66459 is umbilical cord blood. Knight was trained on it; leecontrol was
+  # trained on placenta, and asking for it by name is a refusal from v1.1 --
+  # an explicit request is never silently dropped.
+  expect_error(score(d, clocks = c("knight", "leecontrol")), "category error")
+
+  res <- score(d, clocks = "knight")
   s <- as.data.frame(res)
   expect_true(all(s$knight > 25 & s$knight < 50))
 })

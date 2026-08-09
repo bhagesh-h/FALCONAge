@@ -1,0 +1,7 @@
+# detectable_effect { #falconage.detectable_effect }
+
+```python
+detectable_effect(clock, n_per_group, **kw)
+```
+
+The smallest effect a given n can see. The inverse of :func:`power`.

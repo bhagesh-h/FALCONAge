@@ -14,7 +14,7 @@ the scoring code reads.
 downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
-**161 clocks**, registry schema `1.0.0`.
+**161 clocks**, registry schema `1.1.0`.
 
 
 ## Tier A — 23 clocks
@@ -40,9 +40,9 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `phenoage` | 2018 | phenoage | `age_years` | 10 | clinical laboratory assays |
 | `skinandblood` | 2018 | skinandblood | `age_years` | 391 | 450K, EPICv1 |
 | `vidalbralo` | 2016 | vidalbralo | `age_years` | 8 | 27K |
-| `yingadaptage` | 2024 | yingadaptage | `age_years` | 999 | 450K |
+| `yingadaptage` | 2024 | yingadaptage | `age_years_relative` | 999 | 450K |
 | `yingcausage` | 2024 | yingcausage | `age_years` | 585 | 450K |
-| `yingdamage` | 2024 | yingdamage | `age_years` | 1089 | 450K |
+| `yingdamage` | 2024 | yingdamage | `age_years_relative` | 1089 | 450K |
 | `zhangblup` | 2019 | zhangblup | `age_years` | 319607 | 450K, EPICv1 |
 | `zhangen` | 2019 | zhangen | `age_years` | 514 | 450K, EPICv1 |
 | `zhangmortality` | 2017 | zhangmortality | `mortality_log_hazard` | 10 | 450K |

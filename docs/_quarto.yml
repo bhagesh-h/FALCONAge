@@ -63,8 +63,8 @@ website:
       data, in Python and R, on CPU or GPU.</p>
 
       <div class="falcon-cite"><div class="falcon-cite-title">Cite FALCONAge</div><div class="falcon-cite-buttons"><button
-      class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjAuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
-      APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjAuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
+      class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjEuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
+      APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjEuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
       BibTeX</button></div></div>'
     footer: "[Bhagesh Hunakunti](https://orcid.org/0000-0002-5957-8005)  \n[GPL-3.0-or-later](https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE)\
       \ · [source](https://github.com/bhagesh-h/FALCONAge)\n"
@@ -100,7 +100,33 @@ quartodoc:
     - read_series_matrix
     - read_clinical
     - read_rrbs_dir
+    - read_bedmethyl
+    - read_bedmethyl_dir
+    - read_panel
+    - read_computage_bench
+    - list_computage_bench
+    - preprocess.read_olink
+    - preprocess.read_somascan
+    - preprocess.read_counts
     - FalconData
+  - title: Raw arrays
+    desc: IDAT to scoreable betas, which until v1.1 meant leaving FALCONAge for sesame or
+      minfi and coming back. The manifest is fetched from Illumina's public bucket and cached;
+      it is the one step here that is not offline. Detection is computed before background
+      correction, because pOOBAH's null is the uncorrected out-of-band signal.
+    contents:
+    - idat_to_betas
+    - read_idat_dir
+    - preprocess.poobah
+    - preprocess.noob
+    - preprocess.dye_bias
+    - preprocess.bmiq
+    - preprocess.RawSignal
+    - preprocess.load_manifest
+    - preprocess.manifest_record
+    - preprocess.load_mask
+    - preprocess.mask_report
+    - preprocess.apply_mask
   - title: Preprocessing
     desc: 'Getting a matrix into the shape every clock assumes: bare probe identifiers, values
       in the beta range, a known platform. The EPIC v2 step is mandatory rather than optional
@@ -112,6 +138,37 @@ quartodoc:
     - probe_loss
     - preprocess.aggregate_replicate_probes
     - preprocess.impute
+    - fit_batch_reference
+    - apply_batch_reference
+    - preprocess.BatchReference
+    - preprocess.prepare_proteomic
+    - preprocess.prepare_transcriptomic
+    - preprocess.rle_normalise
+    - preprocess.yugene
+    - preprocess.median_centre
+  - title: Uncertainty
+    desc: 'How much of a score is the assay, and how far it is likely to be from the truth.
+      Two different questions with two different answers, kept apart on purpose: technical
+      replicates of the same DNA differ by up to nine years on prominent clocks, and a point
+      estimate says nothing about either.'
+    contents:
+    - technical_se
+    - interval
+    - conformal_interval
+    - icc_from_replicates
+    - uncertainty.load_probe_icc
+    - uncertainty.probe_icc_source
+    - uncertainty.load_conformal
+  - title: Study design
+    desc: The commands that come before the first array and after the last one. How many samples
+      an effect needs, given the clock's own reliability; and whether a difference that turned
+      up survives the multi-clock rule that a re-analysis of six intervention datasets says
+      it must.
+    contents:
+    - power
+    - detectable_effect
+    - consensus
+    - registry.evidence
   - title: Scoring
     desc: The predict loop, its result object, and the provenance it carries.
     contents:
@@ -146,6 +203,21 @@ quartodoc:
     - models.fit_kdm
     - models.fit_hd
     - models.clinical.phenoage
+  - title: Model architectures
+    desc: Not every clock is a dot product. Six summarise a probe set with a mean or a percentile;
+      the principal-component and neural families need a weight file no licence permits redistributing;
+      scAge asks a different question entirely, one age per cell from a methylome that is
+      99% missing. All of these are implemented and tested against synthetic weights, and
+      all of them work the day a user supplies a file.
+    contents:
+    - models.AggregationClock
+    - models.NeuralClock
+    - models.read_neural_weights
+    - models.PCLinearClock
+    - models.read_rotation
+    - models.ScAgeReference
+    - models.fit_scage_reference
+    - models.scage
   - title: Figures and reports
     desc: 'Every plot returns its data as well as its figure, which is how the two languages
       draw the same numbers with different engines. `clock_atlas` is the exception in scale
@@ -174,6 +246,10 @@ quartodoc:
     - plot.benchmark_bars
     - plot.benchmark_error_bias
     - plot.benchmark_heatmap
+    - plot.reliability_forest
+    - plot.score_interval
+    - plot.platform_bias
+    - plot.consensus_plot
     - plot.palette
     - plot.save_all
     - report.write_report

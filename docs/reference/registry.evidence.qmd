@@ -1,0 +1,22 @@
+# registry.evidence { #falconage.registry.evidence }
+
+```python
+registry.evidence(clock_id=None)
+```
+
+What a score on this clock has been shown to predict, and how strongly.
+
+The step between "DunedinPACE = 1.08" and something a reader can act on.
+Every row carries the study it came from, that study's design, and a DOI --
+a row without one is not admitted, because an uncheckable effect size looks
+identical to a checkable one and is worth less than nothing.
+
+Only effect sizes from studies that tested many clocks on one cohort under
+one protocol are seeded. A single-clock paper reports its own clock
+favourably and its numbers are not comparable to the row above.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name     | Type        | Description                                                                                                       | Default   |
+|----------|-------------|-------------------------------------------------------------------------------------------------------------------|-----------|
+| clock_id | str \| None | One clock, or ``None`` for the whole table including the cross-clock findings, which are marked with clock ``*``. | `None`    |

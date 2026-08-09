@@ -17,25 +17,32 @@ pytestmark = pytest.mark.corpus
 
 
 def _bench(corpus, gse):
-    meta = pd.read_csv(corpus / "bench" / "computage_bench_meta.tsv", sep="\t", index_col=0)
-    X = pd.read_parquet(corpus / "bench" / f"{gse}.parquet").T.astype("float64")
-    obs = meta[meta["DatasetID"] == gse].reindex(X.index).rename(columns={
-        "Age": "age", "Gender": "sex", "Condition": "condition",
-        "DatasetID": "dataset", "PlatformID": "gpl", "Tissue": "tissue"})
-    return fa.prepare(fa.FalconData(X=X, obs=obs, modality="dna_methylation"))
+    """Through the package's own loader, not a local copy of its renames."""
+    return fa.read_computage_bench(gse, root=str(corpus / "bench"))
 
 
 # ---------------------------------------------------------------------------
 # bench: EPIC, 450K, 27K
 # ---------------------------------------------------------------------------
-def test_epic_progeria_scores_every_tier_a_clock(corpus):
+def test_epic_progeria_scores_every_tier_a_clock_the_specimen_allows(corpus):
+    """Every tier A clock that has a calibration on blood, and no others.
+
+    This asserted 18 until the specimen check existed, which meant it was
+    scoring three placenta clocks, a cord-blood clock and a buccal clock on
+    adult blood and calling the numbers results. They are refused now, so the
+    count is 13 and the five names are pinned -- a silent drop back to 18 would
+    mean the check stopped running.
+    """
     d = _bench(corpus, "GSE182991")
     assert d.n_samples == 27
     assert d.platform == "EPICv1"
 
     res = fa.score(d, clocks="compatible")
-    assert res.scores.shape[1] >= 18
+    assert res.scores.shape[1] == 13
     assert res.scores.notna().all().all()
+
+    off_tissue = {cid for cid, why in res.skipped.items() if "tissue_policy=refuse" in why}
+    assert off_tissue == {"knight", "leecontrol", "leerobust", "leerefinedrobust", "pedbe"}
 
     # Horvath on blood spanning 0-41 should land in a human range, not a
     # transform-gone-wrong range.
@@ -123,15 +130,29 @@ def test_cord_blood_gestational_clocks(corpus):
     assert d.platform == "450K"
     assert "gestational_age_days" in d.obs.columns
 
-    res = fa.score(d, clocks=["knight", "leecontrol", "leerobust", "leerefinedrobust"])
+    # GSE66459 is umbilical cord blood. Knight was trained on it; the three Lee
+    # clocks were trained on placenta, and this test used to score all four and
+    # check only that the answers looked like gestational weeks -- which they
+    # do, because gestational age is gestational age whatever tissue you read
+    # it from. That is precisely the failure the specimen check exists to catch.
+    assert d.obs["tissue"].str.lower().str.contains("cord blood").all()
+
+    res = fa.score(d, clocks="compatible")
+    off_tissue = {cid for cid, why in res.skipped.items() if "tissue_policy=refuse" in why}
+    assert {"leecontrol", "leerobust", "leerefinedrobust"} <= off_tissue
+
     # Predictions are in weeks and should sit in a term-ish range.
-    for cid in res.scores.columns:
-        assert 25 < res.scores[cid].median() < 50, cid
+    assert 25 < res.scores["knight"].median() < 50
 
     # And they should track the recorded gestational age once it is in weeks --
     # the conversion the units module refuses to do silently.
     weeks = pd.to_numeric(d.obs["gestational_age_days"], errors="coerce") / 7.0
     assert res.scores["knight"].corr(weeks) > 0.3
+
+    # Asking for a placenta clock on cord blood by name is a refusal, not a
+    # skip: an explicit request is never silently dropped.
+    with pytest.raises(fa.core.errors.ScoringError, match="category error"):
+        fa.score(d, clocks=["leecontrol"])
 
 
 def test_gestational_days_are_not_silently_read_as_weeks(corpus):
@@ -234,6 +255,60 @@ def test_idat_pairs_parse(corpus, sub, n):
     assert (pair["grn"] >= 0).all()
     # Two channels of the same array must not be identical.
     assert not np.array_equal(pair["grn"], pair["red"])
+
+
+@pytest.mark.network
+def test_raw_idats_reproduce_the_published_betas_for_the_same_samples(corpus):
+    """The end-to-end check on the IDAT chain, and the only one that matters.
+
+    ``idat/epicv1`` holds the raw IDATs for GSM5548192 and GSM5548193.
+    ``bench/GSE182991.parquet`` holds the betas the authors published for those
+    same two physical samples. The two paths share nothing -- different files,
+    different pipelines, different decade -- so agreement is a real check on
+    the address decoding, the type I/II split and the channel assignment, which
+    is where a raw-array reader goes wrong.
+
+    Asserted on the *uncorrected* betas. GSE182991's published matrix agrees
+    with our decode at r = 0.999, which says its own processing was minimal;
+    comparing our background-corrected output against it would be asserting
+    that a correction does nothing.
+
+    Marked network: it needs the Illumina manifest, which is fetched once and
+    cached and is the only step in FALCONAge that is not offline.
+    """
+    grn = sorted((corpus / "idat" / "epicv1").glob("GSM5548193*_Grn.idat.gz"))[0]
+    red = grn.with_name(grn.name.replace("_Grn.", "_Red."))
+
+    sig = fa.preprocess.idat_to_betas(grn, red, correct=False, raw=True)
+    assert sig.platform == "EPICv1"
+    assert 0.005 < sig.summary()["frac_undetected"] < 0.10, "a normal failure rate"
+
+    ours = sig.betas(detection_p=None)
+    ref = fa.read_computage_bench("GSE182991", root=str(corpus / "bench"),
+                                  prepare=False).X.loc["GSM5548193"].dropna()
+    shared = ours.dropna().index.intersection(ref.index)
+    assert len(shared) > 750_000
+
+    x, y = ours[shared].to_numpy(), ref[shared].to_numpy()
+    ok = np.isfinite(x) & np.isfinite(y)
+    x, y = x[ok], y[ok]
+    assert np.corrcoef(x, y)[0, 1] > 0.99
+    assert float(np.median(np.abs(x - y))) < 0.03
+    assert float(np.mean(np.abs(x - y) < 0.05)) > 0.95
+
+
+@pytest.mark.network
+def test_the_manifest_that_decoded_a_matrix_is_recorded(corpus):
+    """A beta matrix is a function of which manifest turned addresses into
+    probes, in the way a score is a function of which coefficient file was
+    used. Recording one and not the other would be an odd place to stop."""
+    d = fa.read_idat_dir(corpus / "idat" / "epicv1")
+    rec = d.uns["idat_manifest"]
+    assert rec["platform"] == "EPICv1"
+    assert len(rec["sha256"]) == 64
+    assert rec["redistributed"].startswith("no")
+    assert int(rec["n_type_i"]) > 100_000 and int(rec["n_type_ii"]) > 500_000
+    assert "poobah" in d.uns["pipeline"] and "noob" in d.uns["pipeline"]
 
 
 # ---------------------------------------------------------------------------

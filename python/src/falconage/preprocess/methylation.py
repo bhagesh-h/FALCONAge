@@ -17,7 +17,7 @@ different failure mode:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
@@ -128,6 +128,10 @@ class QCReport:
     n_samples: int
     n_features: int
     warnings: list[str]
+    #: What happened to the specimen before the array read it. See
+    #: :mod:`falconage.core.preanalytical`; recorded even when empty, because
+    #: "nothing was recorded" is itself the finding.
+    preanalytical: dict = field(default_factory=dict)
 
     def summary(self) -> pd.Series:
         return pd.Series({
@@ -136,6 +140,7 @@ class QCReport:
             "n_features": self.n_features,
             "median_sample_missingness": float(self.per_sample["missing_fraction"].median()),
             "features_all_missing": int((self.per_feature["missing_fraction"] == 1.0).sum()),
+            "preanalytical_fields": self.preanalytical.get("n_recognised", 0),
             "warnings": len(self.warnings),
         })
 
@@ -188,8 +193,13 @@ def qc(data: FalconData, *, sample_missing_threshold: float = 0.1) -> QCReport:
     if "sex" in data.obs.columns:
         warnings.extend(_sex_check(data))
 
+    from ..core import preanalytical
+
+    warnings.extend(preanalytical.notes(data.obs))
+
     return QCReport(per_sample, per_feature, data.platform, data.n_samples,
-                    data.n_features, warnings)
+                    data.n_features, warnings,
+                    preanalytical=preanalytical.audit(data.obs))
 
 
 #: A handful of X-linked probes whose beta separates the sexes cleanly on every

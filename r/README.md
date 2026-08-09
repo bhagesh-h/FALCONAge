@@ -84,13 +84,60 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `obs()` | — |
 |  | `write_h5ad()` | — |
 |  | — | `fa.read()` |
+|  | — | `fa.read_bedmethyl()` |
+|  | — | `fa.read_bedmethyl_dir()` |
+|  | — | `fa.read_panel()` |
+|  | — | `fa.read_computage_bench()` |
+|  | — | `fa.list_computage_bench()` |
+|  | — | `fa.preprocess.read_olink()` |
+|  | — | `fa.preprocess.read_somascan()` |
+|  | — | `fa.preprocess.read_counts()` |
+| **Raw arrays** | — | `fa.idat_to_betas()` |
+|  | — | `fa.read_idat_dir()` |
+|  | — | `fa.preprocess.poobah()` |
+|  | — | `fa.preprocess.noob()` |
+|  | — | `fa.preprocess.dye_bias()` |
+|  | — | `fa.preprocess.bmiq()` |
+|  | — | `fa.preprocess.RawSignal()` |
+|  | — | `fa.preprocess.load_manifest()` |
+|  | — | `fa.preprocess.manifest_record()` |
+|  | — | `fa.preprocess.load_mask()` |
+|  | — | `fa.preprocess.mask_report()` |
+|  | — | `fa.preprocess.apply_mask()` |
 | **Preprocessing** | `prepare()` | `fa.prepare()` |
 |  | `qc()` | `fa.qc()` |
 |  | `probe_loss()` | — |
+|  | `fit_batch_reference()` | — |
+|  | `apply_batch_reference()` | — |
 |  | — | `fa.prepare_clinical()` |
 |  | — | `fa.probe_loss()` |
 |  | — | `fa.preprocess.aggregate_replicate_probes()` |
 |  | — | `fa.preprocess.impute()` |
+|  | — | `fa.fit_batch_reference()` |
+|  | — | `fa.apply_batch_reference()` |
+|  | — | `fa.preprocess.BatchReference()` |
+|  | — | `fa.preprocess.prepare_proteomic()` |
+|  | — | `fa.preprocess.prepare_transcriptomic()` |
+|  | — | `fa.preprocess.rle_normalise()` |
+|  | — | `fa.preprocess.yugene()` |
+|  | — | `fa.preprocess.median_centre()` |
+| **Uncertainty** | `technical_se()` | — |
+|  | `interval()` | — |
+|  | `conformal_interval()` | — |
+|  | `icc_from_replicates()` | — |
+|  | — | `fa.technical_se()` |
+|  | — | `fa.interval()` |
+|  | — | `fa.conformal_interval()` |
+|  | — | `fa.icc_from_replicates()` |
+|  | — | `fa.uncertainty.load_probe_icc()` |
+|  | — | `fa.uncertainty.probe_icc_source()` |
+|  | — | `fa.uncertainty.load_conformal()` |
+| **Study design** | `power_n()` | — |
+|  | `consensus()` | — |
+|  | — | `fa.power()` |
+|  | — | `fa.detectable_effect()` |
+|  | — | `fa.consensus()` |
+|  | — | `fa.registry.evidence()` |
 | **Scoring** | `score()` | `fa.score()` |
 |  | `combine()` | `fa.combine()` |
 |  | `as.data.frame.falcon_result()` | `fa.FalconResult()` |
@@ -115,6 +162,14 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 | **Clinical references** | `fit_kdm()` | `fa.models.fit_kdm()` |
 |  | `fit_hd()` | `fa.models.fit_hd()` |
 |  | — | `fa.models.clinical.phenoage()` |
+| **Model architectures** | — | `fa.models.AggregationClock()` |
+|  | — | `fa.models.NeuralClock()` |
+|  | — | `fa.models.read_neural_weights()` |
+|  | — | `fa.models.PCLinearClock()` |
+|  | — | `fa.models.read_rotation()` |
+|  | — | `fa.models.ScAgeReference()` |
+|  | — | `fa.models.fit_scage_reference()` |
+|  | — | `fa.models.scage()` |
 | **Figures and reports** | `plot_ba_vs_ca()` | `fa.plot.ba_vs_ca()` |
 |  | `plot_bland_altman()` | `fa.plot.bland_altman()` |
 |  | `plot_calibration()` | `fa.plot.calibration()` |
@@ -141,6 +196,10 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | — | `fa.plot.missingness()` |
 |  | — | `fa.plot.beta_density()` |
 |  | — | `fa.plot.study_comparison()` |
+|  | — | `fa.plot.reliability_forest()` |
+|  | — | `fa.plot.score_interval()` |
+|  | — | `fa.plot.platform_bias()` |
+|  | — | `fa.plot.consensus_plot()` |
 |  | — | `fa.plot.save_all()` |
 | **Downloading public data** | `download()` | `fa.download()` |
 |  | `cache_info()` | `fa.download.cache_info()` |

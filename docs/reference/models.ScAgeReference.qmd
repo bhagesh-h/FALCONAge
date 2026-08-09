@@ -1,0 +1,12 @@
+# models.ScAgeReference { #falconage.models.ScAgeReference }
+
+```python
+models.ScAgeReference(slope, intercept, r, age_min, age_max, n_reference)
+```
+
+Per-CpG linear models of bulk methylation on age.
+
+``slope`` and ``intercept`` per site, with the correlation that selected it
+and the age range it was fitted over. The range matters: the model is a
+straight line, and a candidate age outside where it was fitted is
+extrapolation with no data behind it.

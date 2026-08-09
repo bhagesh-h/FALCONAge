@@ -1,0 +1,53 @@
+# Split-conformal prediction intervals against chronological age.
+# half_width is the ceil((n+1)*level)/n quantile of the absolute
+# residual on the calibration set: healthy-control blood samples
+# with a recorded age, from the FALCONAge test corpus.
+# Coverage holds for data EXCHANGEABLE with that cohort. It is
+# public blood data, adult, and overwhelmingly of European ancestry;
+# on a paediatric or non-European cohort the guarantee does not
+# transfer, and no widening factor here would make it.
+# age_band 'all' is the shipped interval; the banded rows are
+# diagnostics showing where one width is too wide or too narrow.
+clock,age_band,level,half_width,median_bias,mae,usable,n_calibration,exact
+dnamphenoage,0-30,0.9,32.657,-13.2844,17.7577,True,55,True
+dnamphenoage,30-50,0.9,28.5001,-13.6951,16.1781,True,61,True
+dnamphenoage,50-70,0.9,30.5534,-11.1861,15.4532,True,36,True
+dnamphenoage,all,0.8,24.9284,-11.7847,16.0946,True,164,True
+dnamphenoage,all,0.9,31.7941,-11.7847,16.0946,True,164,True
+dnamphenoage,all,0.95,41.1716,-11.7847,16.0946,True,164,True
+hannum,all,0.8,19.7126,1.5865,10.5572,True,52,True
+hannum,all,0.9,27.9344,1.5865,10.5572,True,52,True
+hannum,all,0.95,33.7913,1.5865,10.5572,True,52,True
+horvath2013,0-30,0.9,10.0172,1.5389,5.0435,True,55,True
+horvath2013,30-50,0.9,12.2368,0.1307,6.7471,True,61,True
+horvath2013,50-70,0.9,11.5096,-2.3153,7.1299,True,36,True
+horvath2013,all,0.8,9.4293,0.0965,6.2389,True,164,True
+horvath2013,all,0.9,11.9562,0.0965,6.2389,True,164,True
+horvath2013,all,0.95,15.2037,0.0965,6.2389,True,164,True
+hrsinchphenoage,all,0.8,29.7414,-16.1138,18.4804,True,52,True
+hrsinchphenoage,all,0.9,33.859,-16.1138,18.4804,True,52,True
+hrsinchphenoage,all,0.95,41.5364,-16.1138,18.4804,True,52,True
+lin,0-30,0.9,25.4501,-10.4616,13.0126,True,55,True
+lin,30-50,0.9,16.7112,-7.2264,9.9383,True,61,True
+lin,50-70,0.9,26.2719,-15.3111,15.1257,True,36,True
+lin,all,0.8,18.8447,-10.1885,12.3184,True,164,True
+lin,all,0.9,24.951,-10.1885,12.3184,True,164,True
+lin,all,0.95,29.1236,-10.1885,12.3184,True,164,True
+skinandblood,all,0.8,6.7967,1.3965,4.4101,True,52,True
+skinandblood,all,0.9,12.3343,1.3965,4.4101,True,52,True
+skinandblood,all,0.95,26.0214,1.3965,4.4101,True,52,True
+vidalbralo,0-30,0.9,32.3942,11.5469,14.8319,True,51,True
+vidalbralo,30-50,0.9,17.9107,4.5281,7.6453,True,56,True
+vidalbralo,50-70,0.9,15.3759,-0.8976,8.6784,True,36,True
+vidalbralo,all,0.8,14.4859,4.854,10.225,True,155,True
+vidalbralo,all,0.9,21.7831,4.854,10.225,True,155,True
+vidalbralo,all,0.95,32.3727,4.854,10.225,True,155,True
+yingcausage,all,0.8,16.9128,-10.5733,9.8819,True,40,True
+yingcausage,all,0.9,18.2793,-10.5733,9.8819,True,40,True
+yingcausage,all,0.95,23.7931,-10.5733,9.8819,True,40,True
+zhangblup,all,0.8,51.5902,31.1131,32.017,True,52,True
+zhangblup,all,0.9,54.9349,31.1131,32.017,True,52,True
+zhangblup,all,0.95,56.8569,31.1131,32.017,True,52,True
+zhangen,all,0.8,38.484,19.638,20.5933,True,52,True
+zhangen,all,0.9,40.9328,19.638,20.5933,True,52,True
+zhangen,all,0.95,41.3371,19.638,20.5933,True,52,True

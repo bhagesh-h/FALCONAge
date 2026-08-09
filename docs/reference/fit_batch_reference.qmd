@@ -1,0 +1,21 @@
+# fit_batch_reference { #falconage.fit_batch_reference }
+
+```python
+fit_batch_reference(
+    data,
+    *,
+    batch_col,
+    covariates=(),
+    protect=('condition', 'group'),
+    min_batch=MIN_BATCH,
+)
+```
+
+Fit the frozen global parameters on a reference cohort.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type            | Description                                                                                                                                                         | Default                  |
+|------------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
+| covariates | Sequence\[str\] | Columns of ``obs`` whose effect should be preserved rather than removed -- typically age and sex. Numeric columns enter as themselves; categorical ones as dummies. | `()`                     |
+| protect    | Sequence\[str\] | Columns checked for being nested inside batch. See :func:`_check_confounding`; pass ``()`` to skip.                                                                 | `('condition', 'group')` |

@@ -9,7 +9,7 @@
 #   C  scaffold only -- architecture implemented, coefficients not ours to give
 ---
 schema_version: 1
-registry_version: "1.0.0"
+registry_version: "1.1.0"
 clocks:
   abec:
     name: "abec"
@@ -138,6 +138,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["cord blood"]
+    tissue_policy: "refuse"   # cord blood; an adult blood clock has no calibration there, nor the reverse
     platform: ["450K"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -258,6 +259,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "first"
     tissue: ["brain cortex"]
+    tissue_policy: "refuse"   # brain cortex; post-mortem neural tissue, no peripheral counterpart
     platform: ["450K"]
     predicts: ["chronological age"]
     training_target: ["chronological age"]
@@ -937,6 +939,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["neonatal blood spots"]
+    tissue_policy: "refuse"   # neonatal blood spots; distinct cell composition, near-zero age range
     platform: ["EPICv1"]
     predicts: ["Down syndrome methylation score"]
     training_target: ["not applicable"]
@@ -1210,6 +1213,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["cord blood"]
+    tissue_policy: "refuse"   # cord blood; an adult blood clock has no calibration there, nor the reverse
     platform: ["EPICv1"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -1414,6 +1418,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "first"
     tissue: ["brain cortex"]
+    tissue_policy: "refuse"   # brain cortex; post-mortem neural tissue, no peripheral counterpart
     platform: ["450K"]
     predicts: ["chronological age"]
     training_target: ["chronological age"]
@@ -2068,6 +2073,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["cord blood", "neonatal blood spots"]
+    tissue_policy: "refuse"   # cord blood; an adult blood clock has no calibration there, nor the reverse
     platform: ["27K", "450K"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -2098,6 +2104,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["placenta"]
+    tissue_policy: "refuse"   # placenta clock; nothing outside placenta has a calibration
     platform: ["450K", "EPICv1"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -2128,6 +2135,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["placenta"]
+    tissue_policy: "refuse"   # placenta clock; nothing outside placenta has a calibration
     platform: ["450K", "EPICv1"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -2158,6 +2166,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["placenta"]
+    tissue_policy: "refuse"   # placenta clock; nothing outside placenta has a calibration
     platform: ["450K", "EPICv1"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -2482,6 +2491,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "other"
     tissue: ["placenta"]
+    tissue_policy: "refuse"   # placenta clock; nothing outside placenta has a calibration
     platform: ["27K", "450K"]
     predicts: ["gestational age"]
     training_target: ["gestational age"]
@@ -2841,6 +2851,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "first"
     tissue: ["brain cortex"]
+    tissue_policy: "refuse"   # brain cortex; post-mortem neural tissue, no peripheral counterpart
     platform: ["450K"]
     predicts: ["chronological age"]
     training_target: ["chronological age"]
@@ -3083,6 +3094,7 @@ clocks:
     data_type: "dna_methylation"
     generation: "first"
     tissue: ["buccal epithelium"]
+    tissue_policy: "refuse"   # buccal clock; blood is a different cell population, not an offset
     platform: ["450K", "EPICv1"]
     predicts: ["chronological age"]
     training_target: ["chronological age"]
@@ -4657,7 +4669,7 @@ clocks:
     predicts: ["adaptive epigenetic age"]
     training_target: ["chronological age"]
     unit: ["years"]
-    scale_type: "age_years"
+    scale_type: "age_years_relative"   # years, slope ~1, but no fixed origin -- see known_discrepancies
     model_type: "causality-weighted elastic net regression"
     population: "adults"
     n_features: 999
@@ -4667,6 +4679,8 @@ clocks:
     doi: "https://doi.org/10.1038/s43587-023-00557-0"
     notes: "Causality-enriched age predictor restricted to adaptive/protective age-related CpGs, with feature penalties weighted by EWMR causality scores."
     known_discrepancies:
+      - >-
+        Scored across three healthy cohorts in the FALCONAge corpus, this clock's median offset against chronological age swings 162 years between datasets while Horvath2013's swings 15; DamAge and AdaptAge move as near mirror images (r = -0.975) and the swing in their sum is only 33, so the cause is one dataset-level shift amplified by their opposing intercepts of +543.43 and -511.97 rather than a fault in either. The slope against age is sound (0.967 pooled for DamAge). The scale is therefore age_years_relative: the residual and group differences are defined, predicted-minus-chronological is not.
       - "The paper reports 1,000 CpGs; the coefficient set carries 999. The same off-by-one
         appears in all three Ying clocks, consistent with the paper's total counting an
         intercept row as a feature."
@@ -4725,7 +4739,7 @@ clocks:
     predicts: ["damaging epigenetic age"]
     training_target: ["chronological age"]
     unit: ["years"]
-    scale_type: "age_years"
+    scale_type: "age_years_relative"   # years, slope ~1, but no fixed origin -- see known_discrepancies
     model_type: "causality-weighted elastic net regression"
     population: "adults"
     n_features: 1089
@@ -4735,6 +4749,8 @@ clocks:
     doi: "https://doi.org/10.1038/s43587-023-00557-0"
     notes: "Causality-enriched age predictor restricted to damaging age-related CpGs, with feature penalties weighted by EWMR causality scores."
     known_discrepancies:
+      - >-
+        Scored across three healthy cohorts in the FALCONAge corpus, this clock's median offset against chronological age swings 162 years between datasets while Horvath2013's swings 15; DamAge and AdaptAge move as near mirror images (r = -0.975) and the swing in their sum is only 33, so the cause is one dataset-level shift amplified by their opposing intercepts of +543.43 and -511.97 rather than a fault in either. The slope against age is sound (0.967 pooled for DamAge). The scale is therefore age_years_relative: the residual and group differences are defined, predicted-minus-chronological is not.
       - "The paper reports 1,090 CpGs; the coefficient set carries 1,089. The same off-by-one
         appears in all three Ying clocks, consistent with the paper's total counting an
         intercept row as a feature."

@@ -57,6 +57,12 @@ class RunManifest:
     coverage: dict[str, dict[str, Any]] = field(default_factory=dict)
     warnings: list[dict[str, str]] = field(default_factory=list)
     skipped: dict[str, str] = field(default_factory=dict)
+    #: What happened to the specimens before the assay: which of the recognised
+    #: pre-analytical fields were supplied, which were not, and which crossed a
+    #: published threshold. See :mod:`falconage.core.preanalytical`. Recorded
+    #: even when empty -- a manifest that says "storage time unknown" is more
+    #: use than one that says nothing at all.
+    preanalytical: dict[str, Any] = field(default_factory=dict)
 
     def add_input(self, path: str | Path, role: str = "data") -> None:
         p = Path(path)

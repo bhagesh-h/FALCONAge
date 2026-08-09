@@ -1,0 +1,12 @@
+# plot.consensus_plot { #falconage.plot.consensus_plot }
+
+```python
+plot.consensus_plot(report, *, alpha=0.05)
+```
+
+The multi-clock verdict, drawn.
+
+Effect size per clock, coloured by generation, with the two correction
+thresholds marked. The point of the figure is the shape rather than any one
+bar: a real change lights up across generations, and a single lit bar among
+twenty dark ones is the published signature of a false positive.

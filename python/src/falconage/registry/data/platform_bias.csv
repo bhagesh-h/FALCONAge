@@ -1,0 +1,39 @@
+# Platform probe-loss bias, measured not assumed.
+# Each 450K dataset in the FALCONAge test corpus is scored twice: once whole,
+# once masked to the probes it shares with the target platform. The shift is
+# the difference, per sample, in the clock's own unit.
+# Probe sets are read off real arrays in the corpus, so they reflect what a user
+# with that platform has after ordinary filtering -- not the manifest's ideal.
+# datasets: 5; bootstrap resamples: 2000; seed: 20260809
+# Reported, never applied. See docs/science.qmd.
+clock,platform,unit,n_samples,probes_retained,probes_total,median_shift,iqr,ci_lo,ci_hi,max_abs_shift
+dnamphenoage,EPICv1,years,109,511,513,-0.1112,0.326,-0.2073,-0.0282,0.7129
+dnamtl,EPICv1,kilobases,109,134,140,0.0353,0.016,0.0327,0.0375,0.0732
+dunedinpoam38,EPICv1,biological years per chronological year,109,44,46,0.0033,0.015,0.0,0.008,0.0509
+hannum,EPICv1,years,109,63,71,-5.2391,7.1366,-7.0232,-4.4825,13.3825
+horvath2013,EPICv1,years,109,333,353,-5.8046,1.8653,-6.0176,-5.3125,9.2495
+hrsinchphenoage,EPICv1,years,109,946,959,0.8168,0.332,0.7828,0.8718,1.3858
+lin,EPICv1,years,109,96,99,-8.9488,2.1699,-9.2819,-8.5449,11.8249
+skinandblood,EPICv1,years,109,385,391,1.9625,1.8001,1.5027,2.1279,3.2647
+vidalbralo,EPICv1,years,109,8,8,0.0,0.0,0.0,0.0,0.0
+yingadaptage,EPICv1,years,109,997,999,-0.0038,0.001,-0.004,-0.0036,0.0048
+yingcausage,EPICv1,years,109,413,585,-13.338,2.9667,-13.6946,-12.8925,18.9594
+yingdamage,EPICv1,years,109,1089,1089,0.0,0.0,0.0,0.0,0.0
+zhangblup,EPICv1,years,109,315834,319607,0.5675,0.237,0.5094,0.5894,0.969
+zhangen,EPICv1,years,109,511,514,0.787,0.3379,0.718,0.843,1.0122
+zhangmortality,EPICv1,unitless,109,8,10,0.4382,0.3838,0.353,0.4676,0.671
+dnamphenoage,EPICv2,years,109,494,513,4.2249,2.397,3.7381,4.4344,7.7406
+dnamtl,EPICv2,kilobases,109,106,140,-0.0744,0.0593,-0.0835,-0.0612,0.1608
+dunedinpoam38,EPICv2,biological years per chronological year,109,31,46,-0.294,0.3108,-0.3986,-0.203,0.6961
+hannum,EPICv2,years,109,64,71,-7.6852,8.4761,-8.972,-6.1498,16.1818
+horvath2013,EPICv2,years,109,339,353,-2.6164,1.8098,-2.8693,-2.0743,4.5316
+hrsinchphenoage,EPICv2,years,109,874,959,16.7457,3.8182,16.1931,17.2746,23.3618
+lin,EPICv2,years,109,96,99,-9.3694,2.1968,-9.646,-8.81,11.8957
+skinandblood,EPICv2,years,109,373,391,-0.8285,1.1585,-1.0815,-0.6764,4.7178
+vidalbralo,EPICv2,years,109,8,8,0.0,0.0,0.0,0.0,0.0
+yingadaptage,EPICv2,years,109,935,999,1.7092,2.435,1.192,2.0842,3.9785
+yingcausage,EPICv2,years,109,492,585,13.9051,2.7043,13.1195,14.3536,20.9886
+yingdamage,EPICv2,years,109,1009,1089,9.1664,5.8016,8.1587,9.9802,15.1212
+zhangblup,EPICv2,years,109,286843,319607,-0.2275,1.6045,-0.4955,0.4228,1.592
+zhangen,EPICv2,years,109,493,514,0.3709,0.4892,0.2346,0.5305,0.8436
+zhangmortality,EPICv2,unitless,109,9,10,-0.0202,0.7772,-0.197,0.0522,0.9155

@@ -18,6 +18,7 @@ RunManifest(
     coverage=dict(),
     warnings=list(),
     skipped=dict(),
+    preanalytical=dict(),
 )
 ```
 

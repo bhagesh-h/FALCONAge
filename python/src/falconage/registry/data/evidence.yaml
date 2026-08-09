@@ -1,0 +1,233 @@
+# Published associations, per clock, with their effect sizes.
+#
+# WHY THIS FILE EXISTS. A score is a number until somebody can say what a number
+# like it has been shown to mean. Every other part of this registry describes
+# how a clock is computed; this describes what it has been observed to predict,
+# in whose cohort, at what magnitude.
+#
+# WHAT GOES IN. Effect sizes from studies that tested many clocks on one cohort
+# under one protocol, so the entries are comparable to each other. Single-clock
+# papers report their own clock favourably and are not comparable across rows;
+# they are not seeded here.
+#
+# EVERY ROW CARRIES A DOI. A row without one does not go in -- the value of the
+# table is that a reader can check it, and an uncheckable effect size is worse
+# than none because it looks the same as a checkable one.
+#
+# Fields:
+#   outcome     what was predicted
+#   measure     hazard_ratio | r2 | icc | count | note
+#   value       the number, in the measure's own terms
+#   per         what a unit of the predictor is (per SD, per year, ...)
+#   n           sample size
+#   population  cohort and its composition, as reported
+#   followup    years, where the design has one
+#   doi         the paper
+#   note        anything a reader needs to not misread the row
+
+schema_version: 1
+registry_version: "1.1.0"
+
+sources:
+  natcomm2025:
+    citation: >-
+      An unbiased comparison of 14 epigenetic clocks in relation to 174 incident
+      disease outcomes. Nature Communications 2025.
+    doi: 10.1038/s41467-025-66106-y
+    design: >-
+      n = 18,859, Generation Scotland, 10-year follow-up, 174 incident diseases
+      plus all-cause mortality. Age, Salas-method cell proportions and
+      relatedness regressed out of every clock before analysis; fully adjusted
+      models add BMI, smoking, alcohol, education and deprivation.
+  nataging2025:
+    citation: >-
+      A unified framework for systematic curation and evaluation of aging
+      biomarkers. Nature Aging 2025;5:2323-2339 (Biolearn).
+    doi: 10.1038/s43587-025-00987-y
+    design: >-
+      39 biomarkers evaluated across more than 20,000 individuals from several
+      cohorts under one pipeline.
+  natagng2022:
+    citation: >-
+      A computational solution for bolstering reliability of epigenetic clocks.
+      Nature Aging 2022;2:644-661.
+    doi: 10.1038/s43587-022-00248-2
+    design: >-
+      Technical replicates of the same DNA across six prominent clocks and their
+      principal-component retrainings.
+
+# ---------------------------------------------------------------------------
+# cross-clock findings: true of the set, not of any one entry
+# ---------------------------------------------------------------------------
+general:
+  - source: nataging2025
+    measure: correlation
+    value: 0.12
+    p: 0.67
+    outcome: >-
+      agreement between a clock's chronological-age accuracy and its mortality
+      prediction, across 39 biomarkers
+    note: >-
+      The empirical statement behind scale_type and LEGAL_OPS. Being good at
+      guessing age tells you nothing about whether the clock predicts anything
+      worth knowing, so the two capabilities must not be reported as one.
+  - source: natcomm2025
+    measure: share
+    value: 0.05
+    outcome: >-
+      share of all Bonferroni-significant clock-disease associations contributed
+      by first-generation clocks (Horvath, Hannum, Lin, Zhang10, Skin and Blood)
+    note: >-
+      Their average log hazards were about 50% smaller than the second- and
+      third-generation clocks'. The paper's recommendation is to prioritise
+      second- and third-generation clocks for disease association work, and that
+      no single clock is best across diseases.
+  - source: natagng2022
+    measure: note
+    value: 9
+    outcome: >-
+      largest deviation in years between technical replicates of the same DNA,
+      across six prominent clocks
+    note: >-
+      Principal-component retrainings brought most replicate pairs within 1.5
+      years. The same paper puts the design cost at 3-16 replicates per
+      condition for the original clocks against 1-2 for the PC versions.
+
+# ---------------------------------------------------------------------------
+# per clock
+# ---------------------------------------------------------------------------
+clocks:
+
+  grimage2:
+    - source: natcomm2025
+      outcome: all-cause mortality
+      measure: hazard_ratio
+      value: 1.54
+      per: 1 SD
+      n: 18859
+      followup: 10
+      population: Generation Scotland, adult, Scottish
+    - source: natcomm2025
+      outcome: cirrhosis
+      measure: hazard_ratio
+      value: 1.86
+      per: 1 SD
+      n: 18859
+      followup: 10
+      population: Generation Scotland, adult, Scottish
+    - source: natcomm2025
+      outcome: number of Bonferroni-significant associations across 174 diseases
+      measure: count
+      value: 37
+      note: the largest of the 14 clocks tested, tied in rank with DunedinPACE
+    - source: nataging2025
+      outcome: all-cause mortality
+      measure: hazard_ratio
+      value: 2.57
+      population: pooled across cohorts, n > 20,000
+      note: strongest mortality association of the 39 biomarkers evaluated
+    - source: nataging2025
+      outcome: healthspan
+      measure: hazard_ratio
+      value: 2.00
+      population: pooled across cohorts, n > 20,000
+
+  grimage:
+    - source: natcomm2025
+      outcome: primary lung cancer
+      measure: hazard_ratio
+      value: 1.56
+      per: 1 SD
+      n: 18859
+      followup: 10
+      population: Generation Scotland, adult, Scottish
+
+  dunedinpace:
+    - source: natcomm2025
+      outcome: type 2 diabetes
+      measure: hazard_ratio
+      value: 1.44
+      per: 1 SD
+      n: 18859
+      followup: 10
+      population: Generation Scotland, adult, Scottish
+    - source: natcomm2025
+      outcome: number of Bonferroni-significant associations across 174 diseases
+      measure: count
+      value: 33
+      note: >-
+        second of the 14, and the only pace-of-aging measure among the leaders.
+        A pace is a rate, so it is compared between groups and never turned into
+        an age acceleration.
+
+  skinandblood:
+    - source: nataging2025
+      outcome: chronological age
+      measure: r2
+      value: 0.88
+      population: pooled across cohorts, n > 20,000
+      note: >-
+        the most accurate age predictor of the 39 evaluated, and by the same
+        paper's cross-clock correlation of 0.12 that says nothing about its
+        usefulness for anything else.
+
+  dnamphenoage:
+    - source: natcomm2025
+      outcome: incident disease across 174 outcomes
+      measure: note
+      value: 0
+      note: >-
+        Grouped with GrimAge and DunedinPACE as the outcome-trained clocks that
+        accounted for the majority of significant associations. The paper does
+        not report a single headline hazard ratio for PhenoAge; see its
+        supplementary tables for the per-disease values.
+
+  horvath2013:
+    - source: natcomm2025
+      outcome: incident disease across 174 outcomes
+      measure: note
+      value: 0
+      note: >-
+        First generation. Contributed to the ~5% of significant associations
+        that the five age-trained clocks produced between them. Use it for what
+        it was trained on -- chronological age across tissues -- not for disease
+        risk.
+
+  hannum:
+    - source: natcomm2025
+      outcome: incident disease across 174 outcomes
+      measure: note
+      value: 0
+      note: >-
+        First generation, and the clock most disrupted by array probe loss in
+        this package's own measurement: see registry/data/platform_bias.csv.
+
+  dunedinpoam38:
+    - source: natcomm2025
+      outcome: incident disease across 174 outcomes
+      measure: note
+      value: 0
+      note: >-
+        The earlier pace measure, superseded by DunedinPACE, which outperformed
+        it in the same head-to-head.
+
+  dnamtl:
+    - source: natcomm2025
+      outcome: incident disease across 174 outcomes
+      measure: note
+      value: 0
+      note: >-
+        Included in the 14. Reported in kilobases of telomere length, so a
+        higher score is the younger direction -- the opposite sign convention
+        from every age clock beside it.
+
+  yingcausage:
+    - source: natcomm2025
+      outcome: incident disease across 174 outcomes
+      measure: note
+      value: 0
+      note: >-
+        One of the three causality-partitioned Ying clocks in the comparison.
+        This package's own conformal calibration puts DamAge and AdaptAge tens
+        of years from chronological age; they are components, not age
+        predictors, whatever their declared unit.

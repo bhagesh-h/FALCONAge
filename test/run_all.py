@@ -70,13 +70,15 @@ def figdir(group: str, dataset: str) -> Path:
 
 
 def make_figures(group, dataset, result, *, data=None, bench=None, acc=None,
-                 group_col=None, platform_col=None, dataset_col=None):
+                 group_col=None, platform_col=None, dataset_col=None,
+                 se=None, conformal=None, consensus=None):
     from falconage import plot as fplot
 
     try:
         w = fplot.save_all(result, figdir(group, dataset), data=data, bench=bench,
                            acc=acc, group=group_col, platform_col=platform_col,
-                           dataset_col=dataset_col)
+                           dataset_col=dataset_col, se=se, conformal=conformal,
+                           consensus=consensus)
         log(f"    {len(w)} figure(s)")
         return list(w)
     except Exception as exc:
@@ -92,11 +94,14 @@ def write_table(d: Path, name: str, df: pd.DataFrame, index: bool = True) -> Non
 # bench: the ComputAgeBench studies
 # ---------------------------------------------------------------------------
 def load_bench(gse: str, meta: pd.DataFrame) -> fa.FalconData:
-    X = pd.read_parquet(DATA / "bench" / f"{gse}.parquet").T.astype("float64")
-    obs = meta[meta["DatasetID"] == gse].reindex(X.index).rename(columns={
-        "Age": "age", "Gender": "sex", "Condition": "condition",
-        "DatasetID": "dataset", "PlatformID": "gpl", "Tissue": "tissue"})
-    return fa.prepare(fa.FalconData(X=X, obs=obs, modality="dna_methylation"))
+    """One benchmark study, through the package's own loader.
+
+    This used to be four lines of column renames here, four more in the
+    integration tests, and two more in each derivation script. They agreed
+    until they did not; `fa.read_computage_bench` is now the single copy.
+    `meta` is unused and kept so the call sites read unchanged.
+    """
+    return fa.read_computage_bench(gse, root=str(DATA / "bench"))
 
 
 def run_bench(records: dict) -> None:
@@ -124,6 +129,29 @@ def run_bench(records: dict) -> None:
         write_table(dd, "acceleration_residual", acc)
         write_table(dd, "agreement_spearman", fa.agreement(res))
 
+        # How much of the table above is the assay. Written beside the scores
+        # rather than offered separately: a score table without its measurement
+        # error is the thing v1.1 exists to stop shipping.
+        se = conf = cons = None
+        try:
+            se = fa.technical_se(res, d)
+            write_table(dd, "technical_se", se.se)
+            write_table(dd, "reliability_diagnostics", se.diagnostics)
+        except Exception as exc:
+            log(f"    technical_se skipped: {exc}")
+        try:
+            conf = fa.conformal_interval(res, level=0.90)
+            write_table(dd, "conformal_interval", conf, index=False)
+        except Exception as exc:
+            log(f"    conformal skipped: {exc}")
+        try:
+            cons = fa.consensus(res, "condition", reference="HC")
+            write_table(dd, "consensus", cons.table)
+            (dd / "consensus_verdict.txt").write_text(
+                f"{cons.verdict}\n{cons.why}\n", encoding="utf-8")
+        except Exception as exc:
+            log(f"    consensus skipped: {exc}")
+
         try:
             from falconage.report import write_report
             write_report(res, dd / "report.html", group="condition")
@@ -131,7 +159,8 @@ def run_bench(records: dict) -> None:
             log(f"    report skipped: {exc}")
 
         figs = make_figures("bench", gse, res, data=d, acc=acc, group_col="condition",
-                            platform_col="gpl", dataset_col="dataset")
+                            platform_col="gpl", dataset_col="dataset",
+                            se=se, conformal=conf, consensus=cons)
 
         conds = d.obs["condition"].value_counts().to_dict()
         rows.append({
@@ -218,13 +247,24 @@ def run_gestational(records: dict) -> None:
     if not p.exists():
         return
     d = fa.prepare(fa.read_series_matrix(p))
-    clocks = ["knight", "leecontrol", "leerobust", "leerefinedrobust"]
-    res = fa.score(d, clocks=clocks)
+    # GSE66459 is umbilical cord blood. Knight was trained on it; the three Lee
+    # clocks were trained on placenta. Until v1.1 this scored all four and
+    # checked only that the answers looked like gestational weeks -- which they
+    # did, because gestational age is gestational age whatever tissue you read
+    # it from. `compatible` now refuses the placenta clocks by name, and the
+    # refusals are recorded beside the scores rather than worked around.
+    res = fa.score(d, clocks="compatible")
+    clocks = list(res.scores.columns)
 
     dd = outdir("gestational", "GSE66459")
     write_table(dd, "scores_wide", res.wide())
     write_table(dd, "coverage", res.qc(), index=False)
     res.manifest.write(dd / "run_manifest.json")
+    off_tissue = {k: v for k, v in res.skipped.items() if "tissue_policy=refuse" in v}
+    if off_tissue:
+        write_table(dd, "refused_off_tissue",
+                    pd.DataFrame({"clock": list(off_tissue), "why": list(off_tissue.values())}),
+                    index=False)
 
     weeks = pd.to_numeric(d.obs["gestational_age_days"], errors="coerce") / 7.0
     cmp = pd.DataFrame({
@@ -237,7 +277,8 @@ def run_gestational(records: dict) -> None:
     write_table(dd, "vs_recorded_gestational_age", cmp, index=False)
     make_figures("gestational", "GSE66459", res, data=d)
     records["gestational"] = cmp
-    log(f"  gestational/GSE66459: {d.n_samples}n, 4 clocks")
+    log(f"  gestational/GSE66459: {d.n_samples}n, {len(clocks)} clocks, "
+        f"{len(off_tissue)} refused off-tissue")
 
 
 def run_mammalian(records: dict) -> None:
@@ -483,6 +524,11 @@ GALLERY_SOURCES = [
     ("forest",                "bench", "_combined", "effect sizes with intervals"),
     ("kaplan_meier",     "clinical", "synthetic", "the only cohort with a follow-up time; synthetic, and the gallery notes say so"),
     ("volcano",          "clinical", "synthetic", "same cohort, the only one with a continuous outcome to regress on"),
+    # ---- v1.1: how much of the numbers above is the assay ----------------
+    ("reliability_forest", "bench", "GSE182991", "EPIC, widest age range, so the spread the noise is measured against is real"),
+    ("score_interval",     "bench", "GSE182991", "same cohort; both intervals drawn on one clock"),
+    ("platform_bias",      "bench", "_combined", "read off the shipped measurement table, not this dataset"),
+    ("consensus_plot",     "bench", "GSE107143", "the one condition every clock detects, so the verdict is 'supported'"),
 ]
 
 

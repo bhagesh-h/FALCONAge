@@ -2861,3 +2861,79 @@ clock coefficients were derived under.
 
 **Mammalian species table.** The AnAge lookup that the mammalian clocks need covers 1,756
 species, and its licence and redistribution terms need checking before it is packaged.
+
+
+## 15. What v1.1 added, and where it sits
+
+Sections 1–14 describe the architecture that computes a score. This one describes the layer added
+in v1.1, which describes how much that score is worth. It is deliberately a *layer*: nothing below
+changed, no score moved, and every new artefact is reported rather than applied.
+
+### 15.1 New modules
+
+| Module | What it holds |
+|---|---|
+| `falconage.uncertainty` | `technical_se`, `interval`, `conformal_interval`, `icc_from_replicates`, and the loaders for the two calibration tables |
+| `falconage.core.tissue` | the specimen alias table, families, and the published discordance between them |
+| `falconage.core.preanalytical` | the recognised `obs` fields, their thresholds, and the manifest block |
+| `falconage.preprocess.batch` | `fit_batch_reference`, `apply_batch_reference`, `BatchReference` |
+| `falconage.models.ops.DERIVATIVE` | an analytic derivative per transform, and an explicit refusal for the four that destroy the information |
+| `python/tools/` | the three derivation scripts for the shipped data artefacts |
+
+### 15.2 New registry artefacts
+
+Each is derived by a script in `python/tools/`, digest-checked, and carries its provenance into
+the run manifest. None can be regenerated in CI — two need the 586 MB corpus, one needs a 72 MB
+published spreadsheet — so CI checks that the shipped files parse and cover what they claim
+instead, and the local `--check` catches staleness before a commit.
+
+| File | Rows | Source | Built by |
+|---|---:|---|---|
+| `probe_icc.csv.gz` | 283,860 | ADNI duplicates, EPIC v1, CC BY 4.0 | `build_probe_icc.py` |
+| `platform_bias.csv` | 30 | this corpus, masked and rescored | `build_platform_bias.py` |
+| `conformal.csv` | 48 | healthy controls in this corpus | `build_conformal.py` |
+| `evidence.yaml` | 18 | multi-clock comparison studies | hand-curated, DOI enforced at load |
+
+### 15.3 Where the checks fire
+
+The registry already declared three properties that scoring enforced. v1.1 adds two more, and they
+use the same shape — a declared property of the clock, checked in `score()`, refusing when the
+substitution is a category error and warning when it is an offset.
+
+| Declared | Enforced since | Refuses when |
+|---|---|---|
+| `scale_type` → `LEGAL_OPS` | v1.0 | an operation is undefined for the output's scale |
+| coverage / coefficient mass | v1.0 | too much of the model is absent |
+| `availability` tier | v1.0 | the coefficients are not distributable |
+| `requires_cohort` | v1.0 | a cohort-centred clock is given one sample |
+| **`tissue_policy`** | **v1.1** | a clock is scored off a tissue with no counterpart, or on cell-free DNA |
+| **`age_years_relative`** | **v1.1** | the absolute acceleration convention is asked of a clock whose origin moves between cohorts |
+
+The last one also fixed a latent gap rather than only adding a rule.
+`LEGAL_OPS` has listed `acceleration` and `residual` as separate entries since
+v1.0, but `acceleration()` checked `"acceleration"` whatever convention was
+asked for, so the distinction in the data model was never read. It is now:
+`absolute` and `both` need `acceleration`, `residual` and `within_group` need
+`residual`.
+
+### 15.4 Figure inventory, updated
+
+Twenty-six figure types, four of them new:
+
+| Figure | Answers |
+|---|---|
+| `reliability_forest` | which of these clocks can be trusted to move |
+| `score_interval` | which two samples are actually distinguishable |
+| `platform_bias` | what this array costs each clock, in years |
+| `consensus_plot` | did the difference hold up across clocks, or is it one clock |
+
+`save_all()` takes `se=`, `conformal=` and `consensus=` and emits them when given; `test/run_all.py`
+computes all three per dataset, so the gallery figures come from real public data rather than a
+synthetic demonstration.
+
+### 15.5 What did not change
+
+No score. The v1.0 numbers are bit-identical in v1.1 for any dataset whose clocks were legal to
+score in the first place — the two integration tests that changed did so because they were
+scoring placenta clocks on cord blood and buccal clocks on adult blood, and those results were
+wrong before the check existed rather than different after it.

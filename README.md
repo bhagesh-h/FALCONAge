@@ -357,12 +357,33 @@ normalisation, platform detection from the probe pattern, and clipping to [0, 1]
 for a beta CSV or Parquet (`read_betas`), a GEO series matrix (`read_series_matrix`) and RRBS
 coverage files (`read_rrbs_dir`).
 
-**Normalisation is not included, and this is a real limit rather than an omission to be inferred
-from silence.** There is no `noob`, no `BMIQ`, no detection-p filter and no cross-reactive or SNP
-probe mask in v1.0. IDAT intensities can be parsed (`io.read_idat_pair`) but turning addresses
-into probe ids needs the Illumina manifest, which the package does not vendor. If your input is
-raw IDATs, normalise with sesame or minfi first and bring the beta matrix here. See
-[ROADMAP.md](ROADMAP.md) item 2.5.
+**Raw IDATs, since v1.1.** Until v1.1 this paragraph said normalisation was not included and told
+you to run sesame or minfi first. It is included now:
+
+```python
+data = fa.read_idat_dir("idats/")             # every Grn/Red pair in a directory
+beta = fa.idat_to_betas(grn, red)             # or one sample
+```
+
+The chain is `addresses → in-band and out-of-band signal → pOOBAH detection → noob background
+correction → betas`, in that order. Detection runs **before** background correction, because
+pOOBAH's null *is* the uncorrected out-of-band distribution and correcting first removes the
+background from its own null. Undetected probes become `NaN` rather than a number.
+
+The array manifest is fetched from Illumina's public bucket on first use and cached — the one step
+in FALCONAge that needs a network — and its digest goes into the run manifest, because a beta
+matrix is a function of which manifest resolved its addresses. Validated against the published
+betas for the same physical samples in the corpus: **r = 0.99928, 99.7% of probes within 0.05**.
+
+Two deliberate gaps. `dye_bias()` exists and is **off by default**: measured on real IDATs it moves
+the median beta by +0.10 to +0.12, because a correct correction needs the normalisation control
+probes, whose addresses are not in the core-columns manifest. And `bmiq()` puts type II probes on
+the type I scale but has to be asked for, because clocks differ in how much they depend on it.
+
+`preprocess.mask_report(platform)` says what the published probe masks (Zhou et al. 2017) would
+cost each clock in probes *and* in coefficient mass, before you apply one. On 450K the general mask
+costs Horvath a single probe and DunedinPoAm38 a ninth of its model — which is why it is a report
+and not a default.
 
 EPIC v2 probe IDs carry replicate suffixes (`cg00000029_TC21`). Without aggregation every clock
 sees zero overlapping features, so the module raises rather than returning an empty result.
@@ -467,6 +488,43 @@ matters because cell composition changes with age and with everything else: acro
 every one of six widely used clocks. An unadjusted acceleration measures two things and reports
 one number. `adjust=["cd8t", "mono"]` uses measured counts from `obs` instead, and the returned
 frame records what it was adjusted for.
+
+### 4.5 How much of the number is the assay
+
+New in v1.1, and the reason the four modules above are worth running.
+
+```python
+se   = fa.technical_se(res, data)        # measurement error, per sample per clock
+conf = fa.conformal_interval(res)        # prediction error against chronological age
+fa.power("horvath2013", effect=1.0, result=pilot)     # n, before any array is run
+fa.consensus(res, "arm", reference="control")         # did the difference hold up?
+```
+
+`technical_se` propagates each probe's published test-retest reliability through the clock's own
+weights: `Var = f'(raw)² · Σ wⱼ² sⱼ² (1 − ICCⱼ)`. One matrix–vector product, an exact answer, and
+the citation, licence and digest of the reliability table go into the run manifest. On the test
+corpus Horvath 2013 comes out at ±1.58 years with an implied ICC of 0.98; the 319,607-probe BLUP
+clock reaches 1.00, because averaging over the whole array averages the noise away.
+
+`conformal_interval` answers the other question — how far from the truth, rather than how
+repeatable — with a distribution-free split-conformal half-width. Every row carries
+`exchangeable = False`, because the coverage guarantee holds only for cohorts drawn like the
+calibration set and nothing in the function can check that.
+
+`power` refuses to default the standard deviation and, where a reliability figure exists, says
+how much of the sample size is buying signal and how much is averaging out the instrument.
+`consensus` implements the published multi-clock rule: one significant clock after an intervention
+is a false positive, and the verdict always carries the counts it came from.
+
+```python
+ref  = fa.fit_batch_reference(pilot, batch_col="plate", covariates=["age", "sex"])
+data = fa.apply_batch_reference(new_plate, ref, batch_col="plate")
+```
+
+Batch correction against a **frozen** reference. Standard ComBat re-estimates over every sample it
+is given, so adding a plate moves every score already reported — measured at up to 2.20 years on
+epigenetic ages. Freezing the parameters and the empirical-Bayes priors makes an earlier plate's
+corrected values bit-identical whatever is run afterwards.
 
 ## 5. Clock catalogue
 
@@ -953,7 +1011,8 @@ and the R and Python conformance suite asserts bit equality rather than approxim
 
 ## 13. Caveats
 
-Ten things that produce a wrong number without producing an error anywhere else.
+Twelve things that produce a wrong number without producing an error anywhere else. Since v1.1,
+FALCONAge checks or quantifies most of them rather than only describing them here.
 
 1. **Units.** Albumin g/L against g/dL is 10×; creatinine µmol/L against mg/dL is 88×; CRP mg/L
    against mg/dL is 10× inside a logarithm. FALCONAge refuses to guess. Two published PhenoAge
@@ -982,6 +1041,17 @@ Ten things that produce a wrong number without producing an error anywhere else.
    `res.interpretation()` surfaces them per clock.
 10. **Age-range extrapolation.** A model trained on adults 20–70 does not extrapolate. Gestational
     and paediatric clocks exist for a reason, and the registry's `population` field is enforced.
+11. **Specimen type.** Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91
+    people**, while the two matrices still correlated at r = 0.88–0.92 — so a correlation check on
+    the input passes and the output is a decade out. Set `obs["tissue"]`. FALCONAge compares it
+    against each clock's training tissue and warns, or refuses for the twelve clocks whose tissue
+    has no counterpart elsewhere. Cell-free DNA is refused by every clock: it is not a tissue.
+12. **A score is a point estimate of something noisy.** Technical replicates of the *same DNA*
+    differ by up to nine years on prominent clocks, and only 18% of 450K probes reach ICC ≥ 0.5.
+    `fa.technical_se(res, data)` propagates published per-probe reliability through each clock's
+    own weights and returns the standard error; `fa.conformal_interval(res)` gives the separate,
+    larger prediction interval against chronological age. Two samples whose intervals overlap are
+    not distinguishable by that clock on that assay.
 
 Eleven clocks also carry documented disagreements between the published paper and the coefficient
 sets in circulation - Bohlin (96 CpGs published, 251 distributed), CVDWesterman (1,305 against

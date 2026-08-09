@@ -1,0 +1,42 @@
+# preprocess.RawSignal { #falconage.preprocess.RawSignal }
+
+```python
+preprocess.RawSignal(
+    meth,
+    unmeth,
+    probe_type,
+    channel,
+    oob_grn,
+    oob_red,
+    platform,
+    sample_id,
+    detection_p=None,
+    steps=list(),
+)
+```
+
+One sample's in-band and out-of-band intensities, probe by probe.
+
+The intermediate every step in the chain reads and writes. Keeping it
+explicit rather than passing a beta vector around is what lets detection be
+computed on the uncorrected out-of-band signal and background correction on
+the same numbers afterwards.
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [betas](#falconage.preprocess.RawSignal.betas) | ``M / (M + U + offset)``, with undetected probes set to NaN. |
+
+### betas { #falconage.preprocess.RawSignal.betas }
+
+```python
+preprocess.RawSignal.betas(offset=BETA_OFFSET, detection_p=DETECTION_P)
+```
+
+``M / (M + U + offset)``, with undetected probes set to NaN.
+
+NaN rather than a number, and this is the point of computing detection
+at all: a probe that did not rise above background has no measurement,
+and a beta of 0.43 from two noise readings is indistinguishable from a
+real 0.43 once it is in the matrix.

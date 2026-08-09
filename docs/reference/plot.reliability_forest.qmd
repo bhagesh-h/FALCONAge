@@ -1,0 +1,15 @@
+# plot.reliability_forest { #falconage.plot.reliability_forest }
+
+```python
+plot.reliability_forest(se, *, top=None)
+```
+
+Technical standard error per clock, with the ICC that cohort implies.
+
+The figure that says which of the numbers beside it can be trusted to move.
+A clock whose measurement error is a large share of the spread between these
+samples cannot detect a small difference between two of them, however
+confident the point estimate looks.
+
+Takes the :class:`~falconage.uncertainty.SEResult` from
+:func:`falconage.technical_se`.

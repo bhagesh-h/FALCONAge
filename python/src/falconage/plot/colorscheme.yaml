@@ -380,3 +380,57 @@ plots:
       never had the features to look with.
     xlab: ""
     ylab: ""
+
+  # ---- uncertainty and platform ---------------------------------------------
+  # The four figures that describe how much a score can be trusted, rather than
+  # what it says. They exist because every implementation of every clock,
+  # including this one until v1.1, reported a point estimate for a quantity
+  # whose technical replicates differ by up to nine years.
+  reliability_forest:
+    title: "How much of each score is the assay"
+    subtitle: "{n} clocks · {method} · bar is SE / cohort SD; the label is the raw SE"
+    description: >-
+      Measurement error propagated from published per-probe reliability through
+      each clock's own weights. The ICC beside each bar is what this cohort
+      implies, not a published figure: green above 0.8, amber below it, red
+      where the assay noise is as large as the spread between these samples --
+      a clock that cannot tell them apart, however confident its point estimate.
+    xlab: "technical standard error, as a fraction of the cohort's own spread"
+    ylab: ""
+
+  score_interval:
+    title: "Scores with the uncertainty they carry"
+    subtitle: "{clock} · n = {n} · {unit}"
+    description: >-
+      Two samples whose bars overlap are not distinguishable by this clock on
+      this assay. The narrow bar is measurement error -- what a repeat of the
+      same DNA would do. The wide grey bar, where present, is the conformal
+      prediction interval against chronological age, which is a larger question
+      and has a larger answer. Neither is a confidence interval on a diagnosis.
+    xlab: "sample, ordered by chronological age"
+    ylab: "score"
+
+  platform_bias:
+    title: "What probe loss costs, in years"
+    subtitle: "{n} clocks · platforms: {platforms} · measured, not assumed"
+    description: >-
+      Full 450K matrices masked down to each platform's probe set and rescored;
+      the bar is the median shift and the whisker a bootstrap interval. A bar at
+      zero is a clock that lost nothing. The long bars are sparse clocks whose
+      missing probes were the ones they lean on, which is why a correlation
+      check passes while the intercept moves. Reported, never subtracted.
+    xlab: "median shift when scored on this platform (years)"
+    ylab: ""
+
+  consensus_plot:
+    title: "Does the difference hold up across clocks?"
+    subtitle: "verdict: {verdict} · {n} clocks tested · alpha {alpha}"
+    description: >-
+      One bar per clock, coloured by generation; * survives Benjamini-Hochberg
+      and ** survives Bonferroni across the tests actually run. The shape is the
+      finding, not any one bar. A real change lights up across generations; a
+      single lit bar among twenty dark ones is the published signature of a
+      false positive, and five of six re-analysed intervention datasets looked
+      exactly like that.
+    xlab: "standardised difference (Cohen's d)"
+    ylab: ""

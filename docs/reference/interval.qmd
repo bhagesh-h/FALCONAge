@@ -1,0 +1,12 @@
+# interval { #falconage.interval }
+
+```python
+interval(result, data=None, *, level=0.95, **kw)
+```
+
+Score, lower and upper bound, long form.
+
+A normal interval on the score scale. Justified by the propagation being a
+sum of many small independent contributions, which is where the central
+limit theorem is at its most comfortable; the exception is a clock with a
+handful of features, where the interval should be read as indicative.

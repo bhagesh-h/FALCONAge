@@ -1,0 +1,13 @@
+# preprocess.rle_normalise { #falconage.preprocess.rle_normalise }
+
+```python
+preprocess.rle_normalise(X)
+```
+
+Median-of-ratios size factors (DESeq's RLE).
+
+Each sample is divided by the median, over genes, of its ratio to the
+geometric mean across samples. Genes with a zero anywhere drop out of the
+size-factor calculation -- their geometric mean is zero and the ratio is
+undefined -- which is the standard treatment and the reason RLE is robust to
+a few very highly expressed genes that would dominate a total-count scaling.

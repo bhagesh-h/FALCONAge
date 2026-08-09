@@ -8,10 +8,316 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 [semantic versioning](https://semver.org/spec/v2.0.0.html), with the clock registry carrying its
 own `registry_version` so a coefficient correction can be pinned independently of the code.
 
-## [Unreleased]
+## [1.1.0] — 2026-08-09
+
+Everything in v1.0 was about computing the number correctly. This release is about the fact that a
+correctly computed number is still not interpretable on its own — which the field's own literature
+says plainly, and which no implementation, including this one, did anything about.
+
+Four of the capabilities below have no equivalent in biolearn, pyaging, methylclock, dnaMethyAge,
+methylCIPHER or EpigeneticAgePipeline, checked against their documented APIs on 2026-08-09:
+uncertainty intervals, frozen-reference batch correction, platform bias priced in years, and
+specimen-type enforcement.
 
 ### Added
 
+- **`technical_se()` — measurement error, propagated.** Split one DNA sample, run both halves, and
+  six prominent clocks disagree with themselves by up to nine years (Nat Aging 2022,
+  s43587-022-00248-2); only 18% of 450K probes reach ICC ≥ 0.5 in whole blood. For a linear clock
+  the answer is one line of algebra — `Var = f'(raw)² · Σ wⱼ² sⱼ² (1 − ICCⱼ)` — and one
+  matrix–vector product. On the corpus, Horvath 2013 comes out at ±1.58 years with an implied
+  cohort ICC of 0.98, DunedinPoAm38 is the least repeatable at 0.72, and the 319,607-probe BLUP
+  clock reaches 1.00 because a model spread over the whole array averages the noise away.
+
+  Three deliberate choices. An **imputed feature contributes its full between-sample variance**,
+  not the reduced `s²(1−ICC)`: an imputed probe carries no information about the sample in front
+  of you, and treating it as well-measured would make worse data produce a narrower interval.
+  The **output transform is differentiated analytically** — Horvath's `anti_log_linear` has slope
+  `21·eˣ` below zero and `21` above it, so a child and an adult scale differently from the same raw
+  error. And a chain containing an op that destroys the information (`binarize`, `rank_normalize`,
+  `quantile_normalize`, `simplex_projection`) **refuses** rather than skipping the step, because
+  skipping it turns an unquantifiable uncertainty into a confidently small one.
+
+- **`registry/data/probe_icc.csv.gz`** — 283,860 per-probe ICC(2,1) values from 69 blood samples
+  each assayed twice on EPIC v1 (Epigenetics 2024, 10.1080/15592294.2024.2333660, CC BY 4.0),
+  derived by `python/tools/build_probe_icc.py`. Restricted to probes a scoreable clock names and
+  reduced to two columns: the published table is 72 MB of xlsx over the whole array, and the
+  cohort SD the propagation actually uses comes from the user's own matrix, not the ADNI one. The
+  citation, licence and SHA-256 go into the run manifest — an interval whose provenance is not
+  recorded is worse than no interval.
+
+- **`icc_from_replicates()`** — ICC(1,1) computed from the user's own technical duplicates, which
+  is this laboratory's noise on this platform rather than a published cohort's. Negative values
+  are kept, not clipped: a negative ICC means the within-subject spread exceeded the
+  between-subject spread, which is a real and reportable state for a probe that measures nothing.
+
+- **`conformal_interval()` and `registry/data/conformal.csv`** — the other uncertainty, and the
+  larger one. Split conformal against chronological age on healthy-control blood samples from the
+  corpus, so the coverage guarantee is finite-sample and distribution-free. Every row carries
+  `exchangeable = False`: the guarantee holds only for cohorts drawn like the calibration set —
+  adult, blood, overwhelmingly European ancestry — and nothing in the function can verify that, so
+  nothing in it implies it. The calibration also exposed something the registry alone did not:
+  Ying's DamAge and AdaptAge sit tens of years from chronological age — which prompted the
+  measurement that produced the `age_years_relative` scale below.
+
+- **Specimen-type enforcement.** Saliva clock ages ran 3.83–16.46 years above buffy coat in the
+  same 91 people while the two matrices still correlated at r = 0.88–0.92 (bioRxiv
+  2025.09.16.673560) — so a correlation check on the input passes and the output is a decade out.
+  `obs["tissue"]` is now compared against each clock's declared training tissue. Twelve clocks
+  whose tissue has no counterpart elsewhere — three placenta clocks, cord blood, neonatal blood
+  spots, buccal, three brain-cortex clocks — carry `tissue_policy: refuse`. Cell-free DNA is
+  refused by *every* clock regardless of policy: it is not a tissue a clock generalises to but a
+  fragment population shed from many, and array clocks applied to it perform poorly (bioRxiv
+  2025.11.27.690895). A run with no `tissue` column says so once, because silence was the previous
+  behaviour and silence was the bug.
+
+  No `trained_tissue` field was added. `tissue` already records what each clock was fitted on, and
+  a second field would give the same fact two places to be wrong.
+
+- **`fit_batch_reference()` / `apply_batch_reference()` — batch correction that does not move a
+  result you already reported.** ComBat estimates its parameters over every sample at once, so
+  adding a plate changes every previously corrected value: measured directly on epigenetic ages as
+  a mean shift of 0.077–0.39 years with a maximum of 2.20 (iComBat, PMC12495439). Freezing the
+  per-probe grand mean, covariate effects, pooled variance **and the empirical-Bayes
+  hyperparameters** on a reference cohort removes that entirely — the test asserts bit equality,
+  not closeness, and a companion test asserts that a re-fit *does* move the values, because the
+  failure this prevents has to be demonstrable or nobody believes the fix is needed. The reference
+  is an artefact you keep, with a digest for the manifest. Refuses a confounded design and a batch
+  under eight samples.
+
+- **`registry/data/platform_bias.csv` and a `bias_years` column on `probe_loss()`.** `probe_loss`
+  said how much of a model was absent; it could not say what that costs. Now measured: every full
+  450K matrix in the corpus masked down to each platform's probe set and rescored, 109 samples over
+  five datasets. `hrsinchphenoage` shifts +16.7 years on EPICv2 from losing 85 of 959 probes; `lin`
+  shifts −9.4 from losing three of ninety-nine; `zhangblup` loses ten percent of a 319,607-probe
+  model and shifts −0.23. Two rows come out at exactly 0.00 — the clocks that lose nothing — which
+  is the internal check on the whole measurement. `score()` warns above a year. **Reported, never
+  subtracted**: an automatic offset would be a second number nobody can trace.
+
+- **`power()` and `detectable_effect()`** — the command that runs before any array does, and needs
+  no data file. Refuses to default the standard deviation, because n scales with its square and a
+  guessed SD is a guessed answer reported to three significant figures. Where a reliability figure
+  exists it splits the answer: at ICC 0.9, a tenth of the sample size exists only to average out
+  the instrument, which is the arithmetic behind 3–16 replicates per condition for the original
+  clocks against 1–2 for their PC versions. A cohort whose spread is no larger than its own assay
+  noise gets a negative implied ICC and an explicit refusal to quote an adjusted n, rather than a
+  comfortable 0.0.
+
+- **`consensus()`** — the intervention false-positive protocol from *When to Trust Epigenetic
+  Clocks* (PMC11526921), where re-analysis of six datasets found exactly one significant clock in
+  five of them, first-generation every time, and four of those five lost significance under
+  correction. Returns a verdict rather than a table to pick from: one lit clock is `unsupported`
+  whatever its p-value. The verdict string always carries the counts it was computed from.
+
+- **`registry.evidence()` and `result.evidence()`** — published effect sizes per clock with their
+  cohort, design and DOI. Seeded from studies that tested many clocks under one protocol so the
+  rows are comparable: GrimAge v2 at HR 1.54 per SD for mortality and 1.86 for cirrhosis,
+  DunedinPACE at 1.44 for diabetes, first-generation clocks at ~5% of significant associations
+  across 174 outcomes in 18,859 people. A row without a DOI is rejected at load time. The most
+  useful row is about none of them: across 39 biomarkers in >20,000 people, age accuracy and
+  mortality prediction are uncorrelated at R = 0.12, P = 0.67 — the empirical justification for
+  `scale_type` and `LEGAL_OPS`.
+
+- **`read_bedmethyl()`, `read_bedmethyl_dir()`, `read_panel()`.** Nanopore bedMethyl from `modkit`,
+  carrying per-site coverage as a separate frame — coverage is information the array path never
+  had, and a CpG read twelve times is measured worse than one read two hundred. 5mC and 5hmC are
+  read separately and never summed. Targeted panels take a *declared* CpG list and are checked
+  against it rather than intersected, because a typo in a probe name would otherwise become a
+  missing probe and a missing probe becomes an imputed one.
+
+- **Pre-analytical metadata** in `qc()` and the run manifest: specimen type, collection-to-
+  processing delay, storage time and temperature, extraction and bisulfite kit, DNA input, array
+  version, plate and position. Flagged above the published thresholds — ten months of whole-blood
+  storage cost up to 97% of DNA yield and moved methylation by up to 42% (PMC5802893), and 24 h at
+  4 °C already shifts buffy coat composition, which reads downstream as age acceleration
+  (PMC4723336). Anticoagulant choice, by contrast, has no measurable effect and is recorded so
+  that stays checkable. Nothing is required; an absent field produces a note saying the run is not
+  reconstructable in that respect, which is true and is the right incentive.
+
+- **Four figures**: `reliability_forest`, `score_interval`, `platform_bias`, `consensus_plot`, with
+  gallery entries. The reliability forest plots SE as a fraction of the cohort's own spread rather
+  than raw SE — the clocks report years, kilobases, pace ratios and unitless scores, and putting
+  their standard errors on one axis would be the units error `LEGAL_OPS` exists to prevent,
+  committed in a figure instead of in arithmetic.
+
+- **`falconage report`** — read, QC, score, quantify, interpret and write one HTML file with 31
+  figures, no Python written. Plus `falconage power` and `falconage consensus`.
+
+### Changed
+
+- **A new scale type, `age_years_relative`, and the two clocks that needed it.** The conformal
+  calibration put Ying's DamAge and AdaptAge 37–150 years from chronological age, which prompted a
+  measurement rather than a conclusion. Their *slope* against age is sound — 0.967 pooled for
+  DamAge, better than DNAmPhenoAge's 1.199 — but their *offset* swings 162 years between healthy
+  cohorts where Horvath's swings 15. The two move as near mirror images (r = −0.975) and the swing
+  in their sum is only 33, so the cause is one dataset-level shift amplified by their intercepts of
+  +543.43 and −511.97, not a fault in either clock.
+
+  Neither obvious label fits. `age_years` licenses `predicted − chronological`, which on these
+  measures the cohort. `relative_score` would forbid the residual and the group difference — the
+  operations the paper itself reports — and would contradict a unit of years and a training target
+  of chronological age, both accurate. `age_years_relative` says what is true: years, slope near
+  one, no fixed origin. It admits `residual`, `difference`, `mean` and `correlate`, and refuses
+  `acceleration`. CausAge is unaffected; its offset swings 15 years like Horvath's.
+
+- **`acceleration()` now checks the permission the convention actually needs.** `LEGAL_OPS` has
+  listed `acceleration` and `residual` separately since v1.0 and nothing read the difference —
+  every method asked for `"acceleration"`. `absolute` and `both` need `acceleration`; `residual`
+  and `within_group` need `residual`. Without this, a clock with no fixed origin could still be
+  handed to the absolute convention, and the two Ying clocks are exactly that case.
+- `FalconResult` gains `.se`, populated by `technical_se()` and surfaced in `summary()`;
+  `.interpretation()` gains `trained_on` and `published_associations`; `.evidence()` is new.
+- `save_all()` accepts `se=`, `conformal=` and `consensus=` and emits the new figures.
+- `test/run_all.py` writes `technical_se.csv`, `reliability_diagnostics.csv`,
+  `conformal_interval.csv` and a consensus verdict beside every scored dataset.
+- The dev image carries `openpyxl`, for the one build-time step that reads the published
+  reliability table. Nothing at run time needs it.
+
+### Fixed
+
+- **The integration tests were scoring placenta clocks on cord blood.** GSE66459 is umbilical cord
+  blood; the three Lee clocks were trained on placenta, and the test asserted only that the answers
+  looked like gestational weeks — which they did, because gestational age is gestational age
+  whatever tissue you read it from. The specimen check caught it on its first run. The tests and
+  `test/run_all.py` now score `compatible` and pin the refusals by name.
+- `_evidence_line` and the ICC provenance parser both mis-handled a second header line with no
+  colon in it, overwriting the citation.
+
+### Also in 1.1.0: the raw-array chain and the missing model architectures
+
+The coverage half of the plan, built after the uncertainty work. Ten of the
+eleven outstanding items; the eleventh is a literature grind, noted below.
+
+- **Raw IDATs are readable end to end.** Until now this package parsed IDAT
+  intensities and stopped, because turning bead addresses into probe
+  identifiers needs the Illumina manifest. `fa.read_idat_dir(dir)` and
+  `fa.idat_to_betas(grn, red)` do the whole chain:
+  `addresses → in-band and out-of-band signal → pOOBAH → noob → betas`.
+
+  **Validated, not asserted.** The corpus holds raw IDATs for GSM5548192 and
+  GSM5548193 *and* the betas their authors published for the same two physical
+  samples. Nothing is shared between the two paths. Agreement on the
+  uncorrected betas: **r = 0.99928, median |Δ| = 0.011, 99.7% of probes within
+  0.05**. That is a check on the address decoding, the type I/II split and the
+  channel assignment, which is where a raw-array reader actually goes wrong.
+
+  The manifest is fetched from Illumina's public S3 bucket and cached — the same
+  route `methylprep` takes, and the only step in FALCONAge that is not offline.
+  Its SHA-256 goes into the run manifest: a beta matrix is a function of which
+  manifest resolved its addresses, in the way a score is a function of which
+  coefficient file produced it.
+
+- **pOOBAH detection (Zhou 2018) and noob background correction (Triche 2013)**,
+  each written from its published definition — there is no sesame or minfi in
+  this environment to port from. The order is enforced rather than documented:
+  `noob()` refuses to run before `poobah()`, because pOOBAH's null is the
+  *uncorrected* out-of-band distribution and correcting first removes the
+  background from its own null, after which every probe clears a bar that has
+  been lowered underneath it.
+
+  Two numerical details that matter. The background location and scale use
+  Huber's M-estimator, because the upper tail of the out-of-band signal is
+  cross-hybridisation rather than background and drags a plain mean by a factor
+  of three. And the normal-exponential posterior is evaluated through
+  `log_ndtr`: as a ratio of a density to a tail probability it underflows to
+  `0/0` for any probe well below background, which is every undetected probe on
+  the array.
+
+- **`dye_bias()` ships off by default, with the measurement that decided it.**
+  Applied to the corpus's EPIC v1 arrays it moves the median beta by +0.10 to
+  +0.12 — far more than a dye correction should. The cause is in the data: red
+  runs about twice as hot as green on that chip (median out-of-band 1,171
+  against 415), so mapping red onto green halves every type II unmethylated
+  signal. That is a limitation of the assumption, not an arithmetic slip:
+  matching the two channels' distributions presumes type I green and type I red
+  probes measure the same underlying thing, and their median betas are 0.05 and
+  0.14. A correct correction needs the normalisation control probes, whose
+  addresses are not in the core-columns manifest. Left in, opt-in, documented.
+
+- **BMIQ** (Teschendorff 2013), with a three-state beta mixture fitted by EM
+  from scratch — closed-form method-of-moments M-steps, an ordered start so the
+  states keep meaning unmethylated, hemimethylated and methylated, and a
+  quantile map *within* each state. Checked against mixtures drawn with known
+  parameters, which is the only way to know an EM is right rather than merely
+  converged. Type I probes come out untouched, so BMIQ never moves a clock built
+  purely on them.
+
+- **Probe masks, and the question nobody asks before applying one.** The
+  published Zhou masks for 450K, EPIC v1 and EPIC v2 are fetched and cached.
+  Masking is standard for an EWAS and a *decision* for a pre-fitted clock: every
+  clock here was trained on unmasked data, so removing a probe at score time
+  deletes an input the coefficients expect and hands the gap to the imputer.
+  `mask_report()` quantifies the trade in probes and in coefficient mass — on
+  450K the general mask costs Horvath one probe and DunedinPoAm38 a ninth of its
+  model — and nothing is masked automatically.
+
+- **`AggregationClock`.** Six registry entries are not linear models at all:
+  epiTOC1 and EPICmitHyper take the mean beta over a probe set, stemTOC the 95th
+  percentile, HypoClock the inverted mean, ReedBMI a weighted mean. All six fell
+  through to `LinearClock` and were refused for want of coefficients that were
+  never going to exist. The statistic is read from the `model_type` the registry
+  already declares, and an unreadable one raises rather than defaulting to the
+  mean — a percentile clock scored as a mean returns a plausible number on the
+  right scale that measures something else. A "coefficient file" for one of
+  these is its probe list, which is the two-column CSV `register_local_weights`
+  already validates.
+
+- **`NeuralClock`** — a feed-forward clock over a fixed probe set, loaded from
+  **safetensors only**. `torch.load` executes arbitrary code while unpickling,
+  and a clock's weights arrive by download from a third party; that is the
+  threat model, not a hypothetical. A `.pt` file is refused by extension.
+
+- **`scAge`** (Trapp 2021) — one age per cell by profile likelihood, for
+  methylomes that are 95–99% missing and binary where they are not. Fits
+  per-CpG linear models on a bulk reference the user supplies, then maximises
+  the binomial log-likelihood over a grid of candidate ages. A cell with fewer
+  than twenty informative sites gets `NaN` and a reason rather than a number,
+  and every row carries the width of the likelihood peak — a flat curve is the
+  finding.
+
+- **Proteomic and transcriptomic preparation.** `read_olink`, `read_somascan`
+  and `prepare_proteomic`, which refuses to z-score against your own cohort
+  unless asked in as many words — the training cohort's mean and SD travel with
+  the model, and standardising against the batch makes a single sample's score
+  the model's intercept. And the tAge chain in order: RLE size factors,
+  `log10(x+1)`, per-sample z, YuGene, alignment with NA padding, and the
+  per-dataset median centring that is exactly what `requires_cohort` exists to
+  refuse for one sample. An orthologue map that is not one-to-one is rejected:
+  summing paralogues loses which one a coefficient referred to.
+
+- **`fa.read_computage_bench()` and `fa.list_computage_bench()`.** Three places
+  were independently turning the benchmark's parquets into a `FalconData`, each
+  with its own copy of the same column renames. One copy now, pinned to a
+  commit rather than a branch, and `test/run_all.py` and the integration tests
+  both call it.
+
+### Still outstanding after 1.1.0
+
+**Tier B coefficient provenance** — 110 clocks catalogued with no primary source
+traced. Not engineering: a per-clock literature hunt, and some have no public
+supplement at all. Unchanged, and the one item from the plan not closed here.
+
+**Registry entries for the new modalities.** The proteomic and transcriptomic
+machinery ships and is tested; no clock in the catalogue declares either
+`data_type` yet, because every published model in both families
+(organAging, tAge) is licence-restricted and would enter as a tier C scaffold.
+Scoring a proteomic matrix today therefore refuses with "no clocks to score",
+which is accurate.
+
+
+### Notes
+
+- 313 Python tests and 52 R tests, including the R↔Python conformance pass at tolerance zero.
+- Peak memory for the full suite stays inside the 8 GB Docker cap.
+- Nothing in this release corrects a score automatically. The batch reference, the platform offset
+  and both intervals are all reported; a score adjusted by an untraceable factor would destroy the
+  provenance discipline that is the reason to use this package.
+
+### Also shipping in 1.1.0
+
+Completed after the v1.0.0 tag was pushed and never released on its own.
+
+### Added
 - **`plot.kaplan_meier()` and `plot.volcano()`**, with R mirrors. The two figure conventions in
   current papers the package could not draw. Both estimators are written out rather than imported:
   the product-limit form and the two-sample log-rank statistic come to about forty lines together,
@@ -42,7 +348,6 @@ own `registry_version` so a coefficient correction can be pinned independently o
   order matters, cross-platform harmonisation, proteomic organ clocks and the NPX and
   reference-cohort traps, the transcriptomic chain and its per-dataset centring, the methylation
   foundation models, single-cell, and why technical and biological reliability decouple.
-
 - **Coefficient-mass coverage.** Feature coverage counted probes and treated them as
   interchangeable, which elastic-net weights are not: a clock can clear an 80% feature floor while
   the probes it lost carry most of the model. `Alignment` now also reports `mass_coverage` — the
@@ -108,9 +413,7 @@ own `registry_version` so a coefficient correction can be pinned independently o
   `falconage_install()` stops being a step someone has to be told about. It stays for pinned,
   reproducible environments — an ephemeral resolution is right for trying the package and wrong
   for an analysis that has to be reproduced in a year. Guarded, so older reticulate still loads.
-
 ### Fixed
-
 - **The sidebar was painted over the article on every phone.** A rule added to put the logo above
   the blurb, `#quarto-sidebar { display: flex }`, is specificity (1,0,0); the rule Quarto uses to
   collapse the sidebar behind a toggle is `.collapse:not(.show) { display: none }` at (0,2,0). The
@@ -148,7 +451,6 @@ own `registry_version` so a coefficient correction can be pinned independently o
   `AttributeError`, and the entire test suite passed regardless, because prose is not executed and
   a name in a fenced block is just text. It also named two tier C clocks that cannot score and a
   CLI verb (`falconage report`) that does not exist.
-
   Fixed: `report` is now exported alongside `plot`, the other four are corrected to
   `cox_hazard`, `download(dry_run=True)`, `prepare` and `prepare_clinical`, and the examples use
   clocks that actually run. `acceleration(method="both")` was documented in six places and was
@@ -177,7 +479,6 @@ own `registry_version` so a coefficient correction can be pinned independently o
   by side, each opening something different. Search is now off on the sidebar, which had no
   navigation to search, and the sidebar is hidden entirely below 992px instead of collapsing into
   a rival menu. Its logo and citation buttons live on the About page, one tap away.
-
   Worth recording how this got through: the responsive check measured geometry, and two search
   boxes that each fit the viewport and never touch each other pass an overflow test and an overlap
   test both. It reported clean while the page was wrong. `test/responsive_check.py` now counts
@@ -189,7 +490,6 @@ own `registry_version` so a coefficient correction can be pinned independently o
 - **Dependency ceilings.** `pandas>=2.0` with no upper bound meant the package claimed
   compatibility with versions that did not exist when it was written. Bounded at the next major
   after verifying the suite passes on pandas 3.0.5 and numpy 2.5.1.
-
 - **Every bundled coefficient file's recorded SHA-256 was wrong on a Windows
   checkout.** All twenty were CRLF on disk while their recorded digests described the LF form, so
   the integrity check failed in any fresh environment and passed only in a stale one. That digest
@@ -245,9 +545,7 @@ own `registry_version` so a coefficient correction can be pinned independently o
   instead made the CPU path **2.1× faster** at 4,096 samples, for every user, GPU or not.
 - The HTML report called a function that had been renamed, inside a `try` shared by every figure,
   so one broken figure silently removed all of them and the report still rendered.
-
 ### Changed
-
 - **`device="auto"` now resolves to CPU even when a CUDA device is present.** Measured on an
   RTX 4060 over eight clocks and 2,340 features, the CPU wins at every size tested and by 6.5× at
   16,384 samples: the dot products take 3 ms and the PCIe transfers take the rest. Choosing CUDA
@@ -262,9 +560,7 @@ own `registry_version` so a coefficient correction can be pinned independently o
 - `plot_clock_radar` in R now draws radial spike labels and a bottom legend, matching Python.
 - Python is tested on one version rather than three. The lock file pins one resolution and both
   images run it; the other two matrix entries were testing the resolver, not this package.
-
 ### Added
-
 - `test/gpu_check.py` — the script that produced every number in `docs/gpu.md`, running in the
   shipping CUDA image. Stops after its first step with an explanation where there is no CUDA
   device, so it is safe to run anywhere and safe to attach to a bug report.
@@ -280,11 +576,8 @@ own `registry_version` so a coefficient correction can be pinned independently o
 - The two long-form notes are published as documentation: *The science of aging clocks* and
   *Architecture*, the second opening with a table reconciling what shipped against what was
   specified.
-
 ### Documentation
-
 Corrections where the README described a package other than this one:
-
 - tier counts said 38 / 95 / 28; the registry says **23 / 110 / 28**
 - the scale-type table listed types the code does not have; replaced with the eight `LEGAL_OPS`
   enforces

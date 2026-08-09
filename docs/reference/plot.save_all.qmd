@@ -13,6 +13,9 @@ plot.save_all(
     platform_col=None,
     dataset_col=None,
     max_per_clock=4,
+    se=None,
+    conformal=None,
+    consensus=None,
 )
 ```
 

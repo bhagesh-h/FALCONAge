@@ -330,6 +330,184 @@ PREPROCESS: dict[str, Callable] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# derivatives, for propagating measurement error through a chain
+# ---------------------------------------------------------------------------
+# WHY THESE ARE WRITTEN OUT RATHER THAN DIFFERENTIATED NUMERICALLY. A central
+# difference would be accurate enough on the smooth ops and quietly wrong on the
+# three that have a kink -- anti_log_linear at zero, clip at its bounds,
+# petkovich_blood at its floor -- which are exactly the places a real sample
+# lands. Analytic derivatives get the one-sided answer right and, more
+# usefully, an op with no entry here is a refusal rather than a plausible
+# number: rank_normalize and binarize destroy the information the propagation
+# would need, and no step size hides that.
+#
+# Each takes the op's INPUT and returns d(output)/d(input) at that point.
+
+
+def _d_const(value):
+    def d(x, xp=np, **_):
+        return xp.full_like(xp.asarray(x, dtype=float), float(value))
+    return d
+
+
+def _d_anti_log_linear(x, adult_age: float = 20.0, xp=np, **_):
+    a = adult_age
+    return xp.where(x < 0, (1.0 + a) * xp.exp(x), xp.full_like(x, 1.0 + a))
+
+
+def _d_log_linear(x, adult_age: float = 20.0, xp=np, **_):
+    a = adult_age
+    return xp.where(x <= a, 1.0 / (x + 1.0), xp.full_like(x, 1.0 / (a + 1.0)))
+
+
+def _d_expit(x, xp=np, **_):
+    s = 1.0 / (1.0 + xp.exp(-x))
+    return s * (1.0 - s)
+
+
+def _d_exp(x, xp=np, **_):
+    return xp.exp(x)
+
+
+def _d_clip(x, low: float | None = None, high: float | None = None, xp=np, **_):
+    """One inside the bounds, zero outside -- the derivative a.e.
+
+    A clamped sample has no sensitivity to its input, which is the right answer:
+    its reported value cannot move, so neither can its uncertainty.
+    """
+    d = xp.ones_like(xp.asarray(x, dtype=float))
+    if low is not None:
+        d = xp.where(x < low, 0.0, d)
+    if high is not None:
+        d = xp.where(x > high, 0.0, d)
+    return d
+
+
+def _d_cox_to_years(x, cox_mean: float, cox_std: float, age_mean: float,
+                    age_std: float, xp=np, **_):
+    return xp.full_like(xp.asarray(x, dtype=float), age_std / cox_std)
+
+
+def _d_anti_log_log(x, xp=np, **_):
+    e = xp.exp(-x)
+    return xp.exp(-e) * e
+
+
+def _d_scale_and_shift(x, scale: float, offset: float = 0.0, xp=np, **_):
+    return xp.full_like(xp.asarray(x, dtype=float), float(scale))
+
+
+def _d_petkovich_blood(x, xp=np, **_):
+    base = (x + 1.712) / 0.1666
+    p = 1.0 / 0.4185
+    d = (p * xp.maximum(base, 1e-12) ** (p - 1.0)) / 0.1666 / 30.5
+    return xp.where(base > 0, d, xp.zeros_like(d))
+
+
+def _d_stubbs_multitissue(x, xp=np, **_):
+    q = 0.1207 * x * x + 1.2424 * x + 2.5440
+    return xp.exp(q) * (2 * 0.1207 * x + 1.2424) * 7.0 / 30.5
+
+
+def _d_mortality_to_phenoage(x, xp=np, **_):
+    gamma = 0.0076927
+    k = (xp.exp(120.0 * gamma) - 1.0) / gamma
+    u = xp.exp(x)
+    m = 1.0 - xp.exp(-u * k)
+    m = xp.clip(m, 1e-12, 1.0 - 1e-12)
+    dm_dx = xp.exp(-u * k) * k * u
+    # d(age)/dm = -1 / (0.090165 * ln(1-m) * (1-m)); ln(1-m) < 0, so positive.
+    dage_dm = -1.0 / (0.090165 * xp.log(1.0 - m) * (1.0 - m))
+    return dage_dm * dm_dx
+
+
+def _d_beta_to_m(x, alpha: float = 1e-6, xp=np, **_):
+    b = xp.clip(x, alpha, 1.0 - alpha)
+    inside = (x > alpha) & (x < 1.0 - alpha)
+    d = 1.0 / (xp.log(2.0) * b * (1.0 - b))
+    return xp.where(inside, d, xp.zeros_like(d))
+
+
+def _d_m_to_beta(x, xp=np, **_):
+    two = 2.0 ** x
+    return two * xp.log(2.0) / (1.0 + two) ** 2
+
+
+def _d_scale(x, centre=None, sd=None, xp=np, **_):
+    v = 1.0 if sd is None else 1.0 / np.asarray(sd, dtype=float)
+    return xp.ones_like(xp.asarray(x, dtype=float)) * v
+
+
+#: op name -> derivative, or absent when the op is not differentiable in a way
+#: that lets error propagate through it. Absence is load-bearing: see
+#: :func:`chain_derivative`.
+DERIVATIVE: dict[str, Callable] = {
+    "add": _d_const(1.0),
+    "add_constant": _d_const(1.0),
+    "multiply": lambda x, value, xp=np, **_: xp.full_like(
+        xp.asarray(x, dtype=float), float(value)),
+    "divide_by": lambda x, value, xp=np, **_: xp.full_like(
+        xp.asarray(x, dtype=float), 1.0 / float(value)),
+    "one_minus": _d_const(-1.0),
+    "days_to_weeks": _d_const(1.0 / 7.0),
+    "days_to_months": _d_const(1.0 / 30.5),
+    "anti_log_linear": _d_anti_log_linear,
+    "log_linear": _d_log_linear,
+    "expit": _d_expit,
+    "sigmoid": _d_expit,
+    "exp": _d_exp,
+    "anti_log": _d_exp,
+    "anti_logp2": _d_exp,
+    "anti_log_log": _d_anti_log_log,
+    "clip": _d_clip,
+    "cox_to_years": _d_cox_to_years,
+    "scale_and_shift": _d_scale_and_shift,
+    "petkovich_blood": _d_petkovich_blood,
+    "stubbs_multitissue": _d_stubbs_multitissue,
+    "mortality_to_phenoage": _d_mortality_to_phenoage,
+    "beta_to_m": _d_beta_to_m,
+    "m_to_beta": _d_m_to_beta,
+    "scale": _d_scale,
+}
+
+#: Ops with no derivative, and the reason, so a refusal can say which.
+NOT_DIFFERENTIABLE: dict[str, str] = {
+    "binarize": "thresholding discards the magnitude the error would propagate through",
+    "rank_normalize": "a rank depends on every other feature, so the map is not elementwise",
+    "quantile_normalize": "same: the map depends on the whole sample's distribution",
+    "simplex_projection": "the projection couples all outputs; the Jacobian is not diagonal",
+}
+
+
+def chain_derivative(x, chain: tuple[dict[str, Any], ...],
+                     table: dict[str, Callable], xp=np):
+    """Run a chain and also return d(output)/d(input), by the chain rule.
+
+    Returns ``(y, dy_dx)``. Both are arrays the shape of ``x``. Raises when any
+    step has no entry in :data:`DERIVATIVE` -- the alternative would be to skip
+    the step's contribution, which turns an unquantifiable uncertainty into a
+    confident small one.
+    """
+    y = xp.asarray(x, dtype=float)
+    slope = xp.ones_like(y)
+    for step in chain:
+        step = dict(step)
+        name = step.pop("op", None)
+        fn = table.get(name)
+        if fn is None:
+            raise ScoringError(f"unknown operation {name!r}")
+        d = DERIVATIVE.get(name)
+        if d is None:
+            why = NOT_DIFFERENTIABLE.get(name, "no derivative is defined for it")
+            raise ScoringError(
+                f"cannot propagate uncertainty through {name!r}: {why}.\n"
+                "  The score is still computed; only the interval is refused.")
+        slope = slope * d(y, xp=xp, **step)
+        y = fn(y, xp=xp, **step)
+    return y, slope
+
+
 def apply_chain(x, chain: tuple[dict[str, Any], ...], table: dict[str, Callable], xp=np):
     """Run a declarative op chain in order.
 

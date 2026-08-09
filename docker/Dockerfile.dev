@@ -62,6 +62,16 @@ RUN pip install --no-cache-dir \
       "hypothesis==${HYPOTHESIS_VERSION}" \
       pytest-cov \
       pyyaml \
+      # Build-time only. The per-probe reliability table that
+      # registry/data/probe_icc.csv is derived from is published as a 72 MB
+      # xlsx; openpyxl reads it once, in the derivation script, and nothing at
+      # run time ever needs it. Kept here rather than in the package extras for
+      # exactly that reason.
+      openpyxl \
+      # The only container format falconage.models.neural will read. Weights
+      # arrive by download from a third party, and torch.load executes arbitrary
+      # code while unpickling; safetensors has no code path at all.
+      safetensors \
  && pip install --no-cache-dir -e "./python[methylation,plot,anndata,cli]" \
  || pip install --no-cache-dir "./python[methylation,plot,anndata,cli]"
 

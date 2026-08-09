@@ -1,0 +1,27 @@
+# idat_to_betas { #falconage.idat_to_betas }
+
+```python
+idat_to_betas(
+    grn,
+    red,
+    *,
+    platform=None,
+    sample_id=None,
+    correct=True,
+    detection_p=DETECTION_P,
+    dye=None,
+    raw=False,
+)
+```
+
+One Grn/Red IDAT pair to a beta vector, through the full chain.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type          | Description                                                                                                                                                                                                           | Default       |
+|-------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| platform    | str \| None   | ``None`` detects it from the bead-address count and refuses rather than guessing when nothing matches within 10%.                                                                                                     | `None`        |
+| correct     | bool          | Run pOOBAH detection and noob background correction. ``False`` still computes detection -- it costs nothing and an undetected probe is not a measurement whatever else is done -- and then returns uncorrected betas. | `True`        |
+| detection_p | float \| None | Probes above this become NaN. ``None`` keeps them, which is a decision to score numbers that are not measurements.                                                                                                    | `DETECTION_P` |
+| dye         | str \| None   | ``None`` (default), ``"linear"`` or ``"nonlinear"``. Off by default; see the warning on :func:`dye_bias` for the measurement that decided that.                                                                       | `None`        |
+| raw         | bool          | Return the :class:`RawSignal` instead of the betas, for anyone who wants the intermediate.                                                                                                                            | `False`       |

@@ -58,7 +58,7 @@ perform:
 
 | `scale_type` | n | What the number is | Units in the registry | Operations permitted |
 |---|---:|---|---|---|
-| `age_years` | 75 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
+| `age_years` | 73 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
 | `relative_score` | 44 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
 | `proportion` | 18 | A composition. The estimates are fractions of a whole and are constrained to sum to one. | proportion | compositional, correlate, difference, mean |
 | `divisions` | 10 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
@@ -66,6 +66,7 @@ perform:
 | `telomere_kb` | 2 | An estimated physical length. | kilobases, base pairs | acceleration, correlate, difference, mean |
 | `pace_ratio` | 2 | A rate: how much biological ageing per year of calendar time, at the moment of sampling. | biological years per chronological year | correlate, difference, mean, rank |
 | `mortality_log_hazard` | 2 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, unitless | correlate, hazard ratio, mean, rank |
+| `age_years_relative` | 2 | An age in years with a slope near one against chronological age, but no fixed origin: the offset moves between cohorts. The residual and group differences are defined; predicted minus chronological is not. | years | correlate, difference, mean, residual |
 
 <!-- END GENERATED: scales -->
 
@@ -251,7 +252,7 @@ fa.registry.load().filter(availability="A")
 APA:
 
 ```
-Hunakunti, B. (2026). FALCONAge: Multiomic biological age and aging clock scoring in Python and R (Version 1.0.0) [Computer software]. https://github.com/bhagesh-h/FALCONAge
+Hunakunti, B. (2026). FALCONAge: Multiomic biological age and aging clock scoring in Python and R (Version 1.1.0) [Computer software]. https://github.com/bhagesh-h/FALCONAge
 ```
 
 BibTeX:
@@ -261,7 +262,7 @@ BibTeX:
   author  = {Bhagesh Hunakunti},
   title   = {FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R},
   year    = {2026},
-  version = {1.0.0},
+  version = {1.1.0},
   url     = {https://github.com/bhagesh-h/FALCONAge},
   license = {GPL-3.0-or-later}
 }

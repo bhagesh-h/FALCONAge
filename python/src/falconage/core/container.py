@@ -24,7 +24,8 @@ import pandas as pd
 
 from .errors import DataError
 
-Modality = Literal["dna_methylation", "clinical_chemistry", "rrbs", "transcriptomics"]
+Modality = Literal["dna_methylation", "clinical_chemistry", "rrbs",
+                   "transcriptomics", "proteomics"]
 
 
 @dataclass

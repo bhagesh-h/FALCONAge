@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import yaml
 
 from .._version import REGISTRY_VERSION
@@ -45,6 +46,25 @@ DATA_DIR = Path(__file__).with_name("data")
 #: here, but declared here because it is a property of the clock.
 LEGAL_OPS: dict[str, set[str]] = {
     "age_years":            {"acceleration", "residual", "correlate", "difference", "mean"},
+    # Years, and a slope of about one against chronological age -- but no fixed
+    # origin. `predicted - chronological` is therefore not a quantity; the
+    # residual, fitted inside the dataset at hand, is.
+    #
+    # This is not a hypothetical category. Ying's DamAge and AdaptAge carry
+    # intercepts of +543.43 and -511.97, and measured across three healthy
+    # cohorts in the test corpus their median bias against chronological age
+    # swings 162 years each -- while Horvath's swings 15. The two move as near
+    # mirror images (r = -0.975) and their sum swings only 33, which says the
+    # cause is one dataset-level offset amplified by those two huge opposing
+    # intercepts rather than two separately broken clocks. Their slopes are
+    # fine: 0.967 for DamAge pooled, better than DNAmPhenoAge's 1.199.
+    #
+    # So the clock works and its zero does not travel. Calling the scale
+    # `relative_score` would be the other error -- it would forbid the residual
+    # and the group difference, which are exactly the operations the paper and
+    # the field use, and it would contradict a `unit` of years and a
+    # `training_target` of chronological age, both of which are accurate.
+    "age_years_relative":   {"residual", "correlate", "difference", "mean"},
     "gestational_weeks":    {"acceleration", "residual", "correlate", "difference", "mean"},
     "mortality_log_hazard": {"correlate", "rank", "hazard_ratio", "mean"},
     "pace_ratio":           {"correlate", "rank", "difference", "mean"},
@@ -144,6 +164,19 @@ class Clock:
     #: Smallest cohort the centring is meaningful over. Only read when
     #: ``requires_cohort`` is set.
     min_samples: int = 1
+    #: How hard to push back when the sample's specimen is not one of
+    #: :attr:`tissue`: ``"warn"`` (default), ``"refuse"``, or ``"allow"``.
+    #:
+    #: There is no second ``trained_tissue`` field. ``tissue`` already records
+    #: what the clock was fitted on -- "placenta", "buccal epithelium",
+    #: "multi-tissue" -- and duplicating it under another name would give two
+    #: places for the same fact to be wrong. Only the policy is new.
+    #:
+    #: ``"refuse"`` is for clocks whose training tissue has no counterpart
+    #: elsewhere: a placenta clock on blood, a cord-blood clock on an adult.
+    #: Those are not offsets, they are category errors. ``"allow"`` is for the
+    #: genuinely pan-tissue clocks, where the check has nothing to say.
+    tissue_policy: str = "warn"
     known_discrepancies: tuple[str, ...] = ()
     reliability: Reliability = field(default_factory=Reliability)
 
@@ -171,6 +204,32 @@ class Clock:
         n = f"{self.n_features} features" if self.n_features else "features unknown"
         return (f"Clock({self.id!r}, {self.year}, {self.scale_type}, "
                 f"tier {self.availability}, {n})")
+
+
+#: Policies that are a property of the tissue list rather than of the clock, so
+#: the YAML does not have to repeat them 161 times. An explicit
+#: ``tissue_policy:`` in an entry always wins.
+_LEGAL_POLICIES = ("allow", "warn", "refuse")
+
+
+def _tissue_policy(cid: str, entry: dict[str, Any]) -> str:
+    """Resolve a clock's tissue policy, defaulting from its declared tissues.
+
+    A clock that lists no tissue, or lists multi-tissue, has nothing to enforce
+    and gets ``"allow"``. Everything else gets ``"warn"`` unless the entry says
+    otherwise. Deriving the common case means the only rows that carry the field
+    are the ones where the answer is not obvious from the data already there.
+    """
+    given = entry.get("tissue_policy")
+    if given is not None:
+        if given not in _LEGAL_POLICIES:
+            raise RegistryError(
+                f"{cid}: tissue_policy {given!r}; expected one of {_LEGAL_POLICIES}")
+        return str(given)
+    tis = {str(t).strip().lower() for t in _tuple(entry.get("tissue"))}
+    if not tis or {"multi-tissue", "multi tissue", "pan-tissue"} & tis:
+        return "allow"
+    return "warn"
 
 
 def _tuple(v: Any) -> tuple:
@@ -244,6 +303,7 @@ class ClockRegistry:
                 requires_reference=bool(e.get("requires_reference", False)),
                 requires_cohort=bool(e.get("requires_cohort", False)),
                 min_samples=int(e.get("min_samples", 1) or 1),
+                tissue_policy=_tissue_policy(cid, e),
                 known_discrepancies=_tuple(e.get("known_discrepancies")),
                 reliability=Reliability(**{
                     k: v for k, v in (e.get("reliability") or {}).items()
@@ -494,3 +554,71 @@ def _read_coefficients(path: Path) -> tuple[list[str], np.ndarray]:
 def load(path: str | None = None) -> ClockRegistry:
     """Load the packaged registry. Cached for the life of the process."""
     return ClockRegistry.from_yaml(Path(path) if path else None)
+
+
+# ---------------------------------------------------------------------------
+# the evidence pack
+# ---------------------------------------------------------------------------
+@functools.lru_cache(maxsize=1)
+def _evidence_doc() -> dict:
+    p = DATA_DIR / "evidence.yaml"
+    if not p.exists():
+        return {"sources": {}, "general": [], "clocks": {}}
+    return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+
+
+def evidence(clock_id: str | None = None) -> pd.DataFrame:
+    """What a score on this clock has been shown to predict, and how strongly.
+
+    The step between "DunedinPACE = 1.08" and something a reader can act on.
+    Every row carries the study it came from, that study's design, and a DOI --
+    a row without one is not admitted, because an uncheckable effect size looks
+    identical to a checkable one and is worth less than nothing.
+
+    Only effect sizes from studies that tested many clocks on one cohort under
+    one protocol are seeded. A single-clock paper reports its own clock
+    favourably and its numbers are not comparable to the row above.
+
+    Parameters
+    ----------
+    clock_id
+        One clock, or ``None`` for the whole table including the cross-clock
+        findings, which are marked with clock ``*``.
+    """
+    doc = _evidence_doc()
+    src = doc.get("sources", {})
+    rows = []
+
+    def _rows(cid: str, entries):
+        for e in entries or ():
+            s = src.get(e.get("source"), {})
+            rows.append({
+                "clock": cid,
+                "outcome": e.get("outcome", ""),
+                "measure": e.get("measure", ""),
+                "value": e.get("value"),
+                "per": e.get("per", ""),
+                "n": e.get("n") or s.get("n"),
+                "followup_years": e.get("followup"),
+                "population": e.get("population", ""),
+                "note": e.get("note", ""),
+                "citation": s.get("citation", ""),
+                "doi": s.get("doi", ""),
+                "design": s.get("design", ""),
+            })
+
+    if clock_id is None:
+        _rows("*", doc.get("general"))
+        for cid, entries in (doc.get("clocks") or {}).items():
+            _rows(cid, entries)
+    else:
+        _rows(clock_id, (doc.get("clocks") or {}).get(clock_id))
+
+    out = pd.DataFrame(rows)
+    if not out.empty:
+        missing = out[out["doi"] == ""]
+        if len(missing):
+            raise RegistryError(
+                f"{len(missing)} evidence row(s) have no DOI: "
+                f"{sorted(set(missing['clock']))}. Every row must be checkable.")
+    return out

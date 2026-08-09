@@ -6,17 +6,24 @@ import pandas as pd
 
 from ..core.container import FalconData
 from ..core.errors import DataError
+from .bench import computage_bench_meta, list_computage_bench, read_computage_bench
 from .methylation import (
     detect_platform,
+    read_bedmethyl,
+    read_bedmethyl_dir,
     read_betas,
     read_idat_pair,
+    read_panel,
     read_rrbs,
     read_rrbs_dir,
     read_series_matrix,
 )
 
 __all__ = [
-    "detect_platform", "read", "read_betas", "read_clinical", "read_idat_pair",
+    "computage_bench_meta", "detect_platform", "list_computage_bench",
+    "read", "read_bedmethyl", "read_bedmethyl_dir",
+    "read_betas", "read_clinical", "read_computage_bench", "read_idat_pair",
+    "read_panel",
     "read_rrbs", "read_rrbs_dir", "read_series_matrix", "write_results",
 ]
 

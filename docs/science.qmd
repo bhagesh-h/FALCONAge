@@ -2141,6 +2141,449 @@ biomarkers.
 64. Moqri M et al. Biomarkers of aging for the identification and evaluation of longevity
     interventions. *Cell* 186(18):3758–3775 (2023).
 
+
+
+## 20. What a score is worth: uncertainty, specimen and platform
+
+Added in v1.1. Sections 1–19 are about computing the number correctly. This one
+is about the fact that a correctly computed number is still not interpretable on
+its own, which is what the field's own literature says and what no
+implementation, including this one until now, did anything about.
+
+### 20.1 The point estimate problem
+
+Split one DNA sample, run both halves on the same array, and six prominent
+clocks disagree with themselves by **up to nine years**
+([Nat Aging 2022](https://doi.org/10.1038/s43587-022-00248-2)). Only **18 % of
+CpGs on the 450K array reach ICC ≥ 0.5** in adult whole blood (Sugden 2020): for
+most probes, the technical variance exceeds the biological variance. A reader
+handed "DNAmAge = 54.2" cannot tell whether a 1.5-year change between two draws
+is biology or the assay.
+
+Every package in the field emits that bare number. FALCONAge v1.1 emits an
+interval, and the arithmetic behind it is short enough to check by hand.
+
+### 20.2 Propagating measurement error
+
+A linear clock is `score = f(b + wᵀβ)`. Give each probe a measurement variance
+`σ²ⱼ` and the score's variance follows directly:
+
+$$\operatorname{Var} = f'(\text{raw})^2 \sum_j w_j^2\,\sigma_j^2$$
+
+$$\sigma_j^2 = s_j^2\,(1 - \mathrm{ICC}_j)$$
+
+with `s²ⱼ` the spread of probe *j* across the cohort in front of you and `ICCⱼ`
+its published test-retest reliability. One matrix–vector product per clock.
+
+Three parts of that are load-bearing:
+
+**The ICC table is measured, not assumed.** `registry/data/probe_icc.csv.gz`
+carries 283,860 probes, derived from 69 blood samples each assayed twice on
+EPIC v1 and preprocessed with SeSAMe 2, using the two-way random-effects,
+absolute-agreement, single-rating model — ICC(2,1)
+([Epigenetics 2024](https://doi.org/10.1080/15592294.2024.2333660), CC BY 4.0).
+Its citation, licence and SHA-256 go into the run manifest, because an interval
+whose provenance is not recorded is worse than no interval.
+
+**An imputed feature contributes its full variance.** Not the reduced
+`s²(1−ICC)`. An imputed probe is the cohort mean or a published reference; it
+carries no information about the sample in front of you. Treating it as
+well-measured would make *worse data produce a narrower interval*, which is the
+wrong direction and the part of the calculation most likely to look like a bug.
+
+**The output transform is differentiated, not linearised once.** Horvath's
+`anti_log_linear` has slope `21·eˣ` below zero and `21` above it, so a child's
+uncertainty and an adult's scale differently from the same raw error. Every op
+in the catalogue has an analytic derivative; the four that destroy the
+information — `binarize`, `rank_normalize`, `quantile_normalize`,
+`simplex_projection` — have none, and a chain containing one **refuses** rather
+than skipping the step and returning a confidently small interval.
+
+On the corpus, Horvath 2013 comes out at ±1.58 years of technical error with an
+implied cohort ICC of 0.98; DunedinPoAm38 is the least repeatable at 0.72; the
+319,607-probe BLUP clock reaches 1.00, because a rotation spread over the whole
+array averages the noise away. That last result is the same mechanism that makes
+PC clocks robust to probe loss, arrived at from the other direction.
+
+### 20.3 Prediction error is a different, larger question
+
+`technical_se()` asks what a repeat of the same DNA would do. `conformal_interval()`
+asks how far the number is from the truth.
+
+Split conformal: take healthy blood samples with known ages, compute the
+absolute residuals, and the `⌈(n+1)(1−α)⌉/n` quantile is a half-width that
+covers the truth at the stated rate on any exchangeable sample — no
+distributional assumption, finite-sample guarantee. Conformalised quantile
+regression ([Genet Epidemiol 2025](https://doi.org/10.1002/gepi.70008)) is the
+better version, widening the interval where the training data were sparse; it
+needs fitted quantile models, so split conformal ships and the calibration table
+reports the width per age band so a reader can see where one width is lying.
+
+The limitation is not small and is stated in the output: every row carries
+`exchangeable = False`. The calibration cohort is adult, blood, and
+overwhelmingly of European ancestry. On a paediatric or non-European cohort the
+guarantee does not transfer, and no widening factor would make it.
+
+### 20.3.1 What the calibration found, and what it turned into
+
+The first calibration put Ying's DamAge and AdaptAge 37–150 years from
+chronological age. The obvious reading — "these are not age predictors" — turned
+out to be wrong, and the measurement that settled it is worth reproducing
+because the distinction it draws is a general one.
+
+Regress predicted on chronological across the corpus's healthy cohorts:
+
+| clock | r | slope | offset swing between datasets |
+|---|---:|---:|---:|
+| horvath2013 | 0.905 | 0.982 | 15 y |
+| yingcausage | 0.960 | 0.954 | 15 y |
+| **yingdamage** | 0.909 | **0.967** | **162 y** |
+| **yingadaptage** | 0.745 | 1.170 | **162 y** |
+
+DamAge's slope is 0.967 — better than DNAmPhenoAge's 1.199. It tracks age. What
+it does not have is a **fixed origin**: its offset against chronological age is
+−84 years in one healthy cohort and +78 in another.
+
+The mechanism is visible in one number. DamAge and AdaptAge move as near mirror
+images, **r = −0.975** across datasets, and the swing in their *sum* is only 33
+years against 162 for each alone. Their published intercepts are **+543.43** and
+**−511.97**; a dataset-level shift in overall methylation pushes one up and the
+other down by nearly the same amount. One shared offset, hugely amplified — not
+two broken clocks.
+
+So neither obvious label fits. `age_years` would license
+`predicted − chronological`, which measures the cohort. `relative_score` would
+forbid the residual and the group difference — the operations the paper itself
+reports — and would contradict a unit of years and a training target of
+chronological age, both of which are accurate.
+
+They are `age_years_relative`: years, slope near one, no fixed zero.
+`LEGAL_OPS` admits `residual`, `difference`, `mean` and `correlate`, and refuses
+`acceleration`. The vocabulary had listed `acceleration` and `residual`
+separately since v1.0 and nothing had ever read the difference; this is the
+first clock that needs it.
+
+### 20.4 Specimen type is not metadata
+
+Same 91 people, three specimens ([bioRxiv 2025.09.16.673560](https://doi.org/10.1101/2025.09.16.673560)):
+
+| | |
+|---|---|
+| saliva vs buffy coat, clock ages | **3.83 – 16.46 years apart** |
+| methylation matrix correlation | r = 0.88 – 0.92 |
+| clock-age agreement | Spearman 0.25 – 0.69 |
+| buffy coat vs PBMC | r = 0.97 on the matrix, 0.66 – 0.87 on clock ages |
+
+The matrices correlate well and the clock ages are a decade apart, so a
+correlation check on the input passes and the output is still wrong. Across
+unrelated tissues the published figure is 20–30 years (PMC12714307).
+
+FALCONAge reads `obs["tissue"]` against each clock's declared training tissue
+and takes one of three positions:
+
+`allow`
+  : the genuinely pan-tissue clocks. Nothing to say.
+
+`warn`
+  : the default. Says what the clock was fitted on, what it was given, and the
+    measured discordance where one is published.
+
+`refuse`
+  : twelve clocks whose training tissue has no counterpart elsewhere — three
+    placenta clocks, cord blood and neonatal blood spots, buccal, brain cortex.
+    A placenta clock on blood is a category error, not an offset.
+
+Cell-free DNA is refused by **every** clock regardless of policy. It is not a
+tissue a clock generalises to; it is a fragment population shed from many of
+them, and array clocks applied to it directly perform poorly
+([bioRxiv 2025.11.27.690895](https://doi.org/10.1101/2025.11.27.690895)).
+
+And when `obs` has no `tissue` column at all, the run says so once — because
+silence was the previous behaviour, and silence is the bug.
+
+::: {.callout-note title="This check found a real error in our own test suite"}
+Until v1.1 the integration tests scored the three Lee **placenta** clocks on
+GSE66459, which is umbilical **cord blood**, and asserted only that the answers
+looked like gestational weeks. They did, because gestational age is gestational
+age whatever tissue you read it from. That is exactly the failure the check
+exists to catch, and it caught it here first.
+:::
+
+### 20.5 Probe loss, priced
+
+`probe_loss()` has always said how much of a model is absent — count and
+coefficient mass. It could not say what that costs. Now it can, because the cost
+was measured: every full-450K matrix in the corpus, masked down to each
+platform's probe set and rescored, 109 samples across five datasets.
+
+| clock | platform | probes kept | median shift |
+|---|---|---|---|
+| hrsinchphenoage | EPICv2 | 874 / 959 | **+16.7 y** |
+| yingcausage | EPICv2 | 492 / 585 | +13.9 y |
+| lin | EPICv2 | 96 / 99 | −9.4 y |
+| hannum | EPICv2 | 64 / 71 | −7.7 y |
+| horvath2013 | EPICv2 | 339 / 353 | −2.6 y |
+| zhangblup | EPICv2 | 286,843 / 319,607 | **−0.23 y** |
+| yingdamage | EPICv1 | 1089 / 1089 | **0.00 y** |
+| vidalbralo | either | 8 / 8 | **0.00 y** |
+
+Three things to read out of that table. `lin` loses three probes of ninety-nine
+and moves nine years — the coefficient-mass argument in its most extreme form.
+`zhangblup` loses ten percent of a 319,607-probe model and moves a quarter of a
+year, which is the graceful-degradation property published for PC clocks,
+reproduced here in a different architecture. And the two rows at exactly zero
+are the internal check: a clock that loses nothing must shift by nothing, and
+does.
+
+The shift is **reported and never applied**. An automatic offset would be a
+second number nobody can trace, which is the failure the coefficient digests
+exist to prevent.
+
+### 20.6 A reported score must not move when the next plate arrives
+
+ComBat estimates its location and scale from every sample at once. Add a batch,
+re-run, and every previously corrected value changes — measured directly on
+epigenetic ages as a mean shift of 0.077 to 0.39 years with a **maximum of 2.20
+years** ([iComBat, PMC12495439](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12495439/)).
+
+A 2.2-year retrospective change in someone's reported biological age, caused by
+a stranger's sample being run three months later, is not a rounding difference.
+The individual-level critique of these measures lists "longitudinal
+comparability without re-running all samples" as a prerequisite for any clinical
+use, and this is precisely it.
+
+`fit_batch_reference()` freezes the per-probe grand mean, covariate effects,
+pooled variance **and the empirical-Bayes hyperparameters** on a reference
+cohort. `apply_batch_reference()` standardises each later batch against those
+frozen values and estimates only that batch's own additive and multiplicative
+effects. A batch's corrected values then depend on that batch and the reference
+alone — there is no path through the arithmetic by which a new plate could move
+an old one, and the test asserts bit equality rather than closeness.
+
+Freezing the hyperparameters is the part that is easy to get wrong. Leave them
+free and adding a batch re-estimates the prior, which moves every other batch's
+shrunk estimate, and the whole exercise is ComBat with extra steps.
+
+Two designs are refused: a batch with fewer than eight samples, and one where
+the variable of interest is nested inside batch. The second matters because
+correcting a confounded design removes the effect along with the artefact and
+returns a clean-looking null — the one failure mode of batch correction that
+looks like success.
+
+### 20.7 Before the first array, and after the last
+
+**`power()`** answers "how many samples to see this effect on this clock", and
+needs no data file. It refuses to default the standard deviation, because n
+scales with its square and a guessed SD is a guessed answer reported to three
+significant figures. Where a reliability figure is available it splits the
+answer: at ICC 0.9, a tenth of the sample size exists only to average out the
+instrument. That is the arithmetic behind the published finding that the
+original clocks need 3–16 replicates per condition where their PC versions need
+1–2.
+
+**`consensus()`** implements the decision rule from *When to Trust Epigenetic
+Clocks* ([PMC11526921](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11526921/)).
+Re-analysing six intervention datasets, the authors found that in **five of
+six** exactly one clock reached significance — a first-generation clock every
+time — and **four of those five lost it** under multiple-testing correction. In
+no case did the PC version of the same clock corroborate. Their conclusion, in
+their words: *a single significant clock after an intervention is likely a false
+positive.*
+
+So `consensus()` tests every scored clock, corrects across the whole set
+actually run, and returns a verdict rather than a table to pick from:
+`supported` needs significance across at least two generations including an
+outcome-trained clock and survival of Bonferroni; one lit clock is `unsupported`
+whatever its p-value. The verdict string always carries the counts it was
+computed from — a verdict without its arithmetic is an oracle, and that is the
+opposite of the posture of this package.
+
+### 20.8 Evidence, attached to the score
+
+`result.evidence()` returns what a value on this clock has been *shown* to
+predict, with effect sizes and DOIs. Seeded from studies that tested many clocks
+on one cohort under one protocol, so the rows are comparable to each other:
+GrimAge v2 at hazard ratio 1.54 per SD for all-cause mortality and 1.86 for
+cirrhosis, DunedinPACE at 1.44 for diabetes, and the observation that
+first-generation clocks account for about 5 % of significant disease
+associations across 174 outcomes in 18,859 people
+([Nat Commun 2025](https://doi.org/10.1038/s41467-025-66106-y)).
+
+A row without a DOI is rejected at load time. An uncheckable effect size looks
+identical to a checkable one in a table, and is worth less than nothing.
+
+The most useful row is not about any clock. Across 39 biomarkers in more than
+20,000 people, a clock's chronological-age accuracy and its mortality prediction
+are **uncorrelated — R = 0.12, P = 0.67**
+([Nat Aging 2025](https://doi.org/10.1038/s43587-025-00987-y)). That is the
+empirical justification for `scale_type` and `LEGAL_OPS`, and it is the reason
+"which clock is most accurate" is the wrong question.
+
+### 20.9 What was deliberately not built
+
+Recorded so it does not appear by accident.
+
+- **No silent correction.** Batch reference, platform offset and interval are
+  all reported. A score adjusted by an untraceable factor destroys the
+  provenance discipline that is the reason to use this package.
+- **No percentile against an unnamed population.** The same person reads as
+  accelerated or decelerated depending on the comparator; a percentile without a
+  cited reference cohort means different things to different readers.
+- **No diagnostic thresholds.** None exist in the literature. Nothing here is
+  coloured red above a cut-off.
+- **No LLM dependency.** A scoring library whose output depends on a model that
+  changes weekly is not reproducible.
+
+
+
+## 21. From raw arrays: the chain the clocks were fitted on
+
+Also v1.1, and the other half of it. Section 20 is about what a score is worth;
+this is about being able to produce one from what a laboratory actually has.
+
+Until v1.1 FALCONAge read beta matrices and told you to normalise elsewhere.
+That was accurate and it was the single largest reason somebody with their own
+IDATs could not use the package.
+
+### 21.1 What an IDAT does not contain
+
+An IDAT is keyed by **bead address**, not by probe. A type I probe has two
+addresses and reads both in one colour; a type II probe has one address and
+reads methylated in green, unmethylated in red. Which colour a type I probe uses
+is a property of its chemistry and is written down nowhere in the file.
+
+So the first thing the chain needs is the array manifest, and Illumina's licence
+does not permit redistributing it. `methylprep` (MIT) solved this by downloading
+from a public S3 bucket and caching; FALCONAge uses the same bucket, the same
+filenames, and its own `download.fetch`. One network round trip per machine,
+ever. Every other path in the package works offline and this one says so.
+
+The manifest's SHA-256 goes into the run manifest. A beta matrix is a function of
+which manifest resolved its addresses, in exactly the way a score is a function
+of which coefficient file produced it, and recording one and not the other would
+be an odd place to stop.
+
+### 21.2 Out-of-band signal, which everything downstream rests on
+
+A type I probe's *other* colour, at its own two addresses, measures nothing
+real. It is the array's background — sampled on this chip, in this run, at tens
+of thousands of addresses. That is what makes it a usable null, and it is why
+type II probes, which have no out-of-band signal, borrow the type I null.
+
+Two steps use it and they must run in this order:
+
+**pOOBAH** (Zhou et al. 2018) asks, per probe, the probability that a signal
+this bright could come from background alone — read straight off the empirical
+out-of-band distribution in the relevant channel. A probe above 0.05 becomes
+`NaN`, because a beta of 0.43 computed from two noise readings is
+indistinguishable from a real 0.43 once it is in the matrix.
+
+**noob** (Triche et al. 2013) then deconvolves the observed signal into a normal
+background plus an exponential true signal, per channel, using the same
+out-of-band values.
+
+Detection **before** correction, and `noob()` raises if asked to run first. The
+reason is not stylistic: pOOBAH's null is the *uncorrected* out-of-band
+distribution, and correcting first subtracts the background from the very
+numbers that define what background looks like. Every probe then clears a bar
+that has been lowered underneath it.
+
+Two numerical points worth recording because both were wrong in a first draft:
+
+- The background location and scale use **Huber's M-estimator**, as minfi does.
+  The upper tail of the out-of-band signal is cross-hybridisation, not
+  background. On the corpus's EPIC v1 arrays a plain mean of the contaminated
+  green channel reads about three times the robust estimate.
+- The normal-exponential posterior is evaluated through `log_ndtr`. Written
+  directly as a density over a tail probability it is `0/0` for any probe well
+  below background — which is *every undetected probe on the array*, not an edge
+  case.
+
+### 21.3 The validation, and why it is a real one
+
+The corpus holds raw IDATs for GSM5548192 and GSM5548193, and the betas their
+authors published for those same two physical samples. The two paths share
+nothing.
+
+| | |
+|---|---|
+| correlation | **r = 0.99928** |
+| median absolute difference | **0.0113** |
+| probes within 0.05 | **99.7%** |
+| probes compared | 809,400 |
+
+That is a check on the address decoding, the type I/II split and the channel
+assignment — where a raw-array reader actually goes wrong, and where an error
+would be a whole-matrix error rather than a subtle one.
+
+It is asserted on the **uncorrected** betas, deliberately. GSE182991's published
+matrix agrees with our raw decode at r = 0.999, which says its own processing
+was minimal; comparing our background-corrected output against it would be
+asserting that a correction does nothing.
+
+### 21.4 Two steps that ship switched off, and why
+
+**Dye bias.** Green and red do not fluoresce equally, and a type II probe reads
+methylated in one and unmethylated in the other, so it carries a tilt that is
+not methylation. The standard fix matches the two channels using type I probes.
+
+Measured on real IDATs, our implementation of it moves the median beta by
+**+0.10 to +0.12** — far more than a dye correction should. The cause is visible
+in the data: on that chip red runs about twice as hot as green (median
+out-of-band 1,171 against 415), so mapping red onto green halves every type II
+unmethylated signal.
+
+That is a limitation of the *assumption*, not an arithmetic slip. Matching the
+two channels' distributions presumes type I green probes and type I red probes
+measure the same underlying quantity; on this array their median betas are 0.05
+and 0.14. A correct correction needs the normalisation control probes, whose
+addresses are not in the core-columns manifest we can fetch. So it is left in,
+opt-in, and documented. Turned on by default it would silently make results
+worse.
+
+**BMIQ.** Implemented in full — a three-state beta mixture per probe type,
+fitted by EM, then a quantile map within each state (Teschendorff et al. 2013).
+It has to be asked for because clocks differ in how much they depend on it, and
+type I probes come out untouched, so BMIQ never moves a clock built purely on
+them.
+
+### 21.5 Probe masks: standard for an EWAS, a decision for a clock
+
+Zhou, Laird and Shen catalogued the probes that do not measure what their name
+says — multi-mapping, common SNP at the interrogated base, repeats, polymorphic
+extension base — and publish a recommended general mask. On 450K it flags 29,504
+probes, six percent of the array.
+
+Masking them is correct for an EWAS. **Scoring a pre-fitted clock is a different
+situation**: every clock in this registry was trained on unmasked data, before
+most of these masks existed, and its coefficients were fitted with those probes
+in, whatever the probes were measuring. Removing them at score time does not
+recover a truer number — it deletes an input the model expects and hands the gap
+to the imputer.
+
+So nothing is masked automatically, and `mask_report()` prices the decision:
+
+| clock | probes masked | share of model | share of |coefficient| |
+|---|---:|---:|---:|
+| dunedinpoam38 | 5 / 46 | 10.9% | **6.1%** |
+| dnamtl | 15 / 140 | 10.7% | 5.4% |
+| hannum | 1 / 71 | 1.4% | 1.6% |
+| horvath2013 | **1 / 353** | 0.3% | **0.2%** |
+
+Two clocks, the same published mask, and opposite answers. For Horvath it is
+free; for DunedinPoAm38 it removes a ninth of the model. The coefficient-mass
+column is the one to read, and it is why this is a report rather than a step.
+
+### 21.6 What the chain still does not do
+
+- **No control-probe normalisation.** The core-columns manifest carries no
+  control addresses, which is why dye bias is unvalidated (§21.4).
+- **No cross-platform liftover.** Unchanged from v1.0, and blocked for the same
+  reason: mLiftOver's tables encode empirical paired-sample concordance.
+- **EPIC v1 and v2 cannot be told apart by address count.** They are five
+  percent apart, so detection refuses as ambiguous rather than picking the
+  closer one. Pass `platform=` for a chip near the boundary.
+
 ## Appendix A - Full pyaging clock registry (173 clocks)
 
 Generated from [pyaging clock_metadata.json](https://github.com/lucascamillomd/pyaging).

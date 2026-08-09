@@ -378,3 +378,23 @@ main video {
     white-space: nowrap;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   Display maths on a phone
+   -----------------------------------------------------------------------------
+   MathJax lays a display equation out at its natural width and does nothing to
+   fit a 320px viewport, so one equation in science.qmd made the whole page
+   scroll sideways -- caught by test/responsive_check.py, not by reading it.
+
+   Scroll the equation, not the document. `mjx-container[display]` is the
+   wrapper MathJax 3 puts around a display block; the inline case is left alone
+   because an inline equation that scrolls independently of its sentence is
+   worse than one that wraps badly.
+   -------------------------------------------------------------------------- */
+mjx-container[display="true"],
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding-bottom: 0.25rem;
+}

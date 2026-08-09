@@ -1,0 +1,20 @@
+# preprocess.poobah { #falconage.preprocess.poobah }
+
+```python
+preprocess.poobah(sig)
+```
+
+Detection p-values against the out-of-band background (Zhou 2018).
+
+For each probe, the probability that a signal at least this bright would be
+seen from background alone, read off the empirical distribution of the
+out-of-band intensities in the relevant channel. A type I probe is compared
+against its own channel's null in both beads; a type II probe's methylated
+bead is green and its unmethylated bead is red, so it is compared against
+both nulls.
+
+The p-value is the *smaller* of the two tail probabilities, i.e. the more
+optimistic bead. A probe is detected if either of its beads rose above
+background, which is the right question: a fully methylated probe has almost
+no unmethylated signal by construction, and requiring both would fail every
+probe at an extreme.

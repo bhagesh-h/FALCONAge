@@ -1,0 +1,17 @@
+# preprocess.apply_mask { #falconage.preprocess.apply_mask }
+
+```python
+preprocess.apply_mask(data, *, platform=None, kind='general')
+```
+
+Set masked probes to NaN. Not called anywhere automatically.
+
+.. warning::
+
+   Every clock in this registry was fitted on unmasked data, before most of
+   these masks existed. Removing a probe at score time does not recover a
+   truer number: it deletes an input the coefficients expect and hands the
+   gap to the imputer. Run :func:`mask_report` first and decide with the
+   coefficient-mass column in front of you.
+
+   Masking is the right default for an EWAS and a real decision for a clock.

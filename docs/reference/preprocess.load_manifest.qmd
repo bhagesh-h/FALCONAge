@@ -1,0 +1,17 @@
+# preprocess.load_manifest { #falconage.preprocess.load_manifest }
+
+```python
+preprocess.load_manifest(platform)
+```
+
+Address-to-probe mapping for one platform, indexed by probe id.
+
+Columns: ``address_a``, ``address_b`` (nullable), ``type`` (``I``/``II``)
+and ``channel`` (``Grn``/``Red``, empty for type II). Cached for the
+process -- parsing 850,000 rows per call would dominate a run.
+
+Type II probes have no ``address_b`` and no channel: they read methylated
+in green and unmethylated in red at a single address. Type I probes have
+two addresses in *one* channel, and the other channel at those same
+addresses is the out-of-band signal that :mod:`falconage.preprocess.idat`
+uses as its background null.

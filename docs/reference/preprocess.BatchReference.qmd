@@ -1,0 +1,32 @@
+# preprocess.BatchReference { #falconage.preprocess.BatchReference }
+
+```python
+preprocess.BatchReference(
+    features,
+    grand_mean,
+    beta,
+    var_pooled,
+    covariates,
+    covariate_columns,
+    g_bar,
+    t2,
+    a_prior,
+    b_prior,
+    reference_batches,
+    n_reference_samples,
+)
+```
+
+Frozen global parameters. The artefact that makes results stable.
+
+``grand_mean``, ``beta`` and ``var_pooled`` are per feature; ``g_bar``,
+``t2``, ``a_prior`` and ``b_prior`` are the empirical-Bayes hyperparameters.
+The hyperparameters are frozen as deliberately as the rest: leave them free
+and adding a batch re-estimates the prior, which moves every other batch's
+shrunk estimate, which is the drift this class exists to remove.
+
+## Attributes
+
+| Name | Description |
+| --- | --- |
+| [digest](#falconage.preprocess.BatchReference.digest) | Content hash, for the run manifest. |

@@ -1,0 +1,12 @@
+# plot.platform_bias { #falconage.plot.platform_bias }
+
+```python
+plot.platform_bias(clocks=None, top=14)
+```
+
+What probe loss costs each clock, in years, on each platform.
+
+Read straight off ``registry/data/platform_bias.csv``, which is measured
+rather than assumed: full 450K matrices masked down to each platform's probe
+set and re-scored. A bar at zero is a clock that lost nothing; a long bar is
+a clock whose missing probes were the ones it leans on.

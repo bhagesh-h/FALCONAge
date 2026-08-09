@@ -20,6 +20,7 @@ import gzip
 import io
 import re
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -396,3 +397,157 @@ def read_rrbs_dir(paths, *, min_coverage: int = 5,
     return FalconData(X=X, obs=obs if obs is not None else pd.DataFrame(index=X.index),
                       modality="rrbs", platform="RRBS",
                       uns={"min_coverage": min_coverage, "n_files": len(series)})
+
+
+# ---------------------------------------------------------------------------
+# nanopore and targeted panels
+# ---------------------------------------------------------------------------
+#: bedMethyl, as `modkit pileup` writes it. Columns 1-9 are BED9; modkit appends
+#: its own. Only four are needed here, and they are taken by position because
+#: bedMethyl has no header and the extended columns differ between callers.
+_BEDMETHYL = {"chrom": 0, "start": 1, "end": 2, "code": 3,
+              "score": 4, "strand": 5, "coverage": 9, "percent": 10}
+
+
+def read_bedmethyl(path, *, min_coverage: int = 10, sample_id: str | None = None,
+                   mod_code: str = "m", manifest: pd.DataFrame | None = None,
+                   probe_col: str = "feature_id", with_coverage: bool = False):
+    """One nanopore bedMethyl file as a per-site methylation fraction.
+
+    WHY THIS IS NOT JUST ANOTHER CSV READER. Long-read methylation arrives with
+    a coverage number per site, and coverage is information the array path never
+    had: a CpG read twelve times is measured worse than one read two hundred
+    times, and :func:`falconage.technical_se` can use that directly. Sites below
+    ``min_coverage`` are dropped rather than kept with a wide error bar, because
+    a fraction from three reads takes only four values.
+
+    Nanopore reads native DNA, so there is no bisulfite conversion and no
+    conversion-efficiency question -- but also no Illumina probe identifier. To
+    score an array-trained clock the sites must be mapped to probe ids, which
+    needs a ``manifest`` with genomic coordinates. Without one this returns
+    coordinate-keyed values, which are perfectly good for a clock trained on
+    sequencing and useless for one trained on an array. That is stated rather
+    than papered over: silently returning a matrix no clock can align to is how
+    a user ends up with a coverage error they cannot interpret.
+
+    Parameters
+    ----------
+    mod_code
+        The modification to take. ``"m"`` is 5mC. Nanopore calls 5hmC (``"h"``)
+        in the same file, and adding the two together is a different quantity
+        from what any array measured.
+    manifest
+        Optional frame with ``chrom``, ``pos`` and ``probe_col``, to map
+        coordinates onto probe identifiers.
+    with_coverage
+        Return ``(beta, coverage)`` rather than just ``beta``. A second return
+        value rather than ``Series.attrs``: pandas compares ``attrs`` for
+        equality when concatenating, and a Series stored in there makes
+        ``pd.concat`` raise on the ambiguous truth value.
+    """
+    p = Path(path)
+    df = pd.read_csv(p, sep=r"\s+", header=None, comment="#", engine="python")
+    if df.shape[1] < 11:
+        raise DataError(
+            f"{p.name}: {df.shape[1]} columns; bedMethyl from `modkit pileup` has "
+            "at least 11. A plain BED9 has no methylation percentage in it.")
+    out = pd.DataFrame({
+        "chrom": df[_BEDMETHYL["chrom"]].astype(str),
+        "pos": df[_BEDMETHYL["start"]].astype(int),
+        "code": df[_BEDMETHYL["code"]].astype(str),
+        "coverage": pd.to_numeric(df[_BEDMETHYL["coverage"]], errors="coerce"),
+        "percent": pd.to_numeric(df[_BEDMETHYL["percent"]], errors="coerce"),
+    })
+    out = out[out["code"] == mod_code]
+    if out.empty:
+        codes = sorted(set(df[_BEDMETHYL["code"]].astype(str)))
+        raise DataError(
+            f"{p.name}: no rows with modification code {mod_code!r}; the file "
+            f"carries {codes}. 5mC is 'm' and 5hmC is 'h'; they are different "
+            "measurements and must not be summed.")
+    out = out[out["coverage"] >= min_coverage]
+    beta = (out["percent"] / 100.0).clip(0.0, 1.0)
+
+    if manifest is not None:
+        key = manifest.set_index([manifest["chrom"].astype(str),
+                                  manifest["pos"].astype(int)])[probe_col]
+        idx = pd.MultiIndex.from_arrays([out["chrom"], out["pos"]])
+        mapped = key.reindex(idx)
+        beta = beta.to_numpy()[mapped.notna().to_numpy()]
+        index = mapped.dropna().astype(str)
+    else:
+        index = out["chrom"] + ":" + out["pos"].astype(str)
+
+    name = sample_id or p.name.split(".")[0]
+    idx = pd.Index(index, name="feature_id")
+    keep = ~idx.duplicated(keep="first")
+    s = pd.Series(np.asarray(beta, dtype=float)[keep], index=idx[keep], name=name)
+    if not with_coverage:
+        return s
+    cov = pd.Series(out["coverage"].to_numpy(dtype=float)[:len(idx)][keep],
+                    index=idx[keep], name=name)
+    return s, cov
+
+
+def read_bedmethyl_dir(paths, *, min_coverage: int = 10,
+                       obs: pd.DataFrame | None = None, **kw) -> FalconData:
+    """Several bedMethyl files as one matrix on their shared sites."""
+    pairs = [read_bedmethyl(p, min_coverage=min_coverage, with_coverage=True,
+                            sample_id=Path(p).name.split(".")[0], **kw)
+             for p in paths]
+    X = pd.concat([b for b, _ in pairs], axis=1).T
+    cov = pd.concat([c for _, c in pairs], axis=1).T
+    d = FalconData(X=X, obs=obs if obs is not None else pd.DataFrame(index=X.index),
+                   modality="dna_methylation", platform="nanopore",
+                   uns={"min_coverage": min_coverage, "n_files": len(pairs)})
+    # Kept alongside rather than folded in: coverage is a per-cell property and
+    # the container's X is the measurement, not its precision.
+    d.uns["site_coverage"] = cov
+    return d
+
+
+def read_panel(path, *, cpgs: Sequence[str] | None = None,
+               index_col: int | str = 0, platform: str = "targeted panel",
+               obs: pd.DataFrame | None = None) -> FalconData:
+    """A targeted assay: pyrosequencing, EpiTYPER, amplicon, ddPCR.
+
+    What most laboratories can actually afford, and the input path an
+    array-shaped reader makes awkward. A panel is a *declared* set of CpGs, so
+    the reader takes that declaration and checks the file against it rather than
+    inferring the panel from whichever columns happen to be present -- a typo in
+    a probe name would otherwise become a missing probe, and a missing probe
+    becomes an imputed one.
+
+    Nothing here lowers the coverage floor. A panel covering six of Horvath's
+    353 probes must fail loudly; ``score`` already refuses below
+    ``min_coverage``, and the point of this reader is to reach that refusal with
+    an accurate feature list rather than to get around it.
+    """
+    p = Path(path)
+    sep = "\t" if p.suffix.lower() in (".tsv", ".txt") else ","
+    df = pd.read_csv(p, sep=sep, index_col=index_col)
+    df = df.apply(pd.to_numeric, errors="coerce")
+
+    if df.to_numpy(dtype=float).max() > 1.5:
+        df = df / 100.0          # percentages, as pyrosequencing reports them
+
+    if cpgs is not None:
+        want = [str(c) for c in cpgs]
+        have = [c for c in want if c in df.columns]
+        missing = [c for c in want if c not in df.columns]
+        if not have:
+            raise DataError(
+                f"{p.name}: none of the {len(want)} declared CpGs are columns in "
+                f"the file. Its columns start {list(df.columns)[:4]}.")
+        if missing:
+            raise DataError(
+                f"{p.name}: {len(missing)} of {len(want)} declared CpGs are "
+                f"absent: {missing[:6]}.\n"
+                "  A declared panel is checked, not intersected. Fix the "
+                "declaration or the file -- silently dropping them would turn a "
+                "typo into an imputed probe.")
+        df = df[want]
+
+    return FalconData(X=df, obs=obs if obs is not None else pd.DataFrame(index=df.index),
+                      modality="dna_methylation", platform=platform,
+                      uns={"panel_size": df.shape[1], "declared": cpgs is not None})

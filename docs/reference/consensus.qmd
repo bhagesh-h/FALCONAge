@@ -1,0 +1,44 @@
+# consensus { #falconage.consensus }
+
+```python
+consensus(
+    result,
+    group_col,
+    *,
+    reference=None,
+    alpha=0.05,
+    age_col='age',
+    min_generations=2,
+    clocks=None,
+)
+```
+
+Does a group difference hold up across clocks, or is it one clock?
+
+Implements the decision rule from *When to Trust Epigenetic Clocks*
+(PMC11526921). Re-analysing six intervention datasets, the authors found
+that in five of them exactly one clock reached significance -- a
+first-generation clock every time -- and four of those five lost it under
+multiple-testing correction. In no case did the principal-component version
+of the same clock corroborate the finding. Their conclusion, stated plainly:
+**a single significant clock after an intervention is likely a false
+positive.**
+
+So this runs every scored clock, corrects across the whole set actually
+tested, and returns a verdict rather than a table of p-values to pick from:
+
+``supported``
+    Significant after Bonferroni, across at least ``min_generations``
+    generations, including at least one outcome-trained clock (second
+    generation, pace, or causal).
+``unsupported``
+    One clock, or first-generation clocks only, or nothing surviving
+    correction.
+``inconclusive``
+    Something in between -- most often several clocks at BH but not at
+    Bonferroni.
+
+Each clock is tested on its acceleration residual where that is a legal
+operation for its scale, and on the raw score where it is not. A pace of
+aging has no residual to take, and taking one anyway is the units error
+``LEGAL_OPS`` exists to prevent.

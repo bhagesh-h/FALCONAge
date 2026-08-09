@@ -1,0 +1,23 @@
+# read_computage_bench { #falconage.read_computage_bench }
+
+```python
+read_computage_bench(dataset, *, root=None, conditions=None, prepare=True)
+```
+
+One ComputAgeBench study, ready to score.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type                    | Description                                                                                                                                                                            | Default    |
+|------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| dataset    | str                     | A GEO series accession, e.g. ``"GSE182991"``. See :func:`list_computage_bench`.                                                                                                        | _required_ |
+| root       | str \| None             | A local directory holding the parquets and the metadata TSV. ``None`` downloads into the ordinary FALCONAge cache.                                                                     | `None`     |
+| conditions | Sequence\[str\] \| None | Keep only these values of ``condition``. The control label in this corpus is ``"HC"``.                                                                                                 | `None`     |
+| prepare    | bool                    | Run :func:`falconage.prepare`, which collapses EPIC v2 replicate suffixes and declares the platform. Left on by default because a v2 matrix without that step overlaps almost nothing. | `True`     |
+
+## Notes {.doc-section .doc-section-notes}
+
+Stored float32 is widened to float64 here. Not because it recovers the lost
+bits -- it does not -- but because everything downstream computes in double
+and a silent upcast partway through a chain is harder to reason about than
+one at the door.

@@ -53,6 +53,11 @@ SCALE_END = "<!-- END GENERATED: scales -->"
 GLOSS = {
     "age_years": "An age. The model predicts elapsed time and is reported on "
                  "the same scale as chronological age.",
+    "age_years_relative": "An age in years with a slope near one against "
+                          "chronological age, but no fixed origin: the offset "
+                          "moves between cohorts. The residual and group "
+                          "differences are defined; predicted minus "
+                          "chronological is not.",
     "relative_score": "A score with no external unit. Comparable within a "
                       "cohort, meaningless as an absolute value.",
     "proportion": "A composition. The estimates are fractions of a whole and "

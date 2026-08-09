@@ -7,6 +7,7 @@ import hashlib
 import numpy as np
 import pytest
 
+import falconage as fa
 from falconage.core.errors import ClockNotFoundError, RegistryError, WeightsUnavailableError
 from falconage.registry.registry import DATA_DIR, LEGAL_OPS
 
@@ -266,3 +267,103 @@ def test_the_shared_registry_was_not_mutated(registry):
     """Guard for the mistake above: `load()` is cached and shared."""
     assert not registry.get("horvath2013").requires_cohort
     assert registry.get("horvath2013").min_samples == 1
+
+
+# ---------------------------------------------------------------------------
+# the relative-origin age scale
+# ---------------------------------------------------------------------------
+# A clock can be in years, track age with a slope of one, and still have no
+# fixed zero. Ying's DamAge and AdaptAge are the case: measured across three
+# healthy cohorts their median offset against chronological age swings 162
+# years each while Horvath's swings 15, they move as near mirror images
+# (r = -0.975), and the swing in their sum is only 33 -- one dataset-level
+# shift amplified by intercepts of +543.43 and -511.97, not two broken clocks.
+
+RELATIVE_ORIGIN = {"yingdamage", "yingadaptage"}
+
+
+def test_the_relative_origin_scale_is_exactly_the_two_measured_clocks(registry):
+    got = {c.id for c in registry if c.scale_type == "age_years_relative"}
+    assert got == RELATIVE_ORIGIN
+
+
+def test_it_forbids_the_absolute_convention_and_allows_the_residual(registry):
+    """The whole distinction. `predicted - chronological` needs the zero to
+    mean something; a residual fitted inside the dataset does not."""
+    for cid in RELATIVE_ORIGIN:
+        ops = registry.get(cid).legal_operations
+        assert "acceleration" not in ops
+        assert {"residual", "difference", "mean", "correlate"} <= ops
+
+
+def test_causage_keeps_the_ordinary_age_scale(registry):
+    """Only the two that were measured to drift. CausAge's offset swings 15
+    years, the same as Horvath's, so nothing about it changed."""
+    assert registry.get("yingcausage").scale_type == "age_years"
+    assert "acceleration" in registry.get("yingcausage").legal_operations
+
+
+def test_it_is_not_relative_score(registry):
+    """The other error, and the tempting one. `relative_score` admits only
+    correlate and rank, which would forbid the residual and the group
+    difference -- the operations the paper itself reports -- and would
+    contradict a unit of years and a training target of chronological age,
+    both of which are accurate."""
+    for cid in RELATIVE_ORIGIN:
+        c = registry.get(cid)
+        assert c.unit == ("years",)
+        assert c.training_target == ("chronological age",)
+        assert "residual" in c.legal_operations
+
+
+def test_the_reason_travels_with_the_clock(registry):
+    """A scale change nobody can trace is the same problem as a silent offset."""
+    for cid in RELATIVE_ORIGIN:
+        notes = " ".join(registry.get(cid).known_discrepancies)
+        assert "162 years" in notes and "-0.975" in notes
+
+
+def test_absolute_acceleration_is_refused_with_the_alternative_named(synthetic_betas):
+    from falconage.core.errors import IllegalOperationError
+
+    obs = synthetic_betas.obs.copy()
+    obs["tissue"] = "whole blood"
+    d = fa.FalconData(X=synthetic_betas.X, obs=obs, modality="dna_methylation",
+                      platform="450K")
+    res = fa.score(d, clocks=["yingdamage"], min_coverage=0.0)
+
+    with pytest.raises(IllegalOperationError, match="origin is not fixed"):
+        fa.acceleration(res, method="absolute", clocks=["yingdamage"])
+    # "both" returns an absolute column, so it is refused for the same reason.
+    with pytest.raises(IllegalOperationError):
+        fa.acceleration(res, method="both", clocks=["yingdamage"])
+
+    # And the residual, which is what the published analyses use, works.
+    acc = fa.acceleration(res, method="residual", clocks=["yingdamage"])
+    assert acc["yingdamage"].notna().all()
+    assert abs(float(acc["yingdamage"].mean())) < 1e-8, "a residual is centred"
+
+
+def test_it_is_dropped_from_an_unnamed_absolute_run_rather_than_raising(synthetic_betas):
+    """`clocks=None` means 'the ones this makes sense for'. Under the absolute
+    convention that no longer includes these two, and the rest still run."""
+    obs = synthetic_betas.obs.copy()
+    obs["tissue"] = "whole blood"
+    d = fa.FalconData(X=synthetic_betas.X, obs=obs, modality="dna_methylation",
+                      platform="450K")
+    res = fa.score(d, clocks=["yingdamage", "horvath2013"], min_coverage=0.0)
+
+    absolute = fa.acceleration(res, method="absolute")
+    assert list(absolute.columns) == ["horvath2013"]
+
+    residual = fa.acceleration(res, method="residual")
+    assert set(residual.columns) == {"yingdamage", "horvath2013"}
+
+
+def test_a_conformal_interval_is_not_offered_for_them(synthetic_betas):
+    """A prediction band against chronological age has no meaning for a clock
+    whose origin moves between cohorts, so the calibration excludes them."""
+    cal = fa.uncertainty.load_conformal()
+    if cal.empty:
+        pytest.skip("conformal.csv absent")
+    assert not (set(cal["clock"]) & RELATIVE_ORIGIN)
