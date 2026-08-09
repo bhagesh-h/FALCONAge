@@ -287,6 +287,63 @@ ref <- fit_kdm(nhanes3, markers = markers)
 score(d, clocks = "kdm", reference = ref)
 ```
 
+## Outcomes: survival and association
+
+Two figures that most aging-clock papers carry, and that need the analysis functions above.
+
+### Does faster ageing shorten survival
+
+::: {.panel-tabset}
+
+#### Python
+
+```python
+fa.cox_hazard(res, time_col="time", event_col="status")      # hazard ratio per SD
+fa.plot.kaplan_meier(res, "horvath2013",
+                     time_col="time", event_col="status")    # the figure
+```
+
+#### R
+
+```r
+cox_hazard(res, time_col = "time", event_col = "status")
+plot_kaplan_meier(res, "horvath2013", time_col = "time", event_col = "status")
+```
+
+:::
+
+The curves compare the fastest-ageing tenth with the slowest, not two halves. The middle of the
+acceleration distribution is where a clock discriminates least, so a median split dilutes the
+comparison; the tails are the published convention. The log-rank p is in the subtitle.
+
+If the curves cross, the hazards are not proportional and the single hazard ratio beside them is
+an average over a period during which the ordering changed. That is worth saying in a caption
+rather than leaving for a reader to notice.
+
+### What associates with acceleration
+
+::: {.panel-tabset}
+
+#### Python
+
+```python
+assoc = fa.associate(res, "crp", covariates=("age", "sex"))
+fa.plot.volcano(assoc, fdr=0.05)
+```
+
+#### R
+
+```r
+assoc <- associate(res, "crp", covariates = c("age", "sex"))
+plot_volcano(assoc, fdr = 0.05)
+```
+
+:::
+
+The dashed line is the Benjamini-Hochberg threshold at the stated FDR, read off the `q` column
+rather than recomputed. This matters more than it looks: across a few hundred tests a raw 0.05
+admits roughly one in twenty of the nulls, and drawing that line instead labels them significant.
+
 ## Benchmarking
 
 ```r

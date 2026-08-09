@@ -51,6 +51,7 @@ from pathlib import Path
 WIDTHS = [320, 360, 390, 768, 1280]
 
 PAGES = [
+    "gallery.html",
     "index.html",
     "clocks.html",
     "gpu.html",

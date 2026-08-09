@@ -122,6 +122,8 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `plot_acceleration_by_group()` | `fa.plot.acceleration_by_group()` |
 |  | `plot_acceleration_heatmap()` | `fa.plot.acceleration_heatmap()` |
 |  | `plot_forest()` | `fa.plot.forest()` |
+|  | `plot_kaplan_meier()` | `fa.plot.kaplan_meier()` |
+|  | `plot_volcano()` | `fa.plot.volcano()` |
 |  | `plot_agreement()` | `fa.plot.clock_corr()` |
 |  | `plot_clock_radar()` | `fa.plot.clock_radar()` |
 |  | `plot_clock_chord()` | `fa.plot.clock_chord()` |

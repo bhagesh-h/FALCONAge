@@ -56,7 +56,7 @@ RUN python3 /opt/testdata/fetch_test_data.py --self-test \
 | Group | Files | Size | Samples | Platform | Exercises |
 |---|---:|---:|---:|---|---|
 | [`bench`](#bench) | 11 | 368.4 MB | 261 | 27K, 450K, EPICv1 | the AA1/AA2 benchmark and most of the 161 clocks |
-| [`idat`](#idat) | 8 | 60.4 MB | 4 | EPICv1, EPICv2 | the raw IDAT → noob → BMIQ path |
+| [`idat`](#idat) | 8 | 60.4 MB | 4 | EPICv1, EPICv2 | the IDAT reader, and the fixture the normalisation chain will need |
 | [`gestational`](#gestational) | 1 | 50.8 MB | 22 | 450K | the 7 gestational and paediatric clocks |
 | [`mouse`](#mouse) | 5 | 50.2 MB | 4 | RRBS | Petkovich, Meer, Stubbs, Thompson |
 | [`epicv2`](#epicv2) | 1 | 41.2 MB | 8 | EPICv2 | probe-suffix aggregation |
@@ -119,6 +119,17 @@ it is the one that decides whether two labs' numbers are comparable.
 Two samples per platform is enough for correctness and not enough for a normalisation that
 estimates parameters across a plate - funnorm on n=2 is not funnorm. The full `RAW.tar` for either
 series is several hundred megabytes and does not fit the budget.
+
+**What this group does and does not exercise today.** `io.read_idat_pair` parses the binary and
+returns bead addresses with their Grn and Red means; that is what these files test. Turning
+addresses into `cg########` probe ids needs the Illumina manifest, and **noob, dye-bias
+correction, pOOBAH and BMIQ are not implemented in v1.0** - see
+[the frontier](../../docs/science.qmd) §17.1 for the chain and why its order matters. These files
+are here because they are the fixture that work will be verified against, and because a corpus
+that contains only other people's normalised beta matrices cannot ever test the one path this
+package would control end to end.
+
+If your input is raw IDATs today, normalise with sesame or minfi and bring the beta matrix here.
 
 ### gestational
 
@@ -198,6 +209,51 @@ Stated here rather than discovered later.
 - **Transcriptomic and proteomic clocks.** Out of scope for v1.0; groups get added when v1.1 and
   v1.2 land.
 - **345 of 348 mammalian species.** See above.
+
+## Every file in the corpus
+
+<!-- BEGIN GENERATED: inventory -->
+
+34 files, 558.6 MB on disk. Digests are the first 12 characters of the SHA-256 in `checksums.sha256`; `verify` checks the full value.
+
+| File | Size | SHA-256 |
+|---|---:|---|
+| `bench/GSE107143.parquet` | 30.5 MB | `647939966e7c` |
+| `bench/GSE118468.parquet` | 41.5 MB | `e7fd70e0e9f6` |
+| `bench/GSE130030.parquet` | 52.8 MB | `cca7d12761f6` |
+| `bench/GSE151355.parquet` | 39.5 MB | `b9d1fe7dcdff` |
+| `bench/GSE182991.parquet` | 89.4 MB | `04c9b1bc248f` |
+| `bench/GSE214297.parquet` | 34.3 MB | `92b1e5ec8914` |
+| `bench/GSE49909.parquet` | 5.3 MB | `c47861e39ab7` |
+| `bench/GSE56606.parquet` | 9.5 MB | `8c947ba4aed3` |
+| `bench/GSE62867.parquet` | 815.6 kB | `7c7a49263dce` |
+| `bench/GSE71841.parquet` | 47.0 MB | `c20fc1a7f48b` |
+| `bench/computage_bench_meta.tsv` | 620.4 kB | `0338cd96a5ba` |
+| `clinical/NHANES3.rda` | 1.3 MB | `c1b940fc9614` |
+| `clinical/NHANES3_HDTrain.rda` | 205.4 kB | `a547c7e45c4f` |
+| `clinical/NHANES4.rda` | 3.6 MB | `de407b8bae12` |
+| `epicv2/GSE330325_series_matrix.txt.gz` | 39.3 MB | `8593eae6e217` |
+| `gestational/GSE66459_series_matrix.txt.gz` | 48.4 MB | `89483980ed5b` |
+| `idat/epicv1/GSM5548192_204081560090_R03C01_Grn.idat.gz` | 7.0 MB | `508c6d7c9253` |
+| `idat/epicv1/GSM5548192_204081560090_R03C01_Red.idat.gz` | 7.2 MB | `7ca40f98d8b3` |
+| `idat/epicv1/GSM5548193_204081560090_R06C01_Grn.idat.gz` | 7.0 MB | `2f05e2252339` |
+| `idat/epicv1/GSM5548193_204081560090_R06C01_Red.idat.gz` | 7.2 MB | `da6ba3af4da5` |
+| `idat/epicv2/GSM9723838_207219750060_R05C01_Grn.idat.gz` | 7.3 MB | `80b867e3a279` |
+| `idat/epicv2/GSM9723838_207219750060_R05C01_Red.idat.gz` | 7.3 MB | `529d7a2e9acc` |
+| `idat/epicv2/GSM9723839_207219750060_R06C01_Grn.idat.gz` | 7.4 MB | `926a0d494aae` |
+| `idat/epicv2/GSM9723839_207219750060_R06C01_Red.idat.gz` | 7.2 MB | `f7a84584a895` |
+| `mammalian/GSE184222_datBetaNormalized.csv.gz` | 3.7 MB | `6d6f51b1f074` |
+| `mammalian/GSE184222_series_matrix.txt.gz` | 2.2 kB | `41ad11914d61` |
+| `mammalian/GSE184224_datBetaNormalized.csv.gz` | 5.2 MB | `cd82139aa8bc` |
+| `mammalian/GSE184224_series_matrix.txt.gz` | 2.1 kB | `8ff89ae99ff5` |
+| `mouse/GSE80672_series_matrix.txt.gz` | 12.4 kB | `bc57dca91e23` |
+| `mouse/GSM2132712_20D02.overlap.txt.gz` | 11.3 MB | `3d3a470a287a` |
+| `mouse/GSM2132713_20D03.overlap.txt.gz` | 12.3 MB | `7612eff16ece` |
+| `mouse/GSM2132959_M3503.overlap.txt.gz` | 12.6 MB | `50bb13e727ef` |
+| `mouse/GSM2132960_M3503R.overlap.txt.gz` | 11.8 MB | `f557a5a68f7f` |
+| `provenance.json` | 16.6 kB | _not in checksums.sha256_ |
+
+<!-- END GENERATED: inventory -->
 
 ## Checksums, and what they are worth
 

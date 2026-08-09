@@ -344,7 +344,12 @@ def run_clinical(records: dict) -> None:
         "mean_cell_volume": rng.normal(89 + 0.03 * age, 4),
         "red_cell_distribution_width": rng.normal(12.8 + 0.012 * age, 0.7),
         "alkaline_phosphatase": rng.normal(70 + 0.20 * age, 15),
-        "white_blood_cell_count": rng.normal(6.5, 1.4),
+        # size=n is load-bearing: the other markers get an array `loc` and so
+        # come out length n, but this one has a scalar mean and without size
+        # numpy returns a single float that broadcasts to a constant column.
+        # A constant marker makes KDM a division by zero, which fit_kdm now
+        # refuses rather than returning a plausible number from.
+        "white_blood_cell_count": rng.normal(6.5, 1.4, size=n),
         "age": age,
     }, index=ids)
     d = fa.FalconData(X=df, obs=pd.DataFrame({"age": age}, index=ids),
@@ -366,6 +371,46 @@ def run_clinical(records: dict) -> None:
     res_p.manifest.write(dd / "run_manifest.json")
 
     make_figures("clinical", "synthetic", res_p)
+
+    # ---- the two outcome figures -------------------------------------------
+    # Survival and association need columns the methylation corpus does not
+    # carry: a follow-up time, an event indicator, and a continuous outcome to
+    # regress on. NHANES has real mortality linkage but ships as .rda, which
+    # Python does not read -- the R suite covers that path. So these two are
+    # drawn on the same synthetic cohort as everything else above, and the
+    # gallery says so rather than implying a real survival analysis.
+    #
+    # The hazard is driven by PhenoAge acceleration on purpose. A survival
+    # figure fitted to noise would render, look plausible, and demonstrate
+    # nothing about whether the estimator works.
+    aa = fa.acceleration(res_p, method="residual")["phenoage"]
+    z = (aa - aa.mean()) / aa.std()
+    time = rng.exponential(30.0 / np.exp(0.45 * z))
+    event = (time < 25).astype(int)
+
+    res_p.obs = res_p.obs.copy()
+    res_p.obs["time"] = time.to_numpy() if hasattr(time, "to_numpy") else time
+    res_p.obs["event"] = event.to_numpy() if hasattr(event, "to_numpy") else event
+    res_p.obs["crp"] = df["crp"].to_numpy()
+
+    fd = figdir("clinical", "synthetic")
+    dpi = fa.plot.theme_value("dpi")
+
+    fig, km = fa.plot.kaplan_meier(res_p, "phenoage",
+                                   time_col="time", event_col="event")
+    fig.savefig(fd / "kaplan_meier.png", bbox_inches="tight", dpi=dpi)
+    write_table(dd, "kaplan_meier", km, index=False)
+
+    # Three clocks rather than one, so the volcano has points to separate.
+    # They are scored above in three calls because `reference=` takes one
+    # reference object and KDM and HD need different ones; the columns are
+    # merged here rather than re-scored.
+    res_v = res_p
+    res_v.scores = pd.concat([res_p.scores, res_k.scores, res_h.scores], axis=1)
+    assoc = fa.associate(res_v, "crp", covariates=("age",))
+    fig, vol = fa.plot.volcano(assoc)
+    fig.savefig(fd / "volcano.png", bbox_inches="tight", dpi=dpi)
+    write_table(dd, "volcano", vol)
 
     records["clinical"] = pd.DataFrame([{
         "clock": c,
@@ -436,6 +481,8 @@ GALLERY_SOURCES = [
     ("benchmark_error_bias",  "bench", "_combined", "the MedAE/MedE tradeoff"),
     ("benchmark_heatmap",     "bench", "_combined", "clock x dataset"),
     ("forest",                "bench", "_combined", "effect sizes with intervals"),
+    ("kaplan_meier",     "clinical", "synthetic", "the only cohort with a follow-up time; synthetic, and the gallery notes say so"),
+    ("volcano",          "clinical", "synthetic", "same cohort, the only one with a continuous outcome to regress on"),
 ]
 
 

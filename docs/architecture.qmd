@@ -1833,6 +1833,18 @@ matplotlib figures across the bridge. The fourteen from [the science notes](scie
 | `qc_density` | beta distribution per sample at each preprocessing stage |
 | `calibration` | predicted against observed, for probability outputs |
 | `missingness` | percent of features absent per clock, drawn before the results |
+| `kaplan_meier` | survival of the fastest-ageing tail against the slowest, with the log-rank p |
+| `volcano` | effect size against evidence, thresholded at the BH cut rather than a raw p |
+
+The last two close the gap against the figure conventions in current papers. Both estimators are
+written out rather than imported: the product-limit form and the two-sample log-rank statistic are
+about forty lines together, and `survival` and `lifelines` are heavier dependencies than that
+deserves. The R side calls the Python core for the log-rank p and redraws the curve in ggplot2, so
+the statistic cannot differ between the languages while the figure still carries the R theme.
+
+`volcano` draws the Benjamini-Hochberg threshold, taken from the `q` column that
+[`associate()`](reference/associate.qmd) already returns rather than recomputed. Drawing a raw
+p-value cut is the usual error and, across thousands of tests, calls noise significant.
 
 Conventions enforced in `theme.py`: the identity line is always drawn on BA-against-CA; rate
 clocks never share an axis with age clocks; facets are ordered by clock generation rather than

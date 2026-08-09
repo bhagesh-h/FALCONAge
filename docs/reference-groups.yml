@@ -94,7 +94,7 @@ groups:
       would need forty of them.
     python: [plot.ba_vs_ca, plot.bland_altman, plot.calibration,
              plot.acceleration_density, plot.acceleration_by_group,
-             plot.acceleration_heatmap, plot.forest,
+             plot.acceleration_heatmap, plot.forest, plot.kaplan_meier, plot.volcano,
              plot.clock_corr, plot.clock_radar, plot.clock_chord,
              plot.clock_pca, plot.clock_atlas,
              plot.coverage_bar, plot.missingness, plot.beta_density,
@@ -111,7 +111,7 @@ groups:
         plot_forest,
         plot_agreement, plot_clock_radar, plot_clock_chord, plot_clock_pca,
         plot_clock_atlas,
-        plot_coverage, plot_by_platform,
+        plot_coverage, plot_by_platform, plot_kaplan_meier, plot_volcano,
         plot_benchmark, plot_benchmark_error_bias, plot_benchmark_heatmap,
         falcon_palette, falcon_scheme, falcon_theme, report]
 
@@ -182,6 +182,8 @@ pairs:
     - [plot_acceleration_by_group, plot.acceleration_by_group]
     - [plot_acceleration_heatmap, plot.acceleration_heatmap]
     - [plot_forest, plot.forest]
+    - [plot_kaplan_meier, plot.kaplan_meier]
+    - [plot_volcano, plot.volcano]
     - [plot_agreement, plot.clock_corr]
     - [plot_clock_radar, plot.clock_radar]
     - [plot_clock_chord, plot.clock_chord]
@@ -229,6 +231,11 @@ pages:
     desc: >-
       Which file computes what, why each decision went the way it did, and an
       explicit accounting of where the specification is wider than v1.0.
+  - title: Figure gallery
+    file: gallery.qmd
+    desc: >-
+      Every figure the package draws, on the public corpus, each with the same
+      interpretation the figure itself prints under its axes.
   - title: Clock catalogue
     file: clocks.qmd
     desc: All 161 entries, generated from the registry that scores them.

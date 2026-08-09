@@ -84,6 +84,8 @@ Every plot returns its data as well as its figure, which is how the two language
 | [plot.acceleration_by_group](plot.acceleration_by_group.qmd#falconage.plot.acceleration_by_group) | Box and strip of acceleration by group -- the case/control workhorse. |
 | [plot.acceleration_heatmap](plot.acceleration_heatmap.qmd#falconage.plot.acceleration_heatmap) | Clocks by samples, z-scored within clock. |
 | [plot.forest](plot.forest.qmd#falconage.plot.forest) | Effect size and 95% interval per clock/dataset comparison. |
+| [plot.kaplan_meier](plot.kaplan_meier.qmd#falconage.plot.kaplan_meier) | Survival of the fastest-ageing tail against the slowest. |
+| [plot.volcano](plot.volcano.qmd#falconage.plot.volcano) | Effect size against evidence, for a table from :func:`~falconage.associate`. |
 | [plot.clock_corr](plot.clock_corr.qmd#falconage.plot.clock_corr) | Correlation heatmap, hierarchically ordered. |
 | [plot.clock_radar](plot.clock_radar.qmd#falconage.plot.clock_radar) | Closed-polygon profile across clocks, one polygon per group. |
 | [plot.clock_chord](plot.clock_chord.qmd#falconage.plot.clock_chord) | Circos-style chord diagram of CpG sharing between clocks. |

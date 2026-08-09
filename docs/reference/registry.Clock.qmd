@@ -28,6 +28,8 @@ registry.Clock(
     formula=None,
     requires_covariates=(),
     requires_reference=False,
+    requires_cohort=False,
+    min_samples=1,
     known_discrepancies=(),
     reliability=Reliability(),
 )

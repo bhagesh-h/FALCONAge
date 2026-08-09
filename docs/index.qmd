@@ -104,6 +104,25 @@ Each of these is a silent wrong answer somewhere else, so each is a hard failure
   count, a changed statistic, a constant. Each carries the note, and it is raised as a warning at
   score time, not left on a documentation page.
 
+## What it does not do
+
+Said here rather than left to be inferred. [The science page](science.qmd) §17 covers each in
+full, with the algorithms and the reason each is or is not blocked.
+
+- **It does not normalise arrays.** No noob, dye-bias correction, pOOBAH or BMIQ. It takes a beta
+  matrix; if you have raw IDATs, normalise with sesame or minfi first. This matters because clock
+  coefficients were fitted on the output of a particular chain — raw betas are the right weights
+  on the wrong scale, not a rougher version of the right answer.
+- **It does not repair cross-platform probe loss.** It measures it, by count and by coefficient
+  mass. The liftover mapping tables encode concordance measured on paired samples and are not
+  derivable from the array manifests.
+- **It does not read proteomics, transcriptomics or single-cell data.** The registry's platform
+  and scale machinery would fit them; the readers and coefficients do not exist. Transcriptomic
+  clocks additionally median-centre per dataset, which makes them undefined for a single sample —
+  a refusal that has to be built before the modality can be honest.
+- **It has no foundation-model backend.** CpGPT and MethylGPT are interesting here for zero-shot
+  imputation and array conversion rather than as another age predictor.
+
 ## What it is not
 
 These are population-research instruments. Reliability varies sharply by clock, and technical

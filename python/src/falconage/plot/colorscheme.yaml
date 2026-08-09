@@ -175,6 +175,30 @@ plots:
     xlab: "difference in median acceleration (years)"
     ylab: ""
 
+  kaplan_meier:
+    title: "Survival by age acceleration"
+    subtitle: "{clock} · {n} subjects · {events} events · log-rank p {p}"
+    description: >-
+      Strata are the tails of the acceleration distribution, not a median split:
+      the published figure compares the fastest-ageing tenth with the slowest,
+      because the middle of the distribution is where a clock has least to say.
+      Curves that cross mean the hazard is not proportional, and the hazard
+      ratio beside them is then an average over a period during which the
+      ordering changed.
+    xlab: "time"
+    ylab: "surviving fraction"
+
+  volcano:
+    title: "Association with age acceleration"
+    subtitle: "{n} tested · {hits} pass FDR {fdr}"
+    description: >-
+      Effect size against evidence. The dashed line is the Benjamini-Hochberg
+      threshold at the stated FDR, not a raw p-value cut -- with thousands of
+      tests the two differ by orders of magnitude. Points far right with small
+      -log10 p are the usual trap: a large effect measured in few samples.
+    xlab: "effect size"
+    ylab: "-log10 p"
+
   trajectory:
     title: "Longitudinal trajectories"
     subtitle: "{clock} · {n} subjects with repeated measures"

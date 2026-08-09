@@ -71,6 +71,48 @@ manifest(res)$warnings
 #> about whether the coefficients transfer across species.
 ```
 
+## Counting probes is not weighing them
+
+Coverage has two forms and they disagree exactly when it matters. The count says how many of a
+clock's features are present. **Mass coverage** says what share of the model's total
+|coefficient| those present features carry — and an elastic net's weights are nothing like
+uniform.
+
+```python
+fa.probe_loss(d, clocks="scoreable")
+#> horvath2013   coverage 0.9632   mass_coverage 0.6117   cg16867657 (14.1%), ...
+```
+
+Ninety-six per cent of probes present, sixty-one per cent of the model. That dataset has kept
+nearly everything and lost the probes the clock leans on. The scoring floor applies to both, so
+this is refused with the heaviest absent probes named rather than scored into a confident number.
+
+This is the mechanism behind EPIC v2: it dropped probes several first-generation clocks depend on,
+which shifts their output while the principal-component versions barely move — a missing probe
+perturbs a component instead of deleting a term.
+
+## Reliability, and the trap in it
+
+Two clocks can be equally reproducible and behave completely differently in a longitudinal study,
+because "reliable" means two things:
+
+| | What is repeated | What it measures |
+|---|---|---|
+| **Technical ICC** | the same DNA, assayed twice | the assay, and the model's sensitivity to array noise |
+| **Biological ICC** | the same person, sampled again days later | whether the number is a property of the person or of the morning |
+
+They do not track together. Nearly every clock is technically excellent; biological ICCs are
+substantially lower, and there is no clear relationship between the two. **GrimAge2 and DunedinPACE
+are among the most biologically fragile** — and they are the two most often used to claim an
+intervention worked.
+
+`res.interpretation()` carries both columns per clock, with `None` where no figure has been
+published. `None` means "not established", never "fine": an unpublished ICC is not a good ICC.
+
+If you are measuring change within a person, prefer a clock with a published biological ICC, or a
+principal-component version — those were rebuilt specifically to suppress the single-probe noise
+that makes repeat measurements disagree.
+
 ## Availability
 
 | Tier | n | What you do |

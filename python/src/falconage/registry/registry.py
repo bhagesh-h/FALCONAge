@@ -130,6 +130,20 @@ class Clock:
     formula: str | None = None
     requires_covariates: tuple[str, ...] = ()
     requires_reference: bool = False
+    #: True when the clock's preprocessing centres or scales against the cohort
+    #: it is given, so a single sample has no defined answer.
+    #:
+    #: The transcriptomic clocks median-centre across all samples within a
+    #: dataset, which means the score for one sample depends on which other
+    #: samples were scored beside it. Run one sample alone and the centring is
+    #: against itself: every value becomes zero and the clock returns its
+    #: intercept, confidently, for anybody. That is a refusal rather than a
+    #: warning, and nothing in the arithmetic can notice it -- which is why it
+    #: is a declared property of the clock instead of a check inside a model.
+    requires_cohort: bool = False
+    #: Smallest cohort the centring is meaningful over. Only read when
+    #: ``requires_cohort`` is set.
+    min_samples: int = 1
     known_discrepancies: tuple[str, ...] = ()
     reliability: Reliability = field(default_factory=Reliability)
 
@@ -228,6 +242,8 @@ class ClockRegistry:
                 formula=e.get("formula"),
                 requires_covariates=_tuple(e.get("requires_covariates")),
                 requires_reference=bool(e.get("requires_reference", False)),
+                requires_cohort=bool(e.get("requires_cohort", False)),
+                min_samples=int(e.get("min_samples", 1) or 1),
                 known_discrepancies=_tuple(e.get("known_discrepancies")),
                 reliability=Reliability(**{
                     k: v for k, v in (e.get("reliability") or {}).items()

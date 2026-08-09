@@ -26,6 +26,8 @@ website:
         file: science.qmd
       - text: Architecture
         file: architecture.qmd
+      - text: Figure gallery
+        file: gallery.qmd
       - text: Clock catalogue
         file: clocks.qmd
       - text: GPU support
@@ -157,6 +159,8 @@ quartodoc:
     - plot.acceleration_by_group
     - plot.acceleration_heatmap
     - plot.forest
+    - plot.kaplan_meier
+    - plot.volcano
     - plot.clock_corr
     - plot.clock_radar
     - plot.clock_chord

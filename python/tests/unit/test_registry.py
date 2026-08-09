@@ -197,3 +197,72 @@ def test_a_clock_reported_in_days_does_not_claim_to_be_in_weeks(registry):
 
     for cid in ("bohlin", "epicga"):
         assert ops.describe_chain(registry.get(cid).postprocess) == "days_to_weeks()"
+
+
+# ---------------------------------------------------------------------------
+# cohort-centred clocks
+# ---------------------------------------------------------------------------
+
+def test_requires_cohort_defaults_off(registry):
+    """Every clock shipping today is per-sample; the flag must not change them."""
+    assert not any(c.requires_cohort for c in registry)
+    assert all(c.min_samples == 1 for c in registry)
+
+
+def _registry_with_cohort_clock(cid: str, min_samples: int):
+    """A private registry instance with one clock marked cohort-centred.
+
+    `from_yaml()` and NOT `load()`. `load()` is `lru_cache`d and returns the
+    same object to every caller for the lifetime of the process, so mutating
+    what it hands back edits the registry every other test is using. Doing that
+    here broke 23 tests in files that never mention this flag, and each of them
+    failed with a message about horvath2013 needing 999 samples -- which is a
+    long way from pointing at the test that caused it.
+    """
+    import dataclasses
+
+    from falconage.registry.registry import ClockRegistry
+
+    reg = ClockRegistry.from_yaml()
+    reg._clocks[cid] = dataclasses.replace(
+        reg.get(cid), requires_cohort=True, min_samples=min_samples)
+    return reg
+
+
+def test_a_cohort_clock_refuses_a_single_sample(synthetic_betas):
+    """The failure this flag exists to prevent.
+
+    Centring one row against itself makes every feature zero, so the model
+    returns its intercept -- the same confident number for any input. Nothing
+    in the arithmetic can notice, which is why it is a declared property.
+    """
+    import falconage as fa
+    from falconage.core.errors import ScoringError
+
+    reg = _registry_with_cohort_clock("horvath2013", 8)
+
+    one = synthetic_betas.subset(samples=[synthetic_betas.sample_ids[0]])
+    with pytest.raises(ScoringError, match="centres each feature"):
+        fa.score(one, clocks=["horvath2013"], registry=reg)
+
+    # And the whole cohort is fine.
+    res = fa.score(synthetic_betas, clocks=["horvath2013"], registry=reg)
+    assert res.scores.shape[0] == synthetic_betas.n_samples
+
+
+def test_a_cohort_clock_is_skipped_not_raised_when_not_asked_for(synthetic_betas):
+    """`clocks="compatible"` must not blow up a whole run over one clock."""
+    import falconage as fa
+
+    reg = _registry_with_cohort_clock("horvath2013", 999)
+
+    res = fa.score(synthetic_betas, clocks="compatible", registry=reg)
+    assert "horvath2013" in res.skipped
+    assert "undefined for" in res.skipped["horvath2013"]
+    assert res.scores.shape[1] > 0, "the other clocks should still have run"
+
+
+def test_the_shared_registry_was_not_mutated(registry):
+    """Guard for the mistake above: `load()` is cached and shared."""
+    assert not registry.get("horvath2013").requires_cohort
+    assert registry.get("horvath2013").min_samples == 1

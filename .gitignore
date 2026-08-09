@@ -149,6 +149,7 @@ r/inst/doc/
 # by CI from a clean checkout; a committed copy only ever goes stale.
 docs/_site/
 docs/.quarto/
+docs/figures/            # staged gallery copies, written by docs/build_gallery.py
 docs/reference/          # quartodoc output, generated from docstrings
 docs/r/                  # pkgdown output, generated from roxygen
 .quarto/

@@ -41,19 +41,20 @@ jobs:
         with:
           python-version: '3.12'
 
-      # The tag and pyproject.toml must agree, or a release installs as a
-      # different version than its name -- unfixable afterwards, because the tag
-      # is what a citation points at.
-      - name: Check the tag matches the package version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          import re, sys, tomllib, os
-          v = tomllib.loads(open("python/pyproject.toml","rb").read().decode())["project"]["version"]
-          tag = re.sub(r"^refs/tags/v", "", os.environ["GITHUB_REF"])
-          if v != tag:
-              sys.exit(f"tag v{tag} does not match pyproject version {v}")
-          print("version", v, "matches tag")
-        shell: python {0}
+      # The tag, the wheel, DESCRIPTION and CITATION.cff must all agree, or a
+      # release installs as a different version than its name -- unfixable
+      # afterwards, because the tag is what a citation points at.
+      #
+      # This used to be three inline scripts in two languages, and the Python
+      # one read `[project].version` from pyproject.toml. That key does not
+      # exist: the version is `dynamic` and hatchling reads it from
+      # `src/falconage/_version.py`. Because the step was gated on a tag ref it
+      # had never once run, so it was wrong from the day it was written and
+      # only surfaced when v1.0.0 was pushed -- KeyError on the first step of
+      # the release. One script now, and it runs locally, which is what would
+      # have caught it.
+      - name: Versions agree
+        run: python test/check_versions.py --tag "${{ github.ref }}"
 
       - run: pip install build twine
       - run: python -m build python/
@@ -101,34 +102,11 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
-      # read.dcf() returns a matrix whose columns carry the field names, and
-      # indexing one cell by column name KEEPS that name -- so the value is
-      # c(Version = "1.0.0") rather than "1.0.0". identical() compares
-      # attributes and returns FALSE for two strings with the same bytes.
-      # as.character() strips the name, which is why it is here.
-      - name: Check the tag matches DESCRIPTION Version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          desc <- as.character(read.dcf("r/DESCRIPTION")[1, "Version"])
-          tag  <- sub("^refs/tags/v", "", Sys.getenv("GITHUB_REF"))
-          if (!identical(desc, tag))
-            stop(sprintf("tag v%s does not match DESCRIPTION Version %s", tag, desc))
-          cat("version", desc, "matches tag\n")
-        shell: Rscript {0}
-
-      # CITATION.cff carries the version too, and it is the file GitHub's "Cite
-      # this repository" button reads. A release whose citation names the
-      # previous version is worse than one with no citation file at all.
-      - name: Check CITATION.cff matches
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          cff <- readLines("CITATION.cff")
-          v   <- trimws(sub("^version:", "", grep("^version:", cff, value = TRUE)[1]))
-          tag <- sub("^refs/tags/v", "", Sys.getenv("GITHUB_REF"))
-          if (!identical(v, tag))
-            stop(sprintf("tag v%s does not match CITATION.cff version %s", tag, v))
-          cat("CITATION.cff version", v, "matches tag\n")
-        shell: Rscript {0}
+      # Same one check as the Python job. Both run it because either job can be
+      # the one that fails, and a mismatch found before R CMD check saves
+      # forty minutes.
+      - name: Versions agree
+        run: python test/check_versions.py --tag "${{ github.ref }}"
 
       - name: Build the source tarball
         run: R CMD build r

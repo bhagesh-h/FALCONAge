@@ -1,0 +1,26 @@
+# plot.kaplan_meier { #falconage.plot.kaplan_meier }
+
+```python
+plot.kaplan_meier(
+    result,
+    clock,
+    *,
+    time_col,
+    event_col,
+    age_col='age',
+    quantile=0.1,
+)
+```
+
+Survival of the fastest-ageing tail against the slowest.
+
+The convention in the literature is the extreme deciles rather than a
+median split -- the middle of the acceleration distribution is where a
+clock discriminates least, and pooling it into two halves dilutes whatever
+signal the tails carry.
+
+## Parameters {.doc-section .doc-section-parameters}
+
+| Name     | Type   | Description                                                             | Default   |
+|----------|--------|-------------------------------------------------------------------------|-----------|
+| quantile | float  | Size of each tail. 0.1 gives top and bottom 10%, the published default. | `0.1`     |

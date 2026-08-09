@@ -1,0 +1,13 @@
+# plot.volcano { #falconage.plot.volcano }
+
+```python
+plot.volcano(assoc, *, effect='beta', p='p', fdr=0.05, label_top=10)
+```
+
+Effect size against evidence, for a table from :func:`~falconage.associate`.
+
+The dashed line is the Benjamini-Hochberg threshold at ``fdr``, taken from
+the ``q`` column when the table has one rather than recomputed. Drawing a
+raw p-value cut instead is the common error: across thousands of tests the
+two thresholds differ by orders of magnitude, and the raw one calls noise
+significant.

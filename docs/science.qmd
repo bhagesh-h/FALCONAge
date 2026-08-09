@@ -1851,7 +1851,124 @@ before defaulting to FP32.
 **Sample size for HD.** The Mahalanobis covariance needs more reference samples than biomarkers,
 well-conditioned. BioAge warns on single-row inputs; a real tool should check the condition number.
 
-## 17. Datasets, registries, reference resources
+## 17. The frontier, and what FALCONAge does not yet compute
+
+Reviewed to August 2026. This section exists because a tool that silently omits half a field reads
+as though the field ends where it does. Each item states the science, the blocker, and whether the
+blocker is technical or legal.
+
+### 17.1 Array normalisation, and what it corrects
+
+FALCONAge takes a beta matrix. It does not produce one from raw intensities, and the chain it
+skips exists to correct specific instrument artefacts rather than to tidy data.
+
+An Infinium array carries two probe chemistries. **Type I** uses two beads per CpG read in one
+colour channel, which leaves the other channel at that address carrying no designed signal -- the
+**out-of-band** readings. **Type II** uses one bead, methylated in green and unmethylated in red,
+and covers roughly 84% of probes from 450K onward. The two designs have different beta
+distributions, so a raw array is bimodal for reasons that are chemistry rather than biology.
+
+| Step | What it removes | How |
+|---|---|---|
+| **noob** | background fluorescence, cross-channel bleed | normal-exponential deconvolution using the out-of-band Type I readings as the background distribution -- the background estimate comes free from probes never meant to fluoresce in that channel |
+| **dye bias** | red/green intensity difference | quantile-matching the channels on Type I probes measured in both |
+| **pOOBAH** | measurements indistinguishable from background | detection p-value from the empirical out-of-band distribution; failures are masked to NA, not deleted |
+| **BMIQ** | the Type I/Type II design difference | three-state beta mixture fitted to Type II, Type I quantile-mapped onto it within each state |
+| **probe masks** | probes untrustworthy anywhere | cross-reactive probes, probes overlapping common SNPs at the interrogated base, sex chromosomes |
+
+The order is load-bearing -- noob, dye bias, pOOBAH, then BMIQ -- and it matters because **clock
+coefficients were fitted on the output of a particular chain**. Applying Horvath's weights to raw
+betas is not a smaller version of the right answer; it is the right weights on the wrong scale.
+
+Until this ships, normalise with [sesame](https://bioconductor.org/packages/sesame/) or
+[minfi](https://bioconductor.org/packages/minfi/) and bring the beta matrix here.
+
+### 17.2 Cross-platform harmonisation
+
+Probe content changed across 27K, 450K, EPIC v1 and EPIC v2. EPIC v2 both dropped probes earlier
+clocks depend on and renamed others with replicate suffixes. FALCONAge handles the suffixes and
+*measures* the damage from the drops, by count and by coefficient mass. It cannot yet repair them.
+
+`mLiftOver` is the published answer, and it is four things rather than an ID lookup: probe-ID
+conversion, replicate management, optional imputation with a confidence filter, and -- the part
+that cannot be reconstructed -- a mapping table carrying empirical evidence of whether each
+probe's cross-platform mapping is reliable. Those tables are measured on paired samples and
+distributed through Bioconductor's ExperimentHub, so this is blocked on data rather than effort.
+
+Two mitigations are complementary: principal-component clocks absorb probe loss because a missing
+probe perturbs a component instead of deleting a term, which is why EPIC v2 disrupts the
+first-generation clocks and barely moves the PC ones.
+
+### 17.3 Proteomic organ clocks
+
+If a protein is enriched at least fourfold in one organ relative to all others, its plasma level
+proxies that organ's state -- so one blood draw supports an age estimate per organ. Ten organ
+clocks plus an organismal one were trained in UK Biobank (n = 43,616) and validated in China
+(n = 3,977) and the USA (n = 800) at cross-cohort r = 0.98 and 0.93, with brain age most strongly
+linked to mortality.
+
+Two properties matter for anyone implementing this. **Olink NPX is log2 and relative already**, so
+re-logging it is an error and comparing across panel versions without bridging is another. And
+these clocks are **z-scored against a training cohort, not against your own samples** -- using
+your cohort's mean silently recentres everyone to zero acceleration, the same class of mistake as
+filling an absent probe with zero. About half the ageing predictors in Olink-based clocks are
+absent from SomaScan-based ones, so the platforms are not interchangeable.
+
+### 17.4 Transcriptomic clocks
+
+Six clocks from two normalisations (YuGene-diff, Scaling-diff) and three targets (chronological
+age, normalised age, mortality), trained as multi-species multi-tissue elastic nets over more than
+11,000 transcriptomes.
+
+The chain is: filter low-count genes, map to one-to-one orthologues only, RLE-normalise, log10,
+per-sample z-score or YuGene, then **median-centre across all samples within each dataset**.
+
+That last step is why these are not simply another modality. A transcriptomic clock is **undefined
+for a single sample in isolation** -- the centring is a property of the cohort. An implementation
+has to refuse a one-sample run rather than warn about it.
+
+Accuracy runs 5-7 years MAE against methylation's 3-5. The honest reading is that they answer a
+different question, not that they are worse.
+
+### 17.5 Methylation foundation models
+
+**CpGPT** (pretrained on 2,000+ datasets, 150,000+ samples) and **MethylGPT** (226,555 profiles
+from 5,281 datasets) are transformers over CpG sites taking sequence, position and epigenetic
+context, so they can reason about a site they have not seen on an array.
+
+The interesting capability is not another age predictor. It is **zero-shot imputation and
+cross-array conversion**, which attacks EPIC v2 probe loss, platform harmonisation and single-cell
+sparsity at once. CpGPT placed second for age and first for methylation-based mortality in the
+Biomarkers of Aging Challenge, and its attention weights give per-sample interpretability --
+which sites drove *this* prediction.
+
+This would also be the first model here where a GPU is the right default. Everything currently
+shipped is a dot product over a few thousand features, and [GPU support](gpu.md) measures CUDA as
+*slower* for exactly that reason; a transformer inverts the arithmetic.
+
+### 17.6 Single-cell
+
+Single-cell methylation is binary and sparse -- a site is covered or not, methylated or not -- so
+a linear clock cannot be applied directly. **scAge** answers with a per-cell maximum likelihood
+over the covered subset, closer in spirit to conditioning on coverage than to taking a dot
+product. On the transcriptomic side **scAgeClock** reaches about 2 years MAE for the best cell
+types using gated multi-head attention, and single-cell profiles are pooled to pseudobulk before a
+bulk transcriptomic clock is applied.
+
+### 17.7 Reliability, and why it governs everything above
+
+Technical and biological reliability come apart. Nearly every clock is technically excellent --
+the same sample assayed twice agrees closely -- while biological ICCs, the same person sampled
+again days later, are substantially lower, with no clear relationship between the two. **GrimAge2
+and DunedinPACE are among the most biologically fragile**, and they are the two most often used to
+claim an intervention worked.
+
+The registry carries both figures where a source exists and `None` where none does, because an
+unpublished ICC is not a good ICC. The Biomarkers of Aging Consortium's own stated bottleneck is
+not the models but the absence of standard procedures for collecting specimens and applying
+biomarkers.
+
+## 18. Datasets, registries, reference resources
 
 **Benchmark and training data**
 - `computage/computage_bench` on Hugging Face - 10,404 benchmark samples / 65 studies and
@@ -1880,7 +1997,7 @@ well-conditioned. BioAge warns on single-row inputs; a real tool should check th
 - tAge `clocks_metadata.csv` (60 models) + Zenodo record 18763485.
 - ComputAge `model_definitions` + `library.yaml` (GEO dataset parsers).
 
-## 18. Reference list
+## 19. Reference list
 
 **The four sources named in the brief**
 

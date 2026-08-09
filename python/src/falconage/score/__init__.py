@@ -230,6 +230,25 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
         spec = resolve(device, dtype, requires_fp64=c.requires_fp64)
         manifest.device, manifest.dtype, manifest.backend = spec.device, spec.dtype, spec.backend
 
+        # A cohort-centred clock has no answer for one sample, and the failure
+        # is silent: centring a single row against itself makes every value
+        # zero, so the model returns its intercept -- the same confident number
+        # for anybody. Refused rather than warned about, because a warning next
+        # to a plausible number is read as a caveat on a result rather than as
+        # notice that there is no result.
+        if c.requires_cohort and data.n_samples < max(c.min_samples, 2):
+            msg = (f"{cid} centres each feature across the samples it is given, "
+                   f"so it is undefined for {data.n_samples} sample(s); it needs "
+                   f"at least {max(c.min_samples, 2)}.\n"
+                   "  Score the whole cohort in one call. Scoring samples "
+                   "one at a time gives every one of them the same answer, "
+                   "because each is centred against itself.")
+            if explicit:
+                raise ScoringError(msg)
+            skipped[cid] = msg.splitlines()[0]
+            warns.warn(msg.splitlines()[0], clock=cid, category="cohort")
+            continue
+
         try:
             model = build(reg, cid)
             values, alignment = model.predict(

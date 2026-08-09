@@ -895,3 +895,142 @@ plot_benchmark_heatmap <- function(bench) {
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                    panel.grid = ggplot2::element_blank())
 }
+
+
+#' Survival by age acceleration
+#'
+#' Kaplan-Meier curves for the fastest-ageing tail against the slowest, with the
+#' log-rank p-value in the subtitle.
+#'
+#' @section Why the tails and not a median split:
+#' The middle of the acceleration distribution is where a clock discriminates
+#' least, so pooling it into two halves dilutes whatever signal the tails carry.
+#' The published convention is the extreme deciles.
+#'
+#' @param x A `falcon_result`.
+#' @param clock Which clock's acceleration to stratify on.
+#' @param time_col,event_col Columns of the sample annotation holding follow-up
+#'   time and the event indicator (1 = event, 0 = censored).
+#' @param age_col Column holding chronological age.
+#' @param quantile Size of each tail; 0.1 gives top and bottom 10%.
+#' @return A ggplot.
+#' @examples
+#' \dontrun{
+#' plot_kaplan_meier(res, "horvath2013", time_col = "time", event_col = "status")
+#' }
+#' @export
+plot_kaplan_meier <- function(x, clock, time_col, event_col,
+                              age_col = "age", quantile = 0.1) {
+  need_ggplot()
+  # The log-rank statistic comes from the Python core, not from a second
+  # implementation here: one numerical core is the whole premise, and a
+  # p-value that differed between the languages would be the worst possible
+  # thing to disagree about. The figure the core draws is discarded -- only its
+  # summary table is used -- and the curve is redrawn in ggplot2 so it carries
+  # the same theme as every other R figure.
+  out <- py_do(fa()$plot$kaplan_meier(x$py, clock, time_col = time_col,
+                                      event_col = event_col, age_col = age_col,
+                                      quantile = quantile))
+  tbl <- as_df(out[[2]])
+
+  # Rebuild the step curves from the same strata the core used.
+  aa <- acceleration(x, age_col = age_col, clocks = clock)[[clock]]
+  obs <- obs(x)
+  d <- data.frame(aa = aa,
+                  time = suppressWarnings(as.numeric(obs[[time_col]])),
+                  event = suppressWarnings(as.numeric(obs[[event_col]])))
+  d <- d[stats::complete.cases(d), , drop = FALSE]
+  cuts <- stats::quantile(d$aa, c(quantile, 1 - quantile), names = FALSE)
+
+  steps <- do.call(rbind, lapply(
+    list(list(sub = d[d$aa <= cuts[1], ], grp = sprintf("slowest %d%%", round(quantile * 100))),
+         list(sub = d[d$aa >= cuts[2], ], grp = sprintf("fastest %d%%", round(quantile * 100)))),
+    function(g) {
+      km <- .km(g$sub$time, g$sub$event)
+      data.frame(time = km$time, surv = km$surv, group = g$grp)
+    }))
+
+  ggplot2::ggplot(steps, ggplot2::aes(x = .data$time, y = .data$surv,
+                                      colour = .data$group)) +
+    ggplot2::geom_step(linewidth = .thm("line_width")) +
+    ggplot2::ylim(0, 1) +
+    ggplot2::scale_colour_manual(
+      values = stats::setNames(c(.sem("control"), .sem("case")),
+                               unique(steps$group))) +
+    .labs(.txt("kaplan_meier", clock = clock, n = nrow(d),
+               events = sum(d$event), p = signif(tbl$logrank_p[1], 3))) +
+    falcon_theme()
+}
+
+# Product-limit estimator. Kept here rather than pulling in `survival`, which is
+# a heavier dependency than twenty lines of arithmetic deserves.
+.km <- function(time, event) {
+  o <- order(time)
+  t <- time[o]; e <- as.logical(event[o])
+  times <- 0; surv <- 1; s <- 1; n <- length(t)
+  for (ti in unique(t)) {
+    at <- t == ti
+    d <- sum(e[at])
+    if (d > 0) {
+      s <- s * (1 - d / n)
+      times <- c(times, ti); surv <- c(surv, s)
+    }
+    n <- n - sum(at)
+  }
+  list(time = times, surv = surv)
+}
+
+
+#' Volcano plot of association results
+#'
+#' Effect size against evidence, for the table [associate()] returns.
+#'
+#' @section The threshold that is drawn:
+#' The dashed line is the Benjamini-Hochberg cut at `fdr`, taken from the `q`
+#' column rather than recomputed. Drawing a raw p-value cut instead is the
+#' common error: across many tests the two differ by orders of magnitude, and
+#' the raw one calls noise significant.
+#'
+#' @param assoc Output of [associate()].
+#' @param effect,p Column names for the effect size and p-value.
+#' @param fdr False-discovery rate for the significance threshold.
+#' @param label_top How many of the strongest hits to label.
+#' @return A ggplot.
+#' @examples
+#' \dontrun{
+#' plot_volcano(associate(res, "mortality"))
+#' }
+#' @export
+plot_volcano <- function(assoc, effect = "beta", p = "p", fdr = 0.05,
+                         label_top = 10) {
+  need_ggplot()
+  d <- as.data.frame(assoc)
+  if (!all(c(effect, p) %in% names(d))) {
+    stop(sprintf("volcano: no '%s' column; associate() returns %s",
+                 setdiff(c(effect, p), names(d))[1],
+                 paste(names(d), collapse = ", ")), call. = FALSE)
+  }
+  d$clock <- rownames(d)
+  d <- d[is.finite(d[[effect]]) & is.finite(d[[p]]), , drop = FALSE]
+  d$y <- -log10(pmax(d[[p]], .Machine$double.xmin))
+  d$hit <- if ("q" %in% names(d)) d$q <= fdr else d[[p]] <= fdr
+  ycut <- if (any(d$hit)) min(d$y[d$hit]) else NA_real_
+
+  g <- ggplot2::ggplot(d, ggplot2::aes(x = .data[[effect]], y = .data$y,
+                                       colour = .data$hit)) +
+    .refline("v", 0) +
+    ggplot2::geom_point(size = .thm("point_size")) +
+    ggplot2::scale_colour_manual(values = c("FALSE" = .sem("neutral"),
+                                            "TRUE" = .sem("case")),
+                                 guide = "none")
+  if (is.finite(ycut)) g <- g + .refline("h", ycut)
+
+  top <- utils::head(d[order(-d$y), , drop = FALSE], label_top)
+  g +
+    ggplot2::geom_text(data = top,
+                       ggplot2::aes(label = .data$clock),
+                       hjust = -0.1, vjust = -0.4, show.legend = FALSE,
+                       size = .thm("caption_size") / 3) +
+    .labs(.txt("volcano", n = nrow(d), hits = sum(d$hit), fdr = fdr)) +
+    falcon_theme()
+}

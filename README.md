@@ -848,8 +848,21 @@ reason recorded, because an axis-free rectangle in a report reads as a measureme
 rather than an absence of measurement.
 
 One representative of each type, from the run against the public corpus, is in
-[test/output_figures/gallery/](test/output_figures/gallery/) and every one is explained in
-[test/README.md](test/README.md#the-figures).
+[test/output_figures/gallery/](test/output_figures/gallery/), and the documentation site carries
+the same twenty-one images with their interpretations on one page:
+[**Figure gallery**](https://bhagesh-h.github.io/FALCONAge/gallery.html).
+
+Two of them cover the outcome conventions most aging-clock papers use:
+
+| Figure | What it answers |
+|---|---|
+| `kaplan_meier` | does the fastest-ageing tenth die sooner than the slowest? Log-rank p in the subtitle. Deciles rather than a median split, because the middle of the acceleration distribution is where a clock discriminates least. |
+| `volcano` | what associates with acceleration, thresholded at the Benjamini-Hochberg cut rather than a raw p. Across many tests the two differ by orders of magnitude, and the raw line calls noise significant. |
+
+Both estimators are written out rather than imported — the product-limit form and the two-sample
+log-rank statistic are about forty lines together, less than `survival` or `lifelines` costs as a
+dependency. The R side takes the log-rank p from the Python core and redraws in ggplot2, so the
+statistic cannot differ between the languages.
 
 The figure to look at first, if you look at one:
 
@@ -957,10 +970,16 @@ Ten things that produce a wrong number without producing an error anywhere else.
    CA` is biased low in the old and high in the young and correlates with age. Report the residual
    too; `method="both"` does.
 8. **Cell composition.** Second-generation and single-tissue clocks partly read cell proportion.
-   Run deconvolution alongside.
+   Across more than 10,000 blood samples, immune composition was significantly associated with age
+   acceleration for every one of six widely used clocks. The 18 deconvolution clocks produce the
+   covariates and `acceleration(adjust="cell_composition")` regresses them out; the returned frame
+   records what it was adjusted for, because an adjusted acceleration is a different quantity.
 9. **Technical ICC is not biological ICC.** A clock can be perfectly reproducible on a re-run of
-   the same DNA and unstable across two blood draws a week apart. PCGrimAge is the only clock with
-   published biological ICC above 0.75.
+   the same DNA and unstable across two blood draws a week apart. The two do not correlate, and
+   GrimAge2 and DunedinPACE — the pair most used to claim an intervention worked — are among the
+   most biologically fragile. The registry carries both figures as separate fields where a source
+   exists and `None` where none does, because an unpublished ICC is not a good ICC;
+   `res.interpretation()` surfaces them per clock.
 10. **Age-range extrapolation.** A model trained on adults 20–70 does not extrapolate. Gestational
     and paediatric clocks exist for a reason, and the registry's `population` field is enforced.
 
@@ -974,6 +993,21 @@ package-to-package with no record of where the coefficients originally came from
 traces each back to its source and publishes the diff. Some of those traces will find further
 disagreements; a few may find no primary source at all, in which case the clock moves to
 [§6](#6-clocks-that-need-author-permission).
+
+### What v1.0 does not do
+
+Stated here rather than left to be inferred from silence. Each has a fuller treatment in
+[the science page, §17](https://bhagesh-h.github.io/FALCONAge/science.html).
+
+| Not implemented | Why it matters, and what to do instead |
+|---|---|
+| **Array normalisation** — noob, dye-bias, pOOBAH, BMIQ, probe masks | FALCONAge takes a beta matrix and does not make one. Clock coefficients were fitted on the output of a particular chain, so applying them to raw betas is the right weights on the wrong scale. Normalise with sesame or minfi first. The IDAT reader exists; the manifest lookup and the chain do not. |
+| **Cross-platform liftover** (`mLiftOver`) | EPIC v2 dropped probes the first-generation clocks depend on. `probe_loss()` measures the damage by count and by coefficient mass; it cannot repair it. Blocked on mapping tables that encode empirical concordance measured on paired samples, not on effort. |
+| **Proteomic clocks** (Olink, SomaScan) | Ten organ-specific clocks are current work, and the registry's `platform` and `scale_type` machinery already fits them. Two traps to know about: NPX is log2 and relative already, and these clocks z-score against a *training* cohort — using your own cohort's mean recentres everyone to zero acceleration. |
+| **Transcriptomic clocks** | The published chain median-centres per dataset, which makes these clocks **undefined for a single sample in isolation**. That needs a refusal rather than a warning, so it needs a registry flag that does not exist yet. |
+| **Foundation models** (CpGPT, MethylGPT) | The valuable use is not another age predictor — it is zero-shot imputation and array conversion, which would attack EPIC v2 loss, platform harmonisation and single-cell sparsity at once. Also the first model here where a GPU would be the right default; everything shipped today is a dot product, which is why [GPU support](docs/gpu.md) measures CUDA as *slower*. |
+| **Single-cell** | Single-cell methylation is binary and sparse, so a linear clock cannot be applied directly; scAge's per-cell likelihood over the covered subset is the published answer. |
+| **110 tier B coefficient sources** | Catalogued with real metadata and no traceable numbers. A per-clock literature hunt, not a technical problem. |
 
 ## 14. Citation
 

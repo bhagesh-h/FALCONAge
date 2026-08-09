@@ -1,0 +1,86 @@
+# The image the test suite, the linters and the generated-file guards run in.
+#
+# WHY THIS FILE EXISTS. `falconage-dev:1.0.0` was built by hand in a terminal
+# and never written down, so it could not be rebuilt, and what was in it could
+# only be discovered by running things and seeing what failed. `ruff` was not
+# in it, which meant every lint invocation began with a `pip install ruff` --
+# a network round trip per run, and a different ruff version each time, which
+# is the opposite of what a linter in CI is for.
+#
+# Deliberately NOT the full `falconage:1.0.0-cpu` image. That one carries R,
+# Bioconductor and the CLI and is 2.5 GB; this is the Python core plus test
+# tooling at about a gigabyte. The R suite and the R/Python conformance tests
+# need the CPU image and are run there.
+#
+# Build:
+#   docker build -f docker/Dockerfile.dev -t falconage-dev:1.0.0 .
+#
+# Use, with the working tree mounted over the installed copy:
+#   docker run --rm -m 8g -v "$PWD:/work" -w /work falconage-dev:1.0.0 \
+#     sh -c 'export PYTHONPATH=/work/python/src; python -m pytest python/tests -q'
+#
+# The 8 GB cap is not decoration -- it is the machine this is developed on, and
+# the suite is written to fit it. Measured peak for the full run: about 860 MB.
+
+FROM python:3.12-slim-bookworm
+
+# Pinned so a rebuild six months from now produces the same linter verdicts.
+# A floating ruff turns an unrelated commit red.
+ARG RUFF_VERSION=0.14.6
+ARG PYTEST_VERSION=8.4.2
+ARG HYPOTHESIS_VERSION=6.140.3
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    # matplotlib must not try to find a display, and must not build a font
+    # cache into a read-only layer on first use.
+    MPLBACKEND=Agg \
+    MPLCONFIGDIR=/tmp/mpl \
+    # BLAS threads. Left uncapped, numpy spawns one per core and the suite
+    # spends its time in thread contention rather than arithmetic.
+    OMP_NUM_THREADS=2 \
+    OPENBLAS_NUM_THREADS=2 \
+    MKL_NUM_THREADS=2
+
+# git for the version checks, curl for the manifest and corpus fetchers.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Dependencies before source, so editing a Python file does not reinstall the
+# world. Only the files pip needs to resolve the dependency set are copied.
+COPY python/pyproject.toml python/README.md ./python/
+COPY python/src/falconage/_version.py ./python/src/falconage/_version.py
+
+RUN pip install --no-cache-dir \
+      "ruff==${RUFF_VERSION}" \
+      "pytest==${PYTEST_VERSION}" \
+      "hypothesis==${HYPOTHESIS_VERSION}" \
+      pytest-cov \
+      pyyaml \
+ && pip install --no-cache-dir -e "./python[methylation,plot,anndata,cli]" \
+ || pip install --no-cache-dir "./python[methylation,plot,anndata,cli]"
+
+# The source is mounted at run time, not baked in: this image is for running a
+# working tree, and a copy inside it would shadow the mount confusingly.
+WORKDIR /work
+
+# Fail the build rather than the first test run if something is missing. The
+# whole point of pinning the tooling is that it is present and correct here.
+RUN python - <<'PY'
+import importlib, subprocess, sys
+for mod in ("numpy", "pandas", "scipy", "yaml", "matplotlib", "pytest",
+            "hypothesis", "pyarrow", "anndata"):
+    importlib.import_module(mod)
+    print(f"  {mod} ok")
+v = subprocess.run(["ruff", "--version"], capture_output=True, text=True)
+if v.returncode:
+    sys.exit("ruff is not on PATH")
+print(" ", v.stdout.strip())
+PY
+
+CMD ["python", "-c", "import falconage; print(falconage.__version__)"]

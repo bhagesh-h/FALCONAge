@@ -97,6 +97,7 @@ jobs:
           python docs/build_docs.py --check
           python docs/build_news.py --check
           python docs/build_catalogue.py --check
+          python docs/build_gallery.py --check
 
       # Prose is not executed, so a function name in a fenced code block is
       # just text and stays wrong forever. The README's quick start told people
@@ -106,6 +107,14 @@ jobs:
       # every test in this suite passed anyway.
       - name: Documented API exists
         run: python docs/check_api_docs.py
+
+      # On every push, not only on a tag. The release workflow checks this too,
+      # but a check that only runs at release time is a check that tells you
+      # about the problem at the worst possible moment -- which is exactly what
+      # happened with v1.0.0. Here it fails on the commit that introduced the
+      # drift, while the fix is still cheap.
+      - name: Versions agree
+        run: python test/check_versions.py
 
       # The rule selection lives in python/pyproject.toml, with the reasoning.
       # Short version: pyflakes and syntax errors only. A style gate a single
