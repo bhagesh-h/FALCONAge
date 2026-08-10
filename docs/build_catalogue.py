@@ -96,7 +96,7 @@ This page is written from the registry the package ships, so it cannot describe
 a catalogue different from the one that scores. Every column below is a field
 the scoring code reads.
 
-`scale_type` is the load-bearing one. It is not a label -- it decides which
+`scale_type` is the load-bearing one. It is not a label: it decides which
 downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
@@ -200,7 +200,7 @@ def render() -> str:
     out = [HEAD.format(n=len(clocks), schema=reg.version, banner=BANNER)]
     for tier in ("A", "B", "C"):
         rows = [c for c in clocks if c.availability == tier]
-        out.append(f"\n## Tier {tier} — {len(rows)} clocks\n")
+        out.append(f"\n## Tier {tier}: {len(rows)} clocks\n")
         out.append(TIER[tier] + "\n")
         out.append("| Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |")
         out.append("|---|---:|---|---|---:|---|---|---|")
@@ -417,7 +417,7 @@ WHY_NOT = {
                    "direction here, unlike every age clock beside it",
     "proportion": "anything ignoring the sum-to-one constraint",
     "divisions": "acceleration: a division count is not elapsed time",
-    "relative_score": "everything except correlation and rank -- there is no "
+    "relative_score": "everything except correlation and rank: there is no "
                       "external unit to difference or average",
 }
 

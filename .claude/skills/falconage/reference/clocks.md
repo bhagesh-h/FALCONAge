@@ -3,14 +3,14 @@
 ## What a clock is
 
 A supervised model mapping molecular features to a scalar. What the scalar *means* is set by the
-outcome it was regressed on — not by the units it is reported in. Six families, trained on six
+outcome it was regressed on, not by the units it is reported in. Six families, trained on six
 different targets, all commonly reported as "biological age":
 
 | Family | Trained on | Examples | What the number is |
 |---|---|---|---|
 | **First-generation** | calendar age | Horvath 2013, Hannum, SkinAndBlood | an estimate of age, with prediction error against a known truth |
 | **Second-generation** | a survival-weighted composite, then rescaled to years | PhenoAge, GrimAge | years as a unit; age was never the target |
-| **Pace-of-aging** | the *rate of change* in organ-system biomarkers, tracked longitudinally | DunedinPACE, DunedinPoAm | a rate — how much biological ageing per calendar year |
+| **Pace-of-aging** | the *rate of change* in organ-system biomarkers, tracked longitudinally | DunedinPACE, DunedinPoAm | a rate: biological ageing per calendar year |
 | **Mitotic** | cumulative stem-cell divisions | epiTOC2, StemTOC, HypoClock | a count, not elapsed time |
 | **Causality-enriched** | CpGs with Mendelian-randomisation support | CausAge, DamAge, AdaptAge | damaging vs adaptive change, separated |
 | **Deconvolution** | cell-type reference profiles | the Salas 12-cell panel | proportions, constrained to sum to one |
@@ -19,7 +19,7 @@ Reporting all six as "biological age" throws away the information needed to inte
 
 **Chronological accuracy and usefulness are different axes.** Across 39 biomarkers in more than
 20,000 people, the correlation between a clock's chronological-age accuracy and its mortality
-prediction was R = 0.12, P = 0.67 — uncorrelated
+prediction was R = 0.12, P = 0.67, uncorrelated
 ([Nat Aging 2025](https://doi.org/10.1038/s43587-025-00987-y)). A clock that predicts age perfectly
 has no acceleration left with which to detect anything.
 
@@ -33,8 +33,8 @@ has no acceleration left with which to detect anything.
 | Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `phenoage`, `hrsinchphenoage`, `kdm`, `hd`, `zhangmortality` | mixed |
 | Is damage separable from adaptation? | `yingdamage`, `yingadaptage` | `age_years_relative` |
 | How long are the telomeres? | `dnamtl` | `telomere_kb` |
-| Which organ system is aging fastest? | none ship — SystemsAge is licence-restricted | — |
-| What is the blood's cell composition? | none ship — the Salas panels are tier C | `proportion` |
+| Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
+| What is the blood's cell composition? | none ship; the Salas panels are tier C | `proportion` |
 
 `fa.registry.load().compatible_with(d)` answers this against a real dataset, which beats any table.
 
@@ -48,12 +48,12 @@ support it rather than returning a units error dressed as a number.
 | `age_years` | 73 | acceleration, residual, difference, mean, correlate | — |
 | `relative_score` | 44 | correlate, rank | no external unit to difference or average |
 | `proportion` | 18 | compositional, difference, mean, correlate | anything ignoring sum-to-one |
-| `divisions` | 10 | difference, mean, rank, correlate | acceleration — a division count is not elapsed time |
+| `divisions` | 10 | difference, mean, rank, correlate | acceleration: a division count is not elapsed time |
 | `gestational_weeks` | 8 | acceleration, residual, difference, mean | mixing with an age in years |
 | `telomere_kb` | 2 | acceleration, difference, mean, correlate | comparison with an age in years; and **higher is younger** here, unlike every age clock beside it |
-| `pace_ratio` | 2 | difference, mean, rank, correlate | acceleration — it is already a rate |
-| `mortality_log_hazard` | 2 | hazard ratio, mean, rank, correlate | acceleration — a log-hazard has no zero on the age scale |
-| `age_years_relative` | 2 | residual, difference, mean, correlate | acceleration — slope against age is near one but the origin moves between cohorts |
+| `pace_ratio` | 2 | difference, mean, rank, correlate | acceleration: it is already a rate |
+| `mortality_log_hazard` | 2 | hazard ratio, mean, rank, correlate | acceleration: a log-hazard has no zero on the age scale |
+| `age_years_relative` | 2 | residual, difference, mean, correlate | acceleration: slope against age is near one but the origin moves between cohorts |
 
 `age_years_relative` exists because of a measurement: DamAge tracks age with a pooled slope of
 0.967, better than DNAmPhenoAge, but its offset swings **162 years** between cohorts against
@@ -64,7 +64,7 @@ Horvath's 15. The residual and group differences are defined; `predicted − chr
 | Tier | n | What it means |
 |---|---:|---|
 | **A** | 23 | Scores offline. 20 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| **B** | 110 | Catalogued, no traced coefficient source. Deliberately not copied out of another package — that is how the field's paper-versus-implementation discrepancies spread. |
+| **B** | 110 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
 | **C** | 28 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
 
 Every architecture is implemented and tested regardless of tier.
@@ -90,8 +90,8 @@ implemented), the three Ying clocks (off by one each), and others. Every one car
 raises it as a warning at score time rather than silently inheriting one side.
 
 **Reliability means two things.** Technical ICC repeats the same DNA; biological ICC re-samples
-the same person days later. They do not track together, and GrimAge2 and DunedinPACE — the two
-most often used to claim an intervention worked — are among the most biologically fragile.
+the same person days later. They do not track together, and GrimAge2 and DunedinPACE, the two
+most often used to claim an intervention worked, are among the most biologically fragile.
 
 **One significant clock is probably a false positive.** Re-analysing six intervention datasets,
 exactly one clock reached significance in five of them, a first-generation clock every time, and

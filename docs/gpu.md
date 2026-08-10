@@ -2,7 +2,7 @@
 
 Verified on real hardware on 2026-08-08. The short version: the GPU path works,
 it is numerically sound, and for the clocks that ship today it is **slower than
-the CPU** - so `device="auto"` resolves to CPU and the GPU is opt-in.
+the CPU**, so `device="auto"` resolves to CPU and the GPU is opt-in.
 
 ## The machine
 
@@ -21,8 +21,8 @@ Nothing was installed on the host. Everything went into a throwaway container.
 |---|---|---|
 | NVIDIA driver 610.88 | already installed | none |
 | CUDA user-mode driver 13.3 | already installed | none |
-| Docker GPU passthrough | already working | none - `docker run --gpus all nvidia/cuda:12.4.1-base nvidia-smi` returned the card first try |
-| CUDA toolkit on the host | **not installed, and not needed** | none - the torch wheel bundles its own runtime; only the driver has to be on the host |
+| Docker GPU passthrough | already working | none, `docker run --gpus all nvidia/cuda:12.4.1-base nvidia-smi` returned the card first try |
+| CUDA toolkit on the host | **not installed, and not needed** | none, the torch wheel bundles its own runtime; only the driver has to be on the host |
 | `torch` with CUDA | **missing** - the CPU image ships without it on purpose | installed `torch 2.6.0+cu124` inside a container, from `docker/Dockerfile.cuda`. Nothing was added to the host |
 | `nvidia-container-toolkit` | already configured | none |
 
@@ -69,7 +69,7 @@ orders, and floating-point addition is not associative. It is not a defect and
 it is not fixable without giving up the vendor kernels.
 
 **What this means for the conformance guarantee.** FALCONAge claims R and Python
-return the same bits. That claim is intact - both go through the same Python
+return the same bits. That claim is intact, both go through the same Python
 core, and the R suite asserts equality at tolerance exactly zero. It is a
 statement about the two *languages*, not about two *devices*. A CPU result and a
 GPU result agree to about 1e-13 and are not bit-identical. The run manifest
@@ -157,7 +157,7 @@ docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
   python test/gpu_check.py
 ```
 
-`test/gpu_check.py` runs the five steps in the order above - what torch sees,
+`test/gpu_check.py` runs the five steps in the order above, what torch sees,
 device and dtype resolution, CPU-versus-GPU agreement, the speed and precision
 table, and the profile that explains it. Each step is meaningless if the one
 before it failed, so it stops rather than continuing. On a machine with no CUDA
@@ -167,4 +167,4 @@ anywhere and safe to put in a bug report.
 `--max-samples` caps the speed table for a card with less memory than the 8 GB
 this was measured on; `--skip-profile` drops the last step.
 
-If your card disagrees with the tables above, the tables are what should change.
+If your card disagrees with the tables above: the tables are what should change.

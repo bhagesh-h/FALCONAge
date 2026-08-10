@@ -9,8 +9,8 @@
 Biological age and aging-clock scoring from DNA methylation and clinical chemistry, against a
 catalogue of 161 published clocks.
 
-This is the R half. It is a native R package — S3 classes, `data.frame` in and out, roxygen2
-documentation, ggplot2 figures — but it does not reimplement anything. Every number comes from one
+This is the R half. It is a native R package: S3 classes, `data.frame` in and out, roxygen2
+documentation, ggplot2 figures, but it does not reimplement anything. Every number comes from one
 Python core that this package calls through reticulate, so **an R result and a Python result are
 the same bits**, and the test suite asserts that at tolerance exactly zero rather than to six
 decimals.
@@ -67,7 +67,7 @@ request should never be dropped quietly.
 
 The two APIs are one-to-one in intent and deliberately not in spelling. R gets
 `as.data.frame(res, form = "long")` where Python gets `FalconResult.long()`, because forcing
-identical names would make one language read like a translation of the other — which is exactly
+identical names would make one language read like a translation of the other, which is exactly
 what the reticulate bridge exists to avoid.
 
 So the mapping is worth having explicitly. Every row is the same computation reached two ways.
@@ -208,16 +208,16 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 ## What the R side does not have
 
 `download()` and the preprocessing entry points are thinner here than in Python, and a few things
-are Python-only by design rather than by omission — an R user reaches them through the same core,
+are Python-only by design rather than by omission, an R user reaches them through the same core,
 and wrapping every one in an S3 method would be surface area with no reader.
 
-Where a group above shows a Python entry and no R counterpart, that is the reason.
+Where a group above shows a Python entry and no R counterpart: that is the reason.
 
 ## Where the numbers come from
 
 A clock is an architecture plus a coefficient set, and the two have very different licences.
 
-Every **architecture** here is written from its published description — no clock implementation is
+Every **architecture** here is written from its published description, no clock implementation is
 imported from another package. **Coefficients** are fitted data and cannot be written, only
 obtained, so the 161 clocks fall into three tiers:
 
@@ -235,12 +235,12 @@ clock_info("grimage2")        # why, and which open clock answers the same quest
 
 ## Further reading
 
-- [Getting started](../guide/FALCONAge.html) — the full walkthrough, both languages side by side
-- [Choosing a clock](../guide/clocks.html) — by the question you asked, and by what the scale permits
-- [Clock catalogue](../clocks.html) — all 161, generated from the registry that scores them
-- [The science of aging clocks](../science.html) — the biology, the equations and the published constants
-- [Architecture](../architecture.html) — which file computes what, and how much of it exists
-- [Python reference](../reference/index.html) — the other half of the table above
+- [Getting started](../guide/FALCONAge.html), the full walkthrough, both languages side by side
+- [Choosing a clock](../guide/clocks.html), by the question you asked, and by what the scale permits
+- [Clock catalogue](../clocks.html), all 161, generated from the registry that scores them
+- [The science of aging clocks](../science.html), the biology, the equations and the published constants
+- [Architecture](../architecture.html), which file computes what, and how much of it exists
+- [Python reference](../reference/index.html), the other half of the table above
 
 ## Citation
 

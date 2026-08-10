@@ -4,7 +4,7 @@
 # FALCONAge 1.1.0 (2026-08-09)
 
 Everything in v1.0 was about computing the number correctly. This release is about the fact that a
-correctly computed number is still not interpretable on its own — which the field's own literature
+correctly computed number is still not interpretable on its own, which the field's own literature
 says plainly, and which no implementation, including this one, did anything about.
 
 Four of the capabilities below have no equivalent in biolearn, pyaging, methylclock, dnaMethyAge,
@@ -14,10 +14,10 @@ specimen-type enforcement.
 
 ## Added
 
-- **`technical_se()` — measurement error, propagated.** Split one DNA sample, run both halves, and
+- **`technical_se()`: measurement error, propagated.** Split one DNA sample, run both halves, and
   six prominent clocks disagree with themselves by up to nine years (Nat Aging 2022,
   s43587-022-00248-2); only 18% of 450K probes reach ICC ≥ 0.5 in whole blood. For a linear clock
-  the answer is one line of algebra — `Var = f'(raw)² · Σ wⱼ² sⱼ² (1 − ICCⱼ)` — and one
+  the answer is one line of algebra, `Var = f'(raw)² · Σ wⱼ² sⱼ² (1 − ICCⱼ)`, and one
   matrix–vector product. On the corpus, Horvath 2013 comes out at ±1.58 years with an implied
   cohort ICC of 0.98, DunedinPoAm38 is the least repeatable at 0.72, and the 319,607-probe BLUP
   clock reaches 1.00 because a model spread over the whole array averages the noise away.
@@ -25,40 +25,40 @@ specimen-type enforcement.
   Three deliberate choices. An **imputed feature contributes its full between-sample variance**,
   not the reduced `s²(1−ICC)`: an imputed probe carries no information about the sample in front
   of you, and treating it as well-measured would make worse data produce a narrower interval.
-  The **output transform is differentiated analytically** — Horvath's `anti_log_linear` has slope
+  The **output transform is differentiated analytically**: Horvath's `anti_log_linear` has slope
   `21·eˣ` below zero and `21` above it, so a child and an adult scale differently from the same raw
   error. And a chain containing an op that destroys the information (`binarize`, `rank_normalize`,
   `quantile_normalize`, `simplex_projection`) **refuses** rather than skipping the step, because
   skipping it turns an unquantifiable uncertainty into a confidently small one.
 
-- **`registry/data/probe_icc.csv.gz`** — 283,860 per-probe ICC(2,1) values from 69 blood samples
+- **`registry/data/probe_icc.csv.gz`**: 283,860 per-probe ICC(2,1) values from 69 blood samples
   each assayed twice on EPIC v1 (Epigenetics 2024, 10.1080/15592294.2024.2333660, CC BY 4.0),
   derived by `python/tools/build_probe_icc.py`. Restricted to probes a scoreable clock names and
   reduced to two columns: the published table is 72 MB of xlsx over the whole array, and the
   cohort SD the propagation actually uses comes from the user's own matrix, not the ADNI one. The
-  citation, licence and SHA-256 go into the run manifest — an interval whose provenance is not
+  citation, licence and SHA-256 go into the run manifest. An interval whose provenance is not
   recorded is worse than no interval.
 
-- **`icc_from_replicates()`** — ICC(1,1) computed from the user's own technical duplicates, which
+- **`icc_from_replicates()`**: ICC(1,1) computed from the user's own technical duplicates, which
   is this laboratory's noise on this platform rather than a published cohort's. Negative values
   are kept, not clipped: a negative ICC means the within-subject spread exceeded the
   between-subject spread, which is a real and reportable state for a probe that measures nothing.
 
-- **`conformal_interval()` and `registry/data/conformal.csv`** — the other uncertainty, and the
+- **`conformal_interval()` and `registry/data/conformal.csv`**: the other uncertainty, and the
   larger one. Split conformal against chronological age on healthy-control blood samples from the
   corpus, so the coverage guarantee is finite-sample and distribution-free. Every row carries
-  `exchangeable = False`: the guarantee holds only for cohorts drawn like the calibration set —
-  adult, blood, overwhelmingly European ancestry — and nothing in the function can verify that, so
+  `exchangeable = False`: the guarantee holds only for cohorts drawn like the calibration set,
+  adult, blood, overwhelmingly European ancestry, and nothing in the function can verify that, so
   nothing in it implies it. The calibration also exposed something the registry alone did not:
-  Ying's DamAge and AdaptAge sit tens of years from chronological age — which prompted the
+  Ying's DamAge and AdaptAge sit tens of years from chronological age, which prompted the
   measurement that produced the `age_years_relative` scale below.
 
 - **Specimen-type enforcement.** Saliva clock ages ran 3.83–16.46 years above buffy coat in the
   same 91 people while still correlating with them at Spearman 0.45–0.69 (bioRxiv
-  2025.09.16.673560) — so a correlation check passes and the output is a decade out.
+  2025.09.16.673560), so a correlation check passes and the output is a decade out.
   `obs["tissue"]` is now compared against each clock's declared training tissue. Twelve clocks
-  whose tissue has no counterpart elsewhere — three placenta clocks, cord blood, neonatal blood
-  spots, buccal, three brain-cortex clocks — carry `tissue_policy: refuse`. Cell-free DNA is
+  whose tissue has no counterpart elsewhere (three placenta clocks, cord blood, neonatal blood
+  spots, buccal, three brain-cortex clocks) carry `tissue_policy: refuse`. Cell-free DNA is
   refused by *every* clock regardless of policy: it is not a tissue a clock generalises to but a
   fragment population shed from many, and array clocks applied to it perform poorly (bioRxiv
   2025.11.27.690895). A run with no `tissue` column says so once, because silence was the previous
@@ -67,12 +67,12 @@ specimen-type enforcement.
   No `trained_tissue` field was added. `tissue` already records what each clock was fitted on, and
   a second field would give the same fact two places to be wrong.
 
-- **`fit_batch_reference()` / `apply_batch_reference()` — batch correction that does not move a
+- **`fit_batch_reference()` / `apply_batch_reference()`, batch correction that does not move a
   result you already reported.** ComBat estimates its parameters over every sample at once, so
   adding a plate changes every previously corrected value: measured directly on epigenetic ages as
   a mean shift of 0.077–0.39 years with a maximum of 2.20 (iComBat, PMC12495439). Freezing the
   per-probe grand mean, covariate effects, pooled variance **and the empirical-Bayes
-  hyperparameters** on a reference cohort removes that entirely — the test asserts bit equality,
+  hyperparameters** on a reference cohort removes that entirely, the test asserts bit equality,
   not closeness, and a companion test asserts that a re-fit *does* move the values, because the
   failure this prevents has to be demonstrable or nobody believes the fix is needed. The reference
   is an artefact you keep, with a digest for the manifest. Refuses a confounded design and a batch
@@ -83,11 +83,11 @@ specimen-type enforcement.
   450K matrix in the corpus masked down to each platform's probe set and rescored, 109 samples over
   five datasets. `hrsinchphenoage` shifts +16.7 years on EPICv2 from losing 85 of 959 probes; `lin`
   shifts −9.4 from losing three of ninety-nine; `zhangblup` loses ten percent of a 319,607-probe
-  model and shifts −0.23. Two rows come out at exactly 0.00 — the clocks that lose nothing — which
+  model and shifts −0.23. Two rows come out at exactly 0.00, the clocks that lose nothing, which
   is the internal check on the whole measurement. `score()` warns above a year. **Reported, never
   subtracted**: an automatic offset would be a second number nobody can trace.
 
-- **`power()` and `detectable_effect()`** — the command that runs before any array does, and needs
+- **`power()` and `detectable_effect()`**: the command that runs before any array does, and needs
   no data file. Refuses to default the standard deviation, because n scales with its square and a
   guessed SD is a guessed answer reported to three significant figures. Where a reliability figure
   exists it splits the answer: at ICC 0.9, a tenth of the sample size exists only to average out
@@ -96,23 +96,23 @@ specimen-type enforcement.
   noise gets a negative implied ICC and an explicit refusal to quote an adjusted n, rather than a
   comfortable 0.0.
 
-- **`consensus()`** — the intervention false-positive protocol from *When to Trust Epigenetic
+- **`consensus()`**: the intervention false-positive protocol from *When to Trust Epigenetic
   Clocks* (PMC11526921), where re-analysis of six datasets found exactly one significant clock in
   five of them, first-generation every time, and four of those five lost significance under
   correction. Returns a verdict rather than a table to pick from: one lit clock is `unsupported`
   whatever its p-value. The verdict string always carries the counts it was computed from.
 
-- **`registry.evidence()` and `result.evidence()`** — published effect sizes per clock with their
+- **`registry.evidence()` and `result.evidence()`**: published effect sizes per clock with their
   cohort, design and DOI. Seeded from studies that tested many clocks under one protocol so the
   rows are comparable: GrimAge v2 at HR 1.54 per SD for mortality and 1.86 for cirrhosis,
   DunedinPACE at 1.44 for diabetes, first-generation clocks at ~5% of significant associations
   across 174 outcomes in 18,859 people. A row without a DOI is rejected at load time. The most
   useful row is about none of them: across 39 biomarkers in >20,000 people, age accuracy and
-  mortality prediction are uncorrelated at R = 0.12, P = 0.67 — the empirical justification for
+  mortality prediction are uncorrelated at R = 0.12, P = 0.67, the empirical justification for
   `scale_type` and `LEGAL_OPS`.
 
 - **`read_bedmethyl()`, `read_bedmethyl_dir()`, `read_panel()`.** Nanopore bedMethyl from `modkit`,
-  carrying per-site coverage as a separate frame — coverage is information the array path never
+  carrying per-site coverage as a separate frame, coverage is information the array path never
   had, and a CpG read twelve times is measured worse than one read two hundred. 5mC and 5hmC are
   read separately and never summed. Targeted panels take a *declared* CpG list and are checked
   against it rather than intersected, because a typo in a probe name would otherwise become a
@@ -120,7 +120,7 @@ specimen-type enforcement.
 
 - **Pre-analytical metadata** in `qc()` and the run manifest: specimen type, collection-to-
   processing delay, storage time and temperature, extraction and bisulfite kit, DNA input, array
-  version, plate and position. Flagged above the published thresholds — ten months of whole-blood
+  version, plate and position. Flagged above the published thresholds, ten months of whole-blood
   storage cost up to 97% of DNA yield and moved methylation by up to 42% (PMC5802893), and 24 h at
   4 °C already shifts buffy coat composition, which reads downstream as age acceleration
   (PMC4723336). Anticoagulant choice, by contrast, has no measurable effect and is recorded so
@@ -129,11 +129,11 @@ specimen-type enforcement.
 
 - **Four figures**: `reliability_forest`, `score_interval`, `platform_bias`, `consensus_plot`, with
   gallery entries. The reliability forest plots SE as a fraction of the cohort's own spread rather
-  than raw SE — the clocks report years, kilobases, pace ratios and unitless scores, and putting
+  than raw SE, the clocks report years, kilobases, pace ratios and unitless scores, and putting
   their standard errors on one axis would be the units error `LEGAL_OPS` exists to prevent,
   committed in a figure instead of in arithmetic.
 
-- **`falconage report`** — read, QC, score, quantify, interpret and write one HTML file with 31
+- **`falconage report`**: read, QC, score, quantify, interpret and write one HTML file with 31
   figures, no Python written. Plus `falconage power` and `falconage consensus`.
 
 - **A Claude skill, at `.claude/skills/falconage/`.** Four markdown files: the Docker workflow,
@@ -145,13 +145,13 @@ specimen-type enforcement.
   `docs/check_api_docs.py` now covers it, and covers CLI verbs as well as `fa.*` names. A wrong
   name in prose misleads a reader who then checks; a wrong name in a skill becomes a command. It
   immediately found five readers written as top-level that live under `fa.preprocess`, and an
-  invented `falconage probe` verb — which had been copied from a specification section of the
+  invented `falconage probe` verb, which had been copied from a specification section of the
   architecture page describing a verb that was never built. Extending the check to CLI verbs then
   found two more of those, `qc` and `analyse`; all three are now marked as specified-not-shipped
   with the reason.
 
 - **`docs/check_docs_complete.py`**, which asserts the documentation describes the release that
-  ships. Seven defects were reported at once against v1.1.0 — the landing page named none of the
+  ships. Seven defects were reported at once against v1.1.0, the landing page named none of the
   new inputs, the catalogue linked no papers, the architecture page still called itself v1.0,
   output was pasted into copyable command fences, the routing table did not cover every clock, the
   availability column spent half the page width on one letter, and the parity table claimed Python
@@ -163,21 +163,21 @@ specimen-type enforcement.
 
 - **A new scale type, `age_years_relative`, and the two clocks that needed it.** The conformal
   calibration put Ying's DamAge and AdaptAge 37–150 years from chronological age, which prompted a
-  measurement rather than a conclusion. Their *slope* against age is sound — 0.967 pooled for
-  DamAge, better than DNAmPhenoAge's 1.199 — but their *offset* swings 162 years between healthy
+  measurement rather than a conclusion. Their *slope* against age is sound: 0.967 pooled for
+  DamAge, better than DNAmPhenoAge's 1.199, but their *offset* swings 162 years between healthy
   cohorts where Horvath's swings 15. The two move as near mirror images (r = −0.975) and the swing
   in their sum is only 33, so the cause is one dataset-level shift amplified by their intercepts of
   +543.43 and −511.97, not a fault in either clock.
 
   Neither obvious label fits. `age_years` licenses `predicted − chronological`, which on these
-  measures the cohort. `relative_score` would forbid the residual and the group difference — the
-  operations the paper itself reports — and would contradict a unit of years and a training target
+  measures the cohort. `relative_score` would forbid the residual and the group difference, the
+  operations the paper itself reports, and would contradict a unit of years and a training target
   of chronological age, both accurate. `age_years_relative` says what is true: years, slope near
   one, no fixed origin. It admits `residual`, `difference`, `mean` and `correlate`, and refuses
   `acceleration`. CausAge is unaffected; its offset swings 15 years like Horvath's.
 
 - **`acceleration()` now checks the permission the convention actually needs.** `LEGAL_OPS` has
-  listed `acceleration` and `residual` separately since v1.0 and nothing read the difference —
+  listed `acceleration` and `residual` separately since v1.0 and nothing read the difference,
   every method asked for `"acceleration"`. `absolute` and `both` need `acceleration`; `residual`
   and `within_group` need `residual`. Without this, a clock with no fixed origin could still be
   handed to the absolute convention, and the two Ying clocks are exactly that case.
@@ -193,7 +193,7 @@ specimen-type enforcement.
 
 - **The integration tests were scoring placenta clocks on cord blood.** GSE66459 is umbilical cord
   blood; the three Lee clocks were trained on placenta, and the test asserted only that the answers
-  looked like gestational weeks — which they did, because gestational age is gestational age
+  looked like gestational weeks, which they did, because gestational age is gestational age
   whatever tissue you read it from. The specimen check caught it on its first run. The tests and
   `test/run_all.py` now score `compatible` and pin the refusals by name.
 - `_evidence_line` and the ICC provenance parser both mis-handled a second header line with no
@@ -217,14 +217,14 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
   0.05**. That is a check on the address decoding, the type I/II split and the
   channel assignment, which is where a raw-array reader actually goes wrong.
 
-  The manifest is fetched from Illumina's public S3 bucket and cached — the same
+  The manifest is fetched from Illumina's public S3 bucket and cached, the same
   route `methylprep` takes, and the only step in FALCONAge that is not offline.
   Its SHA-256 goes into the run manifest: a beta matrix is a function of which
   manifest resolved its addresses, in the way a score is a function of which
   coefficient file produced it.
 
 - **pOOBAH detection (Zhou 2018) and noob background correction (Triche 2013)**,
-  each written from its published definition — there is no sesame or minfi in
+  each written from its published definition. There is no sesame or minfi in
   this environment to port from. The order is enforced rather than documented:
   `noob()` refuses to run before `poobah()`, because pOOBAH's null is the
   *uncorrected* out-of-band distribution and correcting first removes the
@@ -241,7 +241,7 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
 
 - **`dye_bias()` ships off by default, with the measurement that decided it.**
   Applied to the corpus's EPIC v1 arrays it moves the median beta by +0.10 to
-  +0.12 — far more than a dye correction should. The cause is in the data: red
+  +0.12, far more than a dye correction should. The cause is in the data: red
   runs about twice as hot as green on that chip (median out-of-band 1,171
   against 415), so mapping red onto green halves every type II unmethylated
   signal. That is a limitation of the assumption, not an arithmetic slip:
@@ -251,7 +251,7 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
   addresses are not in the core-columns manifest. Left in, opt-in, documented.
 
 - **BMIQ** (Teschendorff 2013), with a three-state beta mixture fitted by EM
-  from scratch — closed-form method-of-moments M-steps, an ordered start so the
+  from scratch, closed-form method-of-moments M-steps, an ordered start so the
   states keep meaning unmethylated, hemimethylated and methylated, and a
   quantile map *within* each state. Checked against mixtures drawn with known
   parameters, which is the only way to know an EM is right rather than merely
@@ -263,9 +263,9 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
   Masking is standard for an EWAS and a *decision* for a pre-fitted clock: every
   clock here was trained on unmasked data, so removing a probe at score time
   deletes an input the coefficients expect and hands the gap to the imputer.
-  `mask_report()` quantifies the trade in probes and in coefficient mass — on
+  `mask_report()` quantifies the trade in probes and in coefficient mass, on
   450K the general mask costs Horvath one probe and DunedinPoAm38 a ninth of its
-  model — and nothing is masked automatically.
+  model, and nothing is masked automatically.
 
 - **`AggregationClock`.** Six registry entries are not linear models at all:
   epiTOC1 and EPICmitHyper take the mean beta over a probe set, stemTOC the 95th
@@ -273,27 +273,27 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
   through to `LinearClock` and were refused for want of coefficients that were
   never going to exist. The statistic is read from the `model_type` the registry
   already declares, and an unreadable one raises rather than defaulting to the
-  mean — a percentile clock scored as a mean returns a plausible number on the
+  mean, a percentile clock scored as a mean returns a plausible number on the
   right scale that measures something else. A "coefficient file" for one of
   these is its probe list, which is the two-column CSV `register_local_weights`
   already validates.
 
-- **`NeuralClock`** — a feed-forward clock over a fixed probe set, loaded from
+- **`NeuralClock`**: a feed-forward clock over a fixed probe set, loaded from
   **safetensors only**. `torch.load` executes arbitrary code while unpickling,
   and a clock's weights arrive by download from a third party; that is the
   threat model, not a hypothetical. A `.pt` file is refused by extension.
 
-- **`scAge`** (Trapp 2021) — one age per cell by profile likelihood, for
+- **`scAge`** (Trapp 2021), one age per cell by profile likelihood, for
   methylomes that are 95–99% missing and binary where they are not. Fits
   per-CpG linear models on a bulk reference the user supplies, then maximises
   the binomial log-likelihood over a grid of candidate ages. A cell with fewer
   than twenty informative sites gets `NaN` and a reason rather than a number,
-  and every row carries the width of the likelihood peak — a flat curve is the
+  and every row carries the width of the likelihood peak. A flat curve is the
   finding.
 
 - **Proteomic and transcriptomic preparation.** `read_olink`, `read_somascan`
   and `prepare_proteomic`, which refuses to z-score against your own cohort
-  unless asked in as many words — the training cohort's mean and SD travel with
+  unless asked in as many words, the training cohort's mean and SD travel with
   the model, and standardising against the batch makes a single sample's score
   the model's intercept. And the tAge chain in order: RLE size factors,
   `log10(x+1)`, per-sample z, YuGene, alignment with NA padding, and the
@@ -309,7 +309,7 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
 
 ## Still outstanding after 1.1.0
 
-**Tier B coefficient provenance** — 110 clocks catalogued with no primary source
+**Tier B coefficient provenance**: 110 clocks catalogued with no primary source
 traced. Not engineering: a per-clock literature hunt, and some have no public
 supplement at all. Unchanged, and the one item from the plan not closed here.
 
@@ -338,7 +338,7 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   the product-limit form and the two-sample log-rank statistic come to about forty lines together,
   which is less than `survival` or `lifelines` costs as a dependency. The R side takes the
   log-rank p from the Python core and redraws in ggplot2, so the statistic cannot differ between
-  the languages. Survival strata are the extreme deciles, not a median split — the middle of the
+  the languages. Survival strata are the extreme deciles, not a median split, the middle of the
   acceleration distribution is where a clock discriminates least. The volcano threshold is the
   Benjamini–Hochberg cut read off the `q` column, not a raw p-value line; across many tests the
   two differ by orders of magnitude and the raw one calls noise significant.
@@ -349,24 +349,24 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
 - **`docker/Dockerfile.dev`.** The image the suite and the linters run in existed only as
   something built by hand in a terminal: it could not be rebuilt, and its contents could only be
   discovered by watching things fail. `ruff` was not in it, so every lint invocation began with a
-  `pip install` — a network round trip and a different linter version each run. Now pinned and
+  `pip install`, a network round trip and a different linter version each run. Now pinned and
   reproducible, with a build-time import check.
 - **`requires_cohort` and `min_samples` on registry entries.** A clock whose preprocessing centres
   against the samples it is given has no answer for one sample: centring a single row against
-  itself makes every feature zero, so the model returns its intercept — the same confident number
+  itself makes every feature zero, so the model returns its intercept, the same confident number
   for anybody, with nothing in the arithmetic able to notice. `score()` refuses when the clock was
   named explicitly and skips-with-a-reason otherwise. No clock shipping today sets it; it exists
   because the transcriptomic clocks median-centre per dataset and cannot be added honestly
   without it.
 - **`test/check_versions.py`**, replacing three inline CI checks in two languages. Runs locally.
-- **`docs/science.qmd` §17, "The frontier"** — the normalisation chain FALCONAge skips and why the
+- **`docs/science.qmd` §17, "The frontier"**: the normalisation chain FALCONAge skips and why the
   order matters, cross-platform harmonisation, proteomic organ clocks and the NPX and
   reference-cohort traps, the transcriptomic chain and its per-dataset centring, the methylation
   foundation models, single-cell, and why technical and biological reliability decouple.
 - **Coefficient-mass coverage.** Feature coverage counted probes and treated them as
   interchangeable, which elastic-net weights are not: a clock can clear an 80% feature floor while
-  the probes it lost carry most of the model. `Alignment` now also reports `mass_coverage` — the
-  fraction of total |coefficient| the present features carry — plus `missing_mass`, the heaviest
+  the probes it lost carry most of the model. `Alignment` now also reports `mass_coverage`, the
+  fraction of total |coefficient| the present features carry, plus `missing_mass`, the heaviest
   absent features ranked by weight share. The floor applies to both, and the error names which one
   failed. This is the mechanism behind EPICv2 probe loss disrupting the traditional clocks while
   barely moving the PC ones.
@@ -376,11 +376,11 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   Bocklandt, Bohlin, CVDWesterman, ZhangMortality, the three Ying clocks, the three Sen clocks, and
   the PhenoAge Gompertz constant.
 - **`reliability` on registry entries**, split into `technical_icc` and `biological_icc` because
-  the two do not track together — a clock can be near-perfect on repeat assay of one sample and
+  the two do not track together. A clock can be near-perfect on repeat assay of one sample and
   poor on repeat sampling of one person, and the clocks most used in intervention work are where
   that gap is widest. Populated only where a value traces to a primary source (eight clocks);
   everywhere else it is `None`, meaning "not established", never "fine".
-- **`FalconResult.interpretation()`** — one row per clock giving scale, unit, permitted operations,
+- **`FalconResult.interpretation()`**: one row per clock giving scale, unit, permitted operations,
   both coverage measures, reliability and any documented caveat. The limits were on the website;
   they are now on the object a person actually prints.
 - **`cell_composition()` and `acceleration(adjust=...)`.** Blood composition confounds every blood
@@ -389,25 +389,25 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   regresses them out alongside chronological age; `adjust=[...]` takes measured columns instead.
   The frame records what it was adjusted for, because an adjusted acceleration is a different
   quantity from an unadjusted one.
-- **`test/responsive_check.py`** — loads the rendered site in headless Chromium at 320, 360, 390,
+- **`test/responsive_check.py`**: loads the rendered site in headless Chromium at 320, 360, 390,
   768 and 1280 px and fails on sideways scroll, overlapping text, or a sidebar that does not
   collapse. Written after a CSS rule broke every phone without failing any build.
 - **A second CI job on the unpinned dependency resolution.** The lock pins pandas 2.3.3; a
   `pip install` from the GitHub URL resolves pandas 3.0. That is the install nearly every user
   gets and nothing tested it. Non-blocking, because a breaking upstream release is not a
   contributor's fault.
-- **A Docker walkthrough for people who have never used Python or R** — numbered from installing
+- **A Docker walkthrough for people who have never used Python or R**: numbered from installing
   Docker to scoring their own data, covering the CPU image, the CUDA image and R, with the
   no-transfer dry run of the 586 MB benchmark corpus first.
 - **Nine published output transforms**, so the registry can express the clocks that need them:
   `anti_logp2`, `anti_log_log`, `one_minus`, `days_to_weeks`, `days_to_months`, `scale_and_shift`,
   `petkovich_blood`, `stubbs_multitissue` and `mortality_to_phenoage`, plus `anti_log`, `sigmoid`
   and `add_constant` as aliases of existing ops rather than second copies that could drift.
-  Twenty-two tier B and C clocks were carrying an empty chain, which is not neutral — it means
+  Twenty-two tier B and C clocks were carrying an empty chain, which is not neutral: it means
   identity, so Bohlin would have returned gestational age in days on a scale declared in weeks.
   A test now asserts that every op named anywhere in the registry is dispatchable, because a
   typo in a chain is otherwise invisible until someone registers coefficients.
-- **`PCLinearClock`** — `((x - centre) @ rotation) @ pc_coefficients`, with an `.npz` loader,
+- **`PCLinearClock`**: `((x, centre) @ rotation) @ pc_coefficients`, with an `.npz` loader,
   because a rotation of 78,464 CpGs by 121 components is not expressible as a coefficient CSV.
   No PC clock ships weights; the architecture is implemented and tested against synthetic
   rotations. It deliberately reports no `mass_coverage`: the weights live in component space, and
@@ -416,9 +416,9 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   from Zenodo by DOI prefix, since sending one to the other's API returns a 404 that reads like a
   missing record. PRIDE refuses an unfiltered project and prints the extensions available instead,
   because most of a PRIDE deposit is raw instrument output no clock reads. SRA stops at a run
-  table on purpose — reads need alignment and methylation calling first, which is not in scope
+  table on purpose: reads need alignment and methylation calling first, which is not in scope
   and should not be pretended.
-- **`probe_loss()`** — the per-clock report of what a dataset costs each clock, before scoring:
+- **`probe_loss()`**: the per-clock report of what a dataset costs each clock, before scoring:
   features present, weight present, and the heaviest absent probes named. Sorted worst-first by
   weight rather than by count.
 - **R parity** for all of it: `cell_composition()`, `interpretation()`, `probe_loss()`, and
@@ -426,7 +426,7 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
 - **`py_require()` support on load.** With reticulate 1.41+, `library(FALCONAge)` declares the
   Python core as a dependency and reticulate builds a uv-managed environment on first use, so
   `falconage_install()` stops being a step someone has to be told about. It stays for pinned,
-  reproducible environments — an ephemeral resolution is right for trying the package and wrong
+  reproducible environments. An ephemeral resolution is right for trying the package and wrong
   for an analysis that has to be reproduced in a year. Guarded, so older reticulate still loads.
 ## Fixed
 - **The sidebar was painted over the article on every phone.** A rule added to put the logo above
@@ -435,15 +435,15 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   id won at every width. Measured at four phone widths: 155 overlapping text pairs, the citation
   buttons and author line lying across the prose. Now scoped to a sidebar that is actually on
   screen. Six page/width combinations also scrolled sideways, all from long inline `code` spans
-  that could not wrap — Quarto ships `code { white-space: pre }`, under which `overflow-wrap` is
+  that could not wrap. Quarto ships `code { white-space: pre }`, under which `overflow-wrap` is
   never consulted, so setting only `overflow-wrap` (the obvious fix) changed nothing.
 - **Pushing `v1.0.0` broke the release workflow on its first step.** The version gate read
-  `["project"]["version"]` from `pyproject.toml`, and that key does not exist — the version is
+  `["project"]["version"]` from `pyproject.toml`, and that key does not exist: the version is
   `dynamic` and hatchling reads it from `src/falconage/_version.py`. `KeyError: 'version'`. The
   step was gated on `startsWith(github.ref, 'refs/tags/v')`, so it had never run: it was wrong
   from the day it was written and only a tag could reveal it. Replaced by one script that reads
   the version the way hatchling does, checks it against `r/DESCRIPTION`, `CITATION.cff` and the
-  tag, and — the part that matters — **runs on every push**, not only at release. A check that
+  tag, and, the part that matters, **runs on every push**, not only at release. A check that
   fires only when you tag tells you at the worst possible moment.
 - **The test corpus documentation claimed a pipeline that does not exist.** `test/data/README.md`
   described the IDAT group as exercising "the raw IDAT → noob → BMIQ path". The reader exists;
@@ -460,7 +460,7 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   byte-identical and maintained by hand, so adding the volcano's text to the root copy changed
   nothing at runtime and the new plot raised `KeyError` from its own text lookup. A test now
   compares the two, and another asserts every plot function has text defined.
-- **The documented API did not exist.** The README's quick start — the first code anyone copies —
+- **The documented API did not exist.** The README's quick start, the first code anyone copies,
   called `fa.report()`, `fa.cox()`, `fa.probe()`, `fa.preprocess_methylation()` and
   `fa.preprocess_clinical()`. None of the five were real names, the last line raised
   `AttributeError`, and the entire test suite passed regardless, because prose is not executed and
@@ -469,7 +469,7 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   Fixed: `report` is now exported alongside `plot`, the other four are corrected to
   `cox_hazard`, `download(dry_run=True)`, `prepare` and `prepare_clinical`, and the examples use
   clocks that actually run. `acceleration(method="both")` was documented in six places and was
-  not implemented — it is now, returning `<clock>_absolute` and `<clock>_residual` side by side,
+  not implemented: it is now, returning `<clock>_absolute` and `<clock>_residual` side by side,
   since suppressing a documented convention is worse than adding it. `docs/check_api_docs.py`
   checks every `fa.*` reference across 71 documents and the enumerated argument values with them,
   and runs in CI.
@@ -479,17 +479,17 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
 - **Tables were crushed rather than scrolled on phones.** `main table { display: block;
   overflow-x: auto }` looks like the right rule and is not: it makes the table a block box of
   width auto, so it shrinks to the container and the anonymous inner table compresses every
-  column to minimum content width. Measured on the catalogue at 390px — cells 46px wide and 82px
+  column to minimum content width. Measured on the catalogue at 390px, cells 46px wide and 82px
   tall, `dnamphenoage` broken across three lines. The scroll container has to be a *parent* of
   the table and Pandoc emits none, so `docs/table-scroll.html` adds one; the table then keeps a
   readable width and the wrapper scrolls. Row height 82px to 48px, with a smaller type size and a
   width floor below 768px.
 - **The logo vanished on phones**, because hiding the duplicated sidebar took the only rendered
-  logo with it. The navbar now carries one below 992px and the sidebar above it — exactly one at
+  logo with it. The navbar now carries one below 992px and the sidebar above it, exactly one at
   any width, verified at both page depths.
 - **A phone got two of everything: two menus, two search boxes, two logos, two titles.** The site
   declares a navbar and a docked sidebar, and Quarto gives each its own search box and its own
-  collapse control — including two elements carrying `id="quarto-search"`, which is invalid HTML
+  collapse control, including two elements carrying `id="quarto-search"`, which is invalid HTML
   before it is a design fault. Below the sidebar breakpoint that surfaced as two hamburgers side
   by side, each opening something different. Search is now off on the sidebar, which had no
   navigation to search, and the sidebar is hidden entirely below 992px instead of collapsing into
@@ -497,8 +497,8 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   Worth recording how this got through: the responsive check measured geometry, and two search
   boxes that each fit the viewport and never touch each other pass an overflow test and an overlap
   test both. It reported clean while the page was wrong. `test/responsive_check.py` now counts
-  chrome as well as measuring it — search boxes, menu toggles, logos and titles, with the drawers
-  opened — and fails on more than one of any.
+  chrome as well as measuring it, search boxes, menu toggles, logos and titles, with the drawers
+  opened, and fails on more than one of any.
 - **`align()` reindexed the frame twice.** The second pass existed only to count per-sample
   missingness, which the mask built two lines earlier already held. Alignment dominates a scoring
   run, so removing it is worth 1.17–1.25× across 1k–16k samples.
@@ -508,13 +508,13 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
 - **Every bundled coefficient file's recorded SHA-256 was wrong on a Windows
   checkout.** All twenty were CRLF on disk while their recorded digests described the LF form, so
   the integrity check failed in any fresh environment and passed only in a stale one. That digest
-  is what `run_manifest.json` records, and the whole reproducibility claim rests on it — a
+  is what `run_manifest.json` records, and the whole reproducibility claim rests on it, a
   checkout that rewrites line endings changes the bytes, changes the digest and makes the manifest
   say two identical runs used different coefficients. The tree is normalised to LF and
   [`.gitattributes`](.gitattributes) now marks the coefficient files binary so git can never
   convert them again, whatever `core.autocrlf` says.
 - **`fit_kdm()` returned a plausible number from a NaN-poisoned reference.** A marker with no
-  residual spread — a unit conversion that collapsed the column, one value filled down — makes
+  residual spread (a unit conversion that collapsed the column, one value filled down) makes
   `k/s` an infinity, `corrcoef` of a constant a NaN and `r_char` a NaN, after which `nansum`
   carries on and produces an answer. It now refuses, names the column, and says that KDM is
   defined for any panel size so the fix is to drop it. The check is relative rather than
@@ -522,7 +522,7 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
   column and an exact test passes the case it exists to catch.
 - **One of the nine markers in the clinical test fixture was a constant.**
   `rng.normal(6.5, 1.4)` without `size=n` returns a single float, which pandas broadcast down the
-  column — so the fixture had been carrying eight informative markers and one flat one, and it was
+  column, so the fixture had been carrying eight informative markers and one flat one, and it was
   that flat marker feeding the zero into KDM.
 - **Test fixtures shared one session-scoped random generator.** A `Generator` is stateful, so each
   fixture's data depended on whether another had been built, which depended on which tests ran,
@@ -555,7 +555,7 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
 - **`falconage_install()` installed a package that does not exist.** It resolved
   `falconage==<version>` from PyPI, where FALCONAge is not published. It now installs the core
   from the GitHub tag matching the R package's version, so the two halves cannot drift.
-- `align()` looped `X.iloc[:, i]` once per feature — 2,666 pandas indexing calls for one
+- `align()` looped `X.iloc[:, i]` once per feature: 2,666 pandas indexing calls for one
   eight-clock run, 76% of total runtime against 0.5% for the arithmetic they fed. One `reindex`
   instead made the CPU path **2.1× faster** at 4,096 samples, for every user, GPU or not.
 - The HTML report called a function that had been renamed, inside a `try` shared by every figure,
@@ -576,10 +576,10 @@ Completed after the v1.0.0 tag was pushed and never released on its own.
 - Python is tested on one version rather than three. The lock file pins one resolution and both
   images run it; the other two matrix entries were testing the resolver, not this package.
 ## Added
-- `test/gpu_check.py` — the script that produced every number in `docs/gpu.md`, running in the
+- `test/gpu_check.py`, the script that produced every number in `docs/gpu.md`, running in the
   shipping CUDA image. Stops after its first step with an explanation where there is no CUDA
   device, so it is safe to run anywhere and safe to attach to a bug report.
-- `plot.clock_atlas` / `plot_clock_atlas` — one figure covering every clock across every pooled
+- `plot.clock_atlas` / `plot_clock_atlas`, one figure covering every clock across every pooled
   study, ordered by benchmark total, for the case where a per-clock panel would need forty.
 - `CITATION.cff` and `inst/CITATION`, both pointing at the registry for the per-clock references,
   because citing FALCONAge does not cite the clock it computed.

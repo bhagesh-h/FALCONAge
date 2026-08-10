@@ -158,6 +158,16 @@ jobs:
       - name: Documentation describes this release
         run: python docs/check_docs_complete.py
 
+      # Punctuation, not content. Four hundred em dashes accumulated across
+      # these pages, each one standing in for a colon, a comma, a full stop or
+      # a pair of parentheses, plus eighteen horizontal rules between sections
+      # that already had headings. Individually defensible, collectively the
+      # reason a scientific catalogue read as generated filler. The habit is
+      # invisible to the person who has it, so it is counted rather than
+      # reviewed.
+      - name: Prose reads as written, not as generated
+        run: python docs/check_prose.py
+
       # On every push, not only on a tag. The release workflow checks this too,
       # but a check that only runs at release time is a check that tells you
       # about the problem at the worst possible moment -- which is exactly what

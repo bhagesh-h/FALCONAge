@@ -13,22 +13,20 @@
 Aging-clock scoring from DNA methylation, clinical chemistry, proteomic and transcriptomic data,
 in Python and R, on CPU or GPU.
 
-📖 **[Full documentation](https://bhagesh-h.github.io/FALCONAge/)** — this file is a summary; every
+📖 **[Full documentation](https://bhagesh-h.github.io/FALCONAge/)**. This file is a summary; every
 section links to the page that covers it properly.
-
----
 
 ## What it does
 
 Reads raw or public data, applies published aging clocks, and returns a score per sample **with
 the unit, the provenance, and how much of the number is measurement noise**.
 
-The R and Python interfaces call one numerical core, so results are bit-identical — asserted at
-tolerance zero in CI, not approximately.
+The R and Python interfaces call one numerical core, so results are bit-identical, asserted at
+tolerance zero in CI rather than approximately.
 
 | | |
 |---|---|
-| **Clocks catalogued** | 161. **23 tier A score offline** — 20 ship a coefficient file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 110 tier B have no traced coefficient source |
+| **Clocks catalogued** | 161. **23 tier A score offline**: 20 ship a coefficient file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 110 tier B have no traced coefficient source |
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, nanopore bedMethyl, RRBS, targeted panels, Olink NPX, SomaScan RFU, bulk RNA-seq counts, clinical chemistry |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
@@ -36,12 +34,12 @@ tolerance zero in CI, not approximately.
 
 Every clock algorithm is implemented from its published description; no clock implementation is
 imported from another package. Coefficients are fitted data rather than a procedure, and 28 clocks
-have coefficients that are research-use-only or have no traceable public source — those ship as
+have coefficients that are research-use-only or have no traceable public source. Those ship as
 tested scaffolds and take a file you supply.
 → [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) ·
 [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html)
 
-## Run it — Docker
+## Run it with Docker
 
 **Docker is the supported path.** One image carries Python, R, the CLI and all 20 bundled clocks
 at pinned versions, so the same input gives the same numbers on any machine. Nothing else to
@@ -67,9 +65,9 @@ docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu python
 docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu R
 ```
 
-On Windows PowerShell write `"${PWD}"`; on `cmd.exe`, `"%cd%"`. GPU: build
-`docker/Dockerfile.cuda` and add `--gpus all` — though
-[measured](docs/gpu.md), CUDA is *slower* for the linear clocks that ship today.
+On Windows PowerShell write `"${PWD}"`; on `cmd.exe`, `"%cd%"`. For GPU, build
+`docker/Dockerfile.cuda` and add `--gpus all`. Measured, CUDA is
+[slower than CPU](docs/gpu.md) for the linear clocks that ship today.
 
 → [Step-by-step Docker walkthrough](https://bhagesh-h.github.io/FALCONAge/guide/FALCONAge.html),
 written for someone who has not used a terminal.
@@ -119,7 +117,7 @@ technical_se(res, d)
 The repository ships a [Claude](https://claude.com/claude-code) skill at
 [`.claude/skills/falconage/`](.claude/skills/falconage/). It carries the Docker commands, the
 clock catalogue routed by the question each clock answers, and every refusal with the measurement
-behind it — so Claude scores a dataset the way the documentation says to rather than inventing an
+behind it, so Claude scores a dataset the way the documentation says to rather than inventing an
 API.
 
 It is already active for anyone working inside a clone. To use it anywhere on your machine, copy
@@ -133,10 +131,10 @@ cp -r .claude/skills/falconage ~/.claude/skills/            # macOS, Linux
 Copy-Item -Recurse .claude\skills\falconage $HOME\.claude\skills\   # Windows
 ```
 
-Then ask in plain language — *"score these IDATs and tell me which clocks you refused and why"* —
-and Claude loads the skill. Every `fa.*` name and CLI verb in it is checked against the running
-package by `docs/check_api_docs.py` on each push, because a wrong name in a skill does not mislead
-a reader, it becomes a command.
+Then ask in plain language. *"Score these IDATs and tell me which clocks you refused and why"*
+loads the skill. Every `fa.*` name and CLI verb in it is checked against the running package by
+`docs/check_api_docs.py` on each push, because a wrong name in a skill does not mislead a reader
+into checking; it becomes a command.
 
 ## What it refuses, and why
 
@@ -144,9 +142,9 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 
 | Refused | Measured reason |
 |---|---|
-| Age acceleration on a pace-of-aging clock | A pace is already a rate. Across 39 biomarkers in >20,000 people, chronological-age accuracy and mortality prediction are uncorrelated (R = 0.12, P = 0.67) — "accurate" and "useful" are different axes |
-| A whole-blood clock on saliva | Saliva clock ages ran **3.83–16.46 years** above buffy coat in the same 91 people, while still correlating with them at Spearman 0.45–0.69 — correlation is not agreement |
-| Any array clock on cell-free DNA | Not a tissue — a fragment population shed from many. Array clocks applied directly perform poorly |
+| Age acceleration on a pace-of-aging clock | A pace is already a rate. Across 39 biomarkers in >20,000 people, chronological-age accuracy and mortality prediction are uncorrelated (R = 0.12, P = 0.67), so "accurate" and "useful" are different axes |
+| A whole-blood clock on saliva | Saliva clock ages ran **3.83–16.46 years** above buffy coat in the same 91 people, while still correlating with them at Spearman 0.45–0.69. Correlation is not agreement |
+| Any array clock on cell-free DNA | Not a tissue, but a fragment population shed from many. Array clocks applied directly perform poorly |
 | A cohort-centred clock given one sample | Centring one row against itself zeroes every feature; the model returns its intercept for anybody |
 | `predicted − chronological` on DamAge/AdaptAge | Slope against age is 0.967, but the offset swings **162 years** between cohorts against Horvath's 15 |
 | A clock below the coverage **or** coefficient-mass floor | 96% of probes present can be 61% of the model |
@@ -156,13 +154,13 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 
 ## What v1.1 added
 
-- **Raw IDATs end to end** — validated at **r = 0.99928** against the published betas for the same
+- **Raw IDATs end to end**, validated at **r = 0.99928** against the published betas for the same
   physical samples (median |Δ| = 0.011, 99.7% of probes within 0.05).
 - **Technical standard error on every score.** Horvath 2013 comes out at **±1.58 years** on the
   test corpus (implied cohort ICC 0.98); DunedinPoAm38 is least repeatable at 0.72.
 - **Frozen-reference batch correction.** Standard ComBat moves already-reported scores by up to
   2.20 years when a plate is added; this makes earlier plates bit-identical.
-- **Probe loss priced in years** per clock per platform — `hrsinchphenoage` shifts +16.7 years on
+- **Probe loss priced in years** per clock per platform. `hrsinchphenoage` shifts +16.7 years on
   EPIC v2; two clocks that lose nothing shift exactly 0.00.
 - Conformal prediction intervals, `power()`, `consensus()`, probe masks, BMIQ, `AggregationClock`,
   `NeuralClock`, `scAge`, proteomic and transcriptomic chains.
@@ -174,7 +172,7 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 | Not implemented | Why |
 |---|---|
 | Cross-platform liftover (`mLiftOver`) | Mapping tables encode concordance measured on paired samples; not derivable from array manifests |
-| Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12 — a correct version needs control probes absent from the fetchable manifest |
+| Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
 | 110 tier B coefficient sources | A per-clock literature hunt; some have no public supplement |
@@ -193,7 +191,7 @@ the array manifest that decoded the IDATs, the reliability table behind the inte
 and floating-point precision, the imputation policy, and every warning raised.
 
 → [Reproducibility](https://bhagesh-h.github.io/FALCONAge/architecture.html) ·
-[test/README.md](test/README.md) — the benchmark corpus and how to read each output
+[test/README.md](test/README.md), the benchmark corpus and how to read each output
 
 ## Documentation
 
@@ -232,7 +230,7 @@ Most valuable first: tracing a tier B clock's coefficients to a primary source.
 
 ## Licence
 
-GPL-3 for the code. Clock coefficients keep their own licences — the registry records the licence,
+GPL-3 for the code. Clock coefficients keep their own licences. The registry records the licence,
 source URL and redistribution status per clock, and FALCONAge prints the restriction at score time.
 
 ## See also

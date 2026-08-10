@@ -31,7 +31,7 @@ Every one of the 161 catalogued clocks appears above, routed by its declared `pr
 <!-- END GENERATED: by-question -->
 
 "Ready to score" means the coefficients ship in the package. The rest are
-catalogued and need a file — see [Availability](#availability) below.
+catalogued and need a file; see [Availability](#availability) below.
 
 ::: {.panel-tabset}
 
@@ -61,7 +61,7 @@ Every clock carries a `scale_type`, and it decides which downstream operations a
 | Scale | Clocks | Permitted | Refused, and why |
 |:------------|---:|:------------------|:---------------------------|
 | `age_years` | 73 | acceleration, correlate, difference, mean, residual | — |
-| `relative_score` | 44 | correlate, rank | everything except correlation and rank -- there is no external unit to difference or average |
+| `relative_score` | 44 | correlate, rank | everything except correlation and rank: there is no external unit to difference or average |
 | `proportion` | 18 | compositional, correlate, difference, mean | anything ignoring the sum-to-one constraint |
 | `divisions` | 10 | correlate, difference, mean, rank | acceleration: a division count is not elapsed time |
 | `gestational_weeks` | 8 | acceleration, correlate, difference, mean, residual | mixing with an age in years |
@@ -82,7 +82,7 @@ A clock trained on 450K runs perfectly well on EPIC data that carries its probes
 which is what `compatible_clocks()` checks.
 
 But high coverage does not make a result meaningful. The mammalian methylation array was designed
-around CpGs conserved across mammals, and carries 96% of Horvath2013's 353 probes - so a zebra
+around CpGs conserved across mammals, and carries 96% of Horvath2013's 353 probes, so a zebra
 scores at *higher* coverage than many human 450K datasets and returns a confident number from a
 clock fitted on people. Nothing in the arithmetic can notice. Set `species` and FALCONAge warns:
 
@@ -144,7 +144,7 @@ se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
     cannot distinguish two of your samples however different their point estimates look.
 
 `implied_cohort_icc`
-  : the reliability *this* cohort implies. Often below the published figure — a narrow age range
+  : the reliability *this* cohort implies. Often below the published figure, because a narrow age range
     leaves less between-sample variance for the same assay noise.
 
 For scale: on this package's test corpus Horvath 2013 comes out at ±1.58 years, DunedinPoAm38 is
@@ -169,7 +169,7 @@ correlating with them at Spearman 0.45–0.69. A correlation check passes and th
 out, because correlation is not agreement.
 
 **The rule:** set `obs["tissue"]` on every dataset. FALCONAge then compares it against what each
-clock was fitted on — pan-tissue clocks say nothing, most warn with the measured discordance, and
+clock was fitted on. Pan-tissue clocks say nothing, most warn with the measured discordance, and
 twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
 warning saying the check did not run.
 

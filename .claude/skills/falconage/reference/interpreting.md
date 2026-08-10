@@ -26,7 +26,7 @@ more imputed features earns a wider interval. On the reference corpus Horvath 20
 ±1.58 years; DunedinPoAm38 is least repeatable; the 319,607-probe BLUP clock is the most, because
 a model spread over the whole array averages the noise away.
 
-That sum treats probe errors as independent, and they are not — chip position and plate move many
+That sum treats probe errors as independent, and they are not: chip position and plate move many
 probes together. **The reported SE is therefore a lower bound.** Where a published clock-level ICC
 exists, `source="clock"` gives a figure that does contain the correlated part; if the two disagree
 by a lot, believe the clock-level one.
@@ -35,7 +35,7 @@ by a lot, believe the clock-level one.
 on healthy blood samples with known ages: the half-width is an order statistic of the absolute
 residuals, so on any sample exchangeable with the calibration cohort the interval contains the
 truth at the stated rate, with no distributional assumption. Horvath 2013's 90% half-width is
-about 12 years — that is the honest width of an individual age prediction, and it is why these
+about 12 years. That is the honest width of an individual age prediction, and it is why these
 are population-research instruments.
 
 The guarantee is conditional on exchangeability. The calibration cohort is public blood data,
@@ -58,7 +58,7 @@ square, so a guessed SD is a guessed answer printed to three significant figures
 |---|---|
 | Age acceleration on a pace-of-aging clock | A pace is already a rate. Subtracting age from it is a units error. |
 | A whole-blood clock on saliva | Saliva clock ages ran 3.83–16.46 years above buffy coat in the same 91 people, while still correlating with them at Spearman 0.45–0.69. Correlation is not agreement. |
-| Any array clock on cell-free DNA | Not a tissue — a fragment population shed from many. Array clocks applied directly perform poorly. |
+| Any array clock on cell-free DNA | Not a tissue, but a fragment population shed from many. Array clocks applied directly perform poorly. |
 | A placenta, cord-blood, buccal or brain-cortex clock on blood | A category error, not an offset. Twelve clocks refuse outright; the rest warn with the measured discordance. |
 | A cohort-centred clock given one sample | Centring one row against itself zeroes every feature; the model returns its intercept for anybody. |
 | `predicted − chronological` on DamAge or AdaptAge | Slope against age is 0.967, but the offset swings 162 years between cohorts against Horvath's 15. |
@@ -66,8 +66,8 @@ square, so a guessed SD is a guessed answer printed to three significant figures
 | A `.pt` file of neural weights | `torch.load` executes arbitrary code while unpickling. Safetensors only. |
 | An interval on a clock with no established reliability | It would be invented rather than measured. `None` means "not established", never "fine". |
 
-When a refusal appears, report the reason. Working around it — `min_coverage=0`, dropping the
-tissue column, computing the difference by hand — produces a number that looks identical to a
+When a refusal appears, report the reason. Working around it with `min_coverage=0`, by dropping the
+tissue column, or by computing the difference by hand produces a number that looks identical to a
 valid one and is not.
 
 ## What FALCONAge does not do

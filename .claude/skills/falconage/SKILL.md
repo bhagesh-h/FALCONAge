@@ -89,11 +89,11 @@ numerical core, so the results are bit-identical rather than approximately equal
 
 ## Reference
 
-- `reference/docker.md` — the full command set: IDATs, GEO accessions, batch correction,
+- `reference/docker.md`, the full command set: IDATs, GEO accessions, batch correction,
   benchmarking, GPU, and the native pip/R install for anyone who wants it.
-- `reference/clocks.md` — what a clock is, the six families, which one answers which question,
+- `reference/clocks.md`, what a clock is, the six families, which one answers which question,
   the nine scale types, and the traps.
-- `reference/interpreting.md` — reading the outputs, every refusal and the measurement behind
+- `reference/interpreting.md`, reading the outputs, every refusal and the measurement behind
   it, and what the package deliberately does not do.
 
 Full documentation: <https://bhagesh-h.github.io/FALCONAge/>

@@ -10,14 +10,14 @@ This page is written from the registry the package ships, so it cannot describe
 a catalogue different from the one that scores. Every column below is a field
 the scoring code reads.
 
-`scale_type` is the load-bearing one. It is not a label -- it decides which
+`scale_type` is the load-bearing one. It is not a label: it decides which
 downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
 **161 clocks**, registry schema `1.1.0`.
 
 
-## Tier A — 23 clocks
+## Tier A: 23 clocks
 
 Coefficients ship with the package, or the clock is a formula with none to ship. Works offline, no network, no licence.
 
@@ -48,7 +48,7 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `zhangmortality` | 2017 | mortality risk | `mortality_log_hazard` | 10 | whole blood | 450K | [Zhang 2017](https://doi.org/10.1038/ncomms14617) |
 
 
-## Tier B — 110 clocks
+## Tier B: 110 clocks
 
 Catalogued, but no primary source for the coefficients has been established, so nothing is bundled. The metadata is real; the numbers are absent.
 
@@ -166,7 +166,7 @@ Catalogued, but no primary source for the coefficients has been established, so 
 | `ychrom` | 2021 | Y-chromosome presence | `relative_score` | — | whole blood | 450K, EPICv1 | [Wang 2021](https://doi.org/10.1186/s12864-021-07675-2) |
 
 
-## Tier C — 28 clocks
+## Tier C: 28 clocks
 
 The architecture is implemented and tested; the coefficients are research-use-only and are not ours to distribute. Obtain a file and register it.
 

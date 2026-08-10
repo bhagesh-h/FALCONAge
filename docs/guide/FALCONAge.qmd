@@ -1,6 +1,6 @@
 ---
 title: "Getting started"
-subtitle: "Install, score, interpret - in both languages"
+subtitle: "Install, score, interpret, in both languages"
 ---
 
 FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data against a
@@ -10,7 +10,7 @@ than two implementations that agree approximately.
 
 ::: {.callout-tip title="How to read this page"}
 Blocks with a **copy button** are things to run. Blocks tagged **Output** are what you should see
-back — reading them is the point, and pasting one into a terminal will only produce an error.
+back. Reading them is the point; pasting one into a terminal only produces an error.
 
 ```bash
 this is a command: copy it
@@ -35,14 +35,14 @@ cd FALCONAge
 docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
 ```
 
-Then either open a session in the image —
+Then either open a session in the image:
 
 ```bash
 docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu python
 docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu R
 ```
 
-— or run a single command without opening one:
+Or run a single command without opening one:
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
@@ -86,7 +86,7 @@ falconage_config()    # what resolved: versions, devices, registry size
 
 The R package delegates every number to the Python core, so it needs a Python environment either
 way. On reticulate ≥ 1.41 an ephemeral one is built on first use and `falconage_install()` is
-optional — use it when you want a pinned, reproducible one.
+optional; use it when you want a pinned, reproducible one.
 
 Every code example on this page runs unchanged in a native install; only the `docker run` prefix
 goes away.
@@ -169,7 +169,7 @@ d  <- fa$read_idat_dir("idats/")
 
 The chain runs detection first (pOOBAH), then background correction (noob), because pOOBAH's null
 *is* the uncorrected out-of-band signal. Undetected probes become `NA` rather than a number. The
-array manifest is downloaded from Illumina's public bucket the first time and cached — the one
+array manifest is downloaded from Illumina's public bucket the first time and cached. It is the one
 step in FALCONAge that needs a network.
 
 ::: {.falcon-output}
@@ -223,7 +223,7 @@ different their point estimates look.
 ## Before you score: what this array costs each clock
 
 Worth running once on an array you have not used before. It reports, per clock, how many features
-are present **and** how much of the model's weight they carry — two different numbers, and the
+are present **and** how much of the model's weight they carry. Two different numbers, and the
 second is the one that catches EPIC v2 probe loss:
 
 ::: {.panel-tabset}
@@ -250,7 +250,7 @@ hannum             A          71         64    0.9014         0.8830       -7.69
 ```
 :::
 
-`bias_years` is filled in when the platform is one the shift has been measured on — see
+`bias_years` is filled in when the platform is one the shift has been measured on; see
 [what probe loss costs](../science.qmd#probe-loss-priced). `NaN` there means *not measured*, never
 *no bias*.
 
@@ -262,7 +262,7 @@ with a message naming the heaviest absent probes rather than returning a confide
 
 The scale, the unit, which arithmetic is permitted, both coverage measures, the published
 reliability where one exists, and any documented disagreement between the clock's paper and the
-coefficients in circulation — all on the object, not only on this website:
+coefficients in circulation, all on the object rather than only on this website:
 
 ::: {.panel-tabset}
 
@@ -314,7 +314,7 @@ acceleration(res, method = "within_group", group = "dataset")
 
 Absolute is interpretable in years and carries the clock's own bias: a clock five years high on
 everybody gives everybody five years of acceleration. Residual removes that bias, and removes any
-real cohort-wide effect with it. Within-group is what the AA2 benchmark needs - it asks whether
+real cohort-wide effect with it. Within-group is what the AA2 benchmark needs: it asks whether
 cases accelerate relative to *their own* controls. `"both"` returns the first two side by side,
 suffixed, for when you would otherwise have to pick without knowing which the comparison paper
 used.
@@ -323,7 +323,7 @@ used.
 
 Blood cell composition changes with age, and with most other things that happen to a person. In
 more than 10,000 blood samples, immune composition was significantly associated with age
-acceleration for **every one** of six widely used clocks — so an unadjusted acceleration is
+acceleration for **every one** of six widely used clocks, so an unadjusted acceleration is
 measuring two things and reporting one number.
 
 The proportions needed to separate them are usually already in the result, computed by the
@@ -430,7 +430,7 @@ Units are required and never guessed. Albumin at 4.2 is g/dL and albumin at 42 i
 clinically normal, and PhenoAge fitted on one returns nonsense for the other. No range check can
 separate them, so the only correct behaviour is to ask.
 
-KDM and homeostatic dysregulation have no fixed coefficients at all - they are defined relative to
+KDM and homeostatic dysregulation have no fixed coefficients at all: they are defined relative to
 a reference cohort:
 
 ```r
@@ -467,7 +467,7 @@ The curves compare the fastest-ageing tenth with the slowest, not two halves. Th
 acceleration distribution is where a clock discriminates least, so a median split dilutes the
 comparison; the tails are the published convention. The log-rank p is in the subtitle.
 
-If the curves cross, the hazards are not proportional and the single hazard ratio beside them is
+If the curves cross: the hazards are not proportional and the single hazard ratio beside them is
 an average over a period during which the ordering changed. That is worth saying in a caption
 rather than leaving for a reader to notice.
 
@@ -515,7 +515,7 @@ write_results(res, "results/")
 report(res, "report.html", group = "condition")
 ```
 
-The HTML report is one self-contained file - inlined CSS, base64 figures, the table embedded - so
+The HTML report is one self-contained file, inlined CSS, base64 figures, the table embedded, so
 it still works after somebody emails it, which is the only thing anybody does with a report.
 
 ## Driving it from Claude {#claude-skill}
@@ -526,7 +526,7 @@ set, the clock catalogue routed by the question each clock answers, and every re
 measurement behind it.
 
 It is active already for anyone working inside a clone. To have it available in any directory,
-copy it into your personal skills folder --- `cp -r .claude/skills/falconage ~/.claude/skills/`,
+copy it into your personal skills folder with `cp -r .claude/skills/falconage ~/.claude/skills/`,
 or on Windows PowerShell
 `Copy-Item -Recurse .claude\skills\falconage $HOME\.claude\skills\`.
 
@@ -540,7 +540,7 @@ against the running package on each push, exactly as it does for these pages.
 The reason it matters more here is that these pages are read by a person, who notices when a
 function does not exist and goes looking. A skill is read by a model that then *runs* what it
 says. The first draft named five readers at top level that actually live under `fa.preprocess`,
-and invented a `falconage probe` verb outright --- copied, as it happens, from a specification
+and invented a `falconage probe` verb outright, copied from a specification
 section of the architecture page that described a verb never built. The check caught all six, and
 then caught two more invented verbs on that page.
 :::
@@ -551,7 +551,7 @@ Everything above, in order, assuming no Python, no R, and no prior experience wi
 command can be copied one at a time and each says what it does and what you should see. It ends
 with a scored public dataset and the figures.
 
-### Step 0 --- get Docker and check it works
+### Step 0: get Docker and check it works
 
 Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows, macOS) or
 Docker Engine (Linux), start it, then run:
@@ -561,13 +561,13 @@ docker --version
 ```
 
 You should get a version string. If instead you get "command not found" or "cannot connect to the
-Docker daemon", Docker is not installed or not running - fix that before going further, because
+Docker daemon", Docker is not installed or not running; fix that before going further, because
 nothing below will work.
 
-If a later command fails with a path error, it is almost certainly the `"$PWD"` spelling for your
-shell --- see [the table above](#setup-once).
+If a later command fails with a path error: it is almost certainly the `"$PWD"` spelling for your
+shell; see [the table above](#setup-once).
 
-### Step 1 --- get the code
+### Step 1: get the code
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git
@@ -576,7 +576,7 @@ cd FALCONAge
 
 Every later command is run from inside this `FALCONAge` folder.
 
-### Step 2 --- build the image
+### Step 2: build the image
 
 One image carries Python, R, the CLI and all 20 bundled clocks. It takes a few minutes the first
 time and is then cached.
@@ -591,7 +591,7 @@ Check it:
 docker run --rm falconage:1.1.0-cpu python -c "import falconage; print(falconage.__version__)"
 ```
 
-### Step 3 --- see what the benchmark data is, before downloading it
+### Step 3: see what the benchmark data is, before downloading it
 
 A second, deliberately tiny image fetches the test corpus. It is separate on purpose: fetching a
 fixture is the first thing you do when the package itself is broken, so it must not need the
@@ -624,14 +624,14 @@ mouse              5     50.2 MB   Mouse blood RRBS across the lifespan
 selected          33    585.7 MB
 ```
 
-### Step 4 --- download it, then prove it arrived intact
+### Step 4: download it, then prove it arrived intact
 
 ```bash
 docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 python
 docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 verify
 ```
 
-The first fetches 33 files from GEO and Hugging Face into `test/data/` on your own disk - never
+The first fetches 33 files from GEO and Hugging Face into `test/data/` on your own disk, never
 inside the image, so rebuilding never re-downloads. The second re-computes every SHA-256 against
 `checksums.sha256` and fails loudly on a single wrong byte.
 
@@ -653,7 +653,7 @@ docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 R
 ```
 :::
 
-### Step 5 --- score it and get the outputs
+### Step 5: score it and get the outputs
 
 ::: {.panel-tabset}
 
@@ -665,10 +665,10 @@ docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
 ```
 
 Every clock against every dataset. It writes one folder per input under `test/output/`, every
-figure under `test/output_figures/`, and rewrites the generated tables in `test/README.md` - so
+figure under `test/output_figures/`, and rewrites the generated tables in `test/README.md`, so
 the numbers in that document are the numbers the code just produced and cannot drift from them.
 
-To check the install without the corpus, run the unit suite instead - seconds, no data needed:
+To check the install without the corpus, run the unit suite instead, seconds, no data needed:
 
 ```bash
 docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
@@ -708,7 +708,7 @@ Only worth it if you have an NVIDIA card. **Read [GPU support](../gpu.md) first*
 that ship today the GPU is *slower* than the CPU, which is why `device="auto"` resolves to CPU
 even inside this image.
 
-Build the CUDA image - larger, because it carries torch built against CUDA 12.4:
+Build the CUDA image, larger, because it carries torch built against CUDA 12.4:
 
 ```bash
 docker build -f docker/Dockerfile.cuda -t falconage:1.1.0-cuda .
@@ -728,7 +728,7 @@ docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
   python test/gpu_check.py
 ```
 
-This reproduces every number on the GPU page - device resolution, CPU-versus-GPU agreement, the
+This reproduces every number on the GPU page, device resolution, CPU-versus-GPU agreement, the
 speed table and the profile that explains it. On a machine with no CUDA device it stops after the
 first step with an explanation rather than an error, so it is safe to run anywhere.
 
@@ -743,7 +743,7 @@ docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
 
 :::
 
-### Step 6 --- score your own data
+### Step 6: score your own data
 
 Put a beta matrix or a clinical table in a folder, mount it read-only, and mount somewhere for the
 results to land:

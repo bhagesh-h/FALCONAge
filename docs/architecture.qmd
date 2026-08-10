@@ -21,7 +21,7 @@ rather than restating it.
 ::: {.callout-important title="Read this before believing any section below"}
 This document was written **before** the code and is deliberately wider than what ships. Every
 section whose specification outruns the implementation says so at its head. The table here is the
-reconciliation, and it is checked against the running package rather than remembered — the counts
+reconciliation, and it is checked against the running package rather than remembered, the counts
 below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own `Modality` type.
 :::
 
@@ -37,7 +37,7 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 | Preprocess ops | 7: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binarize`, `simplex_projection` | The other eight in §4.1 |
 | Postprocess ops | **21**, plus **24 analytic derivatives** for uncertainty propagation and 4 ops explicitly marked non-differentiable | — |
 | Uncertainty | **Technical SE, conformal prediction intervals, per-probe ICC table, power, consensus** | Conformalised quantile regression (split conformal ships instead) |
-| Batch | **Frozen-reference ComBat** — adding a plate cannot move an earlier one | — |
+| Batch | **Frozen-reference ComBat**: adding a plate cannot move an earlier one | — |
 | Download | GEO series and sample, ArrayExpress, SRA/ENA, Zenodo by DOI, Hugging Face, **Figshare, PRIDE, MetaboLights, GDC** | Credentialed archives (Synapse, EGA, dbGaP, UK Biobank): documented, deliberately not automated |
 | Registry storage | One `clocks.yaml` inside the package, loaded into frozen dataclasses | The per-clock file tree and pydantic schema of §3 |
 | Devices | CPU (numpy) and CUDA (torch), fp64 default | MPS is resolved and refused rather than supported |
@@ -45,9 +45,9 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 
 Two gaps are worth naming rather than leaving in a cell.
 
-**Tier B coefficient provenance** is not an engineering task. It is a per-clock literature hunt —
+**Tier B coefficient provenance** is not an engineering task. It is a per-clock literature hunt,
 find the paper, find the supplement, check the coefficient count against what circulates, record
-the discrepancy where they differ — and some of the 110 have no public supplement at all.
+the discrepancy where they differ, and some of the 110 have no public supplement at all.
 `primary_source_traced: false` is the honest record of that debt.
 
 **The proteomic and transcriptomic chains ship without registry entries.** Every published model in
@@ -59,7 +59,7 @@ Contents
 1. [Scope, decisions and repository layout](#scope-decisions-and-repository-layout)
 2. [Core engine](#core-engine)
 3. [Clock registry](#clock-registry)
-4. [Algorithms - the complete operation catalogue](#algorithms---the-complete-operation-catalogue)
+4. [Algorithms, the complete operation catalogue](#algorithms---the-complete-operation-catalogue)
 5. [Download module](#download-module)
 6. [Preprocess module](#preprocess-module)
 7. [Scoring, analysis, plots, report](#scoring-analysis-plots-report)
@@ -106,7 +106,7 @@ from another package.
 
 **Coefficients** are a different matter, because they are fitted data rather than a procedure and
 cannot be written at all. §3.6 surveys where each set actually comes from and §3.7 sorts them into
-three tiers by what FALCONAge may distribute. Twenty-eight clocks - the GrimAge and SystemsAge
+three tiers by what FALCONAge may distribute. Twenty-eight clocks, the GrimAge and SystemsAge
 families and DunedinPACE - ship as a complete, tested scaffold with no numbers, because their
 coefficients are research-use-only or have no traceable public source. §4.7 covers what that means
 in practice.
@@ -379,14 +379,14 @@ test/           run_all.py gpu_check.py responsive_check.py
 Two collapses and one reversal. `models/ops/{preprocess,postprocess,functional}.py` became one
 `ops.py`, because the shared kernels the third file was for are four functions.
 `registry/{schema,weights,vocabulary}.py` became `registry.py` plus the data file: the vocabulary
-is a frozenset, the schema is the dataclass, and weight resolution is one function because nothing
+is a frozenset: the schema is the dataclass, and weight resolution is one function because nothing
 is fetched at run time.
 
 `plot/` went the other way, and the original reasoning was wrong. It was kept as one module plus
 `atlas.py` on the argument that splitting the figures by subject would make the shared helpers a
-circular import waiting to happen. It grew to 1,523 lines --- an implementation living in a package
+circular import waiting to happen. It grew to 1,523 lines, an implementation living in a package
 initialiser, which is the thing an initialiser should not be. The circularity worry was avoidable
-by naming the problem: the helpers are not shared *between* figure families, they are shared *by*
+by naming the problem: the helpers are not shared *between* figure families: they are shared *by*
 them, so they belong in a `_common.py` that imports from nobody in the package. Each family module
 imports `_common`, `__init__` imports the families and re-exports, and the dependency graph is a
 tree. `save_all` stays in `__init__` because orchestrating the families is the one job that
@@ -416,7 +416,7 @@ def resolve_device(
 ) -> DeviceSpec
 ```
 
-`auto` picks CUDA when `torch.cuda.is_available()`, then MPS, then CPU, and logs the choice —
+`auto` picks CUDA when `torch.cuda.is_available()`, then MPS, then CPU, and logs the choice,
 mirroring pyaging's `set_torch_device`
 ([`pyaging/predict/_pred_utils.py`:398](https://github.com/lucascamillomd/pyaging)).
 `batch_size` defaults to 1024 on CPU and is raised to fill available VRAM on CUDA, capped so that
@@ -564,7 +564,7 @@ class UnitRegistry:
 ```
 
 `require` raises `MissingUnitsError` naming every marker whose unit was not declared. There is no
-default and no inference from magnitude - a creatinine of 80 is plausible as both µmol/L and an
+default and no inference from magnitude, a creatinine of 80 is plausible as both µmol/L and an
 absurd mg/dL, and guessing is how the 88× error happens. Conversions carried:
 
 | Marker | Units | Factor |
@@ -628,7 +628,7 @@ and a registry fix does not require a PyPI release.
 > clock, and no pydantic.
 >
 > The per-clock tree below is the right shape for a registry that outside contributors edit
-> concurrently - one file per pull request, no merge conflicts. At 161 entries maintained by one
+> concurrently, one file per pull request, no merge conflicts. At 161 entries maintained by one
 > author it bought nothing and cost a directory walk on every import, plus 161 files to keep a
 > schema version in step across. The single file is 161 entries the loader validates in one pass,
 > and it travels inside the wheel so a clock catalogue is never a download. Pydantic went the
@@ -636,7 +636,7 @@ and a registry fix does not require a PyPI release.
 > a runtime dependency that exists to check a file the package itself ships is a dependency
 > earning nothing.
 >
-> The field vocabulary below is otherwise accurate - it is what the loader reads.
+> The field vocabulary below is otherwise accurate: it is what the loader reads.
 
 ```yaml
 # one entry in falconage/registry/data/clocks.yaml
@@ -868,8 +868,8 @@ coefficient_source:
 ### 3.8 Coefficient extraction
 
 `registry/extractors/`. One small script per clock, or per family where the format is shared.
-Each reads the primary source in whatever shape it was published - xlsx, csv, a zip of csvs, an
-RData object, a supplementary PDF table - and emits a normalised two-column file plus a
+Each reads the primary source in whatever shape it was published, xlsx, csv, a zip of csvs, an
+RData object, a supplementary PDF table, and emits a normalised two-column file plus a
 provenance record.
 
 ```
@@ -930,18 +930,18 @@ Rules:
 - **Offline mode**: `FALCONAGE_OFFLINE=1` uses only what is cached and raises
   `WeightsUnavailableError` naming the missing clock rather than attempting a network call.
 - **Bundling**: nothing over 1 MB ships inside the PyPI or CRAN artefact. The clinical-chemistry
-  sets are the exception - PhenoAge is ten numbers - so that path works with no network at all.
+  sets are the exception. PhenoAge is ten numbers, so that path works with no network at all.
 - **Licence surfacing**: tier B prints the source licence once per clock per session on first
   fetch. Tier C prints the obtain-it-yourself instructions.
 
-## 4. Algorithms - the complete operation catalogue
+## 4. Algorithms, the complete operation catalogue
 
 Every clock in the registry is expressible as
 `select features → preprocess ops → architecture forward → postprocess ops`, with ten exceptions
 that need their own forward pass (§4.3). The ops are the vocabulary; implementing all of them is
 what makes adding a clock a YAML edit rather than a code change.
 
-> **v1.0 implements seven of the fifteen preprocess ops below and nine postprocess transforms** —
+> **v1.0 implements seven of the fifteen preprocess ops below and nine postprocess transforms**,
 > the ones the 23 scoring clocks reach for. The rest are specified and unbuilt, because each is
 > needed by exactly one clock family whose coefficients are not redistributable, and an op with
 > no reachable test vector is an op that is wrong in a way nobody will notice. They are kept here
@@ -953,7 +953,7 @@ what makes adding a clock a YAML edit rather than a code change.
 `falconage/models/ops.py`, dispatched through `PREPROCESS` and applied by `apply_chain()`.
 
 They are plain functions of `(x, xp, **params)`, not `nn.Module` subclasses as originally
-specified. `xp` is the array module the device resolver handed back - numpy or torch - so one
+specified. `xp` is the array module the device resolver handed back, numpy or torch, so one
 implementation serves both backends and the CPU path never imports torch. An `nn.Module` would
 have forced torch on every install for a 500-CpG dot product that numpy finishes before torch has
 finished importing. All are batched and vectorised; none contains a Python loop over samples.
@@ -1047,7 +1047,7 @@ Constants come from [the science notes §4.20](science.qmd) and §5.
 `mortality_to_phenoage` clamps the mortality score to `[1e-12, 1 − 1e-12]` before the logarithm,
 following mcp-phenoage-clock
 ([`mcp-phenoage-clock/src/phenoage.ts`](https://github.com/199-mcp/mcp-phenoage-clock)),
-and records `clamped: true` in the result when it fires - an extreme biomarker combination that
+and records `clamped: true` in the result when it fires, an extreme biomarker combination that
 saturates the Gompertz CDF is information, not an implementation detail.
 
 **Intercept convention.** ComputAge and biolearn carry the clock intercept inside the transform
@@ -1073,7 +1073,7 @@ class FalconClock(nn.Module, ABC):
     def forward(self, x: Tensor, ctx: ClockContext) -> Tensor
 ```
 
-`ClockContext` carries what a clock may need beyond its feature matrix - `age`, `sex`, `species`,
+`ClockContext` carries what a clock may need beyond its feature matrix, `age`, `sex`, `species`,
 and the outputs of other clocks it depends on:
 
 ```python
@@ -1120,7 +1120,7 @@ Each gets an explicit implementation and its own gold-standard vector.
 **1. GrimAge / GrimAge2** (`models/cox.py`). Ten (v2) or eight (v1) sub-linear-models on disjoint
 feature index sets, then a fixed concat order, then the Cox layer, then `cox_to_years`. The order
 is `[GDF15, B2M, CystatinC, TIMP1, ADM, PAI1, Leptin, PACKYRS, (LogCRP, A1C), Age, Female]` and
-is load-bearing - the Cox coefficients are positional
+is load-bearing, the Cox coefficients are positional
 ([`pyaging/models/_models.py`:1742](https://github.com/lucascamillomd/pyaging)).
 The registry declares the order; a mismatch between declared and stored sub-model count fails
 validation.
@@ -1206,7 +1206,7 @@ def phenoage(
 
 The two coefficient sets and their Gompertz constants are in [the science notes §5.1](science.qmd) and are stored in
 the registry, not in code. `units` has no default because the SI and conventional
-parameterisations are not interconvertible by scaling the inputs - the coefficients differ too.
+parameterisations are not interconvertible by scaling the inputs, the coefficients differ too.
 The `0.090165` constant is the corrected one; BioAge's April 2026 commit fixed a widespread
 `0.09165` and the test suite pins the corrected value.
 
@@ -1234,7 +1234,7 @@ def hd(data, biomarkers, fit=None, log=True, by_sex=True) -> pd.DataFrame
 ```
 
 `hd_fit` standardises the reference by its own mean and SD, then stores the covariance. It checks
-the condition number and raises when the covariance is near-singular - BioAge only warns on a
+the condition number and raises when the covariance is near-singular. BioAge only warns on a
 single-row reference, which is the degenerate case rather than the common one. The reference
 cohort must be young, non-pregnant and within the clinical windows in [the science notes §3.5](science.qmd); the
 packaged NHANES III fit satisfies this and is the default.
@@ -1273,7 +1273,7 @@ testable. What cannot be done is invent the numbers.
 | DunedinPACE | 1 | Research-use-only. Distributed through the authors' R package under terms the user accepts on install. |
 
 The GrimAge family is the sharp case. GrimAge2 is the most-used mortality clock in the field, and
-its coefficient set has no public primary source at all - pyaging re-hosts a copy whose origin its
+its coefficient set has no public primary source at all, pyaging re-hosts a copy whose origin its
 own audit could not establish. FALCONAge will not launder that. The scaffold is complete and
 correct; the numbers must come from UCLA or from the user's own licensed copy.
 
@@ -1321,7 +1321,7 @@ res <- score(data, clocks = "grimage2")
 `register_local_weights` parses the file, checks it against the scaffold's declared shapes and
 feature count, warns on any feature the scaffold does not expect, converts to safetensors, and
 caches it. A file that does not match the published architecture is rejected with the mismatch
-named - which also makes this the mechanism for validating a coefficient set someone hands you.
+named, which also makes this the mechanism for validating a coefficient set someone hands you.
 
 The registration is recorded in the run manifest as
 `weights_source: user_supplied, sha256: ...`, so a result computed from a licensed copy is
@@ -1357,9 +1357,9 @@ set with its obtain instructions.
 
 The scaffold is still fully tested, three ways:
 
-1. **Synthetic weights.** Generate a coefficient set of the right shape, run it, and assert the
-   forward pass produces the algebraically expected value. This tests the architecture - the
-   sub-model ordering, the concat order, the Cox transform constants - without needing the real
+1. **Synthetic weights.** Generate a coefficient set of the right shape; run it, and assert the
+   forward pass produces the algebraically expected value. This tests the architecture, the
+   sub-model ordering, the concat order, the Cox transform constants, without needing the real
    numbers. A GrimAge2 scaffold given a coefficient vector of all zeros except one must return the
    value that hand-computation says it should.
 2. **Published worked examples.** Several papers report a reference sample's inputs and its
@@ -1375,12 +1375,12 @@ an untested-against-truth implementation of a correctly-described architecture.
 
 #### Could they be reimplemented from scratch instead?
 
-For the architecture, yes, and that is what §4.4 already specifies - the GrimAge two-stage
+For the architecture, yes, and that is what §4.4 already specifies, the GrimAge two-stage
 structure, the PC rotation and SystemsAge's seven-step pass are all described well enough in
 their papers to write independently, and are written here.
 
 For the coefficients, no. They are the output of an elastic net fit to cohorts that are not
-public - Framingham, the Women's Health Initiative, the Dunedin Study. Refitting the same
+public. Framingham, the Women's Health Initiative, the Dunedin Study. Refitting the same
 architecture on different data produces a different clock that must not carry the same name.
 That path is real and is scoped as a v1.5 milestone (§13), where a FALCONAge-native mortality
 clock trained on the open ComputAgeBench split would be a new contribution rather than a
@@ -1486,7 +1486,7 @@ The three shapes:
 
 ### 5.4 Metadata normalisation
 
-`falconage/download/metadata.py`. The hardest part of the download module is not transfer, it is
+`falconage/download/metadata.py`. The hardest part of the download module is not transfer: it is
 that the GEO `characteristics_ch1` field is free text and every submitter writes age differently.
 
 ```python
@@ -1568,7 +1568,7 @@ falconage download GSE40279 GSE42861 --n-jobs 8
 falconage download 10.5281/zenodo.18763485
 ```
 
-As shipped, `--dry-run` is what answers "what is in this series?" --- it prints every URL and byte
+As shipped, `--dry-run` is what answers "what is in this series?": it prints every URL and byte
 count and transfers nothing. The specification also had a separate `probe` verb for that; it was
 not built, because it would have been the same code behind a second name.
 
@@ -1615,7 +1615,7 @@ IDAT pair (Grn, Red)
 Implementation route: `methylprep` for IDAT parsing and noob, a native BMIQ port (beta-mixture
 quantile normalisation is around 150 lines, and having it in-tree avoids an R dependency inside
 the Python core), and SeSAMe through `rpy2` only when the user asks for it. The pipeline choice
-is recorded in the manifest because it changes the answer - [the science notes](science.qmd) section 3.1 notes that
+is recorded in the manifest because it changes the answer, [the science notes](science.qmd) section 3.1 notes that
 `noob + BMIQ` and SeSAMe both perform well but are not interchangeable, and funnorm is preferred
 when global methylation differs between groups.
 
@@ -1632,7 +1632,7 @@ raises `PlatformMismatchError` when the best overlap is under 50% rather than pr
 wrong manifest.
 
 **EPIC v2 aggregation.** Split each column name on `_`, group by the CpG prefix, average
-replicates. Mandatory - [the science notes](science.qmd) section 16 records that skipping it means every clock sees
+replicates. Mandatory, [the science notes](science.qmd) section 16 records that skipping it means every clock sees
 zero overlapping features. When `detect_platform` says EPIC v2 and `aggregate_epicv2=False`, the
 module raises rather than producing a silently empty result.
 
@@ -1660,7 +1660,7 @@ Three steps: map column names to canonical marker names through a synonym table,
 `albumin` and `Albumin (g/dL)` all resolve to `albumin`; convert every marker to the canonical
 unit the clocks expect; validate against physiological ranges. The ranges are the BioAge
 clinically-healthy windows ([the science notes](science.qmd) section 3.5) for the reference-cohort case, and wider
-physiological bounds for the general case - a CRP of 40 mg/L is outside the healthy window but is
+physiological bounds for the general case, a CRP of 40 mg/L is outside the healthy window but is
 a real measurement, so it warns rather than nulls by default.
 
 ### 6.4 Imputation, kept in three distinct places
@@ -1911,7 +1911,7 @@ shape encodes platform, with one palette across a whole report.
 def report(result, path: Path, sections="all", embed_data=True) -> Path
 ```
 
-One self-contained HTML file - inlined CSS, base64 figures, no external requests - carrying the
+One self-contained HTML file, inlined CSS, base64 figures, no external requests, carrying the
 run manifest, the QC block, the results table, the standard figures, and the caveats that apply
 to the clocks that actually ran. `embed_data=True` attaches the results CSV as a data URI so the
 report is a complete record.
@@ -2013,7 +2013,7 @@ environment yet, which breaks `R CMD check` on CRAN's build farm. With it, the p
 | R | Python | Direction |
 |---|---|---|
 | `data.frame` | `pandas.DataFrame` | both, via reticulate |
-| `falcon_data` | `.h5ad` path | both - the object is passed as a file path, never marshalled cell by cell |
+| `falcon_data` | `.h5ad` path | both: the object is passed as a file path, never marshalled cell by cell |
 | `falcon_result` | `.h5ad` path plus a results `data.frame` | both |
 | `character(1)` | `str` | both |
 | `NULL` | `None` | both |
@@ -2116,7 +2116,7 @@ plot.falcon_qc
 
 ### 8.6 DESCRIPTION
 
-The file as it ships, not as it was specified --- the differences are noted below it:
+The file as it ships, not as it was specified: the differences are noted below it:
 
 ```
 Package: FALCONAge
@@ -2179,7 +2179,7 @@ Every example and every test that needs the core is wrapped in
 
 ### 8.7 Roxygen conventions
 
-Following the cyRAVEN register - see
+Following the cyRAVEN register, see
 `R/thresholds.R` in that package for the model. Every exported function
 gets:
 
@@ -2539,7 +2539,7 @@ tests/vectors/
 ```
 
 Inputs are synthetic and seeded rather than real data: no consent question, no file-size problem,
-and a seeded generator gives coverage of the edge cases real data rarely contains - all-zero
+and a seeded generator gives coverage of the edge cases real data rarely contains, all-zero
 rows, a constant feature, values at exactly 0 and 1, and a controlled missingness pattern.
 
 Generation is a one-off script per source implementation (`scripts/generate_vectors_pyaging.py`,
@@ -2557,7 +2557,7 @@ Oracles are therefore ranked, and each vector records which tier it used:
 
 | Rank | Oracle | Available for |
 |---|---|---|
-| 1 | A worked example published by the clock's own authors - reference inputs and the age they report | a minority of clocks, but the only truth that is not somebody's code |
+| 1 | A worked example published by the clock's own authors, reference inputs and the age they report | a minority of clocks, but the only truth that is not somebody's code |
 | 2 | The authors' own reference implementation, run in a pinned environment | most clocks with an author repository |
 | 3 | Hand computation from the published equation, for clocks small enough | PhenoAge, Weidner, Vidal-Bralo, Bocklandt, Garagnani, ZhangMortality |
 | 4 | An independent third-party package, with at least two agreeing | the remainder |
@@ -2570,7 +2570,7 @@ it goes to `registry/diffs/` rather than to `tests/vectors/`.
 
 A separate, non-blocking job compares FALCONAge against pyaging, biolearn, computage,
 methylCIPHER and BioAge on shared clocks, and writes a table of agreements and disagreements to
-`docs/comparison.md`. Disagreements are published rather than hidden - [the science notes §15.2](science.qmd#where-the-paper-and-the-coefficients-disagree) shows
+`docs/comparison.md`. Disagreements are published rather than hidden, [the science notes §15.2](science.qmd#where-the-paper-and-the-coefficients-disagree) shows
 the field already carries several, and a user comparing a FALCONAge number to a pyaging number
 deserves to know which ones differ and why.
 
@@ -2592,7 +2592,7 @@ Hypothesis in Python, `testthat` with generated inputs in R.
 
 ### 10.4 Unit and integration
 
-Unit tests per op with hand-computed expected values - the 15 preprocess ops and 15 postprocess
+Unit tests per op with hand-computed expected values, the 15 preprocess ops and 15 postprocess
 transforms each get one, because these are where an off-by-one in a quantile index or a wrong
 constant hides. Integration tests run the full path (download a small cached fixture, preprocess,
 score, analyse, report) on both a methylation and a clinical fixture.
@@ -2878,11 +2878,11 @@ Fourteen milestones. Each has an exit criterion that is testable, not a feeling.
 Milestones 1–7 are the critical path; 4b gates 5 and 7, because a clock cannot be tested before
 its coefficients have a traced source. 8–10 can proceed in parallel once 2 and 3 land; 11 needs 7;
 12 and 13 need 11. Milestone 15 is post-1.0 and is the answer to "can the permission-gated clocks
-be replaced rather than licensed" - not with the same clocks, but with open ones.
+be replaced rather than licensed", not with the same clocks, but with open ones.
 
 ## 14. Open questions
 
-**Weight redistribution - resolved into policy, but the letters still need writing.** §3.7 sorts
+**Weight redistribution, resolved into policy, but the letters still need writing.** §3.7 sorts
 every clock into tier A, B or C, and §4.7 specifies what a tier C clock ships. That closes the
 design question. What remains is correspondence: the maintainers of the GrimAge, SystemsAge and
 DunedinPACE coefficient sets should be asked directly whether FALCONAge may redistribute them,
@@ -2893,7 +2893,7 @@ The same question arrives again for the v1.1 and v1.2 layers: tAge models are MG
 non-commercial, and organAging is an Academic Non-Commercial License. Both are likely tier B or C.
 
 **Whether the 37 package-to-package clocks can all be traced.** §3.8 asserts that every tier B
-clock will get a primary source. Some may not have one - a coefficient file that entered
+clock will get a primary source. Some may not have one, a coefficient file that entered
 circulation through a personal communication and was never published leaves no trail. Those end
 up as tier C by default, and the count in §3.7 could grow. The honest position is that the number
 is not yet known, and `primary_source_traced: false` makes the debt visible rather than hidden.
@@ -2942,8 +2942,8 @@ changed, no score moved, and every new artefact is reported rather than applied.
 ### 15.2 New registry artefacts
 
 Each is derived by a script in `python/tools/`, digest-checked, and carries its provenance into
-the run manifest. None can be regenerated in CI — two need the 586 MB corpus, one needs a 72 MB
-published spreadsheet — so CI checks that the shipped files parse and cover what they claim
+the run manifest. None can be regenerated in CI, two need the 586 MB corpus, one needs a 72 MB
+published spreadsheet, so CI checks that the shipped files parse and cover what they claim
 instead, and the local `--check` catches staleness before a commit.
 
 | File | Rows | Source | Built by |
@@ -2956,7 +2956,7 @@ instead, and the local `--check` catches staleness before a commit.
 ### 15.3 Where the checks fire
 
 The registry already declared three properties that scoring enforced. v1.1 adds two more, and they
-use the same shape — a declared property of the clock, checked in `score()`, refusing when the
+use the same shape, a declared property of the clock, checked in `score()`, refusing when the
 substitution is a category error and warning when it is an offset.
 
 | Declared | Enforced since | Refuses when |
@@ -2993,6 +2993,6 @@ synthetic demonstration.
 ### 15.5 What did not change
 
 No score. The v1.0 numbers are bit-identical in v1.1 for any dataset whose clocks were legal to
-score in the first place — the two integration tests that changed did so because they were
+score in the first place, the two integration tests that changed did so because they were
 scoring placenta clocks on cord blood and buccal clocks on adult blood, and those results were
 wrong before the check existed rather than different after it.

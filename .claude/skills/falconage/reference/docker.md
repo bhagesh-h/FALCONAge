@@ -42,7 +42,7 @@ written outside `/work` disappears when the container exits.
 Ten verbs, and `--help` on any of them is authoritative:
 
 ```bash
-falconage config                       # versions, devices, registry size — run this first when confused
+falconage config                       # versions, devices, registry size; run this first when confused
 falconage clocks --tier A              # browse the registry
 falconage clocks --search mortality
 falconage download GSE40279 --dry-run  # what it would fetch, and how many bytes, before fetching
@@ -73,7 +73,7 @@ committing to a GEO series; some are several hundred megabytes.
 | Olink NPX | `fa.preprocess.read_olink(...)` |
 | SomaScan RFU | `fa.preprocess.read_somascan(...)` |
 | Bulk RNA-seq counts | `fa.preprocess.read_counts(...)` |
-| Clinical chemistry | `fa.read_clinical(..., units=...)` — `units` has no default, on purpose |
+| Clinical chemistry | `fa.read_clinical(..., units=...)`, `units` has no default, on purpose |
 
 The proteomic and transcriptomic readers live under `fa.preprocess` rather than at top level,
 which reflects their status: the preparation chains ship and are tested, but no clock in the
@@ -91,7 +91,7 @@ res = fa.score(fa.prepare(d), clocks="compatible")
 
 The chain runs detection (pOOBAH) before background correction (noob), because pOOBAH's null *is*
 the uncorrected out-of-band signal. Undetected probes become `NA` rather than a number. The array
-manifest is fetched from Illumina's public bucket on first use and cached — the one step that
+manifest is fetched from Illumina's public bucket on first use and cached, the one step that
 needs a network.
 
 Validated against the published betas for the *same physical samples*: r = 0.99928,
@@ -112,7 +112,7 @@ are not in the fetchable manifest. Turn it on only if you know why you want it.
 ## Adding a plate later
 
 Standard ComBat re-estimates from every sample at once, so adding a batch silently moves scores
-you already reported — measured at up to 2.20 years. Freeze the reference instead:
+you already reported, measured at up to 2.20 years. Freeze the reference instead:
 
 ```python
 ref = fa.fit_batch_reference(d, batch_col="plate")   # save this alongside the results

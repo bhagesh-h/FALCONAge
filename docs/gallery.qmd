@@ -263,6 +263,6 @@ Two samples whose bars overlap are not distinguishable by this clock on this ass
 `plot.score_interval()` in Python.
 
 
----
+## In total
 
 26 figures. Every one is also written per dataset under `test/output_figures/<group>/<dataset>/` when the full corpus run is executed; the gallery keeps one representative of each type so a reader does not have to fetch 586 MB to see them.

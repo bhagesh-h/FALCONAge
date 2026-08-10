@@ -149,7 +149,9 @@ def render() -> str:
         for name in rest:
             out.append(_figure(name, plots))
 
-    out.append(f"\n---\n\n{len(present)} figures. "
+    # No horizontal rule before this. The heading structure already separates
+    # the sections, and a rule between them is decoration that reads as filler.
+    out.append(f"\n## In total\n\n{len(present)} figures. "
                "Every one is also written per dataset under "
                "`test/output_figures/<group>/<dataset>/` when the full corpus "
                "run is executed; the gallery keeps one representative of each "
