@@ -8,6 +8,79 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 [semantic versioning](https://semver.org/spec/v2.0.0.html), with the clock registry carrying its
 own `registry_version` so a coefficient correction can be pinned independently of the code.
 
+## [Unreleased]
+
+### Fixed
+
+- **The run manifest recorded the device that was asked for, not the one that ran.** Three of the
+  23 scoring clocks and two of the six model classes accepted a `DeviceSpec` and computed in numpy
+  regardless. The scoring loop then wrote `device`, `dtype` and `backend` once per clock inside the
+  loop, so a run reported whichever clock happened to be last: `device="cuda"` for PhenoAge, whose
+  arithmetic never left the host. The same overwrite made `dtype` wrong for any run mixing a
+  `requires_fp64` clock with a float32 request, which is every PC clock.
+
+  The manifest now carries `compute`, one `{device, dtype, backend}` record per scored clock, and
+  the three scalar fields are derived from it: the shared value when the run was uniform, and
+  `"mixed"` when it was not. `device_requested` keeps what the argument resolved to.
+  `manifest.compute_summary()` renders both cases in one line, `"torch:cuda/float64 (20 clocks),
+  numpy:cpu/float64 (3 clocks)"`, and the HTML report uses it instead of the scalars. `combine()`
+  merges the per-clock records from every contributing run rather than copying the first run's
+  device onto all of them, which matters for a benchmark whose datasets were scored on different
+  machines.
+
+  This is a provenance fix, not a performance one. No score changes.
+
+### Changed
+
+- **`NeuralClock` runs its forward pass on the requested device.** It is the one architecture here
+  where a GPU should pay: a linear clock is a single dot product over a few thousand features and
+  loses to the CPU by up to 4.6× because the transfer costs more than the multiply, while AltumAge
+  is dense layers over 20,318 inputs with real depth to parallelise. It was numpy throughout,
+  including the activations, so `device="cuda"` did nothing. The whole pass now goes through the
+  backend handle, with `relu` expressed as the existing `clip(low=0)` op so numpy's `clip` and
+  torch's `clamp` stay one implementation rather than two.
+
+- **`AggregationClock` likewise.** A mean over a few hundred probes will not repay a device on its
+  own; it is routed for the same reason the manifest was fixed, so that what the record says
+  happened is what happened.
+
+- **`ClinicalClock` declares `CPU_ONLY` instead of silently ignoring the device.** PhenoAge sums
+  ten terms, KDM fits one univariate regression per marker, HD inverts a 9×9 covariance. That is
+  less arithmetic than a CUDA kernel launch costs to dispatch, and a device path would also pull
+  torch into the one modality that needs nothing beyond numpy. Declining is the right answer;
+  declining silently was not. `falconage.models.effective_spec()` reads the declaration, and the
+  manifest records `cpu` for these clocks even in a run launched with `device="cuda"`.
+
+### Added
+
+- **`python/tests/unit/test_device_contract.py`**: every model class must either use the spec it is
+  handed or declare `CPU_ONLY`, asserted in both directions with a recording proxy that counts
+  reaches through `xp()`, `asarray()` and `tonumpy()`. Nothing caught the original defect because
+  every other test passes `resolve("cpu")`, against which a model that ignores the argument is
+  indistinguishable from one that honours it. The torch-backend arithmetic is checked against numpy
+  for the neural pass and all three aggregation statistics; those tests skip where torch is absent,
+  which includes CI, and run in `falconage:1.1.0-cuda`.
+
+- `DeviceSpec.as_cpu()`, `RunManifest.record_compute()`, `RunManifest.compute_summary()`,
+  `falconage.models.effective_spec()`.
+
+### Documentation
+
+- `docs/gpu.md` gains the coverage table: which model classes reach the device, which decline, and
+  what that means for a mixed run's manifest. The hardware measurements are unchanged and still
+  date from 2026-08-08; the routing change was verified against the torch CPU backend, not
+  re-measured on a card.
+
+- `docs/architecture.qmd` §2.1 now records where the shipped device layer diverges from the design
+  it specifies, in the same form as the registry and op-catalogue sections: the module is
+  `core/backend.py` rather than `core/device.py`, there is no `batch_size`, and `auto` resolves to
+  **CPU even when a CUDA device is present**. The page previously described the pyaging behaviour
+  the package deliberately does not copy.
+
+- The `AggregationClock` module docstring said five aggregation clocks; there are six. `hypoclock`
+  is declared `"mean aggregation"` without the word methylation and was missed by the count, though
+  not by the detection logic or the tests.
+
 ## [1.1.0] - 2026-08-09
 
 Everything in v1.0 was about computing the number correctly. This release is about the fact that a

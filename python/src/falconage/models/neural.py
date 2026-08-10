@@ -136,6 +136,15 @@ class NeuralClock:
     Forward pass only. Nothing here trains, and the architecture is deliberately
     the plainest one that fits published aging networks: dense layers, one
     activation, no dropout at inference, no batch norm state to get wrong.
+
+    THE ONE ARCHITECTURE HERE WHERE A GPU EARNS ITS TRANSFER. A linear clock is
+    a single dot product over a few thousand features, and ``docs/gpu.md``
+    measures the card losing to the CPU on those by up to 4.6x because moving
+    the matrix costs more than multiplying it. A network is a chain of dense
+    layers with real depth: AltumAge is 20,318 inputs, so the arithmetic per
+    byte transferred is an order of magnitude higher and the transfer amortises.
+    The whole pass therefore runs through the ``xp`` handle, activations
+    included, and honours ``device=`` like the linear path does.
     """
 
     clock: Clock
@@ -143,14 +152,21 @@ class NeuralClock:
     scale: tuple[np.ndarray, np.ndarray] | None = None   # per-feature (mean, sd)
     notes: list[str] = field(default_factory=list)
 
-    def _activate(self, x: np.ndarray) -> np.ndarray:
+    def _activate(self, x, xp):
+        """Apply the activation through the backend handle.
+
+        Written against the op catalogue rather than against ``np`` directly.
+        ``relu`` as ``clip(low=0)`` reuses the one place that already knows
+        numpy spells it ``clip`` and torch spells it ``clamp``, so this stays a
+        single implementation instead of a second branch to keep in step.
+        """
         a = self.weights.activation
         if a == "relu":
-            return np.maximum(x, 0.0)
+            return ops.clip(x, low=0.0, xp=xp)
         if a == "tanh":
-            return np.tanh(x)
+            return xp.tanh(x)
         if a in ("sigmoid", "logistic"):
-            return 1.0 / (1.0 + np.exp(-x))
+            return ops.expit(x, xp=xp)
         if a in ("identity", "linear"):
             return x
         raise ScoringError(f"unknown activation {a!r}")
@@ -167,20 +183,29 @@ class NeuralClock:
                 "no coefficient-mass check to fall back on here: the count is "
                 "all there is.")
 
-        x = al.matrix
+        xp = spec.xp()
+        x = spec.asarray(al.matrix)
         if self.scale is not None:
             mu, sd = self.scale
-            x = (x - mu[None, :]) / np.where(sd == 0, 1.0, sd)[None, :]
+            # The zero-variance guard is computed in numpy, on the host, before
+            # anything moves: a constant feature has no scale to divide by and
+            # substituting 1.0 leaves it centred, which is what the training
+            # code did. Doing it on the device would be one kernel for a
+            # decision that is already made.
+            safe_sd = np.where(np.asarray(sd) == 0, 1.0, np.asarray(sd))
+            x = (x - spec.asarray(mu)[None, :]) / spec.asarray(safe_sd)[None, :]
 
         last = len(self.weights.layers) - 1
         for i, (w, b) in enumerate(self.weights.layers):
-            x = x @ w.T + b[None, :]
+            x = x @ spec.asarray(w).T + spec.asarray(b)[None, :]
             if i != last:
-                x = self._activate(x)
+                x = self._activate(x, xp)
 
-        raw = np.asarray(x, dtype=np.float64).ravel()
-        out = ops.apply_chain(raw, self.clock.postprocess, ops.POSTPROCESS)
-        return pd.Series(np.asarray(out, dtype=np.float64).ravel(),
+        # reshape rather than ravel: both libraries have it and both mean the
+        # same thing by it, which ravel does not guarantee across the two.
+        raw = x.reshape(-1)
+        out = ops.apply_chain(raw, self.clock.postprocess, ops.POSTPROCESS, xp=xp)
+        return pd.Series(np.asarray(spec.tonumpy(out), dtype=np.float64).ravel(),
                          index=data.sample_ids, name=self.clock.id), al
 
     @classmethod

@@ -4,6 +4,12 @@ Verified on real hardware on 2026-08-08. The short version: the GPU path works,
 it is numerically sound, and for the clocks that ship today it is **slower than
 the CPU**, so `device="auto"` resolves to CPU and the GPU is opt-in.
 
+Section 2 was added on 2026-08-10, after an audit found that three of the 23
+scoring clocks never reached the device at all and the manifest did not say so.
+The routing was fixed and checked against the torch CPU backend; no hardware
+measurement was repeated, so every timing on this page is still the 2026-08-08
+run.
+
 ## The machine
 
 | | |
@@ -45,7 +51,73 @@ The `requires_fp64` override fires as designed: a clock the registry flags as
 ill-conditioned gets double precision back with a warning, rather than silently
 honouring a `float32` request that would move its answer.
 
-## 2. CPU and GPU do not agree bit for bit
+## 2. Which clocks the device actually reaches
+
+`device="cuda"` is a request, and until 2026-08-10 it was granted more often in
+the manifest than in the arithmetic. All six model classes take a `DeviceSpec`.
+Of the five that can produce a score, three computed in numpy regardless, and
+the scoring loop then recorded the request rather than the fact.
+
+| Model class | Reaches the device | Registry entries it serves |
+|---|---|---|
+| `LinearClock` | yes | 20 of the 23 that score offline |
+| `PCLinearClock` | yes | 19, none shipping weights |
+| `AggregationClock` | yes, since 2026-08-10 | 6, none shipping weights |
+| `NeuralClock` | yes, since 2026-08-10 | AltumAge |
+| `ClinicalClock` | **no, by declaration** | PhenoAge, KDM, homeostatic dysregulation |
+| `ScaffoldClock` | not applicable | 28 tier C entries; it raises rather than scoring |
+
+**Why the clinical three decline.** A methylation clock reduces thousands of
+probes. A clinical clock reduces nine markers: PhenoAge sums ten terms, KDM fits
+one univariate regression per marker, HD inverts a 9×9 covariance. That is less
+arithmetic than a CUDA kernel launch costs to dispatch, so a device
+implementation would be slower, and it would pull torch into the one modality
+that otherwise needs nothing beyond numpy. They set `CPU_ONLY = True`, which
+`falconage.models.effective_spec()` reads, so the refusal is a declared property
+rather than an argument quietly dropped.
+
+**Why the other two were routed anyway.** `NeuralClock` is the one architecture
+here where a device should pay, for the reason section 4 makes measurable: a
+linear clock is a single dot product over a few thousand features and loses to
+the CPU because the transfer costs more than the multiply, while AltumAge is
+dense layers over 20,318 inputs with depth to parallelise. `AggregationClock`
+takes a mean or a 95th percentile over a probe set and will not repay a device
+on its own; it was routed so that what the manifest records is what happened.
+
+### What the manifest says now
+
+Per clock, not per run. This is a real mixed run: twenty methylation clocks and
+one clinical clock, combined, on the torch backend.
+
+::: {.falcon-output}
+```
+device / backend : cpu / mixed
+compute_summary  : torch:cpu/float64 (20 clocks), numpy:cpu/float64 (1 clock)
+compute["METH:horvath2013"] : {device: cpu, dtype: float64, backend: torch}
+compute["CLIN:phenoage"]    : {device: cpu, dtype: float64, backend: numpy}
+```
+:::
+
+A CUDA run has the same shape with `cuda` in place of `cpu` on the torch rows.
+The backend split is what makes this one mixed, and it is the same split a card
+produces, which is why it can be checked without one.
+
+The three scalar fields are derived from `compute`: the shared value when every
+clock agreed, and `"mixed"` when they did not. Before this they were assigned
+once per clock inside the scoring loop, so a run reported whichever clock ran
+last. The same overwrite made `dtype` wrong for any run combining a
+`requires_fp64` clock with a `float32` request, which is all six PC clocks.
+
+Two things make a run legitimately mixed. A `CPU_ONLY` model where the others
+reached the device, as above; and `combine()` across datasets scored on
+different machines, which is ordinary in a benchmark. The combined manifest
+merges the per-clock records rather than copying the first run's device onto
+all of them.
+
+**This changes no score.** It changes what the run says about itself, which is
+the whole of the reproducibility claim the next section rests on.
+
+## 3. CPU and GPU do not agree bit for bit
 
 This is the finding that matters most, and it qualifies a claim made elsewhere
 in the documentation.
@@ -81,7 +153,7 @@ on the same device. Still negligible against effects measured in single-digit
 years, but four orders of magnitude worse than the device difference, which is
 the right way round.
 
-## 3. Speed: the GPU makes the shipping clocks slower
+## 4. Speed: the GPU makes the shipping clocks slower
 
 Eight clocks, 2,340 distinct features, RTX 4060, best of three runs, measured
 inside `falconage:1.1.0-cuda` - the image the command at the foot of this page
@@ -135,6 +207,12 @@ Not for the 23 tier A clocks. It should pay for itself on:
 None of those are tier A yet, which is exactly why this document can only report
 that the path is correct rather than that it is fast.
 
+Both of the first two now route through the device (section 2). That is a
+correctness statement, not a speed one: no weights ship for either, so there is
+nothing here to time. The point of routing them before the weights arrive is
+that the alternative is discovering on the day somebody supplies a
+`.safetensors` file that `device="cuda"` had been doing nothing all along.
+
 ## A performance bug this found
 
 Profiling for the GPU comparison turned up something unrelated to GPUs. Feature
@@ -163,6 +241,18 @@ table, and the profile that explains it. Each step is meaningless if the one
 before it failed, so it stops rather than continuing. On a machine with no CUDA
 device it stops after step 1 with an explanation, which makes it safe to run
 anywhere and safe to put in a bug report.
+
+The coverage table in section 2 is not from that script, because it needs no
+hardware. It is asserted by `python/tests/unit/test_device_contract.py`, which
+hands every model class a spec that counts how often it is reached and requires
+either a non-empty count or a `CPU_ONLY` declaration. The torch arithmetic is
+checked against numpy in the same file, on the CPU torch backend, so a runner
+with no card still verifies everything except the transfer:
+
+```bash
+docker run --rm -e PYTHONPATH=/work/python/src -v "$PWD:/work" -w /work \
+  falconage:1.1.0-cuda python -m pytest python/tests/unit/test_device_contract.py -q
+```
 
 `--max-samples` caps the speed table for a card with less memory than the 8 GB
 this was measured on; `--skip-profile` drops the last step.

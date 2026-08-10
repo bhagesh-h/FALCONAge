@@ -77,7 +77,12 @@ def write_report(result, path: str | Path, *, age_col: str = "age",
 
     parts.append("<h2>Run</h2><dl class='kv'>")
     for k, v in (("started", m.started_utc), ("finished", m.finished_utc or ""),
-                 ("device", f"{m.backend}:{m.device}/{m.dtype}"),
+                 # compute_summary(), not the three scalar fields. A run that
+                 # put the linear clocks on a card and left the clinical ones
+                 # in numpy reads "mixed:mixed/float64" from the scalars, which
+                 # is true and useless; this names both and counts them.
+                 ("device", m.compute_summary()),
+                 ("device requested", m.device_requested),
                  ("caller", m.caller), ("python", m.python),
                  ("clocks scored", len(result.scores.columns)),
                  ("clocks skipped", len(result.skipped)),

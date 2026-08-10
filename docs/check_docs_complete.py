@@ -184,6 +184,34 @@ def main() -> int:
                     f"are rebuilt by CI before every render; untrack with "
                     f"`git rm -r --cached {gen}`.")
 
+    # 9 -- the GPU page's coverage table agrees with the code.
+    #
+    # docs/gpu.md tells a reader which model classes `device="cuda"` reaches.
+    # For a year it implied all of them, and three shipping clocks plus two
+    # architectures ignored the device entirely. That was invisible because
+    # nothing tied the sentence to the classes. The declaration is one attribute
+    # now, so the page can be checked against it rather than reviewed.
+    gpu_md = (ROOT / "docs" / "gpu.md").read_text(encoding="utf-8")
+    classes = {"LinearClock": fa.models.LinearClock,
+               "PCLinearClock": fa.models.PCLinearClock,
+               "AggregationClock": fa.models.AggregationClock,
+               "NeuralClock": fa.models.NeuralClock,
+               "ClinicalClock": fa.models.ClinicalClock}
+    for name, cls in classes.items():
+        row = next((ln for ln in gpu_md.splitlines()
+                    if ln.startswith(f"| `{name}`")), None)
+        if row is None:
+            problems.append(
+                f"docs/gpu.md has no coverage row for {name}. A model class a "
+                "reader cannot look up is one they will assume uses the device.")
+            continue
+        says_no = "**no" in row.lower()
+        if says_no != bool(getattr(cls, "CPU_ONLY", False)):
+            problems.append(
+                f"docs/gpu.md says {name} "
+                f"{'declines' if says_no else 'reaches'} the device; the class "
+                f"says {'CPU_ONLY' if not says_no else 'it uses the spec'}.")
+
     if problems:
         print(f"{len(problems)} documentation defect(s):")
         for p in problems:
@@ -193,7 +221,9 @@ def main() -> int:
     print(f"documentation is current for v{fa.__version__}: the landing page names "
           f"every input, all {len(all_ids)} clocks are linked and routed, the "
           "architecture page is on this release, output is marked as output, the "
-          "tier column is sized for a letter, and the parity table claims no false gap")
+          "tier column is sized for a letter, the parity table claims no false "
+          "gap, and the GPU page's coverage table matches what the model classes "
+          "declare")
     return 0
 
 

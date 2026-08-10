@@ -32,7 +32,13 @@ explicit request is never silently dropped.}
 
 \item{device}{\code{"auto"}, \code{"cpu"}, \code{"cuda"} or \code{"mps"}. Naming a device that is
 not present is an error rather than a silent downgrade: a run that was
-asked for a GPU and quietly used a CPU looks like a very slow success.}
+asked for a GPU and quietly used a CPU looks like a very slow success.
+\code{"auto"} is CPU even where CUDA exists, which is measured rather than
+cautious: on the clocks that ship, the transfer costs more than the dot
+product it feeds. A named device is not granted to every clock either --
+the three clinical formulas compute in numpy whatever is asked, because
+nine markers are not worth a kernel launch. \code{manifest(res)$compute} records
+what each clock actually used.}
 
 \item{dtype}{\code{NULL} (float64), \code{"float64"} or \code{"float32"}. Clocks flagged
 \code{requires_fp64} in the registry override a float32 request, with a warning.}

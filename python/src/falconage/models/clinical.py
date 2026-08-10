@@ -19,6 +19,16 @@ The reference is part of the definition rather than a parameter: substituting
 the sample's own distribution turns "how far from healthy is this person" into
 "how unusual is this person within this batch", which is a different question
 with the same units.
+
+THESE THREE ARE CPU-ONLY, DELIBERATELY. A methylation clock reduces thousands
+of probes; a clinical clock reduces nine markers. PhenoAge sums ten terms, KDM
+fits one univariate regression per marker, HD inverts a 9x9 covariance. That is
+less arithmetic than a single CUDA kernel launch costs to dispatch, so a device
+implementation would be slower, and it would pull torch into the one modality
+that otherwise needs nothing beyond numpy. :class:`ClinicalClock` therefore
+declares ``CPU_ONLY`` rather than accepting a device and ignoring it, and the
+manifest records ``cpu`` for these clocks even in a run launched with
+``device="cuda"``.
 """
 
 from __future__ import annotations
@@ -338,10 +348,21 @@ class ClinicalClock:
     a property of the run, which is where the manifest can see it.
     """
 
+    #: Nine markers is not a workload for a device; see the module docstring.
+    #: Declared rather than implicit so :func:`falconage.models.effective_spec`
+    #: can tell the caller what these clocks actually computed in.
+    CPU_ONLY = True
+
     clock: object
     reference: object | None = None
 
     def predict(self, data, spec=None, *, reference=None, **kw):
+        """Score. ``spec`` is accepted for interface uniformity and unused.
+
+        Unused is not the same as ignored: ``CPU_ONLY`` above tells the scoring
+        loop so, and the manifest records ``cpu`` for this clock rather than
+        whatever the run asked for.
+        """
         from ..core.errors import AnalysisError
 
         ref = reference if reference is not None else self.reference

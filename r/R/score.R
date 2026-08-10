@@ -13,6 +13,12 @@
 #' @param device `"auto"`, `"cpu"`, `"cuda"` or `"mps"`. Naming a device that is
 #'   not present is an error rather than a silent downgrade: a run that was
 #'   asked for a GPU and quietly used a CPU looks like a very slow success.
+#'   `"auto"` is CPU even where CUDA exists, which is measured rather than
+#'   cautious: on the clocks that ship, the transfer costs more than the dot
+#'   product it feeds. A named device is not granted to every clock either --
+#'   the three clinical formulas compute in numpy whatever is asked, because
+#'   nine markers are not worth a kernel launch. `manifest(res)$compute` records
+#'   what each clock actually used.
 #' @param dtype `NULL` (float64), `"float64"` or `"float32"`. Clocks flagged
 #'   `requires_fp64` in the registry override a float32 request, with a warning.
 #' @param imputation How to fill a clock feature the data does not carry.

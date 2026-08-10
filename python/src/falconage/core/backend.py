@@ -77,6 +77,20 @@ class DeviceSpec:
             return a.detach().cpu().numpy()
         return np.asarray(a)
 
+    def as_cpu(self) -> DeviceSpec:
+        """The same precision, on the CPU, in numpy.
+
+        For the model classes whose forward pass has no device implementation.
+        They are handed the run's spec like every other model and must report
+        what they actually computed in, not what the run asked for: a manifest
+        that records ``cuda`` for arithmetic that never left numpy is a false
+        provenance record, and the manifest is the whole reproducibility claim.
+        See :func:`falconage.models.effective_spec`.
+        """
+        if self.backend == "numpy" and self.device == "cpu":
+            return self
+        return DeviceSpec(device="cpu", dtype=self.dtype, backend="numpy")
+
 
 def _cuda_ok() -> bool:
     if not torch_available():

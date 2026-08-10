@@ -127,8 +127,13 @@ def main(argv=None) -> int:
     data = synthetic(reg, feats, base, rng, 64)
     cpu = fa.score(data, clocks=CLOCKS, device="cpu", dtype="float64")
     gpu = fa.score(data, clocks=CLOCKS, device="cuda", dtype="float64")
-    print(f"  cpu  {cpu.manifest.backend}:{cpu.manifest.device}/{cpu.manifest.dtype}")
-    print(f"  cuda {gpu.manifest.backend}:{gpu.manifest.device}/{gpu.manifest.dtype}\n")
+    # compute_summary(), not the scalar fields. It is per clock, so a run that
+    # put the linear clocks on the card and left a CPU_ONLY clock in numpy says
+    # so here rather than reporting one device for all of them.
+    print(f"  cpu  {cpu.manifest.compute_summary()}")
+    print(f"  cuda {gpu.manifest.compute_summary()}")
+    print(f"       requested {gpu.manifest.device_requested}, "
+          f"{len(gpu.manifest.compute)} clock(s) recorded\n")
     print(f"  {'clock':<16}{'max |cpu-gpu|':>16}{'ulps':>8}   verdict")
     worst = 0.0
     for c in CLOCKS:

@@ -144,6 +144,12 @@ docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda python 
 Measured, and worth knowing: **CUDA is slower** for the linear clocks that ship today. The
 transfer dominates a dot product. The GPU path exists for the neural architectures.
 
+`device="cuda"` does not put every clock on the card. The linear, PC, aggregation and neural
+classes go there; the three clinical clocks (PhenoAge, KDM, homeostatic dysregulation) declare
+`CPU_ONLY` because nine markers are not worth a kernel launch. A run is therefore allowed to be
+mixed, and `manifest.compute` records device, dtype and backend per clock rather than one value
+for the run. Read `manifest.compute_summary()` for the one-line version.
+
 ## Native install, if Docker is not available
 
 ```bash

@@ -1,11 +1,12 @@
 """Clocks that aggregate a probe set rather than weight it.
 
-Five entries in the registry are not linear models at all. epiTOC1 and
-EPICmitHyper take the **mean** beta over a designated set of CpGs; stemTOC takes
-the **95th percentile**; ReedBMI takes a **weighted mean**. There is no
-intercept and no fitted slope -- the model *is* the probe list plus a summary
-statistic, and until v1.1 all five fell through to :class:`LinearClock`, which
-asked for coefficients that do not exist and refused.
+Six entries in the registry are not linear models at all. epiTOC1, EPICmitHyper
+and HypoClock take the **mean** beta over a designated set of CpGs; stemTOC and
+stemTOCvitro take the **95th percentile**; ReedBMI takes a **weighted mean**.
+There is no intercept and no fitted slope -- the model *is* the probe list plus
+a summary statistic, and until v1.1 all six fell through to
+:class:`LinearClock`, which asked for coefficients that do not exist and
+refused.
 
 WHAT A "COEFFICIENT FILE" MEANS FOR ONE OF THESE. The probe list. For the mean
 and percentile forms every weight is 1.0 and only the identifiers matter; for
@@ -16,7 +17,7 @@ so obtaining a published probe set and scoring with it needs no new plumbing:
     fa.registry.register_local_weights("epitoc1", "epitoc1_probes.csv")
 
 WHY THE STATISTIC IS READ FROM ``model_type``. It is already declared there, in
-words, for all five: "mean methylation aggregation", "95th-percentile
+words, for all six: "mean methylation aggregation", "95th-percentile
 methylation aggregation", "weighted methylation aggregation". A second field
 saying the same thing in a different vocabulary would be a second place for it
 to be wrong, and the registry's own convention is that a clock's architecture is
@@ -102,15 +103,22 @@ class AggregationClock:
                 "  An aggregate over a fraction of its probe set is an aggregate "
                 "over a different probe set.")
 
-        x = al.matrix                                   # samples x features
+        # The reduction goes through the backend handle like every other
+        # forward pass. It will not repay a GPU on its own -- a mean over a few
+        # hundred probes is less arithmetic than the transfer that feeds it --
+        # but a model that accepts a device and quietly computes somewhere else
+        # makes the manifest's device field a fiction, and that field is what
+        # the reproducibility claim rests on.
+        xp = spec.xp()
+        x = spec.asarray(al.matrix)                     # samples x features
         if self.statistic == "mean":
-            raw = np.nanmean(x, axis=1)
+            raw = xp.nanmean(x, axis=1)
         elif self.statistic == "quantile":
             # Per sample across probes, not across samples. The premise of a
             # percentile clock is about the spread within one methylome.
-            raw = np.nanquantile(x, self.q, axis=1)
+            raw = xp.nanquantile(x, self.q, axis=1)
         elif self.statistic == "weighted_mean":
-            w = np.abs(np.asarray(self.coefficients, dtype=np.float64))
+            w = xp.abs(spec.asarray(self.coefficients))
             tot = float(w.sum())
             if tot <= 0:
                 raise ScoringError(
@@ -120,9 +128,8 @@ class AggregationClock:
         else:  # pragma: no cover - parse_statistic is the only producer
             raise ScoringError(f"unknown aggregation statistic {self.statistic!r}")
 
-        out = ops.apply_chain(np.asarray(raw, dtype=np.float64),
-                              self.clock.postprocess, ops.POSTPROCESS)
-        values = np.asarray(out, dtype=np.float64).ravel()
+        out = ops.apply_chain(raw, self.clock.postprocess, ops.POSTPROCESS, xp=xp)
+        values = np.asarray(spec.tonumpy(out), dtype=np.float64).ravel()
         return pd.Series(values, index=data.sample_ids, name=self.clock.id), al
 
     @classmethod

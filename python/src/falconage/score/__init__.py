@@ -18,7 +18,7 @@ from ..core.errors import FalconError, FeatureCoverageError, ScoringError, Weigh
 from ..core import preanalytical
 from ..core.logging import WarningCollector, get_logger
 from ..core.manifest import RunManifest
-from ..models import build
+from ..models import build, effective_spec
 from ..preprocess import BIAS_WARN
 from ..preprocess import _load_platform_bias as _platform_bias
 from ..registry import load as load_registry
@@ -341,10 +341,15 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             "data.obs['tissue'] to enable the check.",
             category="tissue")
 
+    # Resolved once, before any clock, so an impossible request fails on the
+    # first line rather than after twenty minutes of alignment. Per-clock
+    # narrowing happens below; this is the ceiling.
+    requested = resolve(device, dtype)
+    manifest.device_requested = requested.device
+
     for cid in wanted:
         c = reg.get(cid)
         spec = resolve(device, dtype, requires_fp64=c.requires_fp64)
-        manifest.device, manifest.dtype, manifest.backend = spec.device, spec.dtype, spec.backend
 
         # A cohort-centred clock has no answer for one sample, and the failure
         # is silent: centring a single row against itself makes every value
@@ -397,6 +402,11 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
 
         try:
             model = build(reg, cid)
+            # What this model will actually compute in, which is not always
+            # what was asked for: a CPU_ONLY class stays in numpy on a CUDA
+            # run. Asked before predict so the manifest can record the fact
+            # rather than the request. See falconage.models.effective_spec.
+            spec = effective_spec(model, spec)
             values, alignment = model.predict(
                 data, spec, imputation=imputation, min_coverage=min_coverage
             ) if not c.formula else model.predict(data, spec, reference=reference)
@@ -408,6 +418,7 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             continue
 
         scores[cid] = values
+        manifest.record_compute(cid, spec)
         manifest.weights[cid] = reg.weight_record(cid)
 
         # Coverage is not validity. The mammalian array carries 96% of
@@ -526,16 +537,21 @@ def combine(results: Iterable[FalconResult], *, keys: Sequence[str] | None = Non
     obs = obs.reindex(scores.index)
 
     m = RunManifest(caller=results[0].manifest.caller)
-    m.device = results[0].manifest.device
-    m.dtype = results[0].manifest.dtype
-    m.backend = results[0].manifest.backend
+    m.device_requested = results[0].manifest.device_requested
+    # Merged from every contributing run, not copied from the first. Datasets
+    # in a benchmark are often scored on whatever machine was free, and a
+    # combined manifest that reports the first one's device for all of them
+    # says something untrue about the rest.
     for r, n in zip(results, names):
+        for cid, comp in r.manifest.compute.items():
+            m.compute[f"{n}:{cid}"] = comp
         m.weights.update(r.manifest.weights)
         m.warnings.extend({**w, "dataset": n} for w in r.manifest.warnings)
         for cid, cov in r.coverage.items():
             m.coverage[f"{n}:{cid}"] = cov
         for cid, why in r.skipped.items():
             m.skipped[f"{n}:{cid}"] = why
+    m.refresh_compute_summary()
     m.config = {"combined_from": names, "n_datasets": len(results)}
     m.finish()
 

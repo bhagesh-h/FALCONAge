@@ -422,6 +422,21 @@ mirroring pyaging's `set_torch_device`
 `batch_size` defaults to 1024 on CPU and is raised to fill available VRAM on CUDA, capped so that
 the largest PC rotation (125,175 × k for SystemsAge) fits.
 
+> **v1.1 diverges here in four ways, three of them deliberate.** The module is
+> `core/backend.py`, the function is `resolve()`, and `DeviceSpec` carries plain strings with no
+> `batch_size` field: nothing shipping is large enough to need batching, and a field that is
+> always its default is a field that is wrong the first time it matters.
+>
+> The substantive difference is `auto`. It resolves to **CPU even when a CUDA device is present**,
+> because on the clocks that ship the card loses: a 2,340-feature dot product is a rounding error
+> against the pandas alignment that feeds it, and the transfer is pure cost. Measured at 4.6×
+> slower on an RTX 4060 at 16,384 samples. Picking CUDA because one exists would make the common
+> case several times worse on every machine that has one, silently, so the GPU is opt-in via
+> `device="cuda"` or `FALCONAGE_DEVICE=cuda`. The numbers are in [GPU support](gpu.md).
+>
+> `resolve()` also refuses a device it cannot provide rather than falling back. A run asked for a
+> GPU and quietly given a CPU looks like a very slow success, and the user finds out hours later.
+
 FP64 is the default because that is what pyaging uses and what the gold-standard vectors are
 generated at. FP32 roughly doubles throughput on consumer GPUs, which have poor FP64 rates, and
 is opt-in. Clocks whose registry entry sets `requires_fp64: true` are promoted back to FP64 for
