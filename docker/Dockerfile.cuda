@@ -108,12 +108,16 @@ WORKDIR /opt/falconage
 # -- torch comes from the cu124 index above, which the lock file cannot express
 # because it pins the CPU build, and the grep below drops the pinned line so pip
 # cannot undo it.
+#
+# The uv pin has to be new enough to read uv.lock's `revision` field or this
+# layer dies with "Failed to parse `uv.lock`". Keep it in step with
+# Dockerfile.cpu, where the failure and the current floor are written up.
 COPY python/pyproject.toml python/uv.lock /opt/falconage/python/
 RUN python -m pip install --no-cache-dir --upgrade pip \
  && python -m pip install --no-cache-dir \
       --index-url https://download.pytorch.org/whl/cu124 \
       torch==2.6.0+cu124 \
- && python -m pip install --no-cache-dir uv==0.5.18 \
+ && python -m pip install --no-cache-dir uv==0.8.17 \
  && cd /opt/falconage/python \
  && uv export --frozen --no-dev --no-emit-project \
       --extra methylation --extra plot --extra anndata --extra cli \

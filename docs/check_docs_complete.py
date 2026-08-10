@@ -212,6 +212,30 @@ def main() -> int:
                 f"{'declines' if says_no else 'reaches'} the device; the class "
                 f"says {'CPU_ONLY' if not says_no else 'it uses the spec'}.")
 
+    # 10 -- the architecture page's list of shipped workflows is the real one.
+    #
+    # Section 12.1 specifies nine workflows and four exist. That is fine and
+    # said so, in a note listing the four by name. What is not fine is the note
+    # going stale: a reader checking which CI actually runs would then be
+    # reading a second wrong list instead of the first. The specification table
+    # underneath is deliberately not checked; it is the design, and the note is
+    # what reconciles it.
+    # The note is a blockquote, so its table rows begin "> |" and the
+    # specification table's rows begin "|". That prefix is the whole
+    # discrimination, and it is why the two can share a section safely.
+    on_disk = {p.name for p in (ROOT / ".github" / "workflows").glob("*.y*ml")}
+    note = arch.split("### 12.1 Workflows")[1].split("### 12.2")[0]
+    claimed = set(re.findall(r"^> \| `([A-Za-z0-9_-]+\.ya?ml)` \|", note, re.M))
+    if not claimed:
+        problems.append(
+            "docs/architecture.qmd 12.1 has no note listing the workflows that "
+            "actually ship. The table under it is the design, and it specifies "
+            "more than exists.")
+    elif claimed != on_disk:
+        problems.append(
+            f"docs/architecture.qmd 12.1 says these workflows ship: "
+            f"{sorted(claimed)}; .github/workflows holds {sorted(on_disk)}.")
+
     if problems:
         print(f"{len(problems)} documentation defect(s):")
         for p in problems:
@@ -222,8 +246,9 @@ def main() -> int:
           f"every input, all {len(all_ids)} clocks are linked and routed, the "
           "architecture page is on this release, output is marked as output, the "
           "tier column is sized for a letter, the parity table claims no false "
-          "gap, and the GPU page's coverage table matches what the model classes "
-          "declare")
+          "gap, the GPU page's coverage table matches what the model classes "
+          f"declare, and the architecture page names the {len(on_disk)} "
+          "workflows that exist")
     return 0
 
 

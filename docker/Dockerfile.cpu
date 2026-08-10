@@ -96,8 +96,17 @@ WORKDIR /opt/falconage
 # then fail on the first corpus dataset. gpu is deliberately absent: the CUDA
 # image installs torch from PyTorch's own wheel index, and this one has no use
 # for 800 MB it will never call.
+#
+# WHY THE uv PIN MOVES WHEN THE LOCK IS REGENERATED. `uv.lock` carries a
+# `revision` field, and a uv older than the one that wrote it refuses the file
+# outright: "Failed to parse `uv.lock`", a TOML parse error, and a build that
+# dies at this layer. This pin was 0.5.18 and the lock is now revision 3, which
+# 0.5.18 cannot read, so neither image built. Nothing caught it, because no
+# workflow builds an image. If this fails after a `uv lock`, raise the pin to
+# the uv that produced the lock; 0.6.17 is the current floor and 0.6.17 through
+# 0.8.17 all export the identical 1,436 requirement lines.
 COPY python/pyproject.toml python/uv.lock /opt/falconage/python/
-RUN pip install --no-cache-dir uv==0.5.18 \
+RUN pip install --no-cache-dir uv==0.8.17 \
  && cd /opt/falconage/python \
  && uv export --frozen --no-dev --no-emit-project \
       --extra methylation --extra plot --extra anndata --extra cli \

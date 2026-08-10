@@ -168,6 +168,18 @@ jobs:
       - name: Prose reads as written, not as generated
         run: python docs/check_prose.py
 
+      # Neither image built for an unknown stretch. Both pinned uv==0.5.18
+      # while uv.lock moved to revision 3, which that uv refuses to parse, so
+      # the dependency layer died six minutes into a build whose command is the
+      # first instruction in README.md. Nothing noticed, because no workflow
+      # builds an image and the images on the maintainer's machine had been
+      # built when the lock was older.
+      #
+      # Building here to catch it would cost ten minutes a push. Comparing the
+      # pin against a measured floor costs a second and catches the same thing.
+      - name: The Docker images can read the lock they install from
+        run: python test/check_docker_lock.py
+
       # On every push, not only on a tag. The release workflow checks this too,
       # but a check that only runs at release time is a check that tells you
       # about the problem at the worst possible moment -- which is exactly what

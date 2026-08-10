@@ -2803,6 +2803,34 @@ the same explanation whichever site they land on.
 
 ### 12.1 Workflows
 
+> **v1.1 runs four workflows, not nine, and the difference is a decision rather than a backlog.**
+> The table below is the specification. What `.github/workflows/` actually holds:
+>
+> | Shipped | Covers | Specified rows it replaces |
+> |---|---|---|
+> | `python-test.yaml` | tests, lint, nine guards, the unpinned-resolution job | `python-test.yaml`, `registry-validate.yaml` |
+> | `R-CMD-check.yaml` | `R CMD check --as-cran` with the Python core, plus a no-Python job | `r-cmd-check.yaml`, `conformance.yaml` |
+> | `docs.yaml` | Quarto site with the embedded pkgdown tree, deployed to gh-pages | `docs.yaml` |
+> | `release.yaml` | one workflow, a `python` job and an `r` job, both behind the version guard | `release-pypi.yaml`, `release-r.yaml` |
+>
+> Registry validation and R/Python conformance are **jobs inside the two check workflows**, not
+> workflows of their own: they share a checkout and an install with the suite they belong to, and
+> splitting them would pay for that twice to gain a second badge saying the same thing.
+>
+> `docker.yaml` and `benchmark.yaml` do not exist. Nothing publishes an image to a registry;
+> `README.md` tells a user to build `docker/Dockerfile.cpu` locally, and the `falconage:1.1.0-cpu`
+> tag it names is the one that build produces. The nightly benchmark would commit timings from a
+> shared runner whose neighbours decide the numbers, which is a regression detector that cries
+> wolf; the measurements that exist were taken on known hardware and are in
+> [GPU support](gpu.md).
+>
+> The `python-test.yaml` row below is the one to disregard outright. There is no matrix and no
+> Codecov upload, and the workflow's own header explains at length why: the lock file pins one
+> resolution, `uv export --frozen` reproduces it, and on any other interpreter the pinned wheels
+> either do not exist or do not match, so a matrix job fails before reaching a test. Three red
+> badges where one would do teaches people to ignore the badge. Coverage was dropped after
+> printing sixty lines of site-packages paths that nobody read.
+
 | Workflow | Trigger | Does |
 |---|---|---|
 | `python-test.yaml` | push, PR | pytest on 3.10–3.13 × {ubuntu, macos, windows}; gold-standard vectors; property tests; coverage to Codecov |

@@ -1,14 +1,14 @@
 # GPU support: what was tested, on what, and what it is worth
 
-Verified on real hardware on 2026-08-08. The short version: the GPU path works,
-it is numerically sound, and for the clocks that ship today it is **slower than
-the CPU**, so `device="auto"` resolves to CPU and the GPU is opt-in.
+Verified on real hardware, re-measured in full on 2026-08-10. The short version:
+the GPU path works, it is numerically sound, and for the clocks that ship today
+it is **slower than the CPU**, so `device="auto"` resolves to CPU and the GPU is
+opt-in.
 
-Section 2 was added on 2026-08-10, after an audit found that three of the 23
-scoring clocks never reached the device at all and the manifest did not say so.
-The routing was fixed and checked against the torch CPU backend; no hardware
-measurement was repeated, so every timing on this page is still the 2026-08-08
-run.
+Every figure below comes from `falconage:1.1.0-cuda`, built from the shipping
+`docker/Dockerfile.cuda`. The 2026-08-08 run of this page reported the same
+shape on an earlier build; where a number moved, the current one is here and the
+old one is named next to it.
 
 ## The machine
 
@@ -16,7 +16,7 @@ run.
 |---|---|
 | GPU | NVIDIA GeForce RTX 4060 Laptop, 8 GB, compute capability sm_89 (Ada) |
 | Driver | 610.88, CUDA UMD 13.3 |
-| Container runtime | Docker 29.6.1, GPU passthrough working via `--gpus all` |
+| Container runtime | Docker 29.6.2, GPU passthrough working via `--gpus all` |
 | Second adapter | AMD Radeon 780M (integrated; not used - FALCONAge has no ROCm path) |
 
 ## What was already present, and what had to be installed
@@ -86,21 +86,21 @@ on its own; it was routed so that what the manifest records is what happened.
 
 ### What the manifest says now
 
-Per clock, not per run. This is a real mixed run: twenty methylation clocks and
-one clinical clock, combined, on the torch backend.
+Per clock, not per run. This is a real run on the card: twenty methylation
+clocks and one clinical clock, both scored with `device="cuda"` and combined.
 
 ::: {.falcon-output}
 ```
-device / backend : cpu / mixed
-compute_summary  : torch:cpu/float64 (20 clocks), numpy:cpu/float64 (1 clock)
-compute["METH:horvath2013"] : {device: cpu, dtype: float64, backend: torch}
-compute["CLIN:phenoage"]    : {device: cpu, dtype: float64, backend: numpy}
+device / backend : mixed / mixed
+device_requested : cuda
+compute_summary  : torch:cuda/float64 (20 clocks), numpy:cpu/float64 (1 clock)
+compute["METH:horvath2013"] : {device: cuda, dtype: float64, backend: torch}
+compute["CLIN:phenoage"]    : {device: cpu,  dtype: float64, backend: numpy}
 ```
 :::
 
-A CUDA run has the same shape with `cuda` in place of `cpu` on the torch rows.
-The backend split is what makes this one mixed, and it is the same split a card
-produces, which is why it can be checked without one.
+Before this, that run reported `device="cuda"` flat, for a manifest in which
+one of the twenty-one clocks had never touched the card.
 
 The three scalar fields are derived from `compute`: the shared value when every
 clock agreed, and `"mixed"` when they did not. Before this they were assigned
@@ -125,20 +125,27 @@ in the documentation.
 | clock | max abs difference | ulps |
 |---|---:|---:|
 | dnamphenoage | 9.9e-14 | 14 |
-| horvath2013 | 1.3e-13 | 9 |
-| lin | 6.4e-14 | 9 |
-| skinandblood | 5.7e-14 | 4 |
 | yingcausage | 8.5e-14 | 3 |
-| hannum | 2.8e-14 | 2 |
-| dnamtl | 1.8e-15 | 2 |
+| horvath2013 | 5.7e-14 | 4 |
+| hannum | 4.3e-14 | 3 |
+| lin | 4.3e-14 | 6 |
+| skinandblood | 4.3e-14 | 3 |
 | zhangen | 1.4e-14 | 1 |
+| dnamtl | 1.8e-15 | 2 |
 
-Worst case across eight clocks: **1.3e-13 years**, about four femtoseconds of
+Worst case across eight clocks: **9.9e-14 years**, about three femtoseconds of
 biological age.
 
 The cause is ordinary: numpy's BLAS and cuBLAS sum a dot product in different
 orders, and floating-point addition is not associative. It is not a defect and
 it is not fixable without giving up the vendor kernels.
+
+The per-clock figures moved between the two runs, worst case 1.3e-13 on
+2026-08-08 against 9.9e-14 now, horvath2013 the largest mover at 1.3e-13 to
+5.7e-14. No code changed for these eight, which are all `LinearClock`; the
+rebuilt image carries a different numpy and therefore a different BLAS, which
+sums in a different order again. Numbers that move when the linear algebra
+library moves are what this section is about, not an exception to it.
 
 **What this means for the conformance guarantee.** FALCONAge claims R and Python
 return the same bits. That claim is intact, both go through the same Python
@@ -155,24 +162,24 @@ the right way round.
 
 ## 4. Speed: the GPU makes the shipping clocks slower
 
-Eight clocks, 2,340 distinct features, RTX 4060, best of three runs, measured
-inside `falconage:1.1.0-cuda` - the image the command at the foot of this page
-builds. These are numbers you can reproduce, not numbers from a throwaway
-environment.
+Eight clocks, 2,340 distinct features, RTX 4060, best of three timings inside a
+run and the best of three runs, measured in `falconage:1.1.0-cuda` - the image
+the command at the foot of this page builds. These are numbers you can
+reproduce, not numbers from a throwaway environment.
 
 | samples | CPU float64 | CUDA float64 | CUDA float32 | verdict |
 |---:|---:|---:|---:|---|
-| 128 | **0.009 s** | 0.011 s | 0.013 s | CPU wins |
-| 1,024 | **0.032 s** | 0.053 s | 0.051 s | CPU wins by 1.6x |
-| 4,096 | **0.143 s** | 0.307 s | 0.190 s | CPU wins by 2.1x |
-| 16,384 | **0.506 s** | 2.328 s | 1.726 s | CPU wins by 4.6x |
+| 128 | **0.007 s** | 0.013 s | 0.011 s | CPU wins by 1.9x |
+| 1,024 | **0.026 s** | 0.048 s | 0.048 s | CPU wins by 1.8x |
+| 4,096 | **0.109 s** | 0.333 s | 0.216 s | CPU wins by 3.1x |
+| 16,384 | **0.445 s** | 3.275 s | 2.397 s | CPU wins by 7.4x |
 
 The gap *widens* with size, which is the opposite of the usual shape. Profiling
 says why:
 
 ```
 4096 samples x 2340 features, 8 clocks
-  feature alignment (pandas, CPU only)    0.134 s
+  feature alignment (pandas, CPU only)    0.132 s
   the dot products, on the GPU            0.010 s
   the dot products, on the CPU            0.005 s
 ```
@@ -183,10 +190,21 @@ Alignment is 28x the arithmetic it feeds, and at this size that arithmetic is
 over a few thousand features is simply too small a matrix multiplication to be
 worth a device.
 
-An earlier revision of this page reported 6.5x at 16,384 rather than 4.6x,
-measured in a stripped test image with a different numpy. Neither the shape of
-the answer nor the conclusion changed, but the figures above are what the
-shipping image gives, and that is the only version worth quoting.
+**Read the CUDA columns as a range, not a figure.** Three consecutive runs of
+the same script on the same idle machine gave 3.275, 3.482 and 3.664 s at
+16,384 samples, a 12% spread, while the CPU column moved by under 7% (0.445 to
+0.477). This is a laptop card that clocks down as it warms. Each column above
+is the best of the three, so the columns are not necessarily from one run;
+computed within a run instead, the CPU margin at 16,384 was 6.9x, 7.7x and
+7.8x. A desktop card with a power budget would be steadier and would still
+lose, because what it is losing to is the transfer.
+
+Two earlier revisions of this page reported 6.5x and then 4.6x at 16,384. The
+gap has widened again to 7.4x, and the reason is not that the GPU got worse:
+the CPU column improved from 0.506 s to 0.445 s on a rebuilt image with a newer
+numpy, while the CUDA column got slower on the same hardware. The shape of the
+answer has never changed across three measurements on two image builds, which
+is worth more than any one of the figures.
 
 So `device="auto"` resolves to **CPU**, even when a GPU is present. Picking CUDA
 because a card exists would make the common case several times slower on every
@@ -250,9 +268,16 @@ checked against numpy in the same file, on the CPU torch backend, so a runner
 with no card still verifies everything except the transfer:
 
 ```bash
-docker run --rm -e PYTHONPATH=/work/python/src -v "$PWD:/work" -w /work \
-  falconage:1.1.0-cuda python -m pytest python/tests/unit/test_device_contract.py -q
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
+  python -m pytest python/tests/unit/test_device_contract.py -q
 ```
+
+**If the build fails at the dependency layer**, the pinned uv is older than the
+`revision` field in `python/uv.lock` and refuses to parse it. That is what broke
+both images between the 2026-08-08 and 2026-08-10 runs of this page.
+`test/check_docker_lock.py` catches it in a second, and CI runs it, but the
+symptom is worth recognising: ``error: Failed to parse `uv.lock` ``, six
+minutes into a build.
 
 `--max-samples` caps the speed table for a card with less memory than the 8 GB
 this was measured on; `--skip-profile` drops the last step.
