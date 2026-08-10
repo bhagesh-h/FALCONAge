@@ -1,7 +1,0 @@
-# read_bedmethyl_dir { #falconage.read_bedmethyl_dir }
-
-```python
-read_bedmethyl_dir(paths, *, min_coverage=10, obs=None, **kw)
-```
-
-Several bedMethyl files as one matrix on their shared sites.

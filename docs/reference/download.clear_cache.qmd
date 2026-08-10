@@ -1,7 +1,0 @@
-# download.clear_cache { #falconage.download.clear_cache }
-
-```python
-download.clear_cache(cache_dir=None, *, confirm=False)
-```
-
-Delete the download cache. Returns the bytes freed.

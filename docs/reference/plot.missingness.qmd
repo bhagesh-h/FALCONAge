@@ -1,7 +1,0 @@
-# plot.missingness { #falconage.plot.missingness }
-
-```python
-plot.missingness(data)
-```
-
-Distribution of per-sample missingness.

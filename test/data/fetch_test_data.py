@@ -455,6 +455,70 @@ def cmd_verify(manifest: Manifest, entries: Sequence[Entry], out: Path) -> int:
     return 0 if not missing and not bad else 1
 
 
+def cmd_inventory(manifest: Manifest, out: Path, readme: Path, check: bool) -> int:
+    """Rewrite the file table in README.md from what is actually on disk.
+
+    The table was previously marked ``BEGIN GENERATED`` with nothing generating
+    it, which is worse than a hand-written table: a stale block that claims to
+    be current is trusted, and this one had drifted into reporting binary
+    megabytes under an SI label. Sizes here come from ``stat``, digests from
+    ``checksums.sha256``, and ``--check`` fails rather than writes so CI notices
+    the drift instead of a reader.
+    """
+    recorded = read_checksums(out)
+    if not recorded:
+        print(f"no checksums.sha256 in {out} -- fetch the corpus first", file=sys.stderr)
+        return 1
+
+    rows, total = [], 0
+    for path in sorted(recorded):
+        dest = out / path
+        if not dest.exists():
+            print(f"  MISSING  {path}", file=sys.stderr)
+            return 1
+        size = dest.stat().st_size
+        total += size
+        rows.append(f"| `{path}` | {human(size)} | `{recorded[path][:12]}` |")
+
+    # provenance.json is written by this script rather than fetched, so it has
+    # no publisher digest and is not in checksums.sha256. Listing it silently
+    # among the fetched files is what made the old count read 34.
+    prov = out / "provenance.json"
+    extra = (f"\n\nAlongside them, `provenance.json` ({human(prov.stat().st_size)}) is written by "
+             f"the fetcher rather than downloaded, so it carries no publisher digest and is not "
+             f"in `checksums.sha256`.") if prov.exists() else ""
+
+    block = (
+        f"\n{len(rows)} fetched files, {human(total)} on disk, against the "
+        f"{human(manifest.expected_total_bytes)} the manifest declares.\n"
+        f"Digests are the first 12 characters of the SHA-256 in `checksums.sha256`; "
+        f"`verify` checks the full value.\n\n"
+        "| File | Size | SHA-256 |\n|---|---:|---|\n"
+        + "\n".join(rows) + extra + "\n"
+    )
+
+    text = readme.read_text(encoding="utf-8")
+    start = "<!-- BEGIN GENERATED: inventory -->"
+    end = "<!-- END GENERATED: inventory -->"
+    if start not in text or end not in text:
+        print(f"no inventory markers in {readme}", file=sys.stderr)
+        return 1
+    head, rest = text.split(start, 1)
+    _, tail = rest.split(end, 1)
+    new = f"{head}{start}\n{block}\n{end}{tail}"
+
+    if check:
+        if new != text:
+            print(f"{readme} inventory is stale; run without --check to rewrite")
+            return 1
+        print(f"{readme} inventory is current: {len(rows)} files, {human(total)}")
+        return 0
+
+    readme.write_text(new, encoding="utf-8", newline="\n")
+    print(f"rewrote the inventory in {readme}: {len(rows)} files, {human(total)}")
+    return 0
+
+
 def cmd_self_test(manifest: Manifest) -> int:
     """Check the manifest against itself. No network, no disk."""
     problems: list[str] = []
@@ -526,6 +590,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="show the plan and stop")
     ap.add_argument("--verify", action="store_true", help="re-check files already on disk")
     ap.add_argument("--self-test", action="store_true", help="check the manifest, touch nothing")
+    ap.add_argument("--inventory", action="store_true",
+                    help="rewrite the file table in README.md from what is on disk")
+    ap.add_argument("--check", action="store_true",
+                    help="with --inventory: fail if the table is stale instead of rewriting it")
     ap.add_argument("--force", action="store_true", help="refetch files that are already present")
     ap.add_argument("--quiet", action="store_true", help="no per-file progress")
     ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -538,6 +606,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.self_test:
         return cmd_self_test(manifest)
+
+    if args.inventory:
+        return cmd_inventory(manifest, args.out.resolve(),
+                             args.manifest.parent / "README.md", args.check)
 
     entries = select(manifest, args.groups)
     if not entries:

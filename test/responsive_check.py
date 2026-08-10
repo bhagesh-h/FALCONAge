@@ -160,6 +160,20 @@ CHROME = """
                 (e.complete && e.naturalWidth > 0 ? '' : ' BROKEN'))
       .join(', ') || 'none',
     brandTitles: count('.navbar-title, .sidebar-title'),
+    // Is the site's own name being cut off?
+    //
+    // This check reported clean at 320px while the navbar read "FALCO...".
+    // Neither an overflow test nor an overlap test can see it: the clipped
+    // element is inside its parent and touching nothing. Quarto puts
+    // `overflow:hidden; text-overflow:ellipsis` on `.navbar-brand`, so the
+    // failure is silent by construction and the only evidence is
+    // scrollWidth > clientWidth on the element doing the clipping.
+    clippedBrand: [...document.querySelectorAll('.navbar-brand, .navbar-title, .sidebar-title')]
+      .filter(vis)
+      .filter(e => e.scrollWidth > e.clientWidth + 1 && e.clientWidth > 0)
+      .map(e => (e.className || 'brand').toString().split(' ')[0] +
+                ' needs ' + e.scrollWidth + 'px, has ' + e.clientWidth + 'px')
+      .join('; '),
   };
 }
 """
@@ -209,7 +223,7 @@ def main(argv=None) -> int:
         browser = p.chromium.launch()
         for width in WIDTHS:
             page = browser.new_page(viewport={"width": width, "height": 820})
-            n_over = n_lap = 0
+            n_over = n_lap = n_img = 0
 
             for rel in PAGES:
                 f = site / rel
@@ -226,6 +240,25 @@ def main(argv=None) -> int:
                     for it in o["items"][:3]:
                         failures.append(f"      +{it['over']}px {it['what']} "
                                         f"{it['text']!r}")
+
+                # Every image the page asks for has to have arrived.
+                #
+                # The gallery PNGs are tracked once, under
+                # test/output_figures/gallery/, and staged into docs/figures/
+                # by docs/build_gallery.py before the render -- the staged copy
+                # is deliberately not in git, so if that step is skipped or
+                # renamed the site publishes with 26 empty boxes and nothing
+                # else here would notice. A browser knows: naturalWidth is 0
+                # for an <img> that failed to load.
+                broken = page.evaluate("""() => [...document.images]
+                    .filter(i => i.complete && i.naturalWidth === 0)
+                    .map(i => i.getAttribute('src'))""")
+                if broken:
+                    n_img += 1
+                    failures.append(f"{rel} @{width}px has {len(broken)} image(s) "
+                                    f"that did not load")
+                    for src in broken[:3]:
+                        failures.append(f"      {src}")
 
                 laps = page.evaluate(OVERLAP)
                 if laps:
@@ -282,6 +315,12 @@ def main(argv=None) -> int:
                 if c["brandTitles"] > 1:
                     failures.append(f"@{width}px ({state}): "
                                     f"{c['brandTitles']} site titles visible")
+                if c["clippedBrand"]:
+                    failures.append(
+                        f"@{width}px ({state}): the site name is being cut off "
+                        f"({c['clippedBrand']}). Shrink the wordmark at this "
+                        "width rather than letting it ellipsise -- a truncated "
+                        "name is not a name.")
 
             if not s.get("present"):
                 failures.append(f"@{width}px: no #quarto-sidebar in the page")
@@ -301,7 +340,8 @@ def main(argv=None) -> int:
                      else "hidden" if not s.get("visible") else "PAINTED")
             print(f"@{width:>5}px  sidebar {state:<7} logo {opened['logoWhich']:<22} "
                   f"search {opened['searchVisible']}  menus {opened['toggles']}  "
-                  f"overflow {n_over}/{len(PAGES)}  overlap {n_lap}/{len(PAGES)}")
+                  f"overflow {n_over}/{len(PAGES)}  overlap {n_lap}/{len(PAGES)}  "
+                  f"broken-img {n_img}/{len(PAGES)}")
             page.close()
         browser.close()
 
@@ -312,9 +352,9 @@ def main(argv=None) -> int:
         return 1
 
     print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths -- no sideways "
-          "scroll, no overlapping text, one search box, one menu, one title, "
-          "and the sidebar is hidden below 992px rather than duplicating the "
-          "navbar")
+          "scroll, no overlapping text, no unloaded image, the site name not "
+          "cut off, one search box, one menu, one title, and the sidebar "
+          "hidden below 992px rather than duplicating the navbar")
     return 0
 
 

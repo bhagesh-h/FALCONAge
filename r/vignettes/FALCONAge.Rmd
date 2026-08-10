@@ -18,11 +18,28 @@ that agree approximately.
 
 ## Setup, once
 
-FALCONAge is not on CRAN yet, so both halves install from GitHub. The R package is in the `r/`
-subdirectory of the repository, hence `subdir`:
+Docker is the supported path. One image carries R, this package, the Python core, the CLI and all
+20 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
+on a reviewer's. A plain `sh` fence, since this runs in a terminal rather than in R:
 
-A plain fence rather than an R chunk, so `remotes` and `pak` do not become declared dependencies
-of a package that only mentions them:
+```sh
+git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
+docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
+
+# an R session with FALCONAge already installed
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu R
+
+# or prove the install by running the R suite
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
+  Rscript -e 'testthat::test_local("r")'
+```
+
+On Windows PowerShell write `"${PWD}"` in place of `"$PWD"`.
+
+If you would rather install into your own R library, FALCONAge is not on CRAN yet, so both halves
+install from GitHub. The R package is in the `r/` subdirectory, hence `subdir`. Again a plain
+fence, so `remotes` and `pak` do not become declared dependencies of a package that only mentions
+them:
 
 ```r
 remotes::install_github("bhagesh-h/FALCONAge", subdir = "r")
@@ -39,24 +56,16 @@ falconage_config()    # what resolved: versions, devices, registry size
 `falconage_install()` fetches the Python core from the same GitHub tag this package was built
 from, so the two halves cannot drift - which matters here more than usual, because the test suite
 asserts that R and Python return the same bits, and a mismatched pair fails that assertion in a
-way that reads as a numerical bug rather than as version skew.
+way that reads as a numerical bug rather than as version skew. Inside the Docker image the
+environment is already built, so `falconage_install()` is not needed there.
 
-Prefer a container? One image carries both languages, the CLI and everything needed to run the
-full benchmark corpus:
-
-```sh
-git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
-  Rscript -e 'testthat::test_local("r")'
-```
-
-`falconage_config()` is the first thing to run when anything looks wrong. It reports the
-interpreter, the registry version, and how many clocks are usable:
+Every code chunk below is identical in both, and `falconage_config()` is the first thing to run
+when anything looks wrong. It reports the interpreter, the registry version, and how many clocks
+are usable:
 
 ```
-FALCONAge 1.0.0
-  registry     1.0.0 (161 clocks)
+FALCONAge 1.1.0
+  registry     1.1.0 (161 clocks)
   tiers        A 23 ship - B 110 need a traced source - C 28 scaffold only
   devices      cpu
 ```

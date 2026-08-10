@@ -1,7 +1,0 @@
-# plot.study_comparison { #falconage.plot.study_comparison }
-
-```python
-plot.study_comparison(result, clock, *, dataset_col='dataset')
-```
-
-Score distribution split by study.

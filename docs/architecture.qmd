@@ -18,25 +18,41 @@ rather than restating it.
 
 ## What of this exists
 
-It was written before the code and is deliberately wider than v1.0. Reading it as a description
-of the shipped package would be a mistake in several places, so here is the reconciliation, and
-every section below whose specification outruns the code says so at its head.
+::: {.callout-important title="Read this before believing any section below"}
+This document was written **before** the code and is deliberately wider than what ships. Every
+section whose specification outruns the implementation says so at its head. The table here is the
+reconciliation, and it is checked against the running package rather than remembered — the counts
+below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own `Modality` type.
+:::
 
-| Area | v1.0 | Specified, not built |
+**Current as of v1.1.0.**
+
+| Area | Shipped in v1.1.0 | Specified, not built |
 |---|---|---|
-| Clock catalogue | 161 entries; 23 tier A score today, 28 tier C ship as tested scaffolds | The 110 tier B entries carry metadata but no traced coefficients |
-| Modalities | DNA methylation, clinical chemistry | Transcriptomics (§6), proteomics, single-cell, spatial |
-| Model classes | `LinearClock`, `ClinicalClock`, `ScaffoldClock` | `PCLinearClock`, `MultiStageCoxClock`, `NeuralClock`, `AggregationClock`, `DeconvolutionClock`, `CompositeClock` |
+| Clock catalogue | 161 entries. **23 tier A score offline**: 20 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 28 tier C are tested scaffolds | The 110 tier B entries carry metadata but no traced coefficients |
+| Modalities | DNA methylation, clinical chemistry, RRBS, **nanopore**, **transcriptomics**, **proteomics** | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
+| Inputs | Beta matrix, GEO series matrix, **raw IDATs**, RRBS, **bedMethyl**, **targeted panels**, **Olink NPX**, **SomaScan RFU**, **bulk counts**, clinical tables, ComputAgeBench | — |
+| Normalisation | **pOOBAH, noob, BMIQ, probe masks** (§21 of the science page) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
+| Model classes | `LinearClock`, `ClinicalClock`, `ScaffoldClock`, **`PCLinearClock`**, **`AggregationClock`**, **`NeuralClock`**, **`ScAgeReference`** | `MultiStageCoxClock`, `DeconvolutionClock`, `CompositeClock` |
 | Preprocess ops | 7: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binarize`, `simplex_projection` | The other eight in §4.1 |
-| Postprocess ops | 9: `add`, `multiply`, `divide_by`, `clip`, `exp`, `expit`, `log_linear`, `anti_log_linear`, `cox_to_years` | The rest of §4.2 |
-| Download | GEO series and sample, ArrayExpress, SRA/ENA, Zenodo by DOI, Hugging Face | Figshare, PRIDE, MetaboLights, GDC |
+| Postprocess ops | **21**, plus **24 analytic derivatives** for uncertainty propagation and 4 ops explicitly marked non-differentiable | — |
+| Uncertainty | **Technical SE, conformal prediction intervals, per-probe ICC table, power, consensus** | Conformalised quantile regression (split conformal ships instead) |
+| Batch | **Frozen-reference ComBat** — adding a plate cannot move an earlier one | — |
+| Download | GEO series and sample, ArrayExpress, SRA/ENA, Zenodo by DOI, Hugging Face, **Figshare, PRIDE, MetaboLights, GDC** | Credentialed archives (Synapse, EGA, dbGaP, UK Biobank): documented, deliberately not automated |
 | Registry storage | One `clocks.yaml` inside the package, loaded into frozen dataclasses | The per-clock file tree and pydantic schema of §3 |
 | Devices | CPU (numpy) and CUDA (torch), fp64 default | MPS is resolved and refused rather than supported |
-| R interface | Full: S3 classes, ggplot2 figures, bit-identical to Python | - |
+| R interface | S3 classes, ggplot2 figures, bit-identical to Python, **including the v1.1 uncertainty and batch verbs** | The raw-array chain and the model architectures are Python-only |
 
-None of the gaps are architectural. Each unbuilt model class has a tier C clock waiting on
-coefficients that are not redistributable, so building the class first would produce something
-untestable against a real answer - which is the one thing this project does not do.
+Two gaps are worth naming rather than leaving in a cell.
+
+**Tier B coefficient provenance** is not an engineering task. It is a per-clock literature hunt —
+find the paper, find the supplement, check the coefficient count against what circulates, record
+the discrepancy where they differ — and some of the 110 have no public supplement at all.
+`primary_source_traced: false` is the honest record of that debt.
+
+**The proteomic and transcriptomic chains ship without registry entries.** Every published model in
+both families is licence-restricted, so each would enter as a tier C scaffold. Scoring a proteomic
+matrix today refuses with "no clocks to score", which is accurate rather than broken.
 
 Contents
 
@@ -54,21 +70,26 @@ Contents
 12. [CI/CD and publishing](#cicd-and-publishing)
 13. [Build order](#build-order)
 14. [Open questions](#open-questions)
+15. [What v1.1 added, and where it sits](#what-v11-added-and-where-it-sits)
 
 ## 1. Scope, decisions and repository layout
 
-### 1.1 What v1.0 delivers
+### 1.1 What each release delivered
 
-| Capability | v1.0 | Later |
-|---|---|---|
-| DNA methylation clocks | 159 clocks: linear, PC, GrimAge family, mitotic, deconvolution, SystemsAge, AltumAge | - |
-| Clinical chemistry | PhenoAge (both unit variants), KDM, homeostatic dysregulation | - |
-| Clock coefficients | 38 redistributed, 95 fetched on first use, 28 scaffold-only (§3.7, §4.7) | tier B narrows as licences are reviewed |
-| Transcriptomics | - | v1.1: tAge (60 models), Pasta, REG, BiT age, RNAAgeCalc |
-| Proteomics | - | v1.2: organAging (24 organ panels), Oh 2023 organ clocks |
-| Single cell / spatial | - | v1.3: pseudobulk, CellBiAge binarisation, SpatialAgingClock, scImmuAging |
-| Foundation models | - | v1.4: CpGPT fine-tuned heads |
-| Download | GEO, ArrayExpress, SRA/ENA, Zenodo, Figshare, Hugging Face, GDC | v1.2 adds PRIDE, MetaboLights, Metabolomics Workbench |
+| Capability | v1.0 | v1.1 | Later |
+|---|---|---|---|
+| DNA methylation clocks | 158 catalogued: linear, PC, GrimAge family, mitotic, deconvolution, SystemsAge, AltumAge | unchanged | — |
+| Clinical chemistry | PhenoAge (both unit variants), KDM, homeostatic dysregulation | unchanged | — |
+| Clock coefficients | 20 bundled, 28 scaffold-only, 110 untraced (§3.7, §4.7) | unchanged | tier B narrows as sources are traced |
+| Raw arrays | IDAT intensities parsed only | **full chain: manifest fetch, pOOBAH, noob, BMIQ, probe masks** | control-probe dye correction |
+| Uncertainty | — | **technical SE, conformal intervals, power, consensus** | conformalised quantile regression |
+| Batch | — | **frozen-reference ComBat** | — |
+| Specimen and platform checks | species only | **specimen type, cell-free DNA refusal, platform bias in years** | — |
+| Transcriptomics | — | **the tAge chain ships; no registry entries** | tAge's 60 models, licence permitting |
+| Proteomics | — | **Olink and SomaScan readers ship; no registry entries** | organAging, Oh 2023 organ clocks |
+| Single cell | — | **scAge (per-cell likelihood)** | pseudobulk, CellBiAge, SpatialAgingClock |
+| Foundation models | — | `NeuralClock` architecture, safetensors only | CpGPT as an *imputation* backend, not a clock |
+| Download | GEO, ArrayExpress, SRA/ENA, Zenodo, Figshare, Hugging Face, GDC, PRIDE, MetaboLights | ComputAgeBench loader | Metabolomics Workbench |
 | Preprocess | IDAT → beta, series matrix, beta CSV/parquet, clinical chemistry | v1.1 adds RNA-seq chain, v1.2 adds Olink/SomaScan |
 | Compute | CPU and CUDA, FP64 default, FP32 opt-in | MPS validated, ROCm |
 | Interfaces | Python API, R API, CLI, Docker (CPU + CUDA) | - |
@@ -308,41 +329,68 @@ FALCONAge/
     └── registry-validate.yaml
 ```
 
-### 1.4 What v1.0 actually laid down
+### 1.4 What actually got laid down
 
 Flatter than the plan in three places, each for the same reason: a directory with one file in it
-is a directory you have to open to find out it has one file in it.
+is a directory you have to open to find out it has one file in it. Modules added in v1.1 are
+marked.
 
 ```
 python/src/falconage/
 ├── core/       backend.py config.py container.py errors.py
 │               logging.py manifest.py units.py
-├── io/         __init__.py methylation.py         # readers, platform detection
-├── preprocess/ __init__.py methylation.py         # prepare, qc, EPIC v2, units
-├── registry/   registry.py  data/clocks.yaml      # all 161 entries, one file
-├── models/     linear.py clinical.py ops.py       # LinearClock, ClinicalClock,
-│                                                  # ScaffoldClock, KDM/HD fits
-├── score/      __init__.py                        # score(), combine()
-├── analysis/   __init__.py                        # acceleration, cox, icc, benchmark
-├── plot/       __init__.py atlas.py spec.py colorscheme.yaml
+│               tissue.py preanalytical.py            # v1.1
+├── io/         __init__.py methylation.py            # readers, platform detection
+│               bench.py                              # v1.1 ComputAgeBench loader
+├── preprocess/ __init__.py methylation.py            # prepare, qc, EPIC v2, units
+│               manifest.py idat.py bmiq.py masks.py  # v1.1 raw-array chain
+│               batch.py                              # v1.1 frozen-reference ComBat
+│               proteomic.py transcriptomic.py        # v1.1 modality chains
+├── uncertainty/ __init__.py                          # v1.1 SE, conformal, ICC
+├── registry/   registry.py  data/clocks.yaml         # all 161 entries, one file
+│               data/probe_icc.csv.gz                 # v1.1 reliability table
+│               data/platform_bias.csv conformal.csv  # v1.1 derived artefacts
+│               data/evidence.yaml                    # v1.1 curated associations
+├── models/     linear.py clinical.py ops.py pc.py
+│               aggregation.py neural.py single_cell.py   # v1.1
+├── score/      __init__.py                           # score(), combine()
+├── analysis/   __init__.py                           # acceleration, cox, icc,
+│                                                     # benchmark, power, consensus
+├── plot/       __init__.py                           # public surface + save_all
+│               _common.py spec.py colorscheme.yaml   # canvas, theme, captions
+│               accuracy.py acceleration.py agreement.py
+│               qc.py benchmark.py outcomes.py atlas.py
+│               uncertainty.py                        # v1.1
 ├── report/     html.py
-└── cli/        app.py __main__.py
+└── cli/        app.py __main__.py                    # + report/power/consensus verbs
 
+python/tools/   build_probe_icc.py build_platform_bias.py   # v1.1 derivations
+                build_conformal.py
 r/R/            FALCONAge-package.R zzz.R install.R bridge.R
                 data.R score.R analysis.R clocks.R download.R
-                plot.R atlas.R
+                plot.R atlas.R uncertainty.R          # v1.1
 docs/           _quarto.yml reference-groups.yml build_docs.py
-                build_downloads.py index.qmd clocks.qmd gpu.md guide/
-test/           run_all.py gpu_check.py data/ output/ output_figures/
+                build_downloads.py build_catalogue.py build_gallery.py
+                index.qmd clocks.qmd gallery.qmd gpu.md guide/
+test/           run_all.py gpu_check.py responsive_check.py
+                check_versions.py data/ output/ output_figures/
 ```
 
-The three collapses. `models/ops/{preprocess,postprocess,functional}.py` became one `ops.py`,
-because the shared kernels the third file was for are four functions. `plot/` stayed one module
-plus `atlas.py`, because the theme is data in `colorscheme.yaml` rather than code, and splitting
-twenty-two figures across eight files by subject makes the shared helpers a circular import
-waiting to happen. `registry/{schema,weights,vocabulary}.py` became `registry.py` plus the data
-file: the vocabulary is a frozenset, the schema is the dataclass, and weight resolution is one
-function because nothing is fetched at run time.
+Two collapses and one reversal. `models/ops/{preprocess,postprocess,functional}.py` became one
+`ops.py`, because the shared kernels the third file was for are four functions.
+`registry/{schema,weights,vocabulary}.py` became `registry.py` plus the data file: the vocabulary
+is a frozenset, the schema is the dataclass, and weight resolution is one function because nothing
+is fetched at run time.
+
+`plot/` went the other way, and the original reasoning was wrong. It was kept as one module plus
+`atlas.py` on the argument that splitting the figures by subject would make the shared helpers a
+circular import waiting to happen. It grew to 1,523 lines --- an implementation living in a package
+initialiser, which is the thing an initialiser should not be. The circularity worry was avoidable
+by naming the problem: the helpers are not shared *between* figure families, they are shared *by*
+them, so they belong in a `_common.py` that imports from nobody in the package. Each family module
+imports `_common`, `__init__` imports the families and re-exports, and the dependency graph is a
+tree. `save_all` stays in `__init__` because orchestrating the families is the one job that
+legitimately knows about all of them. No public name moved; `fa.plot.ba_vs_ca` is where it was.
 
 There is no top-level `registry/` directory and no `tests/vectors/` tree; the catalogue ships
 inside the package and the gold-standard vectors live beside the tests that assert on them.
@@ -496,7 +544,7 @@ dtype: float64
 batch_size: 1024
 verbose: inform
 cache_dir: ~/.cache/falconage
-registry_version: "1.0.0"        # pin to make a project reproducible
+registry_version: "1.1.0"        # pin to make a project reproducible
 hf_token: null
 max_download_gb: 50
 ```
@@ -690,7 +738,7 @@ known_discrepancies: []
 
 ### 3.3 The discrepancy field is load-bearing
 
-[the science notes §15.6](science.qmd) documents nine clocks where the published paper and the coefficient set in
+[The science, §15.2](science.qmd#where-the-paper-and-the-coefficients-disagree) documents the eleven clocks where the published paper and the coefficient set in
 circulation disagree. Every implementation in the field silently inherits one side of each
 disagreement. FALCONAge records both and warns at score time:
 
@@ -1518,8 +1566,11 @@ falconage download GSE40279 --dest data/ --what raw
 falconage download GSE40279 --dry-run              # sizes and file list only
 falconage download GSE40279 GSE42861 --n-jobs 8
 falconage download 10.5281/zenodo.18763485
-falconage probe GSE40279                           # what is in this series?
 ```
+
+As shipped, `--dry-run` is what answers "what is in this series?" --- it prints every URL and byte
+count and transfers nothing. The specification also had a separate `probe` verb for that; it was
+not built, because it would have been the same code behind a second name.
 
 ## 6. Preprocess module
 
@@ -1661,8 +1712,11 @@ already written the number down.
 falconage preprocess methylation data/GSE40279/ --out prepared.h5ad --pipeline noob_bmiq
 falconage preprocess methylation betas.csv --platform illumina_450k --out prepared.h5ad
 falconage preprocess clinical labs.csv --units units.yaml --out prepared.h5ad
-falconage qc prepared.h5ad --report qc.html
 ```
+
+The specification had a separate `qc` verb writing its own HTML. Not built: `preprocess` already
+prints the QC summary, and `report` embeds the full set of QC figures, so a third path to the same
+numbers was a third thing to keep in step.
 
 ## 7. Scoring, analysis, plots, report
 
@@ -1867,13 +1921,19 @@ report is a complete record.
 ```bash
 falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out results/
 falconage score prepared.h5ad --clocks compatible --device cuda --dtype float32
-falconage analyse results/ --cox --time time --status status
 falconage bench results/ --condition-col condition --control HC
 falconage report results/ --out report.html
-falconage clocks list --data-type dna_methylation --generation second
-falconage clocks info grimage2
-falconage clocks cite grimage2 --style bibtex
+falconage clocks --tier A --search mortality
+falconage power horvath2013 --effect 0.5 --sd 6
+falconage consensus results/ --group condition
 ```
+
+Two departures from the specification. `analyse --cox` was not built as a verb: survival and
+association are two functions with several arguments each, and a command line is a poor place to
+specify a model formula, so they stay in `score()`'s Python and R surfaces where the arguments can
+be named. And `clocks` took `list`/`info`/`cite` sub-verbs in the specification; as shipped it is
+one verb with flags, because the three did the same lookup and differed only in what they printed.
+`power` and `consensus` are new since the specification was written.
 
 ## 8. R package
 
@@ -1917,12 +1977,12 @@ package from silently driving a Python core it was never tested against.
 from a Python user carry comparable information:
 
 ```
-FALCONAge 1.0.0 (R)
-  python core   1.0.0  /home/x/.virtualenvs/r-falconage/bin/python
+FALCONAge 1.1.0 (R)
+  python core   1.1.0  /home/x/.virtualenvs/r-falconage/bin/python
   torch         2.6.0  CUDA 12.4
   device        cuda:0  NVIDIA RTX A4000, 16 GB
   dtype         float64
-  registry      1.0.0  (161 clocks)
+  registry      1.1.0  (161 clocks)
   cache         /home/x/.cache/falconage  (2.1 GB)
 ```
 
@@ -2056,66 +2116,65 @@ plot.falcon_qc
 
 ### 8.6 DESCRIPTION
 
+The file as it ships, not as it was specified --- the differences are noted below it:
+
 ```
 Package: FALCONAge
-Type: Package
 Title: Multiomic Biological Age and Aging Clock Scoring
-Version: 1.0.0
-Authors@R: c(
-    person(given = "Bhagesh", family = "Hunakunti",
-           email = "bhunakun@uni-bonn.de", role = c("aut", "cre", "cph"),
-           comment = c(ORCID = "0000-0002-5957-8005")))
-Description: Computes biological age and aging-clock scores from DNA
-    methylation and clinical-chemistry data using published clock definitions,
-    covering chronological-age predictors, mortality-trained second-generation
-    clocks, pace-of-aging measures, mitotic clocks and organ-system clocks.
-    Data can be retrieved from public repositories by accession, normalised from
-    raw intensity files, scored on CPU or GPU, and tested for association with
-    mortality and disease. Numerical work is performed by the 'falconage' Python
-    library through 'reticulate', so results are identical to the Python
-    interface. Methods implemented include Horvath (2013)
-    <doi:10.1186/gb-2013-14-10-r115>, Levine and others (2018)
-    <doi:10.18632/aging.101414>, Lu and others (2019)
-    <doi:10.18632/aging.101684>, Belsky and others (2022)
-    <doi:10.7554/eLife.73420> and Klemera and Doubal (2006)
-    <doi:10.1016/j.mad.2005.10.004>.
+Version: 1.1.0
+Authors@R:
+    person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5957-8005"))
+Description: Scores DNA methylation and clinical chemistry data against a
+    catalogue of 161 published aging clocks, and provides the downstream
+    statistics the field expects: age acceleration in its three conventions,
+    survival and association models, technical reliability, and the AA1/AA2
+    benchmark. Numerical work is delegated to the 'falconage' Python package
+    through 'reticulate', so results from R and from Python are the same bits
+    rather than two implementations that agree approximately. Twenty-three
+    clocks carry coefficients inside the package and run offline; twenty-eight
+    are implemented as scaffolds whose research-use-only coefficients the user
+    supplies.
 License: GPL (>= 3)
-Encoding: UTF-8
-URL: https://bhagesh-h.github.io/FALCONAge/, https://github.com/bhagesh-h/FALCONAge
+URL: https://github.com/bhagesh-h/FALCONAge,
+    https://bhagesh-h.github.io/FALCONAge/,
+    https://bhagesh-h.github.io/FALCONAge/r
 BugReports: https://github.com/bhagesh-h/FALCONAge/issues
 Depends:
     R (>= 4.1)
 Imports:
-    cli,
-    ggplot2 (>= 3.4.0),
-    jsonlite,
-    methods,
-    reticulate (>= 1.35),
-    rlang,
+    grDevices,
+    reticulate (>= 1.34),
     stats,
-    tools,
-    utils
+    utils,
+    yaml
 Suggests:
+    ggplot2,
     knitr,
     optparse,
     patchwork,
     rmarkdown,
-    survival,
-    testthat (>= 3.0.0),
-    withr
-biocViews: DNAMethylation, Epigenetics, Regression, Software,
-    BiomedicalInformatics, Preprocessing
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+biocViews: Epigenetics, DNAMethylation, DifferentialMethylation,
+    MethylationArray, Software
 Config/testthat/edition: 3
-Config/falconage/python-version: 1.0.0
+Encoding: UTF-8
+Language: en-GB
 Roxygen: list(markdown = TRUE)
-LazyData: false
-SystemRequirements: Python (>= 3.10) with the falconage package;
-    see falconage_install()
+RoxygenNote: 7.3.2
 ```
 
-`SystemRequirements` and the `Config/falconage/python-version` field are what a CRAN reviewer
-will look for. Every example and every test that needs the core is wrapped in
+Four departures from the specification, each deliberate:
+
+| Specified | Shipped | Why |
+|---|---|---|
+| `ggplot2`, `cli`, `rlang`, `jsonlite` in `Imports` | `ggplot2` in `Suggests`; the other three absent | Plotting returns a data frame and draws with base graphics, so `grDevices` is the hard dependency and `ggplot2` is optional. Four fewer required packages is four fewer ways for a CRAN check to fail on a machine we do not control. |
+| `Methods implemented include ... <doi:...>` in the description | Absent | CRAN wants DOIs for methods the package *implements in R*. Every method here is implemented in the Python core; the per-clock references live in the registry and come back from `cite()`, which is a truer place for them than a fixed list of five. |
+| `SystemRequirements: Python (>= 3.10) ...` | Absent | On reticulate ≥ 1.41 the environment is provisioned automatically on first use, so Python is not a system requirement the user must satisfy. Still to be added before a CRAN submission, since the field is also documentation. |
+| `Config/falconage/python-version` | Absent | The R package pins the Python core by git tag inside `falconage_install()`, so the field would be a second copy of a number that already exists in one place. |
+
+Every example and every test that needs the core is wrapped in
 `skip_if_not(falconage_available())`, so `R CMD check` passes on a machine with no Python.
 
 ### 8.7 Roxygen conventions
@@ -2282,9 +2341,9 @@ a build-time smoke test so a broken image fails at build instead of an hour into
 
 | Tag | Base | Contains |
 |---|---|---|
-| `falconage:1.0.0-cpu` | `python:3.12-slim-bookworm` | Python core, R, `FALCONAge`, CLI |
-| `falconage:1.0.0-cuda` | `nvidia/cuda:12.4.1-runtime-ubuntu22.04` | the same plus the CUDA torch build |
-| `falconage:1.0.0-slim` | `python:3.12-slim-bookworm` | Python core and CLI only, no R |
+| `falconage:1.1.0-cpu` | `python:3.12-slim-bookworm` | Python core, R, `FALCONAge`, CLI |
+| `falconage:1.1.0-cuda` | `nvidia/cuda:12.4.1-runtime-ubuntu22.04` | the same plus the CUDA torch build |
+| `falconage:1.1.0-slim` | `python:3.12-slim-bookworm` | Python core and CLI only, no R |
 
 ### 9.2 Dockerfile.cpu, annotated
 
@@ -2305,12 +2364,12 @@ a build-time smoke test so a broken image fails at build instead of an hour into
 #   anndata 0.11.3 . scikit-learn 1.6.1 . R 4.4.3 . reticulate 1.40.0
 #
 # BUILD, from the repository root:
-#   docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
+#   docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
 #
 # RUN. Nothing is baked in: no data, no cohort, no credentials.
 #   docker run --rm \
 #     -v "$PWD/data:/data:ro" -v "$PWD/results:/results" \
-#     falconage:1.0.0-cpu \
+#     falconage:1.1.0-cpu \
 #     score --input /data/prepared.h5ad --clocks compatible --outdir /results
 #
 #   On Windows PowerShell replace "$PWD" with "${PWD}".
@@ -2434,7 +2493,7 @@ exec falconage "$@"
 ```yaml
 services:
   falconage:
-    image: falconage:1.0.0-cpu
+    image: falconage:1.1.0-cpu
     volumes:
       - ./data:/data:ro
       - ./results:/results
@@ -2443,7 +2502,7 @@ services:
       OMP_NUM_THREADS: 8
 
   falconage-gpu:
-    image: falconage:1.0.0-cuda
+    image: falconage:1.1.0-cuda
     deploy:
       resources:
         reservations:
@@ -2511,7 +2570,7 @@ it goes to `registry/diffs/` rather than to `tests/vectors/`.
 
 A separate, non-blocking job compares FALCONAge against pyaging, biolearn, computage,
 methylCIPHER and BioAge on shared clocks, and writes a table of agreements and disagreements to
-`docs/comparison.md`. Disagreements are published rather than hidden - [the science notes §15.6](science.qmd) shows
+`docs/comparison.md`. Disagreements are published rather than hidden - [the science notes §15.2](science.qmd#where-the-paper-and-the-coefficients-disagree) shows
 the field already carries several, and a user comparing a FALCONAge number to a pyaging number
 deserves to know which ones differ and why.
 

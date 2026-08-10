@@ -54,8 +54,8 @@ specimen-type enforcement.
   measurement that produced the `age_years_relative` scale below.
 
 - **Specimen-type enforcement.** Saliva clock ages ran 3.83–16.46 years above buffy coat in the
-  same 91 people while the two matrices still correlated at r = 0.88–0.92 (bioRxiv
-  2025.09.16.673560) — so a correlation check on the input passes and the output is a decade out.
+  same 91 people while still correlating with them at Spearman 0.45–0.69 (bioRxiv
+  2025.09.16.673560) — so a correlation check passes and the output is a decade out.
   `obs["tissue"]` is now compared against each clock's declared training tissue. Twelve clocks
   whose tissue has no counterpart elsewhere — three placenta clocks, cord blood, neonatal blood
   spots, buccal, three brain-cortex clocks — carry `tissue_policy: refuse`. Cell-free DNA is
@@ -135,6 +135,29 @@ specimen-type enforcement.
 
 - **`falconage report`** — read, QC, score, quantify, interpret and write one HTML file with 31
   figures, no Python written. Plus `falconage power` and `falconage consensus`.
+
+- **A Claude skill, at `.claude/skills/falconage/`.** Four markdown files: the Docker workflow,
+  the clock catalogue routed by the question each clock answers, and every refusal with the
+  measurement behind it. Active for anyone working in a clone; copy the folder to
+  `~/.claude/skills/` to have it everywhere. It ships in the repository rather than beside it
+  because it documents the same refusals the code enforces, and the two have to version together.
+
+  `docs/check_api_docs.py` now covers it, and covers CLI verbs as well as `fa.*` names. A wrong
+  name in prose misleads a reader who then checks; a wrong name in a skill becomes a command. It
+  immediately found five readers written as top-level that live under `fa.preprocess`, and an
+  invented `falconage probe` verb — which had been copied from a specification section of the
+  architecture page describing a verb that was never built. Extending the check to CLI verbs then
+  found two more of those, `qc` and `analyse`; all three are now marked as specified-not-shipped
+  with the reason.
+
+- **`docs/check_docs_complete.py`**, which asserts the documentation describes the release that
+  ships. Seven defects were reported at once against v1.1.0 — the landing page named none of the
+  new inputs, the catalogue linked no papers, the architecture page still called itself v1.0,
+  output was pasted into copyable command fences, the routing table did not cover every clock, the
+  availability column spent half the page width on one letter, and the parity table claimed Python
+  lacked functions it had. Three of those pages are machine-generated, so a generator change can
+  undo a hand fix without anyone editing the page. Each is now a property checked against the
+  running package, and each was negative-tested by reintroducing the defect.
 
 ## Changed
 

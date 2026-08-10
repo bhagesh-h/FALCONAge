@@ -85,7 +85,11 @@ def test_a_pan_tissue_clock_has_nothing_to_check():
 def test_buffy_coat_on_a_whole_blood_clock_is_a_family_note_with_the_number():
     r = T.compare("buffy coat", ("whole blood",))
     assert r["verdict"] == "family"
-    assert "0.97" in r["message"], "the note should carry the measured agreement"
+    # The figures the note quotes must be ones the cited paper actually reports.
+    # It previously quoted a matrix-level r = 0.97 that is nowhere in that
+    # preprint; these two are from its results.
+    assert "0.66-0.87" in r["message"], "the note should carry the measured agreement"
+    assert "-0.06 to 0.39 years" in r["message"], "and the size of the difference"
 
 
 def test_saliva_on_a_blood_clock_is_a_mismatch_carrying_the_measured_error():

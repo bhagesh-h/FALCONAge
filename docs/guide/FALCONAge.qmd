@@ -3,16 +3,69 @@ title: "Getting started"
 subtitle: "Install, score, interpret - in both languages"
 ---
 
-FALCONAge scores DNA methylation and clinical chemistry against a catalogue of 161 published aging
-clocks. The numerical work happens in one Python core; the R package calls it through reticulate,
-so an R result and a Python result are the same bits rather than two implementations that agree
-approximately.
+FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data against a
+catalogue of 161 published aging clocks. The numerical work happens in one Python core; the R
+package calls it through reticulate, so an R result and a Python result are the same bits rather
+than two implementations that agree approximately.
+
+::: {.callout-tip title="How to read this page"}
+Blocks with a **copy button** are things to run. Blocks tagged **Output** are what you should see
+back — reading them is the point, and pasting one into a terminal will only produce an error.
+
+```bash
+this is a command: copy it
+```
+
+::: {.falcon-output}
+```
+this is what it printed
+```
+:::
+:::
 
 ## Setup, once
 
-::: {.panel-tabset}
+**Docker is the supported path**, and it is the one the rest of this page assumes. One image
+carries Python, R, the CLI and all 20 bundled clocks at pinned versions, so the same input gives
+the same numbers on your machine and on a reviewer's. Nothing else to install.
 
-### Python
+```bash
+git clone https://github.com/bhagesh-h/FALCONAge.git
+cd FALCONAge
+docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
+```
+
+Then either open a session in the image —
+
+```bash
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu python
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu R
+```
+
+— or run a single command without opening one:
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
+  falconage report betas.csv --outdir results/
+```
+
+If you have never used a terminal, start at
+[the step-by-step walkthrough](#docker) below instead; it assumes nothing and covers fetching real
+public data.
+
+::: {.callout-note title="Which shell you are typing into"}
+`"$PWD"` means "the folder I am in now", and the spelling differs:
+
+| Where you are typing | Use |
+|---|---|
+| macOS Terminal, Linux, Git Bash, WSL | `"$PWD"` |
+| Windows PowerShell | `"${PWD}"` |
+| Windows `cmd.exe` | `"%cd%"` |
+
+Everything else is identical. A path error on Windows is almost always this.
+:::
+
+::: {.callout-tip collapse="true" title="Native install, if you manage your own environment"}
 
 ```bash
 pip install "falconage @ git+https://github.com/bhagesh-h/FALCONAge.git#subdirectory=python"
@@ -23,29 +76,39 @@ import falconage as fa
 fa.config()
 ```
 
-### R
-
 ```r
 remotes::install_github("bhagesh-h/FALCONAge", subdir = "r")
 
 library(FALCONAge)
-falconage_install()   # creates a managed Python environment; a few minutes
+falconage_install()   # builds the Python environment R calls into; a few minutes
 falconage_config()    # what resolved: versions, devices, registry size
 ```
 
+The R package delegates every number to the Python core, so it needs a Python environment either
+way. On reticulate ≥ 1.41 an ephemeral one is built on first use and `falconage_install()` is
+optional — use it when you want a pinned, reproducible one.
+
+Every code example on this page runs unchanged in a native install; only the `docker run` prefix
+goes away.
 :::
 
 `falconage_config()` is the first thing to run when anything looks wrong. It reports the
 interpreter, the registry version, and how many clocks are usable:
 
+::: {.falcon-output}
 ```
-FALCONAge 1.0.0
-  registry     1.0.0 (161 clocks)
+FALCONAge 1.1.0
+  registry     1.1.0 (161 clocks)
   tiers        A 23 ship - B 110 need a traced source - C 28 scaffold only
   devices      cpu
 ```
+:::
 
 ## Scoring
+
+Every Python and R snippet from here on runs unchanged in three places: inside the Docker image
+(`docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu python`, or `... R`), in a
+native install, or in the CLI-free path below. Only the way you open the session differs.
 
 ::: {.panel-tabset}
 
@@ -81,6 +144,82 @@ manifest(res)                       # versions, device, and every coefficient ch
 a reason. Naming clocks explicitly is different: then every one must work, because an explicit
 request should never be dropped quietly.
 
+## Starting from raw IDATs
+
+New in v1.1. Before this you had to normalise in sesame or minfi and bring a beta matrix back.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+d = fa.read_idat_dir("idats/")        # every Grn/Red pair in the folder
+res = fa.score(fa.prepare(d), clocks="compatible")
+```
+
+### R
+
+```r
+# The raw-array chain is Python-only for now; call it through reticulate.
+fa <- reticulate::import("falconage")
+d  <- fa$read_idat_dir("idats/")
+```
+
+:::
+
+The chain runs detection first (pOOBAH), then background correction (noob), because pOOBAH's null
+*is* the uncorrected out-of-band signal. Undetected probes become `NA` rather than a number. The
+array manifest is downloaded from Illumina's public bucket the first time and cached — the one
+step in FALCONAge that needs a network.
+
+::: {.falcon-output}
+```
+FalconData(2 samples x 865918 features, dna_methylation, EPICv1, 2.0% missing)
+```
+:::
+
+## How much of a score is the assay
+
+Also new in v1.1, and the reason the rest of this page is worth running. Technical replicates of
+the *same DNA* differ by up to nine years on prominent clocks, so a bare number does not say
+whether a difference between two samples is real.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+se = fa.technical_se(res, d)
+se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
+
+fa.conformal_interval(res, level=0.90)     # the other, larger uncertainty
+fa.power("horvath2013", effect=0.5, result=res)   # how many samples you need
+```
+
+### R
+
+```r
+u <- technical_se(res, d)
+u$diagnostics
+
+conformal_interval(res, level = 0.90)
+power_n("horvath2013", effect = 0.5, result = res)
+```
+
+:::
+
+::: {.falcon-output}
+```
+              method  n_features  median_se  se_over_sd  implied_cohort_icc
+horvath2013    probe         353       1.58        0.14                0.98
+hannum         probe          71       2.46        0.22                0.95
+dunedinpoam38  probe          46       0.04        0.53                0.72
+```
+:::
+
+Two samples whose intervals overlap are not distinguishable by that clock on that assay, however
+different their point estimates look.
+
 ## Before you score: what this array costs each clock
 
 Worth running once on an array you have not used before. It reports, per clock, how many features
@@ -93,8 +232,6 @@ second is the one that catches EPIC v2 probe loss:
 
 ```python
 fa.probe_loss(d, clocks="scoreable")
-#>                 tier  n_features  n_present  coverage  mass_coverage  heaviest_absent
-#> horvath2013        A         353        340    0.9632         0.6117  cg16867657 (14.1%), ...
 ```
 
 ### R
@@ -104,6 +241,18 @@ probe_loss(d, clocks = "scoreable")
 ```
 
 :::
+
+::: {.falcon-output}
+```
+                tier  n_features  n_present  coverage  mass_coverage  bias_years  heaviest_absent
+horvath2013        A         353        340    0.9632         0.6117         NaN  cg16867657 (14.1%), ...
+hannum             A          71         64    0.9014         0.8830       -7.69  cg22454769 (3.1%), ...
+```
+:::
+
+`bias_years` is filled in when the platform is one the shift has been measured on — see
+[what probe loss costs](../science.qmd#probe-loss-priced). `NaN` there means *not measured*, never
+*no bias*.
 
 A clock at 96% feature coverage and 61% weight coverage has kept nearly all its probes and lost
 the ones that matter. The scoring floor applies to both measures, so this run would be refused
@@ -206,12 +355,14 @@ the error this is designed to make visible.
 
 Ask for acceleration on a pace-of-aging clock and it refuses:
 
+::: {.falcon-output}
 ```
 Error: 'acceleration' is not defined for dunedinpoam38, whose output is
   pace_ratio (biological years per chronological year).
   A pace of aging is already a rate; subtracting chronological age from it is
   a units error, not a conservative choice.
 ```
+:::
 
 That refusal is the point. A wrong number in a column of numbers is invisible.
 
@@ -367,12 +518,38 @@ report(res, "report.html", group = "condition")
 The HTML report is one self-contained file - inlined CSS, base64 figures, the table embedded - so
 it still works after somebody emails it, which is the only thing anybody does with a report.
 
+## Driving it from Claude {#claude-skill}
 
-## Everything above, with nothing installed but Docker {#docker}
+The repository ships a [Claude](https://claude.com/claude-code) skill at
+`.claude/skills/falconage/`. It is four markdown files: the workflow above, the Docker command
+set, the clock catalogue routed by the question each clock answers, and every refusal with the
+measurement behind it.
 
-This section assumes no Python, no R, and no prior experience with either. Docker is the only
-thing you install. Every command below can be copied one at a time, in order, and each one says
-what it does and what you should see.
+It is active already for anyone working inside a clone. To have it available in any directory,
+copy it into your personal skills folder --- `cp -r .claude/skills/falconage ~/.claude/skills/`,
+or on Windows PowerShell
+`Copy-Item -Recurse .claude\skills\falconage $HOME\.claude\skills\`.
+
+Then ask in plain language. "Score these IDATs and tell me which clocks you refused and why" is
+enough; the skill supplies the rest.
+
+::: {.callout-note title="Why the skill is checked by CI, and checked harder than the prose"}
+`docs/check_api_docs.py` resolves every `fa.*` name and every `falconage <verb>` in the skill
+against the running package on each push, exactly as it does for these pages.
+
+The reason it matters more here is that these pages are read by a person, who notices when a
+function does not exist and goes looking. A skill is read by a model that then *runs* what it
+says. The first draft named five readers at top level that actually live under `fa.preprocess`,
+and invented a `falconage probe` verb outright --- copied, as it happens, from a specification
+section of the architecture page that described a verb never built. The check caught all six, and
+then caught two more invented verbs on that page.
+:::
+
+## The whole thing from zero, with only Docker installed {#docker}
+
+Everything above, in order, assuming no Python, no R, and no prior experience with either. Each
+command can be copied one at a time and each says what it does and what you should see. It ends
+with a scored public dataset and the figures.
 
 ### Step 0 --- get Docker and check it works
 
@@ -387,19 +564,8 @@ You should get a version string. If instead you get "command not found" or "cann
 Docker daemon", Docker is not installed or not running - fix that before going further, because
 nothing below will work.
 
-::: {.callout-note}
-## Which shell to type these into
-
-`"$PWD"` means "the folder I am in now". The spelling differs:
-
-| Where you are typing | Use |
-|---|---|
-| macOS Terminal, Linux, Git Bash, WSL | `"$PWD"` |
-| Windows PowerShell | `"${PWD}"` |
-| Windows `cmd.exe` | `"%cd%"` |
-
-Everything else is identical. If a command fails with a path error on Windows, this is why.
-:::
+If a later command fails with a path error, it is almost certainly the `"$PWD"` spelling for your
+shell --- see [the table above](#setup-once).
 
 ### Step 1 --- get the code
 
@@ -416,13 +582,13 @@ One image carries Python, R, the CLI and all 20 bundled clocks. It takes a few m
 time and is then cached.
 
 ```bash
-docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
+docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
 ```
 
 Check it:
 
 ```bash
-docker run --rm falconage:1.0.0-cpu python -c "import falconage; print(falconage.__version__)"
+docker run --rm falconage:1.1.0-cpu python -c "import falconage; print(falconage.__version__)"
 ```
 
 ### Step 3 --- see what the benchmark data is, before downloading it
@@ -432,14 +598,14 @@ fixture is the first thing you do when the package itself is broken, so it must 
 package.
 
 ```bash
-docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.0.0 .
+docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.1.0 .
 ```
 
 Now the dry run. **This transfers nothing.** It prints every group, file count and byte total so
 you can decide before committing to half a gigabyte:
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 plan
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 plan
 ```
 
 You should see:
@@ -461,8 +627,8 @@ selected          33    585.7 MB
 ### Step 4 --- download it, then prove it arrived intact
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 python
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 verify
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 python
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 verify
 ```
 
 The first fetches 33 files from GEO and Hugging Face into `test/data/` on your own disk - never
@@ -472,7 +638,7 @@ inside the image, so rebuilding never re-downloads. The second re-computes every
 Only smaller pieces, if 586 MB is too much:
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 \
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 \
   python test/data/fetch_test_data.py --groups clinical --out /data
 ```
 
@@ -483,7 +649,7 @@ Not decoration: the R fetcher writes a byte-identical `checksums.sha256`, so the
 are shown to agree on the input before any clock is scored.
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 R
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 R
 ```
 :::
 
@@ -494,7 +660,7 @@ docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 R
 #### Python, CPU
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
   python test/run_all.py
 ```
 
@@ -505,7 +671,7 @@ the numbers in that document are the numbers the code just produced and cannot d
 To check the install without the corpus, run the unit suite instead - seconds, no data needed:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
   python -m pytest python/tests -q
 ```
 
@@ -515,7 +681,7 @@ The same image. R calls the same Python core through reticulate, so these are th
 not a second implementation that agrees approximately.
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
   Rscript -e 'testthat::test_local("r")'
 ```
 
@@ -525,7 +691,7 @@ exactly zero.
 Scoring from R interactively:
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work falconage:1.0.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu R
 ```
 
 ```r
@@ -545,20 +711,20 @@ even inside this image.
 Build the CUDA image - larger, because it carries torch built against CUDA 12.4:
 
 ```bash
-docker build -f docker/Dockerfile.cuda -t falconage:1.0.0-cuda .
+docker build -f docker/Dockerfile.cuda -t falconage:1.1.0-cuda .
 ```
 
 Check the card is visible inside a container before anything else:
 
 ```bash
-docker run --rm --gpus all falconage:1.0.0-cuda nvidia-smi
+docker run --rm --gpus all falconage:1.1.0-cuda nvidia-smi
 ```
 
 No output or an error here means GPU passthrough is not set up, and every command below will
 fail. On Linux that is usually a missing `nvidia-container-toolkit`.
 
 ```bash
-docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.0.0-cuda \
+docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
   python test/gpu_check.py
 ```
 
@@ -571,7 +737,7 @@ raises rather than falling back, so a run that asked for a GPU cannot quietly be
 success:
 
 ```bash
-docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.0.0-cuda \
+docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
   score --input test/data/prepared.h5ad --device cuda --outdir results
 ```
 
@@ -587,7 +753,7 @@ docker run --rm \
   -v "$PWD/mydata:/data:ro" \
   -v "$PWD/results:/results" \
   -v falconage-cache:/opt/falconage/cache \
-  falconage:1.0.0-cpu \
+  falconage:1.1.0-cpu \
   score --input /data/betas.csv --clocks compatible --outdir /results
 ```
 

@@ -1,0 +1,74 @@
+# FALCONAge --- documentation build image
+#
+# Renders the Quarto site in docs/ and regenerates the Python API reference with
+# quartodoc. Deliberately NOT the full falconage:1.1.0-cpu image: that one carries
+# R, torch and the coefficient files, none of which the site needs, because no
+# .qmd on this site executes code. Every code block in the documentation is a
+# static listing whose output was captured by hand and pasted into a
+# `.falcon-output` div, so the renderer needs no kernel --- hence the `nojupyter`
+# tag, and hence a 230 MB image instead of a 4 GB one.
+#
+# BUILD
+#
+#   docker build -f docker/Dockerfile.docs -t falconage-quarto:nojupyter .
+#
+# RENDER THE WHOLE SITE  (writes docs/_site/)
+#
+#   docker run --rm -v "$PWD:/work" -w /work/docs falconage-quarto:nojupyter \
+#     quarto render
+#
+# RENDER ONE PAGE, which is what you want while editing
+#
+#   docker run --rm -v "$PWD:/work" -w /work/docs falconage-quarto:nojupyter \
+#     quarto render science.qmd
+#
+# REGENERATE THE PYTHON API REFERENCE  (writes docs/reference/*.qmd)
+#   Needs the package importable, so put it on PYTHONPATH; quartodoc reads
+#   signatures and docstrings by import, without running anything.
+#
+#   docker run --rm -v "$PWD:/work" -w /work/docs \
+#     -e PYTHONPATH=/work/python/src falconage-quarto:nojupyter \
+#     quartodoc build
+#
+# PREVIEW ON A PORT  (Quarto's live server; Ctrl-C to stop)
+#
+#   docker run --rm -it -p 4200:4200 -v "$PWD:/work" -w /work/docs \
+#     falconage-quarto:nojupyter \
+#     quarto preview --host 0.0.0.0 --port 4200 --no-browser
+#
+# On Windows PowerShell write "${PWD}" in place of "$PWD"; on cmd.exe, "%cd%".
+#
+# The rendered site is written into the mounted working tree, not into the
+# container, so docs/_site/ survives the run and `docs/_site/index.html` opens
+# straight from the host.
+
+FROM python:3.12-slim-bookworm
+
+# Pinned rather than "latest" on purpose. Quarto 2 is a Rust rewrite with
+# behavioural differences in filters and cross-references; an unpinned image
+# would re-render the site differently on a day nobody touched the content.
+ARG QUARTO=1.6.43
+
+# pandoc from apt rather than the one Quarto vendors: the docs are also
+# converted to a single markdown bundle and a PDF outside Quarto, and those use
+# pandoc directly. curl and ca-certificates are needed to fetch the .deb and are
+# not in the slim base.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl ca-certificates pandoc \
+ && curl -fsSL -o /tmp/q.deb \
+      "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO}/quarto-${QUARTO}-linux-amd64.deb" \
+ && dpkg -i /tmp/q.deb && rm /tmp/q.deb \
+ && rm -rf /var/lib/apt/lists/*
+
+# griffe<2 is a hard constraint, not caution. quartodoc 0.7-0.11 calls griffe
+# APIs that griffe 2.x removed, and the failure is a bare AttributeError deep in
+# the docstring parser rather than a version-conflict message.
+# pyyaml is for the repo's own generator scripts (build_catalogue.py,
+# build_docs.py, build_gallery.py), which run in this image too.
+RUN pip install --no-cache-dir quartodoc "griffe<2" pyyaml
+
+# Fail the build rather than at first render if either tool is broken.
+RUN quarto --version && python -c "import quartodoc, yaml"
+
+WORKDIR /work
+CMD ["quarto", "--help"]

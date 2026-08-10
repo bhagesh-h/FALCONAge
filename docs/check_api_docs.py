@@ -35,10 +35,18 @@ ROOT = HERE.parent
 
 # Prose files a reader copies from. Generated pages are included too: they are
 # generated from templates that can be just as wrong.
+#
+# `.claude/skills/` is in the list for a stronger reason than the rest. Those
+# files are read by a model that then *runs* what they say, so a name that does
+# not exist there does not confuse a reader into checking -- it becomes a
+# command. The first draft of that skill named five readers that live under
+# `fa.preprocess` as though they were top level, and invented a CLI verb
+# outright; this is what caught it.
 SOURCES = (
     [ROOT / "README.md", ROOT / "r" / "README.md"]
     + sorted((ROOT / "docs").rglob("*.qmd"))
     + sorted((ROOT / "docs").glob("*.md"))
+    + sorted((ROOT / ".claude" / "skills").rglob("*.md"))
 )
 
 # Things that look like `fa.x` in prose but are not API references.
@@ -102,6 +110,24 @@ def main() -> int:
                         f"{rel}:{line}: {func}({kw}={val!r}) is not accepted. "
                         f"One of: {', '.join(sorted(allowed))}.")
 
+    # CLI verbs, from the parser rather than from a list kept in step by hand.
+    # A documented verb that does not exist is worse than a wrong function name:
+    # it is a whole command that fails, and the skill files are read by
+    # something that runs them.
+    verbs = _cli_verbs()
+    if verbs:
+        for path in SOURCES:
+            if not path.exists():
+                continue
+            rel = path.relative_to(ROOT)
+            text = path.read_text(encoding="utf-8")
+            for m in re.finditer(r"(?m)^\s*(?:\$\s*)?falconage ([a-z][a-z-]*)", text):
+                if m.group(1) not in verbs:
+                    line = text[:m.start()].count("\n") + 1
+                    problems.append(
+                        f"{rel}:{line}: `falconage {m.group(1)}` is not a verb. "
+                        f"One of: {', '.join(sorted(verbs))}.")
+
     if problems:
         print(f"{len(problems)} documentation reference(s) do not match the API:")
         for p in problems:
@@ -109,8 +135,21 @@ def main() -> int:
         return 1
 
     print(f"every fa.* reference in {len(SOURCES)} document(s) resolves, "
-          "and every enumerated argument value is accepted")
+          f"every enumerated argument value is accepted, and every documented "
+          f"CLI verb is one of the {len(verbs)} the parser defines")
     return 0
+
+
+def _cli_verbs() -> set[str]:
+    """The subcommand names the CLI parser actually registers."""
+    try:
+        from falconage.cli.app import build_parser
+    except Exception:
+        return set()
+    for action in build_parser()._subparsers._group_actions:  # noqa: SLF001
+        if hasattr(action, "choices") and action.choices:
+            return set(action.choices)
+    return set()
 
 
 if __name__ == "__main__":

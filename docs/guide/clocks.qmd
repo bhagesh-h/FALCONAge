@@ -8,14 +8,30 @@ number that answer a different one in the same units.
 
 ## By the question
 
-| Question | Clocks | Scale |
-|---|---|---|
-| How old does this sample look? | `horvath2013`, `hannum`, `skinandblood`, `lin`, `zhangen`, `zhangblup`, `vidalbralo` | years |
-| Who is at risk of dying sooner? | `dnamphenoage`, `hrsinchphenoage`, `zhangmortality` | years, or a log-hazard |
-| How fast is this person aging? | `dunedinpoam38` | years per year |
-| How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerobust`, `leerefinedrobust` | weeks |
-| Is causal or damage-driven aging separable? | `yingcausage`, `yingdamage`, `yingadaptage` | years |
-| How dysregulated is this person's physiology? | `phenoage`, `kdm`, `hd` | years, years, distance |
+<!-- BEGIN GENERATED: by-question -->
+
+| Question | Ready to score | Needs a coefficient file | Scale |
+|:-----------------|:----------------------------|:-------------|:------|
+| How old does this sample look? | `hannum`, `horvath2013`, `lin`, `pedbe`, `skinandblood`, `vidalbralo`, `yingcausage`, `zhangblup`, and 1 more | `abec`, `altumage`, `cabec`, `corticalclock`, `ctsliver`, `eabec`, `encen100`, `encen40`, and 30 more | `age_years`, `relative_score` |
+| How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerefinedrobust`, `leerobust` | `bohlin`, `epicga`, `mayne` | `gestational_weeks` |
+| How fast is this person aging? | `dunedinpoam38` | `ensembleagestatic`, `ensembleagestatictop`, `dunedinpace` | `age_years`, `pace_ratio` |
+| Which organ system is aging fastest? | — | `dnamfitage`, `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, and 5 more | `age_years` |
+| Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `hd`, `hrsinchphenoage`, `kdm`, `phenoage`, `zhangmortality` | `dnamfili`, `dnamic`, `mammalianlifespan`, `pcphenoage`, `senmortalityage`, `weidner`, `cpgptgrimage3`, `cpgptpcgrimage3`, and 3 more | `age_years`, `mortality_log_hazard`, `relative_score` |
+| Is damage separable from adaptation? | `yingadaptage`, `yingdamage` | — | `age_years_relative` |
+| How much has this tissue divided? | — | `cellpopage`, `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, and 4 more | `divisions`, `relative_score` |
+| What is the blood's cell composition? | — | `deconvolutebloodepicbcell`, `deconvolutebloodepiccd4tcell`, `deconvolutebloodepiccd8tcell`, `deconvolutebloodepicmonocyte`, `deconvolutebloodepicneutrophil`, `deconvolutebloodepicnkcell`, `twelvecelldeconvolutebloodepicbas`, `twelvecelldeconvolutebloodepicbmem`, and 10 more | `proportion` |
+| How long are the telomeres? | `dnamtl` | `pcdnamtl` | `telomere_kb` |
+| What is this person exposed to, or how do they live? | — | `dnamfitagegaitf`, `dnamfitagegaitm`, `dnamfitagegripf`, `dnamfitagegripm`, `dnamfitagevo2max`, `dnamstress`, `mccartneyalcohol`, `mccartneybmi`, and 10 more | `gestational_weeks`, `relative_score` |
+| What is a specific protein or lab value likely to be? | — | `bocklandt`, `compil6`, `downsyndrome`, `garagnani`, `grimage2adm`, `grimage2b2m`, `grimage2cystatinc`, `grimage2gdf15`, and 5 more | `relative_score` |
+| Is a named disease more likely? | — | `adbahadosingh`, `cvdwesterman`, `depressionbarbu`, `hepatoxu`, `prostatecancerkirby` | `relative_score` |
+| What is the sample's chromosomal sex, or its species? | — | `mammalianfemale`, `xchrom`, `ychrom` | `relative_score` |
+
+Every one of the 161 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](../clocks.qmd).
+
+<!-- END GENERATED: by-question -->
+
+"Ready to score" means the coefficients ship in the package. The rest are
+catalogued and need a file — see [Availability](#availability) below.
 
 ::: {.panel-tabset}
 
@@ -40,14 +56,21 @@ compatible_clocks(d)
 
 Every clock carries a `scale_type`, and it decides which downstream operations are defined.
 
-| Scale | Legal | Not legal |
-|---|---|---|
-| `age_years` | acceleration, residual, difference, correlation | - |
-| `gestational_weeks` | the same, in weeks | mixing with years |
-| `mortality_log_hazard` | correlation, rank, hazard ratio | acceleration: a log-hazard has no zero on the age scale |
-| `pace_ratio` | correlation, rank, difference | acceleration: it is already a rate |
-| `telomere_kb` | acceleration, correlation, difference | comparison with an age in years |
-| `proportion` | compositional operations | anything ignoring the sum-to-one constraint |
+<!-- BEGIN GENERATED: guide-scales -->
+
+| Scale | Clocks | Permitted | Refused, and why |
+|:------------|---:|:------------------|:---------------------------|
+| `age_years` | 73 | acceleration, correlate, difference, mean, residual | — |
+| `relative_score` | 44 | correlate, rank | everything except correlation and rank -- there is no external unit to difference or average |
+| `proportion` | 18 | compositional, correlate, difference, mean | anything ignoring the sum-to-one constraint |
+| `divisions` | 10 | correlate, difference, mean, rank | acceleration: a division count is not elapsed time |
+| `gestational_weeks` | 8 | acceleration, correlate, difference, mean, residual | mixing with an age in years |
+| `telomere_kb` | 2 | acceleration, correlate, difference, mean | comparison with an age in years; and higher is the *younger* direction here, unlike every age clock beside it |
+| `pace_ratio` | 2 | correlate, difference, mean, rank | acceleration: it is already a rate |
+| `mortality_log_hazard` | 2 | correlate, hazard ratio, mean, rank | acceleration: a log-hazard has no zero on the age scale |
+| `age_years_relative` | 2 | correlate, difference, mean, residual | acceleration: the clock tracks age with a slope near one but its origin moves between cohorts, so predicted minus chronological measures the cohort |
+
+<!-- END GENERATED: guide-scales -->
 
 `acceleration()` enforces this. Naming a clock whose scale does not support it is an error;
 leaving the clock list empty quietly excludes them.
@@ -73,74 +96,62 @@ manifest(res)$warnings
 
 ## Counting probes is not weighing them
 
-Coverage has two forms and they disagree exactly when it matters. The count says how many of a
-clock's features are present. **Mass coverage** says what share of the model's total
-|coefficient| those present features carry — and an elastic net's weights are nothing like
-uniform.
+Coverage has two forms and they disagree exactly when it matters: how many of a clock's features
+are present, and what share of the model's total |coefficient| those present features carry. Check
+both before committing to a clock on a given array.
 
 ```python
 fa.probe_loss(d, clocks="scoreable")
 #> horvath2013   coverage 0.9632   mass_coverage 0.6117   cg16867657 (14.1%), ...
 ```
 
-Ninety-six per cent of probes present, sixty-one per cent of the model. That dataset has kept
-nearly everything and lost the probes the clock leans on. The scoring floor applies to both, so
-this is refused with the heaviest absent probes named rather than scored into a confident number.
+Ninety-six per cent of probes present, sixty-one per cent of the model. The scoring floor applies
+to both, so this is refused with the heaviest absent probes named rather than scored into a
+confident number.
 
-This is the mechanism behind EPIC v2: it dropped probes several first-generation clocks depend on,
-which shifts their output while the principal-component versions barely move — a missing probe
-perturbs a component instead of deleting a term.
+→ [The science, §20.5](../science.qmd#probe-loss-priced) prices the same loss in years, per clock
+per platform, and explains why the PC clocks barely move where first-generation clocks shift by
+double digits.
 
 ## Reliability, and the trap in it
 
-Two clocks can be equally reproducible and behave completely differently in a longitudinal study,
-because "reliable" means two things:
+"Reliable" means two different things, and they do not track together:
 
 | | What is repeated | What it measures |
 |---|---|---|
 | **Technical ICC** | the same DNA, assayed twice | the assay, and the model's sensitivity to array noise |
 | **Biological ICC** | the same person, sampled again days later | whether the number is a property of the person or of the morning |
 
-They do not track together. Nearly every clock is technically excellent; biological ICCs are
-substantially lower, and there is no clear relationship between the two. **GrimAge2 and DunedinPACE
-are among the most biologically fragile** — and they are the two most often used to claim an
-intervention worked.
+Nearly every clock is technically excellent; biological ICCs are substantially lower.
+**GrimAge2 and DunedinPACE are among the most biologically fragile**, and they are the two most
+often used to claim an intervention worked. `res.interpretation()` carries both columns, with
+`None` meaning "not established" rather than "fine".
 
-`res.interpretation()` carries both columns per clock, with `None` where no figure has been
-published. `None` means "not established", never "fine": an unpublished ICC is not a good ICC.
-
-If you are measuring change within a person, prefer a clock with a published biological ICC, or a
-principal-component version — those were rebuilt specifically to suppress the single-probe noise
-that makes repeat measurements disagree.
+**The rule:** measuring change within a person, prefer a clock with a published biological ICC, or
+a principal-component version. → [The science, §17.7](../science.qmd#reliability-and-why-it-governs-everything-above).
 
 ### Measure it on your own cohort
 
-A published ICC is somebody else's laboratory. Since v1.1 you can measure yours:
+A published ICC is somebody else's laboratory. Measure yours:
 
 ```python
 se = fa.technical_se(res, data)
 se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
 ```
 
-Measurement error is propagated from each probe's published test-retest reliability through the
-clock's own weights, so the answer is per clock and per sample. On the package's own test corpus
-Horvath 2013 comes out at ±1.58 years with an implied cohort ICC of 0.98, DunedinPoAm38 is the
-least repeatable at 0.72, and the 319,607-probe BLUP clock reaches 1.00 — a model spread across
-the whole array averages the noise away, which is the same mechanism that makes PC clocks robust.
-
-Two numbers to read out of that table:
-
 `se_over_sd`
   : measurement error as a fraction of the spread between your own samples. Above 1, the clock
     cannot distinguish two of your samples however different their point estimates look.
 
 `implied_cohort_icc`
-  : the reliability *this* cohort implies, which is comparable with a published figure and often
-    lower — a narrow age range leaves less between-sample variance for the same assay noise.
+  : the reliability *this* cohort implies. Often below the published figure — a narrow age range
+    leaves less between-sample variance for the same assay noise.
 
-If you have run technical duplicates, `fa.icc_from_replicates(data, "subject")` gives per-probe
-reliability from your own plates instead of a published cohort's, and `technical_se(icc=...)` will
-use it.
+For scale: on this package's test corpus Horvath 2013 comes out at ±1.58 years, DunedinPoAm38 is
+least repeatable at 0.72, and the 319,607-probe BLUP clock reaches 1.00. With technical duplicates,
+`fa.icc_from_replicates(data, "subject")` replaces the published per-probe table with your own
+plates. → [The science, §20.2](../science.qmd#propagating-measurement-error) for the propagation
+itself.
 
 ### Then ask how many samples you need
 
@@ -148,32 +159,34 @@ use it.
 fa.power("horvath2013", effect=0.5, result=pilot)
 ```
 
-Reliability is not decoration in that answer. At ICC 0.9 a tenth of the sample size exists only to
-average out the instrument, and the function says so. It refuses to default the standard
-deviation, because n scales with its square.
+At ICC 0.9 a tenth of the sample size exists only to average out the instrument, and the function
+says so. It refuses to default the standard deviation, because n scales with its square.
 
 ## Specimen type comes before all of this
 
-Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91 people**, while the two
-methylation matrices still correlated at r = 0.88–0.92. A correlation check on the input passes
-and the output is a decade out.
+Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91 people**, while still
+correlating with them at Spearman 0.45–0.69. A correlation check passes and the output is a decade
+out, because correlation is not agreement.
 
-Set `obs["tissue"]`. FALCONAge compares it against what each clock was fitted on: pan-tissue
-clocks say nothing, most warn with the measured discordance, and twelve — three placenta clocks,
-cord blood, neonatal blood spots, buccal, three brain-cortex clocks — refuse, because a placenta
-clock on blood is a category error rather than an offset. Cell-free DNA is refused by every clock;
-it is not a tissue.
+**The rule:** set `obs["tissue"]` on every dataset. FALCONAge then compares it against what each
+clock was fitted on — pan-tissue clocks say nothing, most warn with the measured discordance, and
+twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
+warning saying the check did not run.
 
-A run with no `tissue` column gets one warning saying the check did not run. That is the honest
-state, and it is what the previous silence was hiding.
+→ [The science, §20.4](../science.qmd#specimen-type-is-not-metadata) for the twelve refusals and
+the measurements behind each.
 
 ## Availability
 
+<!-- BEGIN GENERATED: tiers -->
+
 | Tier | n | What you do |
-|---|---:|---|
+|:--|--:|:-------------------------------------------------------------|
 | A | 23 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
 | B | 110 | Catalogued, but no primary source has been established, so no coefficients ship. |
 | C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
+
+<!-- END GENERATED: tiers -->
 
 ```r
 list_clocks(tier = "C")     # the ones needing author permission

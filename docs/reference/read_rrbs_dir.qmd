@@ -1,7 +1,0 @@
-# read_rrbs_dir { #falconage.read_rrbs_dir }
-
-```python
-read_rrbs_dir(paths, *, min_coverage=5, obs=None)
-```
-
-Assemble several RRBS files into one matrix on their shared sites.

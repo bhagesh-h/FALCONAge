@@ -33,6 +33,23 @@ TWO SOURCES, AND THEY ANSWER SLIGHTLY DIFFERENT QUESTIONS.
     check on the probe path rather than a substitute: the two are derived from
     different measurements and should land in the same neighbourhood.
 
+THE ASSUMPTION IN THAT SUM, STATED BECAUSE IT IS LOAD-BEARING. Writing
+``Var(Σ wⱼ βⱼ) = Σ wⱼ² σ²ⱼ`` drops the cross term
+``2 Σ_{j<k} wⱼ w_k Cov(εⱼ, ε_k)``: it treats the measurement errors on different
+probes as independent. They are not. Chip position, plate, and scanner drift all
+move many probes together, and those covariances are positive far more often than
+negative. **So the SE reported here is a lower bound.** It is not a small
+correction either -- a clock with hundreds of positively correlated terms can
+have a true SE some multiple of this one.
+
+The alternative is not available: estimating a 319,607 x 319,607 error covariance
+would need replicate designs nobody publishes. What is available is the
+comparison -- ``source="clock"`` derives the same quantity from a *published*
+clock-level ICC measured on real technical replicates, which does capture the
+correlated part. When the two disagree by a lot, the clock-level number is the
+one to trust and the gap is the correlated component this path cannot see.
+``icc_from_replicates`` closes it properly if you have run duplicates.
+
 WHAT THIS IS NOT. It is measurement error, not prediction error. A clock can be
 perfectly repeatable and still be a poor estimate of anything -- see
 :func:`falconage.uncertainty.conformal_interval` for the other question. And it
@@ -384,7 +401,7 @@ def load_conformal() -> pd.DataFrame:
     """
     if not CONFORMAL_FILE.exists():
         return pd.DataFrame(columns=["clock", "age_band", "level", "half_width",
-                                     "median_bias", "mae", "usable",
+                                     "median_bias", "mae", "bias_within_interval",
                                      "n_calibration", "exact"])
     return pd.read_csv(CONFORMAL_FILE, comment="#")
 
@@ -435,7 +452,7 @@ def conformal_interval(result, *, level: float = 0.90,
                 "lo": v - float(r["half_width"]), "hi": v + float(r["half_width"]),
                 "half_width": float(r["half_width"]), "level": level,
                 "median_bias": float(r["median_bias"]), "mae": float(r["mae"]),
-                "usable": bool(r["usable"]),
+                "bias_within_interval": bool(r["bias_within_interval"]),
                 "n_calibration": int(r["n_calibration"]),
                 "exchangeable": False,
             })

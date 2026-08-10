@@ -5,12 +5,14 @@ one it still returns a number, still correlates with age, and is wrong by an
 amount nothing in the arithmetic can see. The measured sizes:
 
 * saliva against buffy coat, same 91 people: clock ages differ by **3.83 to
-  16.46 years** (bioRxiv 2025.09.16.673560). Methylation correlates at
-  r = 0.88-0.92 between them while the clock ages agree at Spearman 0.25-0.69 --
-  so a correlation check on the matrix passes and the scores are still a decade
-  apart.
-* buffy coat against PBMC, same people: r = 0.97 on the matrix, 0.66-0.87 on the
-  clock ages. Close enough to be one family, far enough to be worth saying.
+  16.46 years** (bioRxiv 2025.09.16.673560) while still correlating with each
+  other at Spearman 0.45-0.69. Correlation is not agreement, and the check most
+  people run is the correlation.
+* buffy coat against PBMC, same people: 0.66-0.87 on the clock ages, and a mean
+  difference of only -0.06 to 0.39 years. One family, and the contrast with
+  saliva is what makes the saliva number a specimen effect rather than noise.
+* which clock matters as much as which specimen: on those samples DunedinPACE
+  differed by -0.007 years (p = 0.486) where Hannum differed by 12.5.
 * unrelated tissues generally: **20-30 years** (PMC12714307).
 
 So this module is a lookup table and two questions: what did the user mean by
@@ -132,7 +134,7 @@ _ALIASES: dict[str, str] = {
 _MEASURED: dict[frozenset, str] = {
     frozenset({BLOOD, SALIVA}): (
         "saliva clock ages ran 3.83-16.46 years above buffy coat in the same 91 "
-        "people, and agreed with it at only Spearman 0.25-0.69 "
+        "people, while still correlating with it at Spearman 0.45-0.69 "
         "(bioRxiv 2025.09.16.673560)"),
     frozenset({BLOOD, BUCCAL}): (
         "buccal and blood are different cell populations; clocks fitted on one "
@@ -212,9 +214,9 @@ def compare(sample: object, clock_tissues: tuple[str, ...] | list[str]) -> dict:
         return {"verdict": "family", "specimen": got,
                 "message": (f"{got} is not one of the tissues this clock was fitted "
                             f"on ({', '.join(want)}), but is in the same family. "
-                            "Buffy coat, PBMC and whole blood agree at r = 0.97 on "
-                            "the matrix and Spearman 0.66-0.87 on clock ages "
-                            "(bioRxiv 2025.09.16.673560)")}
+                            "Buffy coat and PBMC clock ages agree at Spearman "
+                            "0.66-0.87, with a mean difference of -0.06 to 0.39 "
+                            "years (bioRxiv 2025.09.16.673560)")}
 
     detail = ""
     for w in want_fams:

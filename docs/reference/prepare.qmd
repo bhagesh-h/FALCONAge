@@ -1,7 +1,0 @@
-# prepare { #falconage.prepare }
-
-```python
-prepare(data, *, aggregate_epicv2=True, clip=True)
-```
-
-The standard chain: harmonise ids, collapse v2 replicates, clip, identify.

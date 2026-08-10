@@ -84,7 +84,7 @@ the right way round.
 ## 3. Speed: the GPU makes the shipping clocks slower
 
 Eight clocks, 2,340 distinct features, RTX 4060, best of three runs, measured
-inside `falconage:1.0.0-cuda` - the image the command at the foot of this page
+inside `falconage:1.1.0-cuda` - the image the command at the foot of this page
 builds. These are numbers you can reproduce, not numbers from a throwaway
 environment.
 
@@ -152,8 +152,8 @@ against a slow CPU baseline. The table above is after the fix.
 Every number on this page comes from one script, and it is in the repository:
 
 ```bash
-docker build -f docker/Dockerfile.cuda -t falconage:1.0.0-cuda .
-docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.0.0-cuda \
+docker build -f docker/Dockerfile.cuda -t falconage:1.1.0-cuda .
+docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
   python test/gpu_check.py
 ```
 

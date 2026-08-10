@@ -7,17 +7,35 @@ reason about.
 
 **What goes in**
 
-- DNA methylation as a beta matrix (CSV or Parquet), a GEO series matrix, or RRBS coverage files
-- Clinical chemistry as a table of blood measurements, with units declared rather than guessed
+| Input | Reader | Notes |
+|---|---|---|
+| **Raw Illumina IDATs** | `read_idat_dir()` | 27K, 450K, EPIC v1, EPIC v2. Full chain to betas: pOOBAH detection, noob background correction, optional BMIQ |
+| Beta matrix (CSV, Parquet) | `read_betas()` | |
+| GEO series matrix | `read_series_matrix()` | |
+| **Nanopore bedMethyl** | `read_bedmethyl_dir()` | `modkit` output, with per-site coverage kept alongside; 5mC and 5hmC read separately |
+| RRBS coverage files | `read_rrbs_dir()` | |
+| **Targeted panels** | `read_panel()` | Pyrosequencing, EpiTYPER, amplicon. The declared CpG list is checked, not intersected |
+| **Olink NPX** | `read_olink()` | Proteomics. Already log2 and relative; the scale is left alone |
+| **SomaScan RFU** | `read_somascan()` | Proteomics, log2 by default because that is what the models were fitted on |
+| **Bulk RNA-seq counts** | `read_counts()` | Transcriptomics, with the full RLE → log10 → z → YuGene chain |
+| Clinical chemistry | `read_clinical()` | Units declared rather than guessed |
+| ComputAgeBench | `read_computage_bench()` | 65 harmonised case/control studies, pinned to a commit |
 
 **What comes out**
 
 - One score per sample per clock, for as many of the 161 catalogued clocks as your features support
-- A coverage figure per clock: the fraction of that clock's features your data actually carried
-- A run manifest - package and registry versions, the SHA-256 of every coefficient file used, the
-  device and floating-point precision, the imputation policy, and every warning raised
+- **A standard error on every score** — measurement error propagated from published per-probe
+  reliability through each clock's own weights — and a distribution-free prediction interval
+- A coverage figure per clock, and what the probes you are missing cost in *years*
+- A run manifest — package and registry versions, the SHA-256 of every coefficient file, the array
+  manifest that decoded your IDATs, the reliability table behind the intervals, the device and
+  floating-point precision, the imputation policy, and every warning raised
 
-**Where it runs** - one numerical core in Python, called from R through reticulate, on CPU or GPU.
+**Where it runs** — one numerical core in Python, called from R through reticulate, on CPU or GPU.
+
+**What it refuses.** A saliva sample scored on a whole-blood clock (measured at 3.83–16.46 years of
+error in the same people). Cell-free DNA on any array clock. Age acceleration on a pace-of-aging
+clock. A cohort-centred clock given one sample. Each refusal names the measurement behind it.
 
 ## A clock is a fitted model, and its training target is part of the answer
 
@@ -107,22 +125,29 @@ Each of these is a silent wrong answer somewhere else, so each is a hard failure
 
 ## What it does not do
 
-Said here rather than left to be inferred. [The science page](science.qmd) §17 covers each in
-full, with the algorithms and the reason each is or is not blocked.
+Said here rather than left to be inferred. [The science page](science.qmd) §20 and §21 cover each
+in full, with the algorithms and the reason each is or is not blocked.
 
-- **It does not normalise arrays.** No noob, dye-bias correction, pOOBAH or BMIQ. It takes a beta
-  matrix; if you have raw IDATs, normalise with sesame or minfi first. This matters because clock
-  coefficients were fitted on the output of a particular chain — raw betas are the right weights
-  on the wrong scale, not a rougher version of the right answer.
-- **It does not repair cross-platform probe loss.** It measures it, by count and by coefficient
-  mass. The liftover mapping tables encode concordance measured on paired samples and are not
-  derivable from the array manifests.
-- **It does not read proteomics, transcriptomics or single-cell data.** The registry's platform
-  and scale machinery would fit them; the readers and coefficients do not exist. Transcriptomic
-  clocks additionally median-centre per dataset, which makes them undefined for a single sample —
-  a refusal that has to be built before the modality can be honest.
-- **It has no foundation-model backend.** CpGPT and MethylGPT are interesting here for zero-shot
-  imputation and array conversion rather than as another age predictor.
+- **It does not repair cross-platform probe loss.** It measures it twice over — by count, by
+  coefficient mass, and since v1.1 in *years* per clock per platform. It cannot undo it. The
+  liftover mapping tables encode concordance measured on paired samples and are not derivable
+  from the array manifests.
+- **It has no proteomic or transcriptomic clocks in the catalogue.** The readers and the full
+  preparation chains ship; no entry declares either `data_type`, because every published model in
+  both families is licence-restricted and would enter as a tier C scaffold. Scoring a proteomic
+  matrix today refuses with "no clocks to score", which is accurate rather than broken.
+- **It does not correct dye bias by default.** The step exists and is opt-in. Measured on real
+  IDATs our implementation moves the median beta by +0.10 to +0.12, because a correct correction
+  needs the normalisation control probes and their addresses are not in the manifest we can fetch.
+- **It has no foundation-model backend.** The `NeuralClock` architecture ships, safetensors only.
+  CpGPT and MethylGPT are interesting here for zero-shot imputation and array conversion rather
+  than as another age predictor.
+- **110 of the 161 catalogued clocks have no traced coefficient source.** A per-clock literature
+  hunt, not a technical problem, and `primary_source_traced: false` is the honest record of it.
+
+Removed from this list in v1.1, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
+probe masks), the raw-IDAT path, single-cell scoring, and the transcriptomic per-dataset centring
+refusal.
 
 ## What it is not
 
@@ -133,64 +158,25 @@ FALCONAge computes what the papers specify and records how it did so; it does no
 given clock is fit for a clinical decision about one person. [The science of aging
 clocks](science.qmd) sets out what is established and what is contested.
 
-## Install
+## Install --- Docker
 
-### The short way: Docker
-
-Nothing to install but Docker itself, and it carries Python, R, the CLI and all 20 bundled clocks
-in one image. Three commands from an empty folder to a scored dataset:
+Docker is the supported path. One image carries Python, R, the CLI and all 20 bundled clocks at
+pinned versions, so the same input gives the same numbers on your machine and on a reviewer's.
+Three commands from an empty folder to a proven install:
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
-docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu python -m pytest python/tests -q
+docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
+docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu python -m pytest python/tests -q
 ```
 
-That last line proves the install by running the suite. On Windows PowerShell write `"${PWD}"`.
+The last line proves it by running the 437-test suite. On Windows PowerShell write `"${PWD}"`.
+Open a session with `docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu python`, or
+`... R`, and every example below works unchanged.
 
-For the benchmark corpus, the GPU image, R, and a step-by-step version of all of it written for
-someone who has never used either language, see
-[Getting started → with nothing installed but Docker](guide/FALCONAge.qmd#docker).
-
-### The other way: install the packages
-
-FALCONAge is **not on PyPI or CRAN yet**. Both packages install from the GitHub repository, and
-both live in a subdirectory of it, so the commands name that subdirectory.
-
-::: {.panel-tabset}
-
-### Python
-
-```bash
-pip install "falconage @ git+https://github.com/bhagesh-h/FALCONAge.git#subdirectory=python"
-```
-
-Pin a tag in anything you intend to reproduce - `...FALCONAge.git@v1.0.0#subdirectory=python`.
-`main` moves; a tag does not.
-
-For CUDA, install torch from PyTorch's own index first. Pip's default index serves a CUDA build on
-Linux and a CPU-only build on Windows under the same name:
-
-```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu124
-```
-
-### R
-
-```r
-remotes::install_github("bhagesh-h/FALCONAge", subdir = "r")
-# or
-pak::pak("bhagesh-h/FALCONAge/r")
-
-library(FALCONAge)
-falconage_install()    # creates the managed Python environment, once
-falconage_config()     # what resolved: versions, devices, registry size
-```
-
-`falconage_install()` installs the Python core from the same GitHub tag the R package was built
-from, so the two halves cannot drift.
-
-:::
+[Getting started](guide/FALCONAge.qmd) walks the same ground one command at a time, including
+fetching real public data, the GPU image, and a **native pip / `remotes::install_github`
+install** for anyone who already manages their own environment.
 
 ## Score something
 

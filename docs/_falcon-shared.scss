@@ -338,6 +338,39 @@ main video {
     margin-right: 0.45rem;
   }
 
+  // The wordmark and the mark, sized to fit rather than to be clipped.
+  //
+  // MEASURED, on the rendered page at a 320px viewport. Quarto sets
+  // `.navbar-brand-container { max-width: calc(100% - 115px) }` to reserve room
+  // for the theme switch and search, and sets the brand text at 21.25px. At
+  // 320px that leaves the `<a class="navbar-brand">` 91px of client width for
+  // text needing 106px, and because Quarto also gives it
+  // `overflow:hidden; text-overflow:ellipsis`, the name rendered as "FALCO...".
+  // It fits from about 345px up, which is why this only ever showed on the
+  // smallest phones and not in a desktop window dragged narrow.
+  //
+  // Shrinking the wordmark is the fix rather than widening the container: the
+  // 115px reservation is holding real controls, and a name is either readable
+  // or it is decoration. 17px needs ~85px, which clears 91px with room to spare.
+  //
+  // This is also the arrangement the sibling site uses -- mark and wordmark on
+  // one line, left-aligned after the menu button, at a size that does not
+  // compete with the page title underneath it.
+  @media (max-width: 575.98px) {
+    .navbar-brand,
+    .navbar-title {
+      font-size: 1.05rem;
+      letter-spacing: -0.005em;
+    }
+
+    .navbar-brand img,
+    .navbar-logo {
+      height: 24px;
+      max-height: 24px;
+      margin-right: 0.35rem;
+    }
+  }
+
   // Nothing is done to the grid. Quarto's `page-columns` uses named tracks and
   // already lays the article out correctly when the sidebar is collapsed --
   // it was clean at every width before this block existed. Overriding
@@ -397,4 +430,57 @@ mjx-container[display="true"],
   overflow-y: hidden;
   max-width: 100%;
   padding-bottom: 0.25rem;
+}
+
+/* -----------------------------------------------------------------------------
+   Telling commands apart from what they print
+   -----------------------------------------------------------------------------
+   The getting-started page is written for someone who has not used a terminal.
+   Every fenced block looks identical and every one carries a copy button, so a
+   block showing what a command *printed* is indistinguishable from a block to
+   paste -- and pasting output is the first thing a beginner does.
+
+   Wrap output in `::: {.falcon-output}` and it gets an "Output" tag, a distinct
+   ground, and no copy button. The class is what carries the meaning; the
+   styling only makes it visible.
+   -------------------------------------------------------------------------- */
+.falcon-output {
+  position: relative;
+  margin: 0.35rem 0 1.1rem;
+  border-left: 3px solid #9aa4ae;
+  padding-left: 0.6rem;
+}
+
+.falcon-output::before {
+  content: "Output — you do not need to copy this";
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6b7580;
+  margin-bottom: 0.25rem;
+}
+
+/* Quarto puts a copy button on every code block. On an output block it invites
+   exactly the mistake the class exists to prevent. */
+.falcon-output .code-copy-button,
+.falcon-output button.code-copy-button {
+  display: none !important;
+}
+
+.falcon-output pre,
+.falcon-output div.sourceCode {
+  background: rgba(128, 138, 148, 0.10);
+  border: none;
+}
+
+:root:not([data-theme="light"]) .falcon-output::before,
+:root[data-theme="dark"] .falcon-output::before { color: #98a2ad; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .falcon-output pre,
+  :root:not([data-theme="light"]) .falcon-output div.sourceCode {
+    background: rgba(160, 170, 180, 0.14);
+  }
 }

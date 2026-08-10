@@ -1,7 +1,0 @@
-# plot.coverage_bar { #falconage.plot.coverage_bar }
-
-```python
-plot.coverage_bar(result, *, floor=0.8, platform=None)
-```
-
-Per-clock feature coverage. The plot to read before the scores.

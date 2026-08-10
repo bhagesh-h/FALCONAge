@@ -1,6 +1,0 @@
-# download.cache_info { #falconage.download.cache_info }
-
-```python
-download.cache_info(cache_dir=None)
-```
-

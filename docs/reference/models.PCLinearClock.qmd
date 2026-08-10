@@ -1,7 +1,0 @@
-# models.PCLinearClock { #falconage.models.PCLinearClock }
-
-```python
-models.PCLinearClock(clock, rotation)
-```
-
-``postprocess(((x - centre) @ rotation) @ pc_coefficients)``.

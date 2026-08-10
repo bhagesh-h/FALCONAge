@@ -1,7 +1,0 @@
-# core.describe { #falconage.core.describe }
-
-```python
-core.describe()
-```
-
-What this machine can actually do. Backs ``falconage config``.

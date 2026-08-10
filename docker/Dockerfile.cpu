@@ -19,13 +19,13 @@
 #   anndata 0.11.3 · scikit-learn 1.6.1 · R 4.4.3 · reticulate 1.40.0
 #
 # BUILD, from the repository root (the context must be the root, not docker/):
-#   docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
+#   docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
 #
 # RUN. Nothing is baked in: no data, no cohort, no credentials, no weights.
 #   docker run --rm \
 #     -v "$PWD/test/data:/data:ro" -v "$PWD/results:/results" \
 #     -v falconage-cache:/opt/falconage/cache \
-#     falconage:1.0.0-cpu \
+#     falconage:1.1.0-cpu \
 #     score --input /data/prepared.h5ad --clocks compatible --outdir /results
 #
 #   On Windows PowerShell replace "$PWD" with "${PWD}".

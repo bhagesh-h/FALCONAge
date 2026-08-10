@@ -1,0 +1,43 @@
+# FALCONAge --- responsive-layout check image
+#
+# Drives a headless Chromium over the rendered site and measures whether any
+# page scrolls horizontally at narrow widths. This exists because the failure it
+# catches is invisible in a normal render: a wide table or a long code line does
+# not break the build, it just makes the page unreadable on a phone, and nobody
+# reads the documentation on a phone until a reviewer does.
+#
+# The base image is Microsoft's Playwright image rather than a plain Python one.
+# Chromium needs about forty shared libraries that the slim Debian base does not
+# carry, and `playwright install --with-deps` inside a hand-rolled image pulls
+# most of a desktop. Using the upstream image is one line instead of that.
+#
+# BUILD
+#
+#   docker build -f docker/Dockerfile.responsive -t falconage-responsive:1 .
+#
+# RUN  (render the site first --- this reads docs/_site/, it does not build it)
+#
+#   docker run --rm -v "$PWD:/work" -w /work falconage-responsive:1 \
+#     python test/responsive_check.py
+#
+# It walks every page of the site at five viewport widths and exits non-zero
+# with the offending page, width and element if the document is wider than the
+# viewport. Wide content is allowed to scroll inside its own container; it is
+# the page body scrolling that fails.
+#
+# On Windows PowerShell write "${PWD}" in place of "$PWD"; on cmd.exe, "%cd%".
+
+# Pinned to the Playwright version the browsers in this image were built for.
+# The Python package and the bundled browser binaries are versioned together;
+# installing a different playwright over this base gives "Executable doesn't
+# exist" at run time rather than at build time.
+FROM mcr.microsoft.com/playwright/python:v1.49.0-noble
+
+RUN pip install --no-cache-dir playwright==1.49.0
+
+# Fail at build rather than on the first page if the browser is not usable.
+RUN python -c "from playwright.sync_api import sync_playwright; \
+p = sync_playwright().start(); b = p.chromium.launch(); b.close(); p.stop()"
+
+WORKDIR /work
+CMD ["python", "test/responsive_check.py"]

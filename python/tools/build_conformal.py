@@ -54,6 +54,27 @@ LEVELS = (0.80, 0.90, 0.95)
 #: the 95% level needs the largest residual in the set, which is one number.
 MIN_CALIBRATION = 40
 BANDS = ((0, 30), (30, 50), (50, 70), (70, 120))
+#: A band needs at least this many samples. ceil((20+1)*0.90) = 19 <= 20, so 20
+#: is the smallest n at which the 90% conformal quantile is attainable at all.
+MIN_BAND = 20
+
+
+def conformal_half_width(absr: np.ndarray, level: float) -> tuple[float, bool]:
+    """The ``ceil((n+1)*level)``-th order statistic of the absolute residuals.
+
+    Not ``np.quantile``. The empirical quantile interpolates between order
+    statistics and lands *below* this one, so using it would report an interval
+    narrower than the coverage guarantee licenses -- under-coverage carrying a
+    finite-sample guarantee, which is worse than no interval at all.
+
+    Returns ``(half_width, exact)``. ``exact`` is False when
+    ``ceil((n+1)*level) > n``: the guarantee then needs a calibration set larger
+    than the one in hand, and the honest fallback is the largest residual, which
+    is a lower bound on the correct width rather than the width itself.
+    """
+    n = len(absr)
+    k = int(np.ceil((n + 1) * level))
+    return float(np.sort(absr)[min(k, n) - 1]), k <= n
 
 
 def calibration_set():
@@ -114,15 +135,12 @@ def render() -> tuple[str, dict]:
         n = len(resid)
         absr = np.abs(resid)
         for level in LEVELS:
-            k = int(np.ceil((n + 1) * level))
-            # k > n means the guarantee needs a sample larger than we have; the
-            # honest half-width is then the maximum residual, flagged as such.
-            q = float(np.sort(absr)[min(k, n) - 1])
+            q, exact = conformal_half_width(absr, level)
             bias = float(np.median(resid))
             rows.append({
                 "clock": cid, "level": level, "half_width": round(q, 4),
                 "n_calibration": n,
-                "exact": k <= n,
+                "exact": exact,
                 "median_bias": round(bias, 4),
                 "mae": round(float(np.mean(absr)), 4),
                 # A clock offset from chronological age by more than its own
@@ -132,28 +150,32 @@ def render() -> tuple[str, dict]:
                 # and AdaptAge are the clear cases: they are causality-
                 # partitioned components reported on an age-like scale, not
                 # age predictors, and this column is where that becomes visible.
-                "usable": bool(abs(bias) <= q),
+                "bias_within_interval": bool(abs(bias) <= q),
             })
-        # Per band, so a reader can see where one width is too wide or too narrow.
+        # Per band, so a reader can see where one width is too wide or too
+        # narrow. Same order-statistic rule as above -- a band row that used the
+        # interpolated quantile would be narrower than the guarantee allows and
+        # would sit in the same column as rows that are not.
         for lo, hi in BANDS:
             m = (sub["age"] >= lo) & (sub["age"] < hi)
-            if m.sum() < 20:
+            if m.sum() < MIN_BAND:
                 continue
-            w = float(np.quantile(np.abs(resid[m.to_numpy()]), 0.90))
+            band_absr = np.abs(resid[m.to_numpy()])
+            w, band_exact = conformal_half_width(band_absr, 0.90)
             bb = float(np.median(resid[m.to_numpy()]))
             rows.append({
                 "clock": cid, "level": 0.90, "half_width": round(w, 4),
-                "n_calibration": int(m.sum()), "exact": True,
+                "n_calibration": int(m.sum()), "exact": band_exact,
                 "median_bias": round(bb, 4),
                 "mae": round(float(np.mean(np.abs(resid[m.to_numpy()]))), 4),
-                "usable": bool(abs(bb) <= w),
+                "bias_within_interval": bool(abs(bb) <= w),
                 "age_band": f"{lo}-{hi}",
             })
 
     tab = pd.DataFrame(rows)
     tab["age_band"] = tab.get("age_band", pd.Series(dtype=object)).fillna("all")
     tab = tab[["clock", "age_band", "level", "half_width", "median_bias", "mae",
-               "usable", "n_calibration", "exact"]].sort_values(
+               "bias_within_interval", "n_calibration", "exact"]].sort_values(
                    ["clock", "age_band", "level"])
 
     buf = io.StringIO()
@@ -174,7 +196,7 @@ def render() -> tuple[str, dict]:
         "clocks": allrows["clock"].nunique(), "rows": len(tab),
         "n": int(allrows["n_calibration"].max()) if len(allrows) else 0,
         "table": allrows[allrows["level"] == 0.90][
-            ["clock", "half_width", "mae", "median_bias", "usable",
+            ["clock", "half_width", "mae", "median_bias", "bias_within_interval",
              "n_calibration"]],
     }
 

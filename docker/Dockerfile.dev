@@ -7,7 +7,7 @@
 # a network round trip per run, and a different ruff version each time, which
 # is the opposite of what a linter in CI is for.
 #
-# Deliberately NOT the full `falconage:1.0.0-cpu` image. That one carries R,
+# Deliberately NOT the full `falconage:1.1.0-cpu` image. That one carries R,
 # Bioconductor and the CLI and is 2.5 GB; this is the Python core plus test
 # tooling at about a gigabyte. The R suite and the R/Python conformance tests
 # need the CPU image and are run there.

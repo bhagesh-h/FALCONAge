@@ -131,6 +131,66 @@ clock_info("horvath2013")
 """
 
 
+def _predicts(c) -> str:
+    """What the clock estimates, in words a reader has not already read.
+
+    ``name`` is often just the identifier again -- "dnamphenoage predicts
+    dnamphenoage" -- which fills a column and says nothing. Prefer the
+    ``predicts`` field, fall back to the training target, and only then to the
+    name. All three are registry fields; this picks the first that is not a
+    restatement of the row's first cell.
+    """
+    cid = str(c.id).lower().replace("_", "").replace("-", "")
+
+    def informative(vals) -> str | None:
+        for v in vals:
+            s = str(v).strip()
+            if s and s.lower().replace(" ", "").replace("_", "") != cid:
+                return s
+        return None
+
+    return (informative(c.predicts) or informative([c.name])
+            or informative(c.training_target) or "—")
+
+
+def _paper(c) -> str:
+    """A link to the source, or a plain citation when there is no DOI.
+
+    The whole point of the catalogue is that a reader can go and check; a table
+    of 161 clock names with nothing to follow is a list, not a reference. DOIs
+    are rendered as links because that is the durable identifier -- a journal
+    URL rots and a DOI does not.
+    """
+    label = _short_cite(c)
+    doi = (c.doi or "").strip()
+    if doi:
+        url = doi if doi.startswith("http") else f"https://doi.org/{doi}"
+        return f"[{label}]({url})"
+    return label
+
+
+def _short_cite(c) -> str:
+    """"Horvath 2013" from a full citation string, in whatever style it is in.
+
+    The registry's citations arrive in at least three house styles -- APA,
+    a quoted-title form, and an npj-ish one -- so the surname is taken as the
+    text before the first comma or period, whichever comes first, and the year
+    from the entry's own ``year`` field rather than parsed out of the string.
+    Splitting on the first period alone gave "Levine, M", which is a surname
+    and a dangling initial.
+    """
+    import re
+
+    cite = (c.citation or "").strip()
+    if not cite:
+        return str(c.year or "—")
+    first = re.split(r"[,.]", cite, maxsplit=1)[0].strip()
+    # "de Lima Camillo" and "Bahado-Singh" are surnames; a lone initial is not.
+    if not first or len(first) < 2:
+        first = cite[:20].strip()
+    return f"{first} {c.year}" if c.year else first
+
+
 def render() -> str:
     import falconage as fa
 
@@ -142,12 +202,14 @@ def render() -> str:
         rows = [c for c in clocks if c.availability == tier]
         out.append(f"\n## Tier {tier} — {len(rows)} clocks\n")
         out.append(TIER[tier] + "\n")
-        out.append("| Clock | Year | Predicts | Scale | Features | Platform |")
-        out.append("|---|---:|---|---|---:|---|")
+        out.append("| Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |")
+        out.append("|---|---:|---|---|---:|---|---|---|")
         for c in rows:
-            plat = ", ".join(c.platform) or "—"
-            out.append(f"| `{c.id}` | {c.year or '—'} | {c.name} | "
-                       f"`{c.scale_type}` | {c.n_features or '—'} | {plat} |")
+            out.append("| " + " | ".join([
+                f"`{c.id}`", str(c.year or "—"), _predicts(c), f"`{c.scale_type}`",
+                str(c.n_features or "—"), ", ".join(c.tissue) or "—",
+                ", ".join(c.platform) or "—", _paper(c),
+            ]) + " |")
         out.append("")
     out.append(TAIL)
     return "\n".join(out)
@@ -187,6 +249,219 @@ def scale_table() -> str:
     return "\n".join(out)
 
 
+
+GUIDE = HERE / "guide" / "clocks.qmd"
+QUESTION_BEGIN = "<!-- BEGIN GENERATED: by-question -->"
+QUESTION_END = "<!-- END GENERATED: by-question -->"
+TIERS_BEGIN = "<!-- BEGIN GENERATED: tiers -->"
+TIERS_END = "<!-- END GENERATED: tiers -->"
+
+#: The question a reader arrives with, and a pattern over the `predicts` field
+#: that answers it. **Ordered: first match wins**, so the specific rules come
+#: before the general ones -- "physical-fitness biological age" has to be caught
+#: by the organ-system rule before the plain "biological age" one takes it.
+#:
+#: Patterns rather than exact strings. The registry holds 83 distinct `predicts`
+#: values across 161 clocks, of which the hand-written version of this table
+#: named nine; matching literally would mean editing this list every time a
+#: clock is catalogued, and the page would drift again the first time somebody
+#: forgot. A value that matches nothing is reported by
+#: :func:`unrouted_predicts` and fails the build rather than vanishing from the
+#: page that exists to help people find clocks.
+QUESTIONS: list[tuple[str, str]] = [
+    ("How old does this sample look?",
+     r"^(chronological|relative) age$"),
+    ("How old is this newborn, gestationally?",
+     r"gestational age"),
+    ("How fast is this person aging?",
+     r"pace of aging|intervention-responsive"),
+    ("Which organ system is aging fastest?",
+     r"[- ]system biological age|multisystem|physical-fitness biological age"),
+    ("Who is at risk of dying sooner, or is frailer?",
+     r"mortality|phenotypic age|^biological age$|frailty|healthspan|lifespan"
+     r"|physiological dysregulation|intrinsic capacity|time to death"),
+    ("Is damage separable from adaptation?",
+     r"(damaging|adaptive|causal) epigenetic age"),
+    ("How much has this tissue divided?",
+     r"mitotic|replicative|divisions|proliferation|passage age|senescence"),
+    ("What is the blood's cell composition?",
+     r"proportion|cell composition"),
+    ("How long are the telomeres?",
+     r"telomere"),
+    ("What is this person exposed to, or how do they live?",
+     r"smoking|alcohol|body mass|BMI|body fat|cholesterol|waist|hip|VO2max"
+     r"|grip strength|gait speed|educational attainment|stress|physical activity"
+     r"|diet|exposure"),
+    ("What is a specific protein or lab value likely to be?",
+     r"C-reactive protein|GDF-15|PAI-1|TIMP-1|adrenomedullin|beta-2-microglobulin"
+     r"|cystatin C|interleukin|leptin|hemoglobin A1c|methylation$|methylation score"),
+    ("Is a named disease more likely?",
+     r"disease|cancer|carcinoma|Alzheimer|depressive|syndrome"),
+    ("What is the sample's chromosomal sex, or its species?",
+     r"chromosome|^sex$|species"),
+]
+
+
+def _bucket(pred: tuple[str, ...]) -> str | None:
+    import re
+
+    for p in pred:
+        s = str(p).strip()
+        for question, pattern in QUESTIONS:
+            if re.search(pattern, s, flags=re.IGNORECASE):
+                return question
+    return None
+
+
+def unrouted_predicts() -> dict[str, list[str]]:
+    """`predicts` values that no question above claims, and who has them.
+
+    Reported rather than swallowed. A clock nobody can find on the page that
+    exists to help people find clocks is worse than an ugly extra row.
+    """
+    import falconage as fa
+
+    out: dict[str, list[str]] = {}
+    for c in fa.registry.load():
+        if _bucket(c.predicts) is None:
+            key = ", ".join(c.predicts) or "(nothing declared)"
+            out.setdefault(key, []).append(c.id)
+    return out
+
+
+def question_table() -> str:
+    """Every clock in the registry, routed to the question it answers.
+
+    Generated because the hand-written version listed twenty-three of one
+    hundred and sixty-one and had not been touched since v1.0. A reader
+    choosing a clock needs the whole catalogue or none of it.
+    """
+    import falconage as fa
+
+    reg = fa.registry.load()
+    buckets: dict[str, list] = {q: [] for q, _ in QUESTIONS}
+    for c in sorted(reg, key=lambda c: (c.availability, c.id)):
+        q = _bucket(c.predicts)
+        if q is not None:
+            buckets[q].append(c)
+
+    # Relative dash counts set the column widths. Pandoc reads them for pipe
+    # tables, and without the hint the one-character tier column is given the
+    # same share as the clock list beside it.
+    out = [QUESTION_BEGIN, "",
+           "| Question | Ready to score | Needs a coefficient file | Scale |",
+           "|:-----------------|:----------------------------|:-------------|:------|"]
+    for q, _ in QUESTIONS:
+        cs = buckets[q]
+        if not cs:
+            continue
+        ready = [c for c in cs if c.availability == "A"]
+        other = [c for c in cs if c.availability != "A"]
+        scales = sorted({c.scale_type for c in cs})
+
+        def names(items, limit=8):
+            shown = ", ".join(f"`{c.id}`" for c in items[:limit])
+            more = len(items) - limit
+            return (shown + (f", and {more} more" if more > 0 else "")) or "—"
+
+        out.append(f"| {q} | {names(ready)} | {names(other)} | "
+                   + ", ".join(f"`{s}`" for s in scales) + " |")
+    out += ["",
+            f"Every one of the {len(list(reg))} catalogued clocks appears above, routed by "
+            "its declared `predicts` field. The full table with paper links is the "
+            "[clock catalogue](../clocks.qmd).",
+            "", QUESTION_END]
+    return "\n".join(out)
+
+
+def tier_table() -> str:
+    """Availability counts, from the registry rather than from memory."""
+    import falconage as fa
+
+    reg = fa.registry.load()
+    n = {t: sum(1 for c in reg if c.availability == t) for t in "ABC"}
+    what = {
+        "A": "Nothing. Coefficients ship inside the package, or the clock is a "
+             "formula with none.",
+        "B": "Catalogued, but no primary source has been established, so no "
+             "coefficients ship.",
+        "C": "Obtain a coefficient file and register it. The architecture is "
+             "implemented and tested.",
+    }
+    # Two dashes for the tier column against forty for the last one: Pandoc
+    # sizes pipe-table columns from the separator row, and with an even split a
+    # single letter was taking a third of the width.
+    out = [TIERS_BEGIN, "",
+           "| Tier | n | What you do |",
+           "|:--|--:|:-------------------------------------------------------------|"]
+    for t in "ABC":
+        out.append(f"| {t} | {n[t]} | {what[t]} |")
+    out += ["", TIERS_END]
+    return "\n".join(out)
+
+
+GSCALE_BEGIN = "<!-- BEGIN GENERATED: guide-scales -->"
+GSCALE_END = "<!-- END GENERATED: guide-scales -->"
+
+#: Why an operation is refused on a scale, in one clause. The permitted set is
+#: read from LEGAL_OPS; this is the half a machine cannot write.
+WHY_NOT = {
+    "age_years": "—",
+    "age_years_relative": "acceleration: the clock tracks age with a slope near "
+                          "one but its origin moves between cohorts, so "
+                          "predicted minus chronological measures the cohort",
+    "gestational_weeks": "mixing with an age in years",
+    "mortality_log_hazard": "acceleration: a log-hazard has no zero on the age scale",
+    "pace_ratio": "acceleration: it is already a rate",
+    "telomere_kb": "comparison with an age in years; and higher is the *younger* "
+                   "direction here, unlike every age clock beside it",
+    "proportion": "anything ignoring the sum-to-one constraint",
+    "divisions": "acceleration: a division count is not elapsed time",
+    "relative_score": "everything except correlation and rank -- there is no "
+                      "external unit to difference or average",
+}
+
+
+def guide_scale_table() -> str:
+    """Scale, what it permits, and what it refuses -- from LEGAL_OPS itself.
+
+    Hand-written until v1.1, and by then it was missing three of the nine
+    scales the registry uses, including the one added in the same release. A
+    table of rules that omits a third of the rules is worse than no table.
+    """
+    import falconage as fa
+
+    reg = fa.registry.load()
+    n = Counter(c.scale_type for c in reg)
+    missing = sorted(set(n) - set(WHY_NOT))
+    if missing:
+        raise SystemExit(
+            "docs/build_catalogue.py: no WHY_NOT entry for scale_type "
+            + ", ".join(missing))
+
+    out = [GSCALE_BEGIN, "",
+           "| Scale | Clocks | Permitted | Refused, and why |",
+           "|:------------|---:|:------------------|:---------------------------|"]
+    for s, count in sorted(n.items(), key=lambda kv: -kv[1]):
+        ops = ", ".join(sorted(fa.registry.LEGAL_OPS[s])).replace("_", " ")
+        out.append(f"| `{s}` | {count} | {ops} | {WHY_NOT[s]} |")
+    out += ["", GSCALE_END]
+    return "\n".join(out)
+
+
+def render_guide() -> str:
+    """guide/clocks.qmd with every generated block replaced."""
+    text = GUIDE.read_text(encoding="utf-8")
+    for begin, end, body in ((QUESTION_BEGIN, QUESTION_END, question_table()),
+                             (GSCALE_BEGIN, GSCALE_END, guide_scale_table()),
+                             (TIERS_BEGIN, TIERS_END, tier_table())):
+        start, stop = text.find(begin), text.find(end)
+        if start == -1 or stop == -1:
+            raise SystemExit(f"docs/guide/clocks.qmd has no {begin} block")
+        text = text[:start] + body + text[stop + len(end):]
+    return text
+
+
 def render_index() -> str:
     """docs/index.qmd with the scale block replaced."""
     text = INDEX.read_text(encoding="utf-8")
@@ -205,12 +480,23 @@ def main(argv=None) -> int:
     try:
         text = render()
         index = render_index()
+        guide = render_guide()
     except ImportError:
         print("falconage is not importable; install it before generating the "
               "catalogue (pip install ./python)")
         return 1
 
-    pairs = [(TARGET, text), (INDEX, index)]
+    # A clock whose `predicts` value matches no question is invisible on the
+    # page that exists to help people find clocks. Reported, not swallowed.
+    stray = unrouted_predicts()
+    if stray:
+        print("predicts values not routed to any question on guide/clocks.qmd:")
+        for k, ids in sorted(stray.items()):
+            print(f"  {k!r}: {len(ids)} clock(s), e.g. {ids[:3]}")
+        print("  add them to QUESTIONS in docs/build_catalogue.py")
+        return 1
+
+    pairs = [(TARGET, text), (INDEX, index), (GUIDE, guide)]
     if args.check:
         stale = [p for p, want in pairs
                  if (p.read_text(encoding="utf-8") if p.exists() else None) != want]
@@ -218,7 +504,7 @@ def main(argv=None) -> int:
             print(", ".join(str(p.relative_to(ROOT)) for p in stale)
                   + " is stale; run docs/build_catalogue.py")
             return 1
-        print("docs/clocks.qmd and docs/index.qmd are current")
+        print("docs/clocks.qmd, docs/index.qmd and docs/guide/clocks.qmd are current")
         return 0
 
     for p, want in pairs:

@@ -81,8 +81,8 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `read_clinical()` | `fa.read_clinical()` |
 |  | `read_rrbs_dir()` | `fa.read_rrbs_dir()` |
 |  | `falcon_data()` | `fa.FalconData()` |
-|  | `obs()` | — |
-|  | `write_h5ad()` | — |
+|  | `obs()` | `data.obs` |
+|  | `write_h5ad()` | `data.write_h5ad()` |
 |  | — | `fa.read()` |
 |  | — | `fa.read_bedmethyl()` |
 |  | — | `fa.read_bedmethyl_dir()` |
@@ -106,59 +106,49 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | — | `fa.preprocess.apply_mask()` |
 | **Preprocessing** | `prepare()` | `fa.prepare()` |
 |  | `qc()` | `fa.qc()` |
-|  | `probe_loss()` | — |
-|  | `fit_batch_reference()` | — |
-|  | `apply_batch_reference()` | — |
+|  | `probe_loss()` | `fa.probe_loss()` |
+|  | `fit_batch_reference()` | `fa.fit_batch_reference()` |
+|  | `apply_batch_reference()` | `fa.apply_batch_reference()` |
 |  | — | `fa.prepare_clinical()` |
-|  | — | `fa.probe_loss()` |
 |  | — | `fa.preprocess.aggregate_replicate_probes()` |
 |  | — | `fa.preprocess.impute()` |
-|  | — | `fa.fit_batch_reference()` |
-|  | — | `fa.apply_batch_reference()` |
 |  | — | `fa.preprocess.BatchReference()` |
 |  | — | `fa.preprocess.prepare_proteomic()` |
 |  | — | `fa.preprocess.prepare_transcriptomic()` |
 |  | — | `fa.preprocess.rle_normalise()` |
 |  | — | `fa.preprocess.yugene()` |
 |  | — | `fa.preprocess.median_centre()` |
-| **Uncertainty** | `technical_se()` | — |
-|  | `interval()` | — |
-|  | `conformal_interval()` | — |
-|  | `icc_from_replicates()` | — |
-|  | — | `fa.technical_se()` |
-|  | — | `fa.interval()` |
-|  | — | `fa.conformal_interval()` |
-|  | — | `fa.icc_from_replicates()` |
+| **Uncertainty** | `technical_se()` | `fa.technical_se()` |
+|  | `interval()` | `fa.interval()` |
+|  | `conformal_interval()` | `fa.conformal_interval()` |
+|  | `icc_from_replicates()` | `fa.icc_from_replicates()` |
 |  | — | `fa.uncertainty.load_probe_icc()` |
 |  | — | `fa.uncertainty.probe_icc_source()` |
 |  | — | `fa.uncertainty.load_conformal()` |
-| **Study design** | `power_n()` | — |
-|  | `consensus()` | — |
-|  | — | `fa.power()` |
+| **Study design** | `power_n()` | `fa.power()` |
+|  | `consensus()` | `fa.consensus()` |
 |  | — | `fa.detectable_effect()` |
-|  | — | `fa.consensus()` |
 |  | — | `fa.registry.evidence()` |
 | **Scoring** | `score()` | `fa.score()` |
 |  | `combine()` | `fa.combine()` |
 |  | `as.data.frame.falcon_result()` | `fa.FalconResult()` |
-|  | `coverage()` | — |
-|  | `manifest()` | — |
-|  | `interpretation()` | — |
-|  | `write_results()` | — |
+|  | `interpretation()` | `res.interpretation()` |
+|  | `coverage()` | `res.coverage` |
+|  | `manifest()` | `res.manifest` |
+|  | `write_results()` | `res.write()` |
 | **The clock catalogue** | `list_clocks()` | `fa.registry.ClockRegistry()` |
 |  | `clock_info()` | `fa.registry.Clock()` |
 |  | `register_local_weights()` | `fa.registry.register_local_weights()` |
-|  | `cite_clock()` | — |
-|  | `compatible_clocks()` | — |
+|  | `cite_clock()` | `reg.get(id).cite()` |
+|  | `compatible_clocks()` | `reg.compatible_with(data)` |
 |  | — | `fa.registry.load()` |
 | **Analysis** | `acceleration()` | `fa.acceleration()` |
+|  | `cell_composition()` | `fa.cell_composition()` |
 |  | `associate()` | `fa.associate()` |
 |  | `cox_hazard()` | `fa.cox_hazard()` |
 |  | `agreement()` | `fa.agreement()` |
 |  | `icc()` | `fa.icc()` |
 |  | `run_benchmark()` | `fa.run_benchmark()` |
-|  | `cell_composition()` | — |
-|  | — | `fa.cell_composition()` |
 | **Clinical references** | `fit_kdm()` | `fa.models.fit_kdm()` |
 |  | `fit_hd()` | `fa.models.fit_hd()` |
 |  | — | `fa.models.clinical.phenoage()` |
@@ -191,8 +181,8 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `plot_benchmark_heatmap()` | `fa.plot.benchmark_heatmap()` |
 |  | `falcon_palette()` | `fa.plot.palette()` |
 |  | `report()` | `fa.report.write_report()` |
-|  | `falcon_scheme()` | — |
-|  | `falcon_theme()` | — |
+|  | `falcon_scheme()` | *R only: loads the shared palette into R* |
+|  | `falcon_theme()` | *R only: a ggplot2 theme; Python styles via matplotlib* |
 |  | — | `fa.plot.missingness()` |
 |  | — | `fa.plot.beta_density()` |
 |  | — | `fa.plot.study_comparison()` |
@@ -205,8 +195,8 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `cache_info()` | `fa.download.cache_info()` |
 |  | `clear_cache()` | `fa.download.clear_cache()` |
 | **Configuration and setup** | `falconage_config()` | `fa.config()` |
-|  | `falconage_install()` | — |
-|  | `falconage_available()` | — |
+|  | `falconage_install()` | *R only: builds the Python environment R calls into* |
+|  | `falconage_available()` | *R only: is that environment resolvable yet* |
 |  | — | `fa.configure()` |
 |  | — | `fa.core.resolve()` |
 |  | — | `fa.core.describe()` |

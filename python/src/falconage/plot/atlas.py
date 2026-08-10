@@ -87,14 +87,17 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     (figure, data)
         The frame is one row per clock and carries every number drawn.
     """
-    from . import (
+    # From ``._common`` rather than from ``.``: the package initialiser imports
+    # this module, so importing back from it at call time would work but would
+    # make the cycle load-bearing. The helpers live in one place now.
+    from . import spec
+    from ._common import (
         NothingToPlot,
         _mpl,
         _require_signal,
         group_colours,
         palette,
         semantic,
-        spec,
         theme_value,
     )
 
@@ -191,7 +194,37 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
         if grid_axis:
             ax.grid(axis=grid_axis, alpha=theme_value("grid_alpha"), linewidth=0.45)
         ax.set_axisbelow(True)
-        ax.set_title(title, fontsize=base - 0.5, loc="left", pad=7, color="#333333")
+        _fit_title(ax, title)
+
+    def _fit_title(ax, title):
+        """Set a panel header, shrunk until it fits inside its own panel.
+
+        ``loc="left"`` puts a title at the left edge of its axes and lets it run
+        as far right as it likes. Panel D's header ran past its column and
+        printed through panel E's, so the figure read
+        ``(filled = BH q < 0.05E datasets hit``. Shortening D would fix today's
+        atlas and not the next header somebody lengthens, so the width is
+        measured instead: shrink to fit, and only give up at a floor where
+        shrinking further would be its own legibility bug.
+        """
+        size = base - 0.5
+        avail = ax.get_position().width * fig.get_figwidth() * 72.0  # points
+        # wspace leaves a real gap between panels; a title may use a little of
+        # it, but not so much that it reaches the next panel's own title.
+        avail *= 1.12
+        while size > (base - 0.5) * 0.62:
+            t_obj = ax.set_title(title, fontsize=size, loc="left", pad=7,
+                                 color="#333333")
+            fig.canvas.draw_idle()
+            try:
+                w = t_obj.get_window_extent(
+                    renderer=fig.canvas.get_renderer()).width / fig.dpi * 72.0
+            except Exception:      # no renderer yet on some backends
+                return
+            if w <= avail:
+                return
+            size -= 0.4
+        ax.set_title(title, fontsize=size, loc="left", pad=7, color="#333333")
 
     # ---- A: identity badge, and the clock names ----------------------------
     ax = axes[0]
@@ -237,8 +270,11 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
 
     # ---- D: detection, one dot per study -----------------------------------
     ax = axes[3]
-    _panel(ax, "D  case - control acceleration, one dot per study   "
-               "(filled = BH q < 0.05)")
+    # The "filled = significant" key belongs with the other legends, not in the
+    # header. Shrink-to-fit would have kept it on the canvas, but a header at
+    # 62% size to accommodate a parenthetical is a worse figure than one that
+    # says the same thing where the reader is already looking for a key.
+    _panel(ax, "D  case - control acceleration, one dot per study")
     conds = sorted(per["condition"].astype(str).unique())
     ccol = group_colours(conds)
     # Alternating bands: across a wide panel the eye loses which dot belongs to
@@ -311,17 +347,22 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
                   n_samples=result.scores.shape[0],
                   n_significant=int(per["significant"].sum()),
                   n_comparisons=len(per))
-    sub = t["subtitle"]
+    sub = t["subtitle"] + "  ·  filled dot = BH q < 0.05"
     if truncated:
         sub += f" · {truncated} lower-scoring clock(s) not shown"
+    cap_size = theme_value("caption_size")
     cap = "\n".join(textwrap.wrap(" ".join(t["description"].split()), width=168))
 
+    # Offsets in inches divided by height, so the gap between title and subtitle
+    # is a physical distance rather than a fraction of a canvas whose height
+    # grows with the number of clocks.
+    title_size = theme_value("title_size") + 2
+    sub_size = theme_value("subtitle_size")
     fig.text(0.012, 1 - 0.20 / height, t["title"],
-             fontsize=theme_value("title_size") + 2, va="top", ha="left")
-    fig.text(0.012, 1 - 0.52 / height, sub,
-             fontsize=theme_value("subtitle_size"), color="#555555",
-             va="top", ha="left")
-    fig.text(0.012, 0.16 / height, cap, fontsize=theme_value("caption_size"),
+             fontsize=title_size, va="top", ha="left")
+    fig.text(0.012, 1 - (0.20 + title_size * 1.5 / 72.0) / height, sub,
+             fontsize=sub_size, color="#555555", va="top", ha="left")
+    fig.text(0.012, 0.16 / height, cap, fontsize=cap_size,
              color="#666666", va="bottom", ha="left")
 
     return fig, d.reset_index()

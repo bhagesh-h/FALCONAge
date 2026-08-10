@@ -211,19 +211,41 @@ pairs:
     - [read_clinical, read_clinical]
     - [read_rrbs_dir, read_rrbs_dir]
     - [falcon_data, FalconData]
+    - [obs, FalconData.obs]
+    - [write_h5ad, FalconData.write_h5ad]
   Preprocessing:
     - [prepare, prepare]
     - [qc, qc]
+    - [probe_loss, probe_loss]
+    - [fit_batch_reference, fit_batch_reference]
+    - [apply_batch_reference, apply_batch_reference]
+  Uncertainty:
+    - [technical_se, technical_se]
+    - [interval, interval]
+    - [conformal_interval, conformal_interval]
+    - [icc_from_replicates, icc_from_replicates]
+  Study design:
+    # power_n, not power: `power` is base R's exponent helper and shadowing it
+    # in a package a user has attached is a worse trade than one differing name.
+    - [power_n, power]
+    - [consensus, consensus]
   Scoring:
     - [score, score]
     - [combine, combine]
     - [as.data.frame.falcon_result, FalconResult]
+    - [interpretation, FalconResult.interpretation]
+    - [coverage, FalconResult.coverage]
+    - [manifest, FalconResult.manifest]
+    - [write_results, FalconResult.write]
   The clock catalogue:
     - [list_clocks, registry.ClockRegistry]
     - [clock_info, registry.Clock]
     - [register_local_weights, registry.register_local_weights]
+    - [cite_clock, registry.Clock.cite]
+    - [compatible_clocks, registry.ClockRegistry.compatible_with]
   Analysis:
     - [acceleration, acceleration]
+    - [cell_composition, cell_composition]
     - [associate, associate]
     - [cox_hazard, cox_hazard]
     - [agreement, agreement]

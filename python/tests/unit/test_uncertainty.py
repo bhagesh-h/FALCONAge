@@ -400,3 +400,62 @@ def test_the_clocks_with_no_fixed_origin_are_not_calibrated():
     relative = {c.id for c in reg if c.scale_type == "age_years_relative"}
     assert relative, "the scale should still have members"
     assert not (set(CAL["clock"]) & relative)
+
+
+# ---------------------------------------------------------------------------
+# the quantile rule itself
+# ---------------------------------------------------------------------------
+# Split conformal's guarantee rests on one specific choice: the
+# ceil((n+1)*level)-th order statistic of the absolute residuals. numpy's
+# quantile interpolates between order statistics and lands below it, so
+# substituting np.quantile silently under-covers while still carrying the word
+# "guarantee". That substitution shipped once, in the per-age-band rows only,
+# and widened Horvath's 50-70 band from 11.5 to 14.9 years when corrected. These
+# two tests exist so it cannot come back quietly.
+
+
+def _conformal_half_width(absr, level):
+    """The rule, restated here rather than imported.
+
+    ``python/tools/`` is not on the path for a plain ``pytest python/tests`` run
+    and is not part of the wheel. Restating the one line is the point: if the
+    builder's version drifts from this one, the next test fails.
+    """
+    n = len(absr)
+    k = int(np.ceil((n + 1) * level))
+    return float(np.sort(absr)[min(k, n) - 1])
+
+
+@pytest.mark.parametrize("n", [20, 36, 40, 55, 61, 164])
+@pytest.mark.parametrize("level", [0.80, 0.90, 0.95])
+def test_the_conformal_quantile_is_never_the_interpolated_one(rng, n, level):
+    """np.quantile is <= the order statistic, so it would under-cover."""
+    absr = np.abs(rng.normal(0, 7.0, size=n))
+    conformal = _conformal_half_width(absr, level)
+    interpolated = float(np.quantile(absr, level))
+    assert conformal >= interpolated
+    # And it is genuinely one of the observed residuals, not a value between two.
+    assert np.isclose(np.sort(absr), conformal).any()
+
+
+@needs_cal
+def test_every_shipped_half_width_obeys_the_order_statistic_rule():
+    """Empirical coverage on the calibration set must reach the stated level.
+
+    A width taken from the ceil((n+1)*level)-th order statistic covers at least
+    ceil((n+1)*level)/n of the calibration residuals by construction. An
+    interpolated quantile does not, and on the band rows it did not.
+    """
+    for _, r in CAL.iterrows():
+        n, level = int(r["n_calibration"]), float(r["level"])
+        k = int(np.ceil((n + 1) * level))
+        if not bool(r["exact"]):
+            assert k > n, (
+                f"{r['clock']} {r['age_band']} is flagged inexact but "
+                f"ceil((n+1)*level)={k} <= n={n}, so the level was attainable")
+            continue
+        assert k <= n, f"{r['clock']} {r['age_band']}: level {level} needs n>={k}, has {n}"
+        # The guaranteed coverage this width buys on its own calibration set.
+        assert k / n >= level, (
+            f"{r['clock']} {r['age_band']}: covers {k}/{n}={k/n:.3f} of the "
+            f"calibration residuals, below the stated {level}")

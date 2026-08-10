@@ -143,6 +143,21 @@ jobs:
       - name: Documented API exists
         run: python docs/check_api_docs.py
 
+      # The other half of the same problem. check_api_docs.py catches a name
+      # that does not exist; this catches a feature that does exist and is not
+      # documented, or is documented as belonging to the previous release.
+      #
+      # Seven such defects were reported at once against v1.1.0: the landing
+      # page named none of the new inputs, the catalogue linked no papers, the
+      # architecture page still called itself v1.0, output was pasted into
+      # copyable command fences, the routing table did not cover every clock,
+      # the availability column spent half the page on one letter, and the
+      # parity table claimed Python lacked functions it had. Three of those
+      # pages are machine-generated, so a generator change can undo a hand fix
+      # without anyone touching the page.
+      - name: Documentation describes this release
+        run: python docs/check_docs_complete.py
+
       # On every push, not only on a tag. The release workflow checks this too,
       # but a check that only runs at release time is a check that tells you
       # about the problem at the worst possible moment -- which is exactly what

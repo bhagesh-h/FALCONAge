@@ -450,6 +450,47 @@ def fill_block(path: Path, begin: str, end: str, body: str) -> str | None:
     return head + body + tail
 
 
+#: Python names that are methods on an object rather than module-level
+#: functions, and how a user actually writes them. Without this the table
+#: rendered `interpretation()` as present in R and absent in Python, which is
+#: false -- `res.interpretation()` has existed since v1.0. The R side exposes
+#: them as S3 generics because that is idiomatic R; the Python side hangs them
+#: off the result, which is idiomatic Python. Neither is missing anything.
+METHODS: dict[str, str] = {
+    "FalconResult.interpretation": "res.interpretation()",
+    "FalconResult.evidence": "res.evidence()",
+    "FalconResult.qc": "res.qc()",
+    "FalconResult.long": "res.long()",
+    "FalconResult.wide": "res.wide()",
+    "FalconResult.write": "res.write()",
+    "FalconResult.manifest": "res.manifest",
+    "FalconResult.coverage": "res.coverage",
+    "FalconData.obs": "data.obs",
+    "FalconData.write_h5ad": "data.write_h5ad()",
+    "FalconData.summary": "data.summary()",
+    "registry.Clock.cite": "reg.get(id).cite()",
+    "registry.ClockRegistry.compatible_with": "reg.compatible_with(data)",
+}
+
+#: R entries with no Python counterpart *by design*, and the reason. Rendered
+#: with the reason rather than a bare dash, because "—" reads as an oversight
+#: and these are not one.
+R_ONLY: dict[str, str] = {
+    "falconage_install": "R only: builds the Python environment R calls into",
+    "falconage_available": "R only: is that environment resolvable yet",
+    "falcon_theme": "R only: a ggplot2 theme; Python styles via matplotlib",
+    "falcon_scheme": "R only: loads the shared palette into R",
+}
+
+
+def _py_cell(name: str | None) -> str:
+    if name is None:
+        return "—"
+    if name in METHODS:
+        return f"`{METHODS[name]}`"
+    return f"`fa.{name}()`"
+
+
 def api_map(spec: dict) -> str:
     """The R-to-Python correspondence table, from the explicit `pairs` block.
 
@@ -457,6 +498,17 @@ def api_map(spec: dict) -> str:
     Positional pairing was tried and is wrong: the lists are ordered by subject
     and differ in length, so it produced rows claiming `report()` was
     `fa.plot.palette()`.
+
+    Two things this table used to get wrong, both of which made FALCONAge look
+    less complete in Python than it is:
+
+    * an R function whose Python twin exists but was not listed in ``pairs``
+      rendered as ``foo() | —``, with the twin appearing as ``— | fa.foo()``
+      several rows below. Two half-empty rows for one function. The ``bad_pairs``
+      check below now runs the other way as well, so a pairable name that is not
+      paired is an error rather than a silently ugly table;
+    * a Python *method* counted as absent. ``res.interpretation()`` is not
+      missing because it is not ``fa.interpretation()``. See :data:`METHODS`.
     """
     pairs = spec.get("pairs") or {}
     lines = [MAP_BEGIN, "", "| | R | Python |", "|---|---|---|"]
@@ -471,18 +523,33 @@ def api_map(spec: dict) -> str:
             continue
         for i, (rn, pn) in enumerate(rows):
             group = f"**{g['title']}**" if i == 0 else ""
-            lines.append(f"| {group} | {f'`{rn}()`' if rn else '—'} "
-                         f"| {f'`fa.{pn}()`' if pn else '—'} |")
+            if rn is not None and pn is None and rn in R_ONLY:
+                right = f"*{R_ONLY[rn]}*"
+            else:
+                right = _py_cell(pn)
+            lines.append(f"| {group} | {f'`{rn}()`' if rn else '—'} | {right} |")
     lines += ["", MAP_END]
     return "\n".join(lines)
 
 
 def bad_pairs(spec: dict) -> list[str]:
-    """Names in `pairs` that do not appear in the group they are filed under.
+    """Everything that can make the correspondence table lie, checked both ways.
 
-    Without this the table silently keeps rendering a function that has been
-    renamed or moved, which is the failure mode the whole generated-file
-    arrangement exists to prevent.
+    Three failures, and the third is the one that actually shipped:
+
+    1. a ``pairs`` entry naming a group that does not exist;
+    2. a ``pairs`` entry naming a function that is not in that group's list --
+       the rename-and-forget case;
+    3. **an R name and a Python name that are the same string, both present in
+       the same group, and not paired.** That renders as two half-empty rows,
+       ``foo() | —`` and, several rows lower, ``— | fa.foo()``. It reads as "R
+       has this and Python does not" about a function both languages export
+       under the identical name. Eight v1.1 functions did exactly that.
+
+    A Python name that is a method path -- ``FalconResult.interpretation`` --
+    is allowed without being in the group's ``python`` list, because the list
+    holds what quartodoc renders a page for and a method is documented on its
+    class. :data:`METHODS` is the registry of those.
     """
     out = []
     by_title = {g["title"]: g for g in spec["groups"]}
@@ -495,8 +562,23 @@ def bad_pairs(spec: dict) -> list[str]:
         for a, b in rows:
             if a not in r:
                 out.append(f"{title}: R {a!r} is not in that group's r: list")
-            if b not in py:
-                out.append(f"{title}: Python {b!r} is not in that group's python: list")
+            if b not in py and b not in METHODS:
+                out.append(f"{title}: Python {b!r} is not in that group's "
+                           "python: list and is not a known method path "
+                           "(add it to METHODS in build_docs.py)")
+
+    for g in spec["groups"]:
+        title = g["title"]
+        rows = (spec.get("pairs") or {}).get(title, [])
+        free_r = set(g.get("r") or []) - {a for a, _ in rows}
+        free_py = set(g.get("python") or []) - {b for _, b in rows}
+        same = sorted(free_r & free_py)
+        if same:
+            out.append(
+                f"{title}: {same} appear in both languages under the same name "
+                "but are not paired, so the table will show each of them twice, "
+                "once as missing from Python and once as missing from R. Add "
+                f"them to pairs: {title}.")
     return out
 
 

@@ -9,7 +9,7 @@ the `#subdirectory=python` fragment below selects:
 pip install "falconage @ git+https://github.com/bhagesh-h/FALCONAge.git#subdirectory=python"
 ```
 
-Pin a tag in anything you intend to reproduce - `...FALCONAge.git@v1.0.0#subdirectory=python`.
+Pin a tag in anything you intend to reproduce - `...FALCONAge.git@v1.1.0#subdirectory=python`.
 `main` moves; a tag does not.
 
 ```python

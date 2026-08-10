@@ -1587,206 +1587,72 @@ weights and the same transform code so results are bit-comparable.
 
 ## 15. Design blueprint for the new tool
 
-> This section is the sketch that preceded the package, kept because the reasoning is still the
-> reasoning. It is not a description of what shipped: the working name was `agingscore`, some
-> layers were collapsed, and the registry ended up as one file rather than a tree. For what the
-> code actually does, read [Architecture](architecture.qmd) - it carries the same decisions with
-> the outcome of each recorded, including where the plan turned out to be wrong.
+The requirement was one tool, Python and R, multiomic input, optional GPU, and correct --- meaning
+it reproduces published clock values on published test vectors.
 
-### 15.1 Requirements restated
+This section was the sketch that turned that into a design. It is now documented properly
+elsewhere, and the sketch has been cut rather than kept in parallel: it used the abandoned working
+name `agingscore` and an API that no longer exists, so anyone who copied from it got nothing that
+runs.
 
-One tool, Python and R, multiomic input, optional GPU, and it must be correct - meaning it
-reproduces published clock values on published test vectors.
+[Architecture](architecture.qmd) is the design record for the built system, and it is checked
+against the running package rather than remembered. Where to look:
 
-### 15.2 Layered architecture
+| What the blueprint specified | Where it is documented now |
+|---|---|
+| Layered architecture, module boundaries | [Architecture §1.4](architecture.qmd) --- the file tree, with the v1.1 modules marked |
+| Data model (`X`, `obs`, `var`, `uns`, multi-modality) | [Architecture §2](architecture.qmd) --- the shipped `FalconData`, AnnData-backed |
+| Clock registry schema | [Architecture §3](architecture.qmd) --- the schema as validated, field by field |
+| API surface, Python and R | [Getting started](guide/FALCONAge.qmd), and the [Python](reference/) and [R](r/reference/) references |
+| Correctness strategy | §15.1 below, which is the part that did not reduce to an implementation detail |
+| Packaging, distribution, CI | [Architecture §9, §12](architecture.qmd) |
+| Build order and milestones | [Architecture §13](architecture.qmd), with the exit criterion each milestone was held to |
 
-```
-                 ┌──────────────────────────────────────────────┐
-   R front end   │  agingscore (R)  - reticulate bridge          │
-                 │  read_*, prepare_*, score(), plot_*(), bench()│
-                 └───────────────────┬──────────────────────────┘
-                                     │  identical API surface
-                 ┌───────────────────┴──────────────────────────┐
-Python front end │  agingscore (py) - same verbs                 │
-                 └───────────────────┬──────────────────────────┘
-                                     │
-   ┌─────────────────────────────────┴──────────────────────────────────┐
-   │  Core                                                              │
-   │  ┌────────────┐ ┌───────────────┐ ┌───────────┐ ┌────────────────┐ │
-   │  │ IO/adapters│ │ Harmonisation │ │  Registry │ │  Engine        │ │
-   │  │ idat, csv, │ │ ID mapping,   │ │  clock    │ │  torch / numpy │ │
-   │  │ h5ad, seurat│ │ units, probe │ │  metadata │ │  cupy / cuml   │ │
-   │  │ olink, npx │ │  aggregation  │ │  + weights│ │                │ │
-   │  └────────────┘ └───────────────┘ └───────────┘ └────────────────┘ │
-   │  ┌────────────────┐ ┌───────────────┐ ┌──────────────────────────┐ │
-   │  │ Preprocess ops │ │ Postprocess   │ │ Analysis: AA, Cox, ICC,  │ │
-   │  │ (15 ops, App E)│ │ (15 forms)    │ │ AA1/AA2, plots, report   │ │
-   │  └────────────────┘ └───────────────┘ └──────────────────────────┘ │
-   └────────────────────────────────────────────────────────────────────┘
-```
+Two decisions from the blueprint are worth restating because they are about the field rather than
+about this package. Weights belong outside the git repository, in `safetensors` rather than
+pickles --- `torch.load(weights_only=False)` executes arbitrary code while unpickling, and it is
+what several packages still accept. And a `license` field has to gate use and print at score time:
+tAge models are MGB Open Access (non-commercial), organAging is Academic Non-Commercial, and a tool
+that redistributes weights must surface that rather than bury it.
 
-### 15.3 Data model
+### 15.1 Correctness strategy
 
-Use AnnData as the in-memory container (Python) and a thin S4/R6 wrapper in R backed by the same
-HDF5 (`.h5ad`) on disk, so both languages read the same artefact.
+This is the part that decides whether a clock implementation is trusted, and it is the reason the
+next subsection exists at all.
 
-- `X` - the primary feature matrix for one modality.
-- `layers["<modality>"]` - additional modalities aligned on the same samples, or separate AnnData
-  objects in a `MuData`-style container when feature spaces differ (methylation 850K columns vs
-  proteomics 3,000 columns).
-- `obs` - sample metadata: `age`, `sex`, `tissue`, `species`, `platform`, `condition`, `time`,
-  `subject_id` (for repeated measures), plus predictions.
-- `var` - feature metadata: identifier type, genomic position, probe design type.
-- `uns["agingscore"]` - run manifest: tool version, registry version, device, dtype, imputation,
-  per-clock missingness, warnings, and the full config so a run is reproducible.
+1. **Gold-standard vectors.** For every clock, an input matrix and the expected output from the
+   original implementation, asserted to 1e-6 in FP64.
+2. **Cross-implementation agreement.** Where two packages implement the same clock, compare, and
+   record disagreements in the registry rather than picking a side silently. §15.2 is that record.
+3. **Registry validation** against a controlled vocabulary for tissue, platform, predicts,
+   training target, unit, data type, species, model type and population. With 161 entries there is
+   no other way to keep them coherent.
+4. **Property tests.** Proportions sum to 1; probabilities in [0,1]; monotone response to a
+   synthetic age gradient; permuting feature order must not change results; adding a duplicated
+   sample must not change either sample's score.
+5. **Numerical dtype tests.** FP32-versus-FP64 divergence held under a documented per-clock
+   tolerance. The PC clocks are the ones to watch.
 
-### 15.4 Clock registry schema
+### 15.2 Where the paper and the coefficients disagree
 
-Extend pyaging's fields with what is missing for a multiomic, benchmark-aware tool:
+Eleven catalogued clocks are scored from coefficient sets that do not match what their paper
+describes. Each carries a `known_discrepancies` note in the registry and raises it as a warning at
+score time:
 
-```yaml
-id: grimage2
-display_name: GrimAge2
-version: "1.0.0"
-year: 2022
-citation: "Lu AT et al., Aging 2022"
-doi: "10.18632/aging.204434"
-license: research_only          # gates use and prints a warning
-data_type: dna_methylation
-platform: [illumina_450k]
-species: homo_sapiens
-tissue: [whole_blood]
-population: older_adults
-generation: second              # first | second | pace | causal | mitotic | system | foundation
-predicts: [mortality_risk]
-training_target: [mortality]
-unit: years
-scale_type: age_years           # governs which operations are legal
-n_features: 1032
-feature_ids: cpg_illumina
-requires_covariates: [age, sex] # hard requirement, error if absent
-architecture: two_stage_cox
-weights_uri: hf://.../grimage2.safetensors
-reference_values_uri: hf://.../grimage2_ref.npy
-preprocess: [fill_nan_with_reference]
-postprocess: [cox_to_years]
-postprocess_params: {cox_mean: 15.370829484122, cox_std: 1.09534876966487,
-                     age_mean: 66.0943807965085, age_std: 9.05974444998421}
-reliability:
-  technical_icc: 0.83
-  biological_icc: 0.61
-  source: "TranslAGE 2025"
-benchmark:
-  computage_aa2: 9
-  computage_aa1: 12
-  computage_medae: 8.1
-gold_standard_test:
-  input: tests/vectors/grimage2_in.parquet
-  expected: tests/vectors/grimage2_out.parquet
-  tolerance: 1e-6
-```
+| Clock | The disagreement |
+|---|---|
+| `bocklandt` | Paper describes 2 CpGs; the circulating coefficient set carries 1 |
+| `bohlin` | Paper reports 96 CpGs; the circulating set carries 251 |
+| `cvdwesterman` | Paper reports 1,305 CpGs; the circulating set carries 235 |
+| `zhangmortality` | Paper defines an integer count of markers past quartile thresholds; the implementations compute a continuous weighted sum |
+| `yingcausage`, `yingdamage`, `yingadaptage` | Paper reports 586 / 1,090 / 1,000 CpGs; the sets carry 585 / 1,089 / 999 --- the same off-by-one in all three |
+| `senchronoage`, `sencultureage`, `senmortalityage` | The upstream README's feature counts disagree with the coefficient objects it ships |
+| `phenoage` | Two constants circulate in the divisor of the Gompertz inversion, 0.090165 and 0.09165 |
 
-The `license` field matters: pyaging carries a `research_only` flag and warns at prediction time;
-tAge models are MGB Open Access (non-commercial); organAging is Academic Non-Commercial. A tool
-that redistributes weights must respect and surface these.
-
-### 15.5 API sketch
-
-Python:
-
-```python
-import agingscore as ag
-
-data = ag.read_methylation("betas.csv", platform="epic_v2")   # aggregates v2 probe suffixes
-data = ag.add_modality(data, ag.read_olink("npx.csv"))
-data = ag.add_metadata(data, age="age", sex="sex", tissue="whole blood")
-
-ag.qc(data)                       # missingness, distribution, platform inference
-
-res = ag.score(
-    data,
-    clocks=["horvath2013", "grimage2", "dunedinpace", "systemsage", "phenoage"],
-    imputation="knn",
-    device="auto",                # "cpu" | "cuda" | "auto"
-    dtype="float32",
-    batch_size=1024,
-)
-
-res.table()                       # tidy long frame with units and provenance
-res.acceleration(method="both")   # absolute and residual
-ag.pl.ba_vs_ca(res); ag.pl.clock_corr(res); ag.pl.missingness(res)
-ag.stats.cox(res, time="time", status="status", covars=["age", "sex"])
-ag.bench.run(res, design="AA2", condition_col="condition", control="HC")
-ag.report(res, "report.html")
-```
-
-R, deliberately mirrored:
-
-```r
-library(agingscore)
-data <- read_methylation("betas.csv", platform = "epic_v2") |>
-        add_modality(read_olink("npx.csv")) |>
-        add_metadata(age = "age", sex = "sex")
-
-res <- score(data, clocks = c("horvath2013", "grimage2", "dunedinpace"),
-             imputation = "knn", device = "auto")
-
-as_tibble(res)
-plot_ba_vs_ca(res)
-cox_table(res, time = "time", status = "status", covars = c("age", "sex"))
-```
-
-### 15.6 Correctness strategy
-
-This is the part that decides whether the tool is trusted.
-
-1. **Gold-standard vectors.** For every clock, store an input matrix and the expected output from
-   the original implementation, and assert to 1e-6 in FP64. pyaging already has
-   `tests/predict/test_gold_standard.py` - extend the idea to every clock and both languages.
-2. **Cross-implementation agreement.** Where two packages implement the same clock (pyaging vs
-   computage vs methylCIPHER vs biolearn), compare and record any disagreement in the registry.
-   The pyaging audit already documents several: Bocklandt (paper says 2 CpGs, packaged model has
-   1), Bohlin (paper 96, packaged 251), CVDWesterman (paper 1,305, packaged 235), ZhangMortality
-   (paper is an integer count over quartile thresholds, pyaging implements a continuous weighted
-   sum), YingCausAge/DamAge/AdaptAge (paper 586/1090/1000 vs packaged 585/1089/999),
-   SenChronoAge/SenCultureAge/SenMortalityAge (README counts differ from the coefficient objects).
-   Surface these as warnings, do not hide them.
-3. **Registry validation.** pyaging ships `clocks/metadata/validate_metadata.py` (33 KB) and a
-   `controlled_vocabulary.json`. Adopt both - a controlled vocabulary for tissue, platform,
-   predicts, training target, unit, data type, species, model type and population is the only way
-   to keep 200+ entries coherent.
-4. **Property tests.** Proportions sum to 1; probabilities in [0,1]; DunedinPACE within a
-   plausible range; monotone response to a synthetic age gradient; permutation of feature order
-   must not change results; adding a duplicated sample must not change either sample's score.
-5. **Numerical dtype tests.** FP32 vs FP64 divergence must stay under a documented per-clock
-   tolerance; PC clocks are the ones to watch.
-
-### 15.7 Packaging and distribution
-
-- Weights and reference vectors do not belong in the git repo. pyaging's approach - one artefact
-  per clock on Hugging Face, downloaded on first use into the standard HF cache - is right.
-  Prefer `safetensors` over pickled `torch.load(weights_only=False)`, which is an arbitrary-code
-  execution hazard that pyaging currently accepts.
-- Python: `uv` / PyPI, optional extras `[gpu]`, `[histone]` (pyBigWig), `[single-cell]`,
-  `[bench]`.
-- R: the R package carries no weights; it reticulates into the Python core, matching tAge's
-  design. Ship a `setup_agingscore_python()` helper that builds the venv.
-- Provide a Docker image with CUDA and both language stacks, and a conda-forge recipe.
-- CI must run the gold-standard suite on CPU on every PR and on GPU nightly.
-
-### 15.8 Build order
-
-1. Core data model, IO for methylation CSV/parquet + IDAT, harmonisation, registry, engine.
-2. Linear + PC clocks with all 15 postprocess transforms and all 11 preprocess ops - that covers
-   ~150 of the 173 pyaging clocks.
-3. Clinical chemistry: PhenoAge (both unit variants), KDM (with de novo training), HD.
-4. Age acceleration, Cox/ROC, the standard plot set, HTML report.
-5. GPU path with dtype control and vectorised preprocess kernels.
-6. Transcriptomics: bulk RNA-seq normalisation chain, tAge model loading, Pasta/REG, BiT age.
-7. Proteomics: Olink/SomaScan adapters, organAging coefficient loading, log-hazard → years.
-8. Benchmarking module with the ComputAgeBench dataset and AA1/AA2 scoring.
-9. Single-cell: pseudobulk, binarisation, spatial smoothing, cell-type clocks.
-10. Foundation-model integration (CpGPT) as an optional heavy extra.
+The list is generated from the registry, not maintained by hand: `reg.get(id).known_discrepancies`
+returns the full text, and `res.manifest["warnings"]` carries whichever of them fired on your run.
+The Ying clocks additionally carry a measured cohort-offset note, which is why they sit on
+`age_years_relative` rather than `age_years` --- §20.3.1.
 
 ## 16. Failure modes and gotchas
 
@@ -2199,11 +2065,30 @@ information — `binarize`, `rank_normalize`, `quantile_normalize`,
 `simplex_projection` — have none, and a chain containing one **refuses** rather
 than skipping the step and returning a confidently small interval.
 
+**The sum assumes probe errors are independent, and they are not.** Writing
+$\sum_j w_j^2 \sigma_j^2$ drops the cross term
+$2\sum_{j<k} w_j w_k \operatorname{Cov}(\varepsilon_j, \varepsilon_k)$. Chip
+position, plate and scanner drift move many probes together, and those
+covariances are positive far more often than negative, so **the SE reported here
+is a lower bound** --- and not necessarily a tight one, since a clock with
+hundreds of positively correlated terms can have a true SE several times this.
+
+The honest alternative does not exist: a $319{,}607 \times 319{,}607$ error
+covariance would need replicate designs nobody publishes. What exists is a
+cross-check. `source="clock"` derives the same quantity from a published
+clock-level ICC measured on real technical replicates, which *does* contain the
+correlated part; when the two disagree substantially, the clock-level figure is
+the one to believe and the gap is the correlated component the probe path cannot
+see. `icc_from_replicates()` closes it properly on your own duplicates. This is
+stated rather than buried because an interval presented without its assumption
+is exactly the false precision the section exists to argue against.
+
 On the corpus, Horvath 2013 comes out at ±1.58 years of technical error with an
 implied cohort ICC of 0.98; DunedinPoAm38 is the least repeatable at 0.72; the
 319,607-probe BLUP clock reaches 1.00, because a rotation spread over the whole
 array averages the noise away. That last result is the same mechanism that makes
-PC clocks robust to probe loss, arrived at from the other direction.
+PC clocks robust to probe loss, arrived at from the other direction. Read all
+three as lower bounds, for the reason just given.
 
 ### 20.3 Prediction error is a different, larger question
 
@@ -2265,18 +2150,28 @@ first clock that needs it.
 
 ### 20.4 Specimen type is not metadata
 
-Same 91 people, three specimens ([bioRxiv 2025.09.16.673560](https://doi.org/10.1101/2025.09.16.673560)):
+Same 91 people, three specimens
+([bioRxiv 2025.09.16.673560](https://doi.org/10.1101/2025.09.16.673560), CATSLife1,
+mean age 30.9):
 
-| | |
-|---|---|
-| saliva vs buffy coat, clock ages | **3.83 – 16.46 years apart** |
-| methylation matrix correlation | r = 0.88 – 0.92 |
-| clock-age agreement | Spearman 0.25 – 0.69 |
-| buffy coat vs PBMC | r = 0.97 on the matrix, 0.66 – 0.87 on clock ages |
+| Comparison | Mean difference in clock age | Spearman between the two |
+|---|---|---|
+| **saliva vs buffy coat** | **3.83 – 16.46 years** | 0.45 – 0.69 |
+| saliva vs PBMC | in the same direction | 0.25 – 0.55 |
+| buffy coat vs PBMC | −0.06 – 0.39 years | 0.66 – 0.87 |
 
-The matrices correlate well and the clock ages are a decade apart, so a
-correlation check on the input passes and the output is still wrong. Across
-unrelated tissues the published figure is 20–30 years (PMC12714307).
+Read the two columns together, because separately each is reassuring. Saliva and
+buffy coat clock ages correlate at up to 0.69 — a correlation most people would
+accept — and are still a decade apart. **Correlation is not agreement**, and the
+check that gets run is the correlation. The blood pair is the control: same
+study, same pipeline, difference under half a year, which is what makes the
+saliva number a specimen effect rather than noise.
+
+Which clock matters as much as which specimen. On those samples DunedinPACE
+differed by −0.007 years (p = 0.486) where Hannum differed by 12.5 — so "this
+clock transfers" is a per-clock fact, not a per-tissue one, and FALCONAge
+therefore holds the policy per clock. Across unrelated tissues the published
+figure is 20–30 years (PMC12714307).
 
 FALCONAge reads `obs["tissue"]` against each clock's declared training tissue
 and takes one of three positions:
@@ -2334,6 +2229,16 @@ year, which is the graceful-degradation property published for PC clocks,
 reproduced here in a different architecture. And the two rows at exactly zero
 are the internal check: a clock that loses nothing must shift by nothing, and
 does.
+
+**What the table does not cover, so it is not read as covering it.** Thirty rows:
+fifteen clocks × two targets, EPIC v1 and EPIC v2. 450K is the *reference* the
+shift is measured from, so it cannot appear --- its shift is zero by
+construction, not by measurement. 27K is absent for a different reason: masking
+a 450K matrix to 27,578 probes leaves most of these clocks below the coverage
+floor, so what would be measured is the shift of a clock that would have been
+refused anyway. And the reference cohort is 109 blood samples of adults; a shift
+measured there is a reasonable prior for another blood cohort and not a
+correction factor for a different tissue.
 
 The shift is **reported and never applied**. An automatic offset would be a
 second number nobody can trace, which is the failure the coefficient digests

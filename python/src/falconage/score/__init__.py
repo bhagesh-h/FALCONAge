@@ -330,8 +330,8 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
     # Specimen types present in this run, resolved once. A clock's coefficients
     # were fitted on a tissue; applied to another they still return a number.
     # Saliva against buffy coat in the same people differs by 3.83-16.46 years
-    # while the two matrices still correlate at r = 0.88-0.92, so nothing
-    # downstream of the arithmetic can notice.
+    # while the two sets of clock ages still correlate at Spearman 0.45-0.69, so
+    # a correlation check passes and nothing downstream can notice.
     specimens = _specimens(data)
     if specimens is None:
         warns.warn(

@@ -37,7 +37,7 @@ def test_km_matches_a_hand_worked_example():
       t=4: 2 at risk, 1 event -> S = 0.5333 * (1 - 1/2)= 0.2666...
       t=5: censored
     """
-    from falconage.plot import _km_curve
+    from falconage.plot.outcomes import _km_curve
 
     t = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     e = np.array([1, 0, 1, 1, 0])
@@ -54,14 +54,14 @@ def test_censoring_is_not_an_event():
     Same times, but every observation censored: survival never drops. A naive
     one-minus-cumulative-proportion would fall to zero.
     """
-    from falconage.plot import _km_curve
+    from falconage.plot.outcomes import _km_curve
 
     _, surv, _ = _km_curve(np.arange(1.0, 6.0), np.zeros(5))
     assert (surv == 1.0).all()
 
 
 def test_logrank_finds_no_difference_between_identical_groups():
-    from falconage.plot import _logrank
+    from falconage.plot.outcomes import _logrank
 
     t = np.arange(1.0, 21.0)
     e = np.ones(20)
@@ -70,7 +70,7 @@ def test_logrank_finds_no_difference_between_identical_groups():
 
 
 def test_logrank_separates_groups_that_plainly_differ():
-    from falconage.plot import _logrank
+    from falconage.plot.outcomes import _logrank
 
     early = np.arange(1.0, 21.0)              # all die 1-20
     late = np.arange(40.0, 60.0)              # all die 40-59
