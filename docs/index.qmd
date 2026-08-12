@@ -195,17 +195,25 @@ clocks](science.qmd) sets out what is established and what is contested.
 
 Docker is the supported path. One image carries Python, R, the CLI and all 20 bundled clocks at
 pinned versions, so the same input gives the same numbers on your machine and on a reviewer's.
-Three commands from an empty folder to a proven install:
+Both images are published on [Docker Hub](https://hub.docker.com/r/bhagesh/falconage) and built
+from the Dockerfiles in this repository. Two commands from nothing to a proven install:
+
+```bash
+docker pull bhagesh/falconage:1.1.0-cpu
+docker run --rm bhagesh/falconage:1.1.0-cpu python -m pytest /opt/falconage/src/python/tests -q
+```
+
+The second line proves it by running the 452-test suite inside the image, against the source it
+was built from. To build the same image yourself instead of pulling it:
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu python -m pytest python/tests -q
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
 ```
 
-The last line proves it by running the 437-test suite. On Windows PowerShell write `"${PWD}"`.
-Open a session with `docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu python`, or
-`... R`, and every example below works unchanged.
+On Windows PowerShell write `"${PWD}"`. Open a session with
+`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python`, or `... R`, and
+every example below works unchanged.
 
 [Getting started](guide/FALCONAge.qmd) walks the same ground one command at a time, including
 fetching real public data, the GPU image, and a **native pip / `remotes::install_github`

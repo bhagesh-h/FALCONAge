@@ -39,12 +39,10 @@
 # ---- base --------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS base
 
-LABEL org.opencontainers.image.title="FALCONAge" \
-      org.opencontainers.image.description="Multiomic biological age and aging clock scoring" \
-      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
-      org.opencontainers.image.licenses="GPL-3.0-or-later" \
-      org.opencontainers.image.version="1.0.0" \
-      org.opencontainers.image.base.name="python:3.12-slim-bookworm"
+# The image labels are at the FOOT of this file, not here. They change every
+# release, and a LABEL layer at the top invalidates every layer under it, so a
+# one-character version bump used to mean a full ten-minute rebuild including
+# apt and the whole R dependency tree. At the bottom it costs a second.
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -203,3 +201,20 @@ VOLUME ["/results", "/opt/falconage/cache"]
 WORKDIR /work
 ENTRYPOINT ["/opt/falconage/entrypoint.sh"]
 CMD ["--help"]
+
+# Last, so that bumping the version rebuilds one layer instead of the image.
+#
+# These travel with the image wherever it is pulled from, and on a registry they
+# are often all a reader gets before deciding whether to pull 2.5 GB. `version`
+# said 1.0.0 for the whole of the 1.1.0 cycle, which would have published an
+# image labelled as the previous release; nothing noticed, because a label is
+# not executed. `test/check_versions.py` reads it out of this file now, so it is
+# one of the six sources that have to agree before a tag can be cut.
+LABEL org.opencontainers.image.title="FALCONAge" \
+      org.opencontainers.image.description="Multiomic biological age and aging clock scoring: 161 catalogued clocks, identical results from Python and R" \
+      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
+      org.opencontainers.image.url="https://bhagesh-h.github.io/FALCONAge/" \
+      org.opencontainers.image.documentation="https://bhagesh-h.github.io/FALCONAge/" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="1.1.0" \
+      org.opencontainers.image.base.name="python:3.12-slim-bookworm"

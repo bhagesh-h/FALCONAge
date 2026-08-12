@@ -1933,6 +1933,18 @@ report is a complete record.
 
 ### 7.8 CLI
 
+> **The command lines in this section, in 5.5, 5.6 and 6.6, are the specified interface and
+> several of them do not parse against the shipped one.** The verbs are right; the argument shapes
+> are not. `score`, `bench` and `preprocess` take `--input` rather than a positional, `preprocess`
+> has no `methylation` or `clinical` sub-verb, `clocks` requires an action (`list`, `info`, `cite`)
+> before any filter, `power` takes `--clock`, and `cache` has `ls` and `rm` but not `size`,
+> `verify` or `gc`.
+>
+> Left as written because this is the design record and the spec is what it records. The shipped
+> interface is in [Getting started](guide/FALCONAge.html) and in `--help`, which is generated from
+> the parser and cannot drift. `docs/check_api_docs.py` parses every command in every other
+> document against that parser and skips this page for exactly this reason.
+
 ```bash
 falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out results/
 falconage score prepared.h5ad --clocks compatible --device cuda --dtype float32

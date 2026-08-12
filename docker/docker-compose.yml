@@ -14,8 +14,11 @@
 #   docker compose -f docker/docker-compose.yml run --rm falconage-gpu \
 #     score --input /data/prepared.h5ad --device cuda --outdir /results
 #
-# The falconage and falconage-gpu services need python/ and r/ to exist before
-# they can build; testdata does not, and is what runs today.
+# Both falconage services name a published image and also carry a `build:`.
+# Compose uses the local image when it has one and builds otherwise, so
+# `docker compose pull` fetches them from Docker Hub in two minutes and
+# `docker compose build` reproduces the same thing from source in ten. The
+# testdata image is local-only and has no published counterpart to pull.
 # -----------------------------------------------------------------------------
 
 name: falconage
@@ -24,7 +27,7 @@ services:
 
   # ---- CPU -------------------------------------------------------------------
   falconage:
-    image: falconage:1.1.0-cpu
+    image: bhagesh/falconage:1.1.0-cpu
     build:
       context: ..
       dockerfile: docker/Dockerfile.cpu
@@ -41,7 +44,7 @@ services:
 
   # ---- CUDA ------------------------------------------------------------------
   falconage-gpu:
-    image: falconage:1.1.0-cuda
+    image: bhagesh/falconage:1.1.0-cuda
     build:
       context: ..
       dockerfile: docker/Dockerfile.cuda
@@ -66,7 +69,7 @@ services:
   # the container, no rebuild. See docker/entrypoint.sh for how FALCONAGE_SOURCE
   # takes precedence over the installed copy.
   falconage-dev:
-    image: falconage:1.1.0-cpu
+    image: bhagesh/falconage:1.1.0-cpu
     volumes:
       - ..:/src:ro
       - ../test/data:/data:ro

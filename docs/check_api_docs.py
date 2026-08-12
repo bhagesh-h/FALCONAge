@@ -42,8 +42,14 @@ ROOT = HERE.parent
 # command. The first draft of that skill named five readers that live under
 # `fa.preprocess` as though they were top level, and invented a CLI verb
 # outright; this is what caught it.
+#: docker/DOCKERHUB.md is here because it is the least correctable page in the
+#: project. It is pushed to a registry, read by people who have not cloned
+#: anything, and its example is often the first command they run; a function
+#: name that does not exist fails on somebody else's machine with no way for
+#: them to see that the page is wrong rather than their install.
 SOURCES = (
-    [ROOT / "README.md", ROOT / "r" / "README.md"]
+    [ROOT / "README.md", ROOT / "r" / "README.md",
+     ROOT / "docker" / "DOCKERHUB.md"]
     + sorted((ROOT / "docs").rglob("*.qmd"))
     + sorted((ROOT / "docs").glob("*.md"))
     + sorted((ROOT / ".claude" / "skills").rglob("*.md"))
@@ -128,6 +134,18 @@ def main() -> int:
                         f"{rel}:{line}: `falconage {m.group(1)}` is not a verb. "
                         f"One of: {', '.join(sorted(verbs))}.")
 
+    # The whole command line, not only the verb.
+    #
+    # The verb check above passed for years while six of the eight commands in
+    # the skill's own reference could not run: `clocks --tier A` omitted the
+    # required action, `score data.h5ad` and `bench results/` passed an input
+    # positionally to verbs that want `--input`, `preprocess --out` was really
+    # `--output`, and `power horvath2013` was really `--clock`. Every one of
+    # them names a real verb, so nothing objected. Which arguments are
+    # positional differs per verb and is not guessable, which is exactly why
+    # this has to be checked against the parser rather than reviewed.
+    problems += _check_cli_commands()
+
     if problems:
         print(f"{len(problems)} documentation reference(s) do not match the API:")
         for p in problems:
@@ -135,9 +153,71 @@ def main() -> int:
         return 1
 
     print(f"every fa.* reference in {len(SOURCES)} document(s) resolves, "
-          f"every enumerated argument value is accepted, and every documented "
-          f"CLI verb is one of the {len(verbs)} the parser defines")
+          f"every enumerated argument value is accepted, every documented CLI "
+          f"verb is one of the {len(verbs)} the parser defines, and every "
+          f"documented command line parses")
     return 0
+
+
+#: Placeholders a reader is meant to substitute. A command containing one is
+#: a template, so it is checked for shape by filling them with a dummy rather
+#: than skipped: `score --input <file>` should still fail if `--input` is wrong.
+PLACEHOLDER = re.compile(r"<[^>]+>|\.\.\.|\$\{?\w+\}?")
+
+
+def _check_cli_commands() -> list[str]:
+    """Parse every documented ``falconage ...`` command with the real parser.
+
+    Uses ``parse_args`` on the token list and catches the ``SystemExit``
+    argparse raises, so nothing is executed: no file is read, no network is
+    touched, and a command naming an input that does not exist still validates.
+    Only the interface is under test, which is the part prose gets wrong.
+    """
+    try:
+        from falconage.cli.app import build_parser
+    except Exception:                                  # pragma: no cover
+        return []
+
+    import contextlib
+    import io
+    import shlex
+
+    problems: list[str] = []
+    for path in SOURCES:
+        if not path.exists():
+            continue
+        rel = path.relative_to(ROOT)
+        # architecture.qmd is the design record, written before the code and
+        # deliberately wider than it. Its command lines are the specified
+        # interface, several of which the shipped parser does not implement,
+        # and §7.8 says so in the page. Checking them would fail on the gap the
+        # page exists to document.
+        if rel.as_posix() == "docs/architecture.qmd":
+            continue
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r"(?m)^\s*(?:\$\s*)?falconage ((?:[^\n#]|\\\n)+)", text):
+            raw = m.group(1).replace("\\\n", " ").strip()
+            if not raw or raw.startswith("-"):
+                continue
+            filled = PLACEHOLDER.sub("PLACEHOLDER", raw)
+            try:
+                argv = shlex.split(filled)
+            except ValueError:
+                continue
+            err = io.StringIO()
+            try:
+                with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                    build_parser().parse_args(argv)
+            except SystemExit as exc:
+                if exc.code:
+                    line = text[:m.start()].count("\n") + 1
+                    why = (err.getvalue().strip().splitlines() or ["rejected"])[-1]
+                    problems.append(
+                        f"{rel}:{line}: `falconage {raw[:60]}` does not parse. "
+                        f"{why.split('error: ')[-1]}")
+            except Exception:                          # pragma: no cover
+                continue
+    return problems
 
 
 def _cli_verbs() -> set[str]:

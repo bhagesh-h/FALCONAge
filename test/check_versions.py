@@ -84,6 +84,29 @@ def citation_version() -> tuple[str, str]:
     raise SystemExit("no version: field in CITATION.cff")
 
 
+def image_label_versions() -> list[tuple[str, str]]:
+    """``org.opencontainers.image.version`` from each Dockerfile.
+
+    A published image carries its labels wherever it is pulled from, and on a
+    registry they are often the only provenance a reader gets. Both files said
+    ``1.0.0`` for the whole of the 1.1.0 cycle, so pushing them would have put
+    an image labelled as the previous release on Docker Hub. It went unnoticed
+    because a label is not executed and nothing read it; reading it here costs
+    nothing and makes it one more thing that has to agree before a tag.
+    """
+    out = []
+    for rel in ("docker/Dockerfile.cpu", "docker/Dockerfile.cuda"):
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        m = re.search(r"""org\.opencontainers\.image\.version=["']([^"']+)["']""",
+                      text)
+        if not m:
+            raise SystemExit(
+                f"{rel} sets no org.opencontainers.image.version label. An "
+                "image on a registry is provenance-free without it.")
+        out.append((m.group(1), f"{rel} image.version label"))
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--tag", default="",
@@ -92,6 +115,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     found = [python_version(), description_version(), citation_version()]
+    found += image_label_versions()
 
     tag = re.sub(r"^refs/tags/", "", args.tag).lstrip("v").strip()
     if tag:

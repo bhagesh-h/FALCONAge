@@ -5,7 +5,7 @@ the GPU path works, it is numerically sound, and for the clocks that ship today
 it is **slower than the CPU**, so `device="auto"` resolves to CPU and the GPU is
 opt-in.
 
-Every figure below comes from `falconage:1.1.0-cuda`, built from the shipping
+Every figure below comes from `bhagesh/falconage:1.1.0-cuda`, built from the shipping
 `docker/Dockerfile.cuda`. The 2026-08-08 run of this page reported the same
 shape on an earlier build; where a number moved, the current one is here and the
 old one is named next to it.
@@ -163,7 +163,7 @@ the right way round.
 ## 4. Speed: the GPU makes the shipping clocks slower
 
 Eight clocks, 2,340 distinct features, RTX 4060, best of three timings inside a
-run and the best of three runs, measured in `falconage:1.1.0-cuda` - the image
+run and the best of three runs, measured in `bhagesh/falconage:1.1.0-cuda` - the image
 the command at the foot of this page builds. These are numbers you can
 reproduce, not numbers from a throwaway environment.
 
@@ -248,9 +248,15 @@ against a slow CPU baseline. The table above is after the fix.
 Every number on this page comes from one script, and it is in the repository:
 
 ```bash
-docker build -f docker/Dockerfile.cuda -t falconage:1.1.0-cuda .
-docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
+docker pull bhagesh/falconage:1.1.0-cuda
+docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda \
   python test/gpu_check.py
+```
+
+Or build the image instead of pulling it, which is what produced the numbers above:
+
+```bash
+docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.1.0-cuda .
 ```
 
 `test/gpu_check.py` runs the five steps in the order above, what torch sees,
@@ -268,7 +274,7 @@ checked against numpy in the same file, on the CPU torch backend, so a runner
 with no card still verifies everything except the transfer:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda \
   python -m pytest python/tests/unit/test_device_contract.py -q
 ```
 

@@ -236,6 +236,49 @@ def main() -> int:
             f"docs/architecture.qmd 12.1 says these workflows ship: "
             f"{sorted(claimed)}; .github/workflows holds {sorted(on_disk)}.")
 
+    # 11 -- pulling the published image is offered before building it.
+    #
+    # Both images are on Docker Hub as bhagesh/falconage. A page that opens
+    # with `docker build` sends a reader through a ten-minute build and a git
+    # clone to obtain a thing they could have pulled in two minutes, and most
+    # readers do what the first code block says. The build stays documented,
+    # because building from source is the point of shipping a Dockerfile; it
+    # just goes second.
+    #
+    # Only the two published images are covered. Dockerfile.testdata, .dev,
+    # .docs and .responsive build local helper images that are not on any
+    # registry, and telling somebody to pull one would be worse than the
+    # problem this fixes.
+    import subprocess as _sp
+
+    try:
+        tracked = _sp.run(["git", "ls-files", "--", "*.md", "*.qmd"], cwd=ROOT,
+                          capture_output=True, text=True, timeout=30,
+                          check=True).stdout.split()
+    except Exception:
+        tracked = []
+        problems.append(
+            "cannot ask git which files are tracked, so the pull-before-build "
+            "check did not run.")
+
+    for rel in tracked:
+        if rel.startswith(("docs/reference/", "docs/r/", "docs/_site/")) \
+                or rel == "docs/architecture.qmd":
+            continue
+        lines = (ROOT / rel).read_text(encoding="utf-8",
+                                       errors="ignore").splitlines()
+        for i, ln in enumerate(lines):
+            m = re.search(r"docker build .*-t (bhagesh/falconage:\S+)", ln)
+            if not m:
+                continue
+            image = m.group(1)
+            window = "\n".join(lines[max(0, i - 14):i])
+            if f"docker pull {image}" not in window:
+                problems.append(
+                    f"{rel}:{i + 1}: `docker build` for {image} with no "
+                    f"`docker pull {image}` in the 14 lines above it. The "
+                    f"image is published; offer the pull first.")
+
     if problems:
         print(f"{len(problems)} documentation defect(s):")
         for p in problems:
@@ -247,8 +290,9 @@ def main() -> int:
           "architecture page is on this release, output is marked as output, the "
           "tier column is sized for a letter, the parity table claims no false "
           "gap, the GPU page's coverage table matches what the model classes "
-          f"declare, and the architecture page names the {len(on_disk)} "
-          "workflows that exist")
+          f"declare, the architecture page names the {len(on_disk)} workflows "
+          "that exist, and every documented build of a published image offers "
+          "the pull first")
     return 0
 
 

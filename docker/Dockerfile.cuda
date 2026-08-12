@@ -49,12 +49,9 @@
 # ---- base --------------------------------------------------------------------
 FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS base
 
-LABEL org.opencontainers.image.title="FALCONAge (CUDA)" \
-      org.opencontainers.image.description="Multiomic biological age and aging clock scoring, GPU build" \
-      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
-      org.opencontainers.image.licenses="GPL-3.0-or-later" \
-      org.opencontainers.image.version="1.0.0" \
-      org.opencontainers.image.base.name="nvidia/cuda:12.4.1-runtime-ubuntu22.04"
+# Labels are at the foot of this file, for the cache reason written up in
+# Dockerfile.cpu. A 14.6 GB image is the last one you want to rebuild whole
+# because a version string moved.
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -189,3 +186,15 @@ VOLUME ["/results", "/opt/falconage/cache"]
 WORKDIR /work
 ENTRYPOINT ["/opt/falconage/entrypoint.sh"]
 CMD ["--help"]
+
+# Last, so a version bump rebuilds one layer rather than 14.6 GB. Keep in step
+# with Dockerfile.cpu; test/check_versions.py reads both and refuses a release
+# where they disagree.
+LABEL org.opencontainers.image.title="FALCONAge (CUDA)" \
+      org.opencontainers.image.description="Multiomic biological age and aging clock scoring, GPU build. On the clocks that ship today the CPU image is faster; see the documentation." \
+      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
+      org.opencontainers.image.url="https://bhagesh-h.github.io/FALCONAge/" \
+      org.opencontainers.image.documentation="https://bhagesh-h.github.io/FALCONAge/gpu.html" \
+      org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.version="1.1.0" \
+      org.opencontainers.image.base.name="nvidia/cuda:12.4.1-runtime-ubuntu22.04"

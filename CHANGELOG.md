@@ -8,6 +8,55 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 [semantic versioning](https://semver.org/spec/v2.0.0.html), with the clock registry carrying its
 own `registry_version` so a coefficient correction can be pinned independently of the code.
 
+## [Unreleased]
+
+### Added
+
+- **Both images are published: `bhagesh/falconage:1.1.0-cpu`, `:1.1.0-cuda` and `:latest`**, on
+  [Docker Hub](https://hub.docker.com/r/bhagesh/falconage), built from the Dockerfiles here.
+  `latest` tracks the CPU release. Compressed, the CPU image is 666 MB against a 2.5 GB local
+  size, and the CUDA image is 5.2 GB against 14.6 GB. `docker/DOCKERHUB.md` holds the repository
+  overview, kept in the tree because Docker Hub cannot generate one from GitHub and a description
+  pasted once is a description nobody updates.
+
+  Every documented `docker build` for a published image now offers `docker pull` above it. The
+  build stays, because building from source is why a Dockerfile ships; it goes second, since a
+  reader who follows the first code block should not spend ten minutes and a clone on something
+  they could pull in two.
+
+### Fixed
+
+- **Six of the eight CLI commands in the skill's own reference could not run.** `clocks --tier A`
+  omitted the required action, `score data.h5ad` and `bench results/` passed an input positionally
+  to verbs that take `--input`, `preprocess --out` should have been `--output`, and
+  `power horvath2013` should have been `--clock horvath2013`. Every one of them names a real verb,
+  which is all the existing check looked at.
+
+  `docs/check_api_docs.py` now parses every documented command line with the actual
+  `build_parser()`, catching the `SystemExit` argparse raises so nothing is executed: no file is
+  read and no network is touched, and a command naming an input that does not exist still
+  validates. Placeholders like `<clock_id>` are filled with a dummy rather than skipped, so a
+  template is still checked for shape. `docs/architecture.qmd` is exempt and says so at §7.8: it
+  is the design record, and several of its command lines are the specified interface rather than
+  the shipped one.
+
+- **Four documented `docker run` commands ran `falconage falconage <verb>`.** The image's
+  entrypoint is the CLI itself, so the verb goes straight after the image name. They were in the
+  README quick start, the guide's first command, and both skill files, which is to say in every
+  place a new user starts.
+
+- **The image labels said `version="1.0.0"` throughout the 1.1.0 cycle.** Publishing them would
+  have put an image on a registry labelled as the previous release. `test/check_versions.py` reads
+  `org.opencontainers.image.version` out of both Dockerfiles now, so it is one of six sources that
+  have to agree before a tag. The labels also gained `url` and `documentation`, pointing at the
+  documentation site, which is most of what a registry page can show about an image.
+
+### Changed
+
+- **The `LABEL` block moved to the foot of both Dockerfiles.** At the top it invalidated every
+  layer beneath it, so a one-character version bump meant a full rebuild: ten minutes for the CPU
+  image and rather more for the 14.6 GB CUDA one. At the bottom it costs a second.
+
 ## [1.1.0] - 2026-08-10
 
 Everything in v1.0 was about computing the number correctly. This release is about the fact that a

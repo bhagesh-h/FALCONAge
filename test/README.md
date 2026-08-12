@@ -16,11 +16,18 @@ interpretation disagree: the table is right and the prose is stale; say so in an
 Docker is the supported path, and it is what produced every number on this page. Run from the
 repository root. On Windows PowerShell replace `"$PWD"` with `"${PWD}"`; on `cmd.exe`, `"%cd%"`.
 
-### Step 1: build the two images
+### Step 1: get the two images
 
 ```bash
+docker pull bhagesh/falconage:1.1.0-cpu
 docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.0.0 .
-docker build -f docker/Dockerfile.cpu      -t falconage:1.1.0-cpu      .
+```
+
+The fetcher image is not published, because it is thirty lines of curl and building it is faster
+than pulling it. To build the main image rather than pull it:
+
+```bash
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
 ```
 
 The testdata image is deliberately separate and does not contain FALCONAge. A fetcher that
@@ -46,11 +53,11 @@ weaker claim than verification and is stated as such.
 ### Step 3: run everything
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu python test/run_all.py
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python test/run_all.py
 
 # or one group at a time: registry, bench, epicv2, gestational,
 #                         mammalian, mouse, idat, clinical
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
   python test/run_all.py --groups bench,epicv2
 ```
 
@@ -91,8 +98,8 @@ The tables on this page are what the package *produces*. The assertions about wh
 artefact of somebody's laptop:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu python -m pytest python/tests -q
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu Rscript -e 'testthat::test_local("r")'
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python -m pytest python/tests -q
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu Rscript -e 'testthat::test_local("r")'
 ```
 
 **437 Python tests** (418 unit across 19 files, 19 corpus integration) and **52 R tests**,
@@ -110,10 +117,12 @@ agreement, the speed table and the profile behind it. It stops after the first s
 explanation on a machine with no CUDA device:
 
 ```bash
-docker build -f docker/Dockerfile.cuda -t falconage:1.1.0-cuda .
-docker run --rm --gpus all -v "$PWD:/work" -w /work falconage:1.1.0-cuda \
+docker pull bhagesh/falconage:1.1.0-cuda
+docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda \
   python test/gpu_check.py
 ```
+
+Or build it: `docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.1.0-cuda .`
 
 ### Without Docker
 
