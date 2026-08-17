@@ -31,7 +31,7 @@ tolerance zero in CI rather than approximately.
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, nanopore bedMethyl, RRBS, targeted panels, Olink NPX, SomaScan RFU, bulk RNA-seq counts, clinical chemistry |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
-| **Tested** | 437 Python tests, 52 R tests, all passing |
+| **Tested** | 452 Python tests, 52 R tests, all passing |
 
 Every clock algorithm is implemented from its published description; no clock implementation is
 imported from another package. Coefficients are fitted data rather than a procedure, and 28 clocks
@@ -160,7 +160,7 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 | A clock below the coverage **or** coefficient-mass floor | 96% of probes present can be 61% of the model |
 | A `.pt` file of neural weights | `torch.load` executes arbitrary code while unpickling |
 
-→ [The science, §20](https://bhagesh-h.github.io/FALCONAge/science.html)
+→ [The science, §19](https://bhagesh-h.github.io/FALCONAge/science.html)
 
 ## What v1.1 added
 

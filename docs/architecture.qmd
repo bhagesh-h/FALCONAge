@@ -32,7 +32,7 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 | Clock catalogue | 161 entries. **23 tier A score offline**: 20 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 28 tier C are tested scaffolds | The 110 tier B entries carry metadata but no traced coefficients |
 | Modalities | DNA methylation, clinical chemistry, RRBS, **nanopore**, **transcriptomics**, **proteomics** | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
 | Inputs | Beta matrix, GEO series matrix, **raw IDATs**, RRBS, **bedMethyl**, **targeted panels**, **Olink NPX**, **SomaScan RFU**, **bulk counts**, clinical tables, ComputAgeBench | — |
-| Normalisation | **pOOBAH, noob, BMIQ, probe masks** (§21 of the science page) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
+| Normalisation | **pOOBAH, noob, BMIQ, probe masks** (§20 of the science page) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
 | Model classes | `LinearClock`, `ClinicalClock`, `ScaffoldClock`, **`PCLinearClock`**, **`AggregationClock`**, **`NeuralClock`**, **`ScAgeReference`** | `MultiStageCoxClock`, `DeconvolutionClock`, `CompositeClock` |
 | Preprocess ops | 7: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binarize`, `simplex_projection` | The other eight in §4.1 |
 | Postprocess ops | **21**, plus **24 analytic derivatives** for uncertainty propagation and 4 ops explicitly marked non-differentiable | — |
@@ -54,12 +54,14 @@ the discrepancy where they differ, and some of the 110 have no public supplement
 both families is licence-restricted, so each would enter as a tier C scaffold. Scoring a proteomic
 matrix today refuses with "no clocks to score", which is accurate rather than broken.
 
+<!-- BEGIN GENERATED: contents -->
+
 Contents
 
 1. [Scope, decisions and repository layout](#scope-decisions-and-repository-layout)
 2. [Core engine](#core-engine)
 3. [Clock registry](#clock-registry)
-4. [Algorithms, the complete operation catalogue](#algorithms---the-complete-operation-catalogue)
+4. [Algorithms, the complete operation catalogue](#algorithms-the-complete-operation-catalogue)
 5. [Download module](#download-module)
 6. [Preprocess module](#preprocess-module)
 7. [Scoring, analysis, plots, report](#scoring-analysis-plots-report)
@@ -70,7 +72,9 @@ Contents
 12. [CI/CD and publishing](#cicd-and-publishing)
 13. [Build order](#build-order)
 14. [Open questions](#open-questions)
-15. [What v1.1 added, and where it sits](#what-v11-added-and-where-it-sits)
+15. [What v1.1 added, and where it sits](#what-v1.1-added-and-where-it-sits)
+
+<!-- END GENERATED: contents -->
 
 ## 1. Scope, decisions and repository layout
 

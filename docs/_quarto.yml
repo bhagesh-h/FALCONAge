@@ -18,32 +18,33 @@ website:
     logo: logo.png
     logo-alt: FALCONAge logo
     left:
-    - text: About
-      file: index.qmd
-    - text: Background
+    - text: Contents
       menu:
-      - text: The science of aging clocks
-        file: science.qmd
-      - text: Architecture
-        file: architecture.qmd
-      - text: Figure gallery
-        file: gallery.qmd
-      - text: Clock catalogue
-        file: clocks.qmd
-      - text: GPU support
-        file: gpu.md
-    - text: Guides
-      menu:
+      - text: 1. Orientation
+      - text: What FALCONAge is
+        file: index.qmd
       - text: Getting started
         file: guide/FALCONAge.qmd
+      - text: 2. Working with clocks
       - text: Choosing a clock
         file: guide/clocks.qmd
-    - text: Reference
-      menu:
+      - text: Clock catalogue
+        file: clocks.qmd
+      - text: Figure gallery
+        file: gallery.qmd
+      - text: 3. The science
+      - text: The science of aging clocks
+        file: science.qmd
+      - text: 4. API reference
       - text: Python reference
         file: reference/index.qmd
       - text: R reference
         href: r/index.html
+      - text: 5. Internals and operations
+      - text: Architecture
+        file: architecture.qmd
+      - text: GPU and performance
+        file: gpu.md
     right:
     - text: Download
       menu:
@@ -66,6 +67,37 @@ website:
       class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjEuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
       APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjEuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
       BibTeX</button></div></div>'
+    contents:
+    - section: 1. Orientation
+      contents:
+      - text: What FALCONAge is
+        file: index.qmd
+      - text: Getting started
+        file: guide/FALCONAge.qmd
+    - section: 2. Working with clocks
+      contents:
+      - text: Choosing a clock
+        file: guide/clocks.qmd
+      - text: Clock catalogue
+        file: clocks.qmd
+      - text: Figure gallery
+        file: gallery.qmd
+    - section: 3. The science
+      contents:
+      - text: The science of aging clocks
+        file: science.qmd
+    - section: 4. API reference
+      contents:
+      - text: Python reference
+        file: reference/index.qmd
+      - text: R reference
+        href: r/index.html
+    - section: 5. Internals and operations
+      contents:
+      - text: Architecture
+        file: architecture.qmd
+      - text: GPU and performance
+        file: gpu.md
     footer: "[Bhagesh Hunakunti](https://orcid.org/0000-0002-5957-8005)  \n[GPL-3.0-or-later](https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE)\
       \ · [source](https://github.com/bhagesh-h/FALCONAge)\n"
 format:

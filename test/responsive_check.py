@@ -174,6 +174,22 @@ CHROME = """
       .map(e => (e.className || 'brand').toString().split(' ')[0] +
                 ' needs ' + e.scrollWidth + 'px, has ' + e.clientWidth + 'px')
       .join('; '),
+    // HOW MANY SITE-CONTENTS LISTS ARE ON SCREEN AT ONCE.
+    //
+    // The site declares its reading order twice: as the sidebar spine, and as
+    // a collapsed "Contents" menu in the navbar for the widths where that
+    // column is hidden. Exactly one of the two must be reachable at any width.
+    // Two is the duplication the sidebar was previously emptied to avoid; zero
+    // is a site with no navigation, which is what happens if the CSS hiding
+    // the sidebar on a phone lands without the navbar copy being shown.
+    //
+    // Counted, not reviewed: both failures pass an overflow test and an
+    // overlap test, which is exactly how the earlier two-menu bug survived.
+    // The navbar copy counts as present when its toggle is visible, because on
+    // a phone the list itself is collapsed until tapped.
+    navLists: (vis(document.querySelector('#quarto-sidebar .sidebar-menu-container'))
+                 ? 1 : 0)
+            + (vis(document.querySelector('#nav-menu-contents')) ? 1 : 0),
   };
 }
 """
@@ -321,6 +337,27 @@ def main(argv=None) -> int:
                         f"({c['clippedBrand']}). Shrink the wordmark at this "
                         "width rather than letting it ellipsise -- a truncated "
                         "name is not a name.")
+                # Two contents lists at once is the duplication to prevent, and
+                # it is a failure in either state. One is correct. Zero is only
+                # correct in the closed state on a phone, where the navbar menu
+                # is behind the hamburger by design, so that case is checked
+                # below against the toggle rather than here.
+                if c["navLists"] > 1:
+                    failures.append(
+                        f"@{width}px ({state}): the reading order is stated "
+                        f"twice on one screen ({c['navLists']} contents lists). "
+                        "The sidebar spine serves widths at or above 992px and "
+                        "the navbar 'Contents' menu serves the rest; only one "
+                        "of the two may be on screen.")
+                if state == "expanded" and c["navLists"] == 0:
+                    failures.append(
+                        f"@{width}px (expanded): no contents list even with the "
+                        "menu open, so the site cannot be navigated at this "
+                        "width.")
+                if state == "closed" and c["navLists"] == 0 and c["toggles"] == 0:
+                    failures.append(
+                        f"@{width}px: no contents list and no menu toggle. The "
+                        "sidebar is hidden here and nothing stands in for it.")
 
             if not s.get("present"):
                 failures.append(f"@{width}px: no #quarto-sidebar in the page")
@@ -353,8 +390,9 @@ def main(argv=None) -> int:
 
     print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths -- no sideways "
           "scroll, no overlapping text, no unloaded image, the site name not "
-          "cut off, one search box, one menu, one title, and the sidebar "
-          "hidden below 992px rather than duplicating the navbar")
+          "cut off, one search box, one menu, one title, and exactly one "
+          "contents list at every width: the sidebar spine at or above 992px, "
+          "the navbar menu below it")
     return 0
 
 

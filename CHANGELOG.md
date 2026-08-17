@@ -10,6 +10,70 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ## [Unreleased]
 
+### Changed
+
+- **The documentation site is organised as a book.** It had three navbar menus, one of them a
+  drawer called "Background" holding the literature review, the internals document, the figure
+  gallery, the clock catalogue and the GPU measurements: five documents with five audiences, filed
+  together because none of them was a guide. Nothing told a reader what to read first, what
+  followed it, or whether they had finished.
+
+  Five ordered parts now run down the left as a spine, visible without a click: **1. Orientation**
+  (what it is, getting started), **2. Working with clocks** (choosing one, the catalogue, the
+  gallery), **3. The science**, **4. API reference** (Python, R), **5. Internals and operations**
+  (architecture, GPU). The order is roughly the order in which a reader stops needing each part.
+  The current chapter is marked on the spine. `book:` in `docs/reference-groups.yml` is the single
+  source for both the sidebar and the compact navbar menu that replaces it below 992px, so the two
+  cannot disagree about what exists or what order it is in.
+
+- **Section titles use the vocabulary of the field rather than sentences.** Headings were written
+  as prose: *What goes in*, *What comes out*, *How much of a score is the assay*, *Counting probes
+  is not weighing them*, *Reliability, and the trap in it*. Each says something true and none is
+  what a reader scanning a contents list is looking for. Now *Input*, *Output*, *Measurement
+  uncertainty*, *Feature count and coefficient mass*, *Reliability*, and so on across four pages.
+
+  The three scope sections follow [Model Cards](https://arxiv.org/abs/1810.03993), the reporting
+  convention Hugging Face, Google and the EU AI Act all adopted, in its order: **Intended use**,
+  **Out-of-scope use**, **Known limitations**. Those were *What it is not*, *What FALCONAge refuses
+  to do* and *What it does not do*, in that order. The distinction the earlier titles were groping
+  for is real, and the field already has names for it.
+
+- **Both long documents generate their own contents list.** `docs/build_contents.py` derives it
+  from the headings, so a renamed section cannot leave a dead entry behind. Four of the
+  twenty-three entries were already dead when this was written: the science list pointed at
+  `#reference-list` for a section since renamed, the architecture list at
+  `#algorithms---the-complete-operation-catalogue` and `#what-v11-added-and-where-it-sits`, neither
+  an id on the page, and two more at `#python` and `#r`, which are tab labels inside a
+  `panel-tabset` and never had ids at all. The science list had also silently dropped §17.
+
+- **`docs/check_links.py`**: every internal link in the rendered site, anchors included, must point
+  at something that exists. 1,489 links across 123 pages. Quarto does not warn about a dead
+  anchor: it emits the href, the page builds clean, and the link scrolls nowhere, so the only
+  previous way to find one was for a reader to click it. Runs in the docs workflow after the
+  render and before the deploy. Links into `downloads/` and `r/` are skipped with the reason, since
+  later build steps write those; their filenames are pinned and checked by `build_docs.py --check`.
+
+- **The landing page leads with what the tool does rather than with three sections of caveats.**
+  It ran: concepts, then *What FALCONAge refuses to do*, *What it does not do*, *What it is not*,
+  and only then how to install it. Three consecutive negations stood between a reader and the
+  first command. Now: install, score, catalogue, then the two concept sections, then a single
+  **Limits** section holding all three as subsections, then where to go next. The three are kept
+  apart rather than merged, because "refuses at runtime", "not built yet" and "no clock can do
+  this" are different claims with different evidence. The intro's population-research caveat and
+  the *Not a clinical instrument* subsection were near-duplicates; each now carries what the other
+  does not.
+
+- **The beginner walkthrough in Getting started moved from section 14 to section 2.** "The whole
+  thing from zero, with only Docker installed" is the page's own answer for a reader who has never
+  used a terminal, and the top of the page links down to it, so it sat behind twelve sections that
+  assume a working install. "Driving it from Claude" moved to the end: it is an alternative
+  interface, not a step in the sequence.
+
+- `test/responsive_check.py` counts how many contents lists are reachable at each width and
+  requires exactly one. Two means the reading order is stated twice on one screen; zero means the
+  page cannot be navigated. Both pass an overflow test and an overlap test, which is how the
+  earlier two-menu bug survived to be reported by a human.
+
 ### Added
 
 - **Both images are published: `bhagesh/falconage:1.1.0-cpu`, `:1.1.0-cuda` and `:latest`**, on

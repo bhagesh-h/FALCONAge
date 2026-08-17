@@ -131,7 +131,7 @@ series is several hundred megabytes and does not fit the budget.
 decodes the binary to bead addresses with their Grn and Red means; `fetch_manifest` maps addresses
 to `cg########` ids and infers the platform from the address set; then pOOBAH detection masking,
 noob background correction with the out-of-band signal as the null, and optional BMIQ. The
-[science page §21](../../docs/science.qmd) sets out the chain and why its order matters.
+[science page §20](../../docs/science.qmd) sets out the chain and why its order matters.
 
 These four samples are also what the chain was **validated** against, which is the reason a
 two-sample-per-platform group earns its place: GSE182991 publishes processed betas for the same

@@ -6,8 +6,7 @@ subtitle: "By the question, by the scale, and by whether the coefficients transf
 There is no best clock. There is a clock that answers the question you asked, and a much larger
 number that answer a different one in the same units.
 
-## By the question
-
+## Choosing by research question
 <!-- BEGIN GENERATED: by-question -->
 
 | Question | Ready to score | Needs a coefficient file | Scale |
@@ -52,8 +51,7 @@ compatible_clocks(d)
 
 :::
 
-## Scale governs what you may do
-
+## Scale type and permitted operations
 Every clock carries a `scale_type`, and it decides which downstream operations are defined.
 
 <!-- BEGIN GENERATED: guide-scales -->
@@ -75,8 +73,7 @@ Every clock carries a `scale_type`, and it decides which downstream operations a
 `acceleration()` enforces this. Naming a clock whose scale does not support it is an error;
 leaving the clock list empty quietly excludes them.
 
-## Coverage is not validity
-
+## Coverage and validity
 A clock trained on 450K runs perfectly well on EPIC data that carries its probes, and fails on
 450K data filtered to 20,000 probes. Only the feature list can answer whether a clock is usable,
 which is what `compatible_clocks()` checks.
@@ -94,8 +91,7 @@ manifest(res)$warnings
 #> about whether the coefficients transfer across species.
 ```
 
-## Counting probes is not weighing them
-
+## Feature count and coefficient mass
 Coverage has two forms and they disagree exactly when it matters: how many of a clock's features
 are present, and what share of the model's total |coefficient| those present features carry. Check
 both before committing to a clock on a given array.
@@ -109,12 +105,11 @@ Ninety-six per cent of probes present, sixty-one per cent of the model. The scor
 to both, so this is refused with the heaviest absent probes named rather than scored into a
 confident number.
 
-→ [The science, §20.5](../science.qmd#probe-loss-priced) prices the same loss in years, per clock
+→ [The science, §19.5](../science.qmd#probe-loss-priced) prices the same loss in years, per clock
 per platform, and explains why the PC clocks barely move where first-generation clocks shift by
 double digits.
 
-## Reliability, and the trap in it
-
+## Reliability
 "Reliable" means two different things, and they do not track together:
 
 | | What is repeated | What it measures |
@@ -150,7 +145,7 @@ se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
 For scale: on this package's test corpus Horvath 2013 comes out at ±1.58 years, DunedinPoAm38 is
 least repeatable at 0.72, and the 319,607-probe BLUP clock reaches 1.00. With technical duplicates,
 `fa.icc_from_replicates(data, "subject")` replaces the published per-probe table with your own
-plates. → [The science, §20.2](../science.qmd#propagating-measurement-error) for the propagation
+plates. → [The science, §19.2](../science.qmd#propagating-measurement-error) for the propagation
 itself.
 
 ### Then ask how many samples you need
@@ -162,8 +157,7 @@ fa.power("horvath2013", effect=0.5, result=pilot)
 At ICC 0.9 a tenth of the sample size exists only to average out the instrument, and the function
 says so. It refuses to default the standard deviation, because n scales with its square.
 
-## Specimen type comes before all of this
-
+## Specimen type
 Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91 people**, while still
 correlating with them at Spearman 0.45–0.69. A correlation check passes and the output is a decade
 out, because correlation is not agreement.
@@ -173,7 +167,7 @@ clock was fitted on. Pan-tissue clocks say nothing, most warn with the measured 
 twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
 warning saying the check did not run.
 
-→ [The science, §20.4](../science.qmd#specimen-type-is-not-metadata) for the twelve refusals and
+→ [The science, §19.4](../science.qmd#specimen-type-is-not-metadata) for the twelve refusals and
 the measurements behind each.
 
 ## Availability

@@ -98,6 +98,7 @@ jobs:
           python docs/build_news.py --check
           python docs/build_catalogue.py --check
           python docs/build_gallery.py --check
+          python docs/build_contents.py --check
 
       # The three derived data artefacts. Each needs an input CI does not have
       # -- a 72 MB published spreadsheet for the reliability table, the 586 MB

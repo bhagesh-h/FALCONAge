@@ -80,11 +80,11 @@ table is quoted from a paper; those carry a DOI at the point of use instead.
 | Gestational clocks against recorded days-not-weeks | [below](#gestational-clocks) | `python test/run_all.py --groups gestational` |
 | PhenoAge / KDM / HD on blood chemistry | [below](#clinical-chemistry) | `python test/run_all.py --groups clinical` (synthetic); the R suite runs the real 15,160-sample NHANES III |
 | Registry tier counts, 161 / 23 / 110 / 28 | [below](#the-registry) | `python test/run_all.py --groups registry` |
-| Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [science §20.2](../docs/science.qmd) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
-| `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [science §20.5](../docs/science.qmd) | `python python/tools/build_platform_bias.py` |
-| Conformal interval widths per clock | [science §20.3](../docs/science.qmd) | `python python/tools/build_conformal.py` |
-| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [science §20.6](../docs/science.qmd) | `pytest python/tests/unit/test_batch.py` |
-| Dye bias moves the median beta by **+0.10 to +0.12** | [science §21.4](../docs/science.qmd) | `python test/run_all.py --groups idat` |
+| Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [science §19.2](../docs/science.qmd) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
+| `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [science §19.5](../docs/science.qmd) | `python python/tools/build_platform_bias.py` |
+| Conformal interval widths per clock | [science §19.3](../docs/science.qmd) | `python python/tools/build_conformal.py` |
+| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [science §19.6](../docs/science.qmd) | `pytest python/tests/unit/test_batch.py` |
+| Dye bias moves the median beta by **+0.10 to +0.12** | [science §20.4](../docs/science.qmd) | `python test/run_all.py --groups idat` |
 | R and Python agree at tolerance **exactly zero** | [architecture §8](../docs/architecture.qmd) | `Rscript -e 'testthat::test_local("r")'` |
 | GPU speed table, including where CUDA is slower | [docs/gpu.md](../docs/gpu.md) | `python test/gpu_check.py` on a CUDA machine |
 | No page scrolls sideways at 320--1280 px | the rendered site | `python test/responsive_check.py` |
@@ -102,8 +102,7 @@ docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python -m p
 docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu Rscript -e 'testthat::test_local("r")'
 ```
 
-**437 Python tests** (418 unit across 19 files, 19 corpus integration) and **52 R tests**,
-all passing. The R suite contains the conformance test that asserts R and Python scores are
+**452 Python tests** and **52 R tests**, all passing, with 5 skipped where torch is absent. The R suite contains the conformance test that asserts R and Python scores are
 bit-identical at tolerance exactly zero, not approximately equal, which is what a second
 implementation would give and is the reason there is only one.
 

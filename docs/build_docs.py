@@ -101,6 +101,47 @@ def _b64(text: str) -> str:
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
 
 
+def _chapter(ch: dict) -> dict:
+    """One sidebar or menu entry. `href` for the pkgdown tree, `file` otherwise.
+
+    The R reference is copied into ``_site`` as a resource rather than rendered
+    by Quarto, so Quarto cannot resolve it as a page and it has to be linked.
+    """
+    key = "href" if "href" in ch else "file"
+    return {"text": ch["title"], key: ch.get("href") or ch["file"]}
+
+
+def book_contents(spec: dict) -> list[dict]:
+    """The sidebar spine: ordered parts, each with its chapters.
+
+    Quarto renders a `section` with no `file` as a plain heading, which is what
+    a part should be. `collapse-level` is left alone so every part stays open:
+    the point of the spine is that a reader can see the whole shape of the site
+    without clicking, and a collapsed book is a table of contents that has to
+    be excavated.
+    """
+    return [
+        {"section": part["part"],
+         "contents": [_chapter(ch) for ch in part["chapters"]]}
+        for part in spec.get("book", [])
+    ]
+
+
+def _navbar_contents(spec: dict) -> list[dict]:
+    """The same list, flattened for a navbar menu.
+
+    A Quarto navbar menu takes one level, so the parts become `text`-only
+    entries that Quarto renders as headers rather than links. Losing the
+    hierarchy is acceptable here: this menu only appears on a screen too narrow
+    for the sidebar, where a nested drawer is worse than a long list.
+    """
+    out: list[dict] = []
+    for part in spec.get("book", []):
+        out.append({"text": part["part"]})
+        out.extend(_chapter(ch) for ch in part["chapters"])
+    return out
+
+
 def sidebar_header(spec: dict) -> str:
     """Logo, one line on what this is, and a citation you can paste.
 
@@ -178,29 +219,22 @@ def quarto_yaml(spec: dict) -> str:
                 # below the breakpoint, the sidebar's above it.
                 "logo": "logo.png",
                 "logo-alt": f"{site['title']} logo",
-                # Ordered the way someone reads it: what the tool is, then the
-                # science it rests on, then how to drive it, then the API.
+                # ONE navigation, in one order, in whichever of the two places
+                # is on screen.
                 #
-                # "About", not "Get started": guide/FALCONAge.qmd is called
-                # "Getting started" and is the walkthrough. Two entries a menu
-                # apart with near-identical names is a coin toss for the reader.
+                # The site's contents live in the sidebar as a book spine (see
+                # `sidebar.contents` below). That column is hidden below 992px,
+                # so this single collapsed menu carries the same list, in the
+                # same order, for those widths, and the stylesheet hides it
+                # above the breakpoint. Both are generated from `book:` in
+                # reference-groups.yml, so they cannot disagree about what
+                # exists or what order it is in.
+                #
+                # The part headings become disabled separators rather than
+                # links, because a part is a grouping and there is no page at
+                # the end of it.
                 "left": [
-                    {"text": "About", "file": "index.qmd"},
-                    {"text": "Background", "menu": [
-                        {"text": p["title"], "file": p["file"]}
-                        for p in spec.get("pages", [])]},
-                    {"text": "Guides", "menu": [
-                        {"text": a["title"], "file": f"guide/{a['file']}.qmd"}
-                        for a in spec["articles"]]},
-                    # One menu, two languages. They were top-level siblings, so
-                    # the same idea occupied two slots and neither said it had a
-                    # counterpart. `file` for the Python tree and `href` for R
-                    # because pkgdown's output is copied in as a resource rather
-                    # than rendered by Quarto.
-                    {"text": "Reference", "menu": [
-                        {"text": "Python reference", "file": "reference/index.qmd"},
-                        {"text": "R reference", "href": "r/index.html"},
-                    ]},
+                    {"text": "Contents", "menu": _navbar_contents(spec)},
                 ],
                 "right": [
                     # href, not file: these are binaries copied into _site by
@@ -239,10 +273,21 @@ def quarto_yaml(spec: dict) -> str:
                 "logo": "logo.png",
                 "logo-alt": f"{site['title']} logo",
                 "logo-href": site["url"],
-                # Logo, then what it is, then how to cite it. No navigation:
-                # the navbar already carries it, and repeating it down the left
-                # is two copies of one menu. See sidebar_header().
+                # Logo, then what it is, then how to cite it, then the spine.
                 "header": sidebar_header(spec),
+                # THE BOOK SPINE. This column used to carry no navigation, on
+                # the grounds that repeating the navbar down the left is two
+                # copies of one menu. That was right about the duplication and
+                # wrong about which copy to keep: three navbar menus, one of
+                # them a drawer called "Background" holding five unrelated
+                # documents, gave a reader no way to see the order of the
+                # material or where they were in it.
+                #
+                # Now the order lives here, visible without a click, and the
+                # navbar carries a single collapsed copy for the widths where
+                # this column is hidden. Exactly one of the two is on screen at
+                # any width; the stylesheet enforces that.
+                "contents": book_contents(spec),
                 # The licence links to the file rather than naming a string:
                 # "GPL-3.0-or-later" is an identifier, and the thing a reader
                 # actually wants is the terms.

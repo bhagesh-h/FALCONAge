@@ -122,6 +122,15 @@ jobs:
         run: quarto render
         working-directory: docs
 
+      # Renaming a heading moves its anchor, and Quarto does not warn: it emits
+      # the old href, the page builds clean, and the link scrolls nowhere. Four
+      # of the twenty-three entries in the two hand-written contents lists were
+      # dead this way before the lists were generated. Runs after the render
+      # because it reads _site, and before the deploy so a dead link is a red
+      # build rather than something a reader finds.
+      - name: Internal links resolve
+        run: python docs/check_links.py
+
       # ---- the downloadable copies -------------------------------------------
       # After the render, because the markdown bundle converts pkgdown's HTML.
       # --strict so a broken toolchain fails the build here rather than

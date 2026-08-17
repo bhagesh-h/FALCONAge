@@ -283,6 +283,59 @@ pairs:
   Configuration and setup:
     - [falconage_config, config]
 
+# =============================================================================
+# The reading order of the site
+# =============================================================================
+#
+# WHY THIS EXISTS. The navbar used to carry three menus: "About", "Guides", and
+# "Background". The first two were fine and the third was a drawer holding the
+# literature review, the internals document, the figure gallery, the clock
+# catalogue and the GPU measurements -- five things with five different
+# audiences, filed together because none of them was a guide. A reader could
+# not tell what to read first, what followed it, or whether they had finished.
+#
+# Ordered parts fix that, and they are what a technical book does: a spine down
+# the left, in the order somebody learns the material, so the position of a page
+# is itself information. The parts run from what the tool is, through using it,
+# to the science it rests on, to the API, to the internals -- roughly the order
+# in which a reader stops needing each one.
+#
+# `book` is the source for the Quarto sidebar and for the compact navbar menu
+# shown at widths where the sidebar is not. `articles` and `pages` below are
+# kept because pkgdown's own navbar is generated from them and it groups by
+# kind rather than by reading order.
+book:
+  - part: 1. Orientation
+    chapters:
+      - title: What FALCONAge is
+        file: index.qmd
+      - title: Getting started
+        file: guide/FALCONAge.qmd
+  - part: 2. Working with clocks
+    chapters:
+      - title: Choosing a clock
+        file: guide/clocks.qmd
+      - title: Clock catalogue
+        file: clocks.qmd
+      - title: Figure gallery
+        file: gallery.qmd
+  - part: 3. The science
+    chapters:
+      - title: The science of aging clocks
+        file: science.qmd
+  - part: 4. API reference
+    chapters:
+      - title: Python reference
+        file: reference/index.qmd
+      - title: R reference
+        href: r/index.html
+  - part: 5. Internals and operations
+    chapters:
+      - title: Architecture
+        file: architecture.qmd
+      - title: GPU and performance
+        file: gpu.md
+
 articles:
   - title: Getting started
     file: FALCONAge

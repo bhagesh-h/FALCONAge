@@ -50,6 +50,50 @@
 }
 #quarto-sidebar .sidebar-header { order: -2; }        // logo
 #quarto-sidebar .quarto-sidebar-header { order: -1; } // blurb and cite
+// The book spine sits under both, and takes the slack so the footer stays at
+// the bottom of a short page instead of floating under the last chapter.
+#quarto-sidebar .sidebar-menu-container { order: 0; flex: 1 1 auto; }
+
+// THE SPINE ITSELF.
+//
+// Quarto styles a docked sidebar for a flat page list. This one has parts, and
+// a part heading that looks like a chapter link is worse than no grouping at
+// all, so the two are given visibly different weights: the part is small,
+// spaced and uppercase; the chapter is ordinary body text with a rule down the
+// left that fills in on the current page.
+// The `>` is load-bearing. Quarto nests the chapters in a
+// `<ul class="sidebar-section">` inside the part's own `<li>`, so a descendant
+// selector here reaches every chapter link and renders the whole spine in
+// small uppercase. Only the part's own container is a direct child.
+#quarto-sidebar .sidebar-item-section > .sidebar-item-container {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+// The part heading is a Bootstrap collapse toggle, so Quarto gives it a
+// caret and link styling it does not need: nothing here is collapsed, and a
+// heading that looks clickable invites a click that changes nothing useful.
+#quarto-sidebar .sidebar-item-section > .sidebar-item-container .sidebar-item-toggle {
+  display: none;
+}
+#quarto-sidebar .sidebar-item-section + .sidebar-item-section {
+  margin-top: 1.15rem;
+}
+#quarto-sidebar .sidebar-item .sidebar-item-container .sidebar-item-text {
+  font-size: 0.88rem;
+  line-height: 1.35;
+  padding: 0.16rem 0;
+}
+// The current chapter, marked on the spine rather than only in the tab title.
+#quarto-sidebar .sidebar-item a.active,
+#quarto-sidebar .sidebar-item a:hover {
+  border-left: 2px solid currentColor;
+  padding-left: 0.5rem;
+  margin-left: -0.5rem;
+  text-decoration: none;
+}
+#quarto-sidebar .sidebar-item a.active { font-weight: 600; opacity: 1; }
 
 #quarto-sidebar .sidebar-header {
   padding: 0;
@@ -305,11 +349,13 @@ main video {
 // reported clean while the page was wrong. test/responsive_check.py now counts
 // them instead.
 //
-// The sidebar is the one to drop. It holds no navigation at all here (that was
-// removed deliberately: repeating the navbar down the left is two copies of one
-// menu), so on a phone its drawer offers a logo and a citation button behind a
-// control that looks exactly like the real menu next to it. The logo and the
-// citation are both on the About page, one tap away.
+// The sidebar is the one to drop. Its drawer would otherwise sit behind a
+// control that looks exactly like the real menu next to it, offering the same
+// contents twice. The navigation is not lost: the navbar's single "Contents"
+// menu carries the identical list, generated from the same `book:` block, and
+// the rule below hides that menu above this breakpoint so the two are never on
+// screen together. The logo and the citation are both on the About page, one
+// tap away.
 @media (max-width: 991.98px) {
   #quarto-sidebar,
   #quarto-sidebar-glass,
@@ -482,5 +528,26 @@ mjx-container[display="true"],
   :root:not([data-theme="light"]) .falcon-output pre,
   :root:not([data-theme="light"]) .falcon-output div.sourceCode {
     background: rgba(160, 170, 180, 0.14);
+  }
+}
+
+// ONE CONTENTS LIST, WHICHEVER FITS.
+//
+// The site's reading order lives in the sidebar spine. Below 992px that column
+// is hidden (see the block above), and the navbar's collapsed "Contents" menu
+// stands in for it. Above 992px the spine is on screen, so the navbar copy is
+// removed: two identical lists a centimetre apart is the duplication the
+// sidebar was emptied to avoid, only in the other direction.
+//
+// `.me-auto` is Quarto's left-hand navbar list, and build_docs.py puts exactly
+// one item in it: the Contents menu. The `#nav-menu-contents` id is Quarto's
+// own, slugged from the menu text, and is here so the rule still bites if a
+// later change adds a second left item and the list selector stops being
+// specific enough. The right-hand list, `.ms-auto`, carries Download and the
+// GitHub icon and stays at every width.
+@media (min-width: 992px) {
+  #quarto-header .navbar-nav.me-auto,
+  #quarto-header #nav-menu-contents {
+    display: none;
   }
 }
