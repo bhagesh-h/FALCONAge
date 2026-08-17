@@ -176,13 +176,38 @@ def main() -> int:
             "generated directory is committed did not run. Reporting this "
             "rather than passing: an unrunnable check is not a clean one.")
     else:
-        for gen in ("docs/figures", "docs/reference", "docs/r", "docs/_site"):
+        for gen in ("docs/figures", "docs/reference", "docs/r", "docs/_site",
+                    "docs/site_libs"):
             n = _tracked(gen)
             if n:
                 problems.append(
                     f"{n} generated file(s) under {gen}/ are tracked by git. They "
                     f"are rebuilt by CI before every render; untrack with "
                     f"`git rm -r --cached {gen}`.")
+
+        # Rendered pages, which are files rather than a directory and so were
+        # not covered above. Quarto writes each one into docs/ during a render
+        # and moves it to docs/_site/ at the end; a `git add -A` that lands
+        # while a render is running captures the intermediate. Twenty-five were
+        # committed exactly that way. Two .html files here are genuinely source
+        # -- the include-after-body fragments -- so the check is a subtraction
+        # rather than a blanket ban.
+        SOURCE_HTML = {"docs/cite-copy.html", "docs/table-scroll.html"}
+        try:
+            listed = subprocess.run(
+                ["git", "ls-files", "--", "docs/*.html", "docs/guide/*.html"],
+                cwd=ROOT, capture_output=True, text=True, timeout=30,
+                check=True).stdout.split()
+        except Exception:
+            listed = []
+        stray = sorted(set(listed) - SOURCE_HTML)
+        if stray:
+            problems.append(
+                f"{len(stray)} rendered page(s) are tracked by git: "
+                f"{stray[:4]}. Quarto writes these into docs/ mid-render and "
+                f"moves them to docs/_site/; only "
+                f"{', '.join(sorted(SOURCE_HTML))} are source. Untrack with "
+                f"`git rm --cached {stray[0]}`.")
 
     # 9 -- the GPU page's coverage table agrees with the code.
     #
