@@ -19,6 +19,24 @@
   source for both the sidebar and the compact navbar menu that replaces it below 992px, so the two
   cannot disagree about what exists or what order it is in.
 
+- **The mark sits beside the site name in the header, on every page and at every width.** It was
+  in the sidebar at full column width, 205px of logo above everything else, and a stylesheet rule
+  hid the navbar's copy above 992px so the two could not both appear. That put the identity on the
+  part of the page a reader does not look at for it, and left the header wordless on a desktop.
+  There is one mark now, in the navbar, sized in `em` so it tracks the wordmark instead of needing
+  its own breakpoint. Verified present on all 123 rendered pages.
+
+- **The book spine collapses to the part you are in.** Five parts and fifteen chapters open at once
+  is a wall, and a reader on the GPU page does not need the six chapters of parts 1 and 2 in front
+  of them. `collapse-level: 1` closes them; Quarto opens the one holding the current page. The part
+  headings stay visible, so the shape of the site is still legible without a click. The caret is
+  visible again, having been hidden back when nothing collapsed and the control would have been
+  inert.
+
+  `test/responsive_check.py` asserts exactly one part open, and that a mark is on screen at every
+  width. Both were checked against the previous design and both assertions had gone stale with it:
+  the old one measured `img.sidebar-logo`, which no longer exists.
+
 - **Section titles use the vocabulary of the field rather than sentences.** Headings were written
   as prose: *What goes in*, *What comes out*, *How much of a score is the assay*, *Counting probes
   is not weighing them*, *Reliability, and the trap in it*. Each says something true and none is

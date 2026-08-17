@@ -26,9 +26,10 @@
   letter-spacing: -0.01em;
 }
 
-// Quarto emits the logo block after the header text. Reordering here rather
-// than hand-writing an <img> keeps Quarto's per-page path rewriting, which is
-// what makes the logo resolve from guide/ and reference/ as well as the root.
+// The sidebar is a flex column so its blocks can be ordered: the blurb and
+// citation above, the book spine below, the author line last. It carried a
+// logo above all of them until the mark moved to the navbar; the ordering
+// survives because the blurb still has to precede the spine.
 //
 // WHY THIS IS NOT A BARE `#quarto-sidebar { display: flex }`, WHICH IS WHAT IT
 // WAS. `order` needs a flex parent, and Quarto leaves the <nav> as a block, so
@@ -48,7 +49,7 @@
   display: flex;
   flex-direction: column;
 }
-#quarto-sidebar .sidebar-header { order: -2; }        // logo
+#quarto-sidebar .sidebar-header { order: -2; }        // title, when Quarto emits one
 #quarto-sidebar .quarto-sidebar-header { order: -1; } // blurb and cite
 // The book spine sits under both, and takes the slack so the footer stays at
 // the bottom of a short page instead of floating under the last chapter.
@@ -71,11 +72,12 @@
   text-transform: uppercase;
   opacity: 0.62;
 }
-// The part heading is a Bootstrap collapse toggle, so Quarto gives it a
-// caret and link styling it does not need: nothing here is collapsed, and a
-// heading that looks clickable invites a click that changes nothing useful.
+// The caret stays. Parts are collapsed now (`collapse-level: 1`), so the
+// heading really is a toggle and hiding its affordance would leave a control
+// that works and looks inert. An earlier revision hid it, correctly, back when
+// nothing collapsed.
 #quarto-sidebar .sidebar-item-section > .sidebar-item-container .sidebar-item-toggle {
-  display: none;
+  opacity: 0.55;
 }
 #quarto-sidebar .sidebar-item-section + .sidebar-item-section {
   margin-top: 1.15rem;
@@ -95,40 +97,30 @@
 }
 #quarto-sidebar .sidebar-item a.active { font-weight: 600; opacity: 1; }
 
-#quarto-sidebar .sidebar-header {
-  padding: 0;
-  margin: 0 0 0.9rem;
-}
-#quarto-sidebar .sidebar-logo-link,
-#quarto-sidebar a.sidebar-logo-link {
-  display: block;
-  width: 100%;
-  padding: 0;
-}
-#quarto-sidebar img.sidebar-logo {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  max-height: none;   // Quarto caps this at 100px, which crops a square mark
-  height: auto;
-  margin: 0;
-  padding: 0;
-}
-
 #quarto-sidebar .quarto-sidebar-header {
   padding: 0.25rem 0 0.5rem;
   font-size: 0.86rem;
   line-height: 1.45;
 }
 
-// Above the breakpoint the sidebar shows the mark at full column width, so the
-// navbar's copy would be the second logo on the page -- the duplication this
-// whole arrangement exists to avoid. One or the other, never both.
-@media (min-width: 992px) {
-  .navbar-brand img,
-  .navbar-logo {
-    display: none !important;
-  }
+// THE MARK SITS BESIDE THE SITE NAME, ON EVERY PAGE, AT EVERY WIDTH.
+//
+// It used to live in the sidebar at full column width, and a rule here hid the
+// navbar's copy above 992px so the two could not both appear. That put the
+// logo on the one part of the page a reader is not looking at for identity,
+// hid it entirely on a phone-width sidebar, and left the header wordless.
+//
+// Now there is one mark, in the header, next to the wordmark, which is where
+// the pattern this follows puts it. Sized in `em` so it tracks the brand text
+// rather than needing a second breakpoint to stay in proportion.
+.navbar-brand img,
+.navbar-logo {
+  display: inline-block;
+  height: 1.9em;
+  width: auto;
+  max-height: none;
+  margin-right: 0.45rem;
+  vertical-align: -0.45em;
 }
 
 // One line, doing the job the navbar cannot: saying what this is.
@@ -327,16 +319,12 @@ main video {
   height: auto;
 }
 
-// Below Quarto's sidebar breakpoint the docked column becomes a drawer that
-// spans the screen. `width: 100%` on the logo is right in a 250 px column and
-// absurd in a 360 px one -- a square mark rendered 360 px tall, pushing every
-// other thing in the drawer off the first screen. This is the "overlapping on
-// small devices" symptom.
 // ONE SET OF CHROME ON A PHONE, NOT TWO.
 //
 // This site declares a navbar and a docked sidebar. On a wide screen they have
-// different jobs -- the navbar navigates, the sidebar carries the logo, the
-// one-line description and the citation buttons -- and both fit.
+// different jobs -- the navbar carries the mark, the site name and the search;
+// the sidebar carries the one-line description, the citation buttons and the
+// book spine -- and both fit.
 //
 // Below the sidebar breakpoint Quarto collapses each of them behind its own
 // control, and the result was two hamburgers side by side in the header, each
@@ -354,8 +342,8 @@ main video {
 // contents twice. The navigation is not lost: the navbar's single "Contents"
 // menu carries the identical list, generated from the same `book:` block, and
 // the rule below hides that menu above this breakpoint so the two are never on
-// screen together. The logo and the citation are both on the About page, one
-// tap away.
+// screen together. The mark is unaffected, being in the navbar; the citation
+// buttons are on the About page, one tap away.
 @media (max-width: 991.98px) {
   #quarto-sidebar,
   #quarto-sidebar-glass,
@@ -365,9 +353,10 @@ main video {
     display: none !important;
   }
 
-  // ...which took the logo with it, because the sidebar was the only place one
-  // was rendered. The navbar carries one for these widths. Small: it sits
-  // beside the wordmark in a short bar, not above a column.
+  // The mark is in the navbar at every width now, so hiding this column no
+  // longer takes it off the page. What these rules do is size it *down* for a
+  // short bar on a small screen, where the 1.9em set above is more than the
+  // header can spare.
   //
   // `max-height` as well as `height`, because Quarto ships
   // `.navbar-logo { max-height: 24px }` and a bare `height: 30px` is capped by
@@ -551,3 +540,5 @@ mjx-container[display="true"],
     display: none;
   }
 }
+
+@media (min-width: 992px){.navbar-brand img,.navbar-logo{display:none !important;}}

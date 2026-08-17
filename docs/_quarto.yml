@@ -57,9 +57,6 @@ website:
   sidebar:
     style: docked
     search: false
-    logo: logo.png
-    logo-alt: FALCONAge logo
-    logo-href: https://bhagesh-h.github.io/FALCONAge/
     header: '<p class="falcon-blurb">Biological age and aging-clock scoring from multiomic
       data, in Python and R, on CPU or GPU.</p>
 
@@ -67,6 +64,7 @@ website:
       class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjEuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
       APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjEuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
       BibTeX</button></div></div>'
+    collapse-level: 1
     contents:
     - section: 1. Orientation
       contents:

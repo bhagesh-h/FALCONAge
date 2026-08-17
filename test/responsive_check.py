@@ -199,19 +199,25 @@ SIDEBAR = """
   const bar = document.querySelector('#quarto-sidebar');
   if (!bar) return {present: false};
   const r = bar.getBoundingClientRect();
-  const logo = bar.querySelector('img.sidebar-logo');
   const head = bar.querySelector('.quarto-sidebar-header');
-  const lr = logo ? logo.getBoundingClientRect() : null;
+  const spine = bar.querySelector('.sidebar-menu-container');
   const hr = head ? head.getBoundingClientRect() : null;
+  const sr = spine ? spine.getBoundingClientRect() : null;
+  // Parts of the book spine that are open. `collapse-level: 1` closes them
+  // all and Quarto opens the one holding the current page, so on any page
+  // this is exactly 1: five open at once is the wall the collapse removed,
+  // none open means the reader cannot see where they are.
+  const sections = [...bar.querySelectorAll('.sidebar-menu-container ul.sidebar-section')];
   return {
     present: true,
     visible: r.width > 0 && r.height > 0,
     width: Math.round(r.width),
     display: getComputedStyle(bar).display,
-    logoH: lr ? Math.round(lr.height) : null,
-    logoW: lr ? Math.round(lr.width) : null,
-    // The whole reason the flex rule exists: logo must sit above the blurb.
-    logoAboveBlurb: (lr && hr) ? lr.top < hr.top : null,
+    sections: sections.length,
+    openSections: sections.filter(u => u.classList.contains('show')).length,
+    // The blurb introduces the site and the spine navigates it; the flex
+    // ordering exists to keep them in that order.
+    blurbAboveSpine: (hr && sr) ? hr.top < sr.top : null,
   };
 }
 """
@@ -322,9 +328,9 @@ def main(argv=None) -> int:
                                     f"visible ({c['logoWhich']})")
                 if c["logos"] == 0:
                     failures.append(
-                        f"@{width}px ({state}): no logo anywhere. The sidebar "
-                        "owns it above 992px and the navbar below; if both are "
-                        "hidden the page has lost its mark entirely.")
+                        f"@{width}px ({state}): no logo anywhere. The mark sits "
+                        "beside the site name in the navbar at every width; if "
+                        "it is missing here, a rule is hiding it.")
                 if "BROKEN" in c["logoWhich"]:
                     failures.append(f"@{width}px ({state}): logo does not load "
                                     f"at this page depth ({c['logoWhich']})")
@@ -364,8 +370,17 @@ def main(argv=None) -> int:
             elif desktop:
                 if not s["visible"]:
                     failures.append(f"@{width}px: sidebar should be docked and is not")
-                elif s["logoAboveBlurb"] is False:
-                    failures.append(f"@{width}px: logo is below the blurb")
+                elif s["blurbAboveSpine"] is False:
+                    failures.append(f"@{width}px: the blurb is below the book "
+                                    "spine; the flex ordering has broken")
+                elif s["openSections"] != 1:
+                    failures.append(
+                        f"@{width}px: {s['openSections']} of {s['sections']} "
+                        "parts of the spine are open, expected exactly 1. "
+                        "`collapse-level: 1` closes them and Quarto opens the "
+                        "one holding the current page; all open is the wall "
+                        "the collapse removed, none open leaves the reader "
+                        "unable to see where they are.")
             elif s["visible"]:
                 failures.append(
                     f"@{width}px: sidebar is painted ({s['width']}px wide, "
@@ -390,9 +405,9 @@ def main(argv=None) -> int:
 
     print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths -- no sideways "
           "scroll, no overlapping text, no unloaded image, the site name not "
-          "cut off, one search box, one menu, one title, and exactly one "
-          "contents list at every width: the sidebar spine at or above 992px, "
-          "the navbar menu below it")
+          "cut off, one mark beside the site name at every width, exactly one "
+          "part of the book spine open, and exactly one contents list: the "
+          "spine at or above 992px, the navbar menu below it")
     return 0
 
 

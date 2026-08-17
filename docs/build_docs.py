@@ -266,15 +266,25 @@ def quarto_yaml(spec: dict) -> str:
                 # identity and citation, not navigation, so it has nothing to
                 # search.
                 "search": False,
-                # Quarto emits this into a block AFTER `header:`; the
-                # stylesheet reorders it to the top. Using the key rather than
-                # a hand-written <img> is what makes the path correct at every
-                # page depth.
-                "logo": "logo.png",
-                "logo-alt": f"{site['title']} logo",
-                "logo-href": site["url"],
-                # Logo, then what it is, then how to cite it, then the spine.
+                # NO LOGO IN THIS COLUMN. It used to carry one at full column
+                # width, 205px of mark above everything else, on the reasoning
+                # that the sidebar owned the identity and the navbar owned the
+                # navigation. Both halves of that have since flipped: the spine
+                # below is the navigation, and a logo belongs beside the site
+                # name in the header where a reader looks for it, on every page
+                # and at every width, which is where the navbar puts it.
+                #
+                # One mark on the page, not two. The stylesheet no longer hides
+                # the navbar's copy above 992px, because there is nothing left
+                # for it to collide with.
                 "header": sidebar_header(spec),
+                # Parts start closed and the one holding the current page
+                # opens. Fifteen chapters under five headings is a wall when it
+                # is all open at once, and a reader on the GPU page does not
+                # need the six chapters of parts 1 and 2 in front of them. The
+                # part headings stay visible, so the shape of the site is still
+                # legible at a glance; only the contents fold away.
+                "collapse-level": 1,
                 # THE BOOK SPINE. This column used to carry no navigation, on
                 # the grounds that repeating the navbar down the left is two
                 # copies of one menu. That was right about the duplication and
