@@ -28,6 +28,7 @@
 !/.gitignore
 !/CHANGELOG.md
 !/CITATION.cff
+!/CLOCK_AUDIT.md
 !/LICENSE
 !/NEWS.md
 !/PUBLISHING.md
