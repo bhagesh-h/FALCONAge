@@ -17,7 +17,7 @@ in Python and R, on CPU or GPU.
 📖 **[Full documentation](https://bhagesh-h.github.io/FALCONAge/)**. This file is a summary; every
 section links to the page that covers it properly.
 
-## What it does
+## Overview
 
 Reads raw or public data, applies published aging clocks, and returns a score per sample **with
 the unit, the provenance, and how much of the number is measurement noise**.
@@ -40,7 +40,7 @@ tested scaffolds and take a file you supply.
 → [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) ·
 [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html)
 
-## Run it with Docker
+## Installation
 
 **Docker is the supported path.** One image carries Python, R, the CLI and all 20 bundled clocks
 at pinned versions, so the same input gives the same numbers on any machine. Nothing else to
@@ -122,7 +122,7 @@ interpretation(res)
 technical_se(res, d)
 ```
 
-## Driving it from Claude
+## Claude skill
 
 The repository ships a [Claude](https://claude.com/claude-code) skill at
 [`.claude/skills/falconage/`](.claude/skills/falconage/). It carries the Docker commands, the
@@ -146,7 +146,7 @@ loads the skill. Every `fa.*` name and CLI verb in it is checked against the run
 `docs/check_api_docs.py` on each push, because a wrong name in a skill does not mislead a reader
 into checking; it becomes a command.
 
-## What it refuses, and why
+## Out-of-scope use
 
 Refusals are the design, not the edge cases. Each names the measurement behind it.
 
@@ -162,7 +162,7 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 
 → [The science, §19](https://bhagesh-h.github.io/FALCONAge/science.html)
 
-## What v1.1 added
+## Changes in v1.1
 
 - **Raw IDATs end to end**, validated at **r = 0.99928** against the published betas for the same
   physical samples (median |Δ| = 0.011, 99.7% of probes within 0.05).
@@ -177,7 +177,7 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 
 → [CHANGELOG](CHANGELOG.md) · [Architecture §15](https://bhagesh-h.github.io/FALCONAge/architecture.html)
 
-## What it does not do
+## Known limitations
 
 | Not implemented | Why |
 |---|---|
