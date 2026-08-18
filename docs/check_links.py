@@ -13,6 +13,12 @@ what a reader loads and because Quarto rewrites relative paths on the way out:
 ``../science.qmd#x`` in the source is ``../science.html#x`` in the output, and
 only the second one has to resolve.
 
+Also checked, because it lives in the same place and nothing else looks at it:
+every page carries a ``<link rel="icon">`` whose target exists. The site was
+deployed for months with a blank browser tab -- the ``favicon:`` key was in the
+design and never made it into the generated config -- and no test noticed,
+because a missing icon breaks nothing that a build can see.
+
 WHAT IS NOT CHECKED. External URLs, which would make this a network test with a
 network test's flakiness, and ``mailto:``. The generated API trees under
 ``reference/`` and ``r/`` are skipped as link *sources*: quartodoc and pkgdown
@@ -32,7 +38,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from urllib.parse import unquote, urldefrag
+from urllib.parse import unquote, urldefrag, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "docs" / "_site"
@@ -55,6 +61,54 @@ BUILT_AFTER_RENDER = ("downloads/", "r/")
 HREF = re.compile(r'<a\b[^>]*?href="([^"]+)"', re.I)
 ID = re.compile(r'\bid="([^"]+)"')
 NAME = re.compile(r'<a\b[^>]*?\bname="([^"]+)"', re.I)
+
+#: The tab icon. Quarto emits one `<link rel="icon">` per page from the
+#: `favicon:` key; pkgdown draws its own head and gets one from an
+#: `in_header` include. Both are set in build_docs.py, and neither is
+#: visible in anything else this repository checks -- the site rendered,
+#: deployed and served for months with a blank tab and every test green,
+#: because a missing favicon breaks nothing except recognising the tab.
+LINK = re.compile(r"<link\b[^>]*>", re.I)
+ATTR = re.compile(r'\b(rel|href)="([^"]*)"', re.I)
+
+#: Where the site is served from, e.g. `/FALCONAge/`. pkgdown's pages sit at
+#: two depths and share one include, so its icon href has to be
+#: root-relative, which only resolves under this prefix.
+def deploy_prefix() -> str:
+    m = re.search(r"^\s*site-url:\s*(\S+)",
+                  (ROOT / "docs" / "_quarto.yml").read_text(encoding="utf-8"),
+                  re.M)
+    return urlsplit(m.group(1)).path if m else "/"
+
+
+def check_icons(pages: list[Path]) -> list[str]:
+    """Every rendered page carries an icon link that resolves."""
+    prefix = deploy_prefix()
+    bad: list[str] = []
+    for page in pages:
+        rel = page.relative_to(SITE).as_posix()
+        text = page.read_text(encoding="utf-8", errors="ignore")
+        hrefs = []
+        for tag in LINK.findall(text):
+            attrs = {k.lower(): v for k, v in ATTR.findall(tag)}
+            if "icon" in attrs.get("rel", "").lower().split() and attrs.get("href"):
+                hrefs.append(html.unescape(attrs["href"]))
+        if not hrefs:
+            bad.append(f"{rel}: no <link rel=\"icon\">")
+            continue
+        for href in hrefs:
+            if href.startswith(("http://", "https://", "data:")):
+                continue
+            if href.startswith("/"):
+                if not href.startswith(prefix):
+                    bad.append(f"{rel}: icon -> {href}   (outside {prefix})")
+                    continue
+                dest = SITE / unquote(href[len(prefix):])
+            else:
+                dest = (page.parent / unquote(href)).resolve()
+            if not dest.exists():
+                bad.append(f"{rel}: icon -> {href}   (no such file)")
+    return bad
 
 
 def ids_in(path: Path) -> set[str]:
@@ -116,6 +170,18 @@ def main() -> int:
                     broken.append(
                         f"{rel}: -> {href}\n      no id {frag!r} in {where}")
 
+    icons = check_icons(pages)
+    if icons:
+        print(f"{len(icons)} page(s) with a missing or broken tab icon:")
+        print()
+        for b in icons[:20]:
+            print(f"  {b}")
+        if len(icons) > 20:
+            print(f"  ... and {len(icons) - 20} more")
+        print("The icon comes from `favicon:` in _quarto.yml and the pkgdown "
+              "`in_header` include, both written by docs/build_docs.py.")
+        return 1
+
     if broken:
         print(f"{len(broken)} broken internal link(s) of {counts['checked']} "
               f"checked across {len(pages)} page(s):\n")
@@ -127,6 +193,7 @@ def main() -> int:
               "point at it, in the same change.")
         return 1
 
+    print(f"{len(pages)} rendered page(s) all carry a tab icon that resolves")
     print(f"{counts['checked'] - counts['deferred']} internal link(s) across "
           f"{len(pages)} rendered page(s) all resolve, anchors included "
           f"({counts['deferred']} into downloads/ and r/ skipped: a later build "

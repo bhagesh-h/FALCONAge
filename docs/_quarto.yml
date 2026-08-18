@@ -6,10 +6,12 @@ project:
   resources:
   - r/**
   - logo.png
+  - favicon.png
 website:
   title: FALCONAge
   description: Biological age and aging-clock scoring from multiomic data, in Python and R,
     on CPU or GPU.
+  favicon: favicon.png
   site-url: https://bhagesh-h.github.io/FALCONAge/
   repo-url: https://github.com/bhagesh-h/FALCONAge
   repo-actions:

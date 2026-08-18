@@ -23,6 +23,7 @@ import argparse
 import base64
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -203,10 +204,15 @@ def quarto_yaml(spec: dict) -> str:
         # HTML. Without this Quarto either tries to render those files itself
         # or drops them from _site, and the "R reference" navbar link 404s.
         "project": {"type": "website", "output-dir": "_site",
-                    "resources": ["r/**", "logo.png"]},
+                    "resources": ["r/**", "logo.png", "favicon.png"]},
         "website": {
             "title": site["title"],
             "description": " ".join(site["description"].split()),
+            # The tab icon. Its own file, not logo.png: the source mark is
+            # 512px and 320 kB, which every page would fetch to draw sixteen
+            # pixels. docs/favicon.png is the same mark at 96px and 15 kB,
+            # generated once rather than downscaled by each browser.
+            "favicon": "favicon.png",
             "site-url": site["url"],
             "repo-url": site["repo"],
             "repo-actions": ["issue", "source"],
@@ -379,6 +385,19 @@ def pkgdown_yaml(spec: dict) -> str:
             "bootstrap": 5,
             "light-switch": True,
             "bslib": {"primary": "#a84800", "link-color": "#a84800"},
+            # pkgdown draws its own <head>, so the Quarto half's `favicon:`
+            # does not reach these pages and the R reference used to be the
+            # one part of the site with a blank tab. The href is
+            # root-relative on purpose: pkgdown writes pages at two depths
+            # (r/index.html and r/reference/*.html) and a relative path
+            # cannot be right for both. `/FALCONAge/` is the Pages project
+            # prefix, so this resolves only on the deployed site -- a local
+            # `pkgdown::build_site()` preview shows no icon, which is the
+            # cheaper of the two wrong answers.
+            "includes": {
+                "in_header": ('<link rel="icon" type="image/png" '
+                              f'href="{urlsplit(site["url"]).path}favicon.png">'),
+            },
         },
         "home": {"title": f"{site['title']} for R",
                  "description": " ".join(site["description"].split())},

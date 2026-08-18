@@ -7,6 +7,8 @@ template:
   bslib:
     primary: '#a84800'
     link-color: '#a84800'
+  includes:
+    in_header: <link rel="icon" type="image/png" href="/FALCONAge/favicon.png">
 home:
   title: FALCONAge for R
   description: Biological age and aging-clock scoring from multiomic data, in Python and R,

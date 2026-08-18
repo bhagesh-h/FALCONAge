@@ -84,7 +84,23 @@ jobs:
       # ---- the R half ---------------------------------------------------------
       - uses: r-lib/actions/setup-pandoc@v2
 
+      # A ceiling on this step, not on the job alone.
+      #
+      # This step apt-installs R and its system dependencies, and normally
+      # takes about half a minute. On 18 Aug 2026 it ran for 44 minutes: the
+      # Azure package mirror was failing over to archive.ubuntu.com and every
+      # index fetch crawled. The job hit its own 45-minute ceiling while still
+      # inside it, which GitHub reports as "Error: The operation was
+      # canceled." -- naming no step, after three quarters of an hour of
+      # runner time, and looking for all the world like the build broke.
+      # R-CMD-check ran the same step on the same commit in 19 minutes and
+      # passed, which is what said the slowness was the mirror and not us.
+      #
+      # 25 minutes is above the slowest run that has ever succeeded here and
+      # well under the job ceiling. A stalled mirror now fails this step by
+      # name, in half the time, and the fix is to re-run rather than to bisect.
       - uses: r-lib/actions/setup-r@v2
+        timeout-minutes: 25
         with:
           r-version: release
           use-public-rspm: true
