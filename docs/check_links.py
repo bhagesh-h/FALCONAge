@@ -172,12 +172,25 @@ def main() -> int:
 
     icons = check_icons(pages)
     if icons:
-        print(f"{len(icons)} page(s) with a missing or broken tab icon:")
+        print(f"{len(icons)} of {len(pages)} page(s) with a missing or broken "
+              f"tab icon:")
         print()
         for b in icons[:20]:
             print(f"  {b}")
         if len(icons) > 20:
             print(f"  ... and {len(icons) - 20} more")
+        # State the inputs, not just the verdict. This check first failed in
+        # CI and passed on every local render, and none of the three things it
+        # depends on were visible in the output: which prefix it derived, what
+        # the site root actually holds, and which half of the site the failing
+        # pages came from.
+        print()
+        print(f"  deploy prefix: {deploy_prefix()!r}")
+        fav = SITE / "favicon.png"
+        print(f"  {fav.relative_to(SITE)} in the site root: {fav.exists()}")
+        r_side = sum(1 for b in icons if b.startswith("r/"))
+        print(f"  of the failures, {r_side} are pkgdown pages under r/ and "
+              f"{len(icons) - r_side} are Quarto pages")
         print("The icon comes from `favicon:` in _quarto.yml and the pkgdown "
               "`in_header` include, both written by docs/build_docs.py.")
         return 1

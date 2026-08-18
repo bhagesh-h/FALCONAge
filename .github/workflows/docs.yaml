@@ -144,8 +144,19 @@ jobs:
       # dead this way before the lists were generated. Runs after the render
       # because it reads _site, and before the deploy so a dead link is a red
       # build rather than something a reader finds.
+      #
+      # The failure is repeated as a `::error::` annotation, not only printed.
+      # A step log is readable by whoever has admin on the repository; an
+      # annotation is on the commit and in the API for anyone who can see the
+      # repository at all, which is what you want the first time a check fails
+      # for a reason nobody can reproduce locally.
       - name: Internal links resolve
-        run: python docs/check_links.py
+        run: |
+          set -o pipefail
+          if ! python docs/check_links.py 2>&1 | tee /tmp/links.txt; then
+            echo "::error title=check_links::$(head -c 900 /tmp/links.txt | tr -s '[:space:]' ' ')"
+            exit 1
+          fi
 
       # ---- the downloadable copies -------------------------------------------
       # After the render, because the markdown bundle converts pkgdown's HTML.
