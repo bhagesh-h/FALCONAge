@@ -57,11 +57,18 @@
 
 // THE SPINE ITSELF.
 //
-// Quarto styles a docked sidebar for a flat page list. This one has parts, and
-// a part heading that looks like a chapter link is worse than no grouping at
-// all, so the two are given visibly different weights: the part is small,
-// spaced and uppercase; the chapter is ordinary body text with a rule down the
-// left that fills in on the current page.
+// A part heading that looks like a chapter link is worse than no grouping at
+// all, so the two carry different weight: the part is small, spaced and
+// uppercase, the chapter is ordinary body text.
+//
+// SEPARATED BY SIZE AND CASE, NOT BY FADING IT OUT. The part headings were set
+// at `opacity: 0.62` and the caret at 0.55. Against this sidebar's ground that
+// lands near 3:1, under the 4.5:1 WCAG asks of body text and worse in dark,
+// where the fade eats a light grey rather than a dark one. They read as
+// disabled rather than secondary, which is what was reported for both themes.
+// Small spaced uppercase is already a strong enough signal that a line is a
+// heading; it does not have to be hard to read as well.
+//
 // The `>` is load-bearing. Quarto nests the chapters in a
 // `<ul class="sidebar-section">` inside the part's own `<li>`, so a descendant
 // selector here reaches every chapter link and renders the whole spine in
@@ -70,14 +77,15 @@
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.62;
+  opacity: 1;
+  font-weight: 600;
 }
-// The caret stays. Parts are collapsed now (`collapse-level: 1`), so the
-// heading really is a toggle and hiding its affordance would leave a control
-// that works and looks inert. An earlier revision hid it, correctly, back when
-// nothing collapsed.
+// The caret stays: parts collapse (`collapse-level: 1`), so the heading is a
+// real toggle and hiding its affordance would leave a control that works and
+// looks inert. It is the one thing here that may sit back a little, being a
+// glyph rather than words.
 #quarto-sidebar .sidebar-item-section > .sidebar-item-container .sidebar-item-toggle {
-  opacity: 0.55;
+  opacity: 0.8;
 }
 #quarto-sidebar .sidebar-item-section + .sidebar-item-section {
   margin-top: 1.15rem;
@@ -86,16 +94,28 @@
   font-size: 0.88rem;
   line-height: 1.35;
   padding: 0.16rem 0;
+  opacity: 1;
 }
-// The current chapter, marked on the spine rather than only in the tab title.
+// The current chapter, marked by weight and the brand colour.
+//
+// NO RULE DOWN THE LEFT. There was one, `border-left: 2px solid currentColor`,
+// meant to mark position on the spine. Two pixels of vertical line beside a
+// single line of text does not read as a position marker; it reads as a stray
+// pipe character in front of the title, which is how it was reported. Bold and
+// the brand colour say "you are here" without adding a glyph the reader has to
+// interpret.
+// `$falcon-accent`, NOT `$falcon-brand`. Brand is #e06000, which is 3.59:1 on
+// white: fine for the wordmark, where WCAG's large-text threshold is 3:1, and
+// too low for a 14px link. The light theme already carries the darker
+// #a84800 for exactly this and says so at its definition. Measured after the
+// swap: 4.85:1 in light, 8.9:1 in dark.
+#quarto-sidebar .sidebar-item a:hover { text-decoration: underline; }
 #quarto-sidebar .sidebar-item a.active,
-#quarto-sidebar .sidebar-item a:hover {
-  border-left: 2px solid currentColor;
-  padding-left: 0.5rem;
-  margin-left: -0.5rem;
-  text-decoration: none;
+#quarto-sidebar .sidebar-item a.active .menu-text {
+  font-weight: 700;
+  opacity: 1;
+  color: $falcon-accent;
 }
-#quarto-sidebar .sidebar-item a.active { font-weight: 600; opacity: 1; }
 
 #quarto-sidebar .quarto-sidebar-header {
   padding: 0.25rem 0 0.5rem;
@@ -454,6 +474,33 @@ main video {
   .panel-tabset .nav-tabs .nav-link {
     white-space: nowrap;
   }
+}
+
+/* -----------------------------------------------------------------------------
+   Tabset labels
+   -----------------------------------------------------------------------------
+   The ACTIVE tab went near-black on a dark ground, so on every Python/R block
+   the selected language was the one you could not read while the unselected
+   one stayed legible in the accent colour.
+
+   Bootstrap sets `.nav-tabs .nav-link.active` from
+   `--bs-nav-tabs-link-active-color`, which its dark build leaves at the light
+   default because the variable is not part of the colour-mode swap. Nothing in
+   this stylesheet touched it, so the value survived into dark mode unchanged.
+
+   `inherit` rather than a named colour: the tab takes the body text colour of
+   whichever theme is painting it, so this is one rule instead of two that have
+   to be kept in step. The inactive tabs keep the accent colour, which is what
+   makes the pair readable as "one of these is selected".
+   -------------------------------------------------------------------------- */
+.panel-tabset .nav-tabs .nav-link.active,
+.panel-tabset .nav-tabs .nav-item.show .nav-link {
+  color: inherit;
+  background-color: transparent;
+}
+
+.panel-tabset .nav-tabs .nav-link {
+  color: $falcon-accent;
 }
 
 /* -----------------------------------------------------------------------------
