@@ -151,6 +151,21 @@ CHROME = """
     searchVisible: count('#quarto-search, .sidebar-search, input[type=search]'),
     toggles: count('.navbar-toggler, .quarto-btn-toggle'),
     logos: count('img.sidebar-logo, img.navbar-logo'),
+    // HOW MANY PAGE MARKS ARE PAINTED.
+    //
+    // The mark is a floated ::before carrying a background image, so it is not
+    // an element and none of the counts above can see it. An earlier revision
+    // attached it to two selectors, the title block and the first section, so
+    // that reference pages (whose title block is empty) would get one; every
+    // prose page matched both and painted it twice. Nothing caught that: it is
+    // invisible to the overflow, overlap and image checks alike.
+    pageMarks: [...document.querySelectorAll('main, main *, #quarto-document-content, #title-block-header, #title-block-header *')]
+      .filter(el => {
+        const cs = getComputedStyle(el, '::before');
+        return cs.content !== 'none'
+            && (cs.backgroundImage || '').startsWith('url(')
+            && parseFloat(cs.width) > 40;
+      }).length,
     // Which one, and whether the file actually resolved at this page depth --
     // a logo that 404s from guide/ still counts as one element.
     logoWhich: [...document.querySelectorAll('img.sidebar-logo, img.navbar-logo')]
@@ -345,6 +360,13 @@ def main(argv=None) -> int:
                 # correct in the closed state on a phone, where the navbar menu
                 # is behind the hamburger by design, so that case is checked
                 # below against the toggle rather than here.
+                if c["pageMarks"] != 1:
+                    failures.append(
+                        f"@{width}px ({state}): {c['pageMarks']} page marks "
+                        "painted, expected exactly 1. The mark is a floated "
+                        "::before, so it is invisible to every other check "
+                        "here; two means a second selector is matching, none "
+                        "means the rule stopped applying.")
                 if c["navLists"] > 1:
                     failures.append(
                         f"@{width}px ({state}): the reading order is stated "
@@ -402,7 +424,7 @@ def main(argv=None) -> int:
 
     print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths -- no sideways "
           "scroll, no overlapping text, no unloaded image, the site name not "
-          "cut off, no logo image in the chrome, exactly one "
+          "cut off, no logo image in the chrome, exactly one page mark, exactly one "
           "part of the book spine open, and exactly one contents list: the "
           "spine at or above 992px, the navbar menu below it")
     return 0

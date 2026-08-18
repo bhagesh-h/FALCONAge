@@ -123,23 +123,21 @@
 // a gap.
 // THE MARK, BESIDE THE PAGE TITLE, WITH THE TEXT WRAPPING AROUND IT.
 //
-// WHERE IT IS ATTACHED, AND WHY THAT MATTERS. Quarto lays the article out with
-// CSS grid, and a float does not wrap across grid items: a mark attached to the
-// content container was ignored by every heading below it and text ran straight
-// through the image. So it is attached INSIDE the block that holds the heading,
-// where the heading is an ordinary sibling in the same formatting context and
-// the float does what a float does.
+// ONE SELECTOR, ONE MARK. An earlier version attached to two places, the title
+// block and the first section, so that the reference pages (whose title block
+// is empty) would get one too. Every prose page matched both and painted the
+// mark twice. The suppression rule meant to prevent that used `:has()` and
+// silently matched nothing.
 //
-// Two attachment points because Quarto emits two page shapes: the title block
-// on a prose page, and, on the 115 quartodoc reference pages, an EMPTY title
-// block with the h1 in a following section.
+// `#quarto-document-content` is the one element every page shape has exactly
+// one of, and it is the parent of both the title block and the sections, so a
+// float here precedes all of them and the text wraps around it either way.
 //
 // The image is embedded rather than linked: Quarto resolves a url() in theme
 // SCSS against the filesystem root, not the project, so a relative path fails
 // the render outright on `lstat '/logo.png'`. 49KB, from the 320KB original
 // resized to 192px. Decorative, so no alt text is the correct choice.
-#title-block-header .quarto-title::before,
-main.content > section:first-of-type::before {
+#quarto-document-content::before {
   content: "";
   float: right;
   // One value for width and height, so the box cannot differ from the mark
@@ -154,14 +152,10 @@ main.content > section:first-of-type::before {
   background-position: right top;
 }
 
-// The title block must not establish its own formatting context, or the float
-// inside it stops shortening the lines of the heading next to it.
+// Neither the container nor the title block may establish its own formatting
+// context, or the float stops shortening the lines of the heading beside it.
+#quarto-document-content { display: block; }
 #title-block-header.quarto-title-block { display: block; }
-
-// A page has one mark. On a prose page the title block carries it, so the
-// reference-page attachment is switched off there.
-#quarto-document-content:has(#title-block-header .quarto-title) main.content::before,
-#title-block-header:not(:has(.quarto-title))::before { content: none; }
 
 // One line, doing the job the navbar cannot: saying what this is.
 .falcon-blurb {
