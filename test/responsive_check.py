@@ -323,14 +323,11 @@ def main(argv=None) -> int:
                     failures.append(f"@{width}px ({state}): {c['toggles']} menu "
                                     "toggles visible -- a reader cannot tell "
                                     "which is the menu")
-                if c["logos"] > 1:
-                    failures.append(f"@{width}px ({state}): {c['logos']} logos "
-                                    f"visible ({c['logoWhich']})")
-                if c["logos"] == 0:
+                if c["logos"] > 0:
                     failures.append(
-                        f"@{width}px ({state}): no logo anywhere. The mark sits "
-                        "beside the site name in the navbar at every width; if "
-                        "it is missing here, a rule is hiding it.")
+                        f"@{width}px ({state}): {c['logos']} logo <img> in the "
+                        f"chrome ({c['logoWhich']}). The mark belongs beside "
+                        "the page title, not in the navbar or the sidebar.")
                 if "BROKEN" in c["logoWhich"]:
                     failures.append(f"@{width}px ({state}): logo does not load "
                                     f"at this page depth ({c['logoWhich']})")
@@ -405,7 +402,7 @@ def main(argv=None) -> int:
 
     print(f"\nclean: {len(PAGES)} pages x {len(WIDTHS)} widths -- no sideways "
           "scroll, no overlapping text, no unloaded image, the site name not "
-          "cut off, one mark beside the site name at every width, exactly one "
+          "cut off, no logo image in the chrome, exactly one "
           "part of the book spine open, and exactly one contents list: the "
           "spine at or above 992px, the navbar menu below it")
     return 0

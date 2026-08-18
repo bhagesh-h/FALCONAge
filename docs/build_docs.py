@@ -203,7 +203,7 @@ def quarto_yaml(spec: dict) -> str:
         # HTML. Without this Quarto either tries to render those files itself
         # or drops them from _site, and the "R reference" navbar link 404s.
         "project": {"type": "website", "output-dir": "_site",
-                    "resources": ["r/**"]},
+                    "resources": ["r/**", "logo.png"]},
         "website": {
             "title": site["title"],
             "description": " ".join(site["description"].split()),
@@ -212,13 +212,10 @@ def quarto_yaml(spec: dict) -> str:
             "repo-actions": ["issue", "source"],
             "navbar": {
                 # The mark, for the widths where the sidebar is not rendered.
-                # The sidebar owns the logo on a wide screen; below 992px it is
-                # hidden (it duplicated the navbar's search and menu), and
-                # hiding it took the only logo on the page with it. The
-                # stylesheet shows exactly one of the two at any width: this one
-                # below the breakpoint, the sidebar's above it.
-                "logo": "logo.png",
-                "logo-alt": f"{site['title']} logo",
+                # NO LOGO IN THE HEADER BAR. The mark sits beside each page's
+                # title instead, floated right, the way the sibling site does
+                # it. A logo in a navbar is chrome; beside the title it is part
+                # of the page. See `.falcon-page-logo` in the stylesheet.
                 # ONE navigation, in one order, in whichever of the two places
                 # is on screen.
                 #

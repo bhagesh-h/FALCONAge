@@ -5,6 +5,7 @@ project:
   output-dir: _site
   resources:
   - r/**
+  - logo.png
 website:
   title: FALCONAge
   description: Biological age and aging-clock scoring from multiomic data, in Python and R,
@@ -15,8 +16,6 @@ website:
   - issue
   - source
   navbar:
-    logo: logo.png
-    logo-alt: FALCONAge logo
     left:
     - text: Contents
       menu:
