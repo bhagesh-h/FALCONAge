@@ -68,6 +68,14 @@ NAME = re.compile(r'<a\b[^>]*?\bname="([^"]+)"', re.I)
 #: visible in anything else this repository checks -- the site rendered,
 #: deployed and served for months with a blank tab and every test green,
 #: because a missing favicon breaks nothing except recognising the tab.
+#: A page that bounces is not a page anyone reads. pkgdown writes one of
+#: these for every alias that is not itself a topic file -- 15 of them here,
+#: `falcon_result` living in `score.Rd`, `read_h5ad` in `write_h5ad.Rd` and so
+#: on. They are 272 bytes, have no `<body>`, and never went through the
+#: template, so asking them for a tab icon fails a check on pages that have no
+#: tab to speak of. That is what turned this check red the first time it ran
+#: against a full site: 15 of 222 pages, every one of them a stub.
+REDIRECT = re.compile(r'<meta[^>]+http-equiv="refresh"', re.I)
 LINK = re.compile(r"<link\b[^>]*>", re.I)
 ATTR = re.compile(r'\b(rel|href)="([^"]*)"', re.I)
 
@@ -81,6 +89,10 @@ def deploy_prefix() -> str:
     return urlsplit(m.group(1)).path if m else "/"
 
 
+#: Redirect stubs met on the last run, for the count in the summary line.
+SKIPPED: list[str] = []
+
+
 def check_icons(pages: list[Path]) -> list[str]:
     """Every rendered page carries an icon link that resolves."""
     prefix = deploy_prefix()
@@ -88,6 +100,9 @@ def check_icons(pages: list[Path]) -> list[str]:
     for page in pages:
         rel = page.relative_to(SITE).as_posix()
         text = page.read_text(encoding="utf-8", errors="ignore")
+        if REDIRECT.search(text):
+            SKIPPED.append(rel)
+            continue
         hrefs = []
         for tag in LINK.findall(text):
             attrs = {k.lower(): v for k, v in ATTR.findall(tag)}
@@ -206,7 +221,9 @@ def main() -> int:
               "point at it, in the same change.")
         return 1
 
-    print(f"{len(pages)} rendered page(s) all carry a tab icon that resolves")
+    print(f"{len(pages) - len(SKIPPED)} rendered page(s) all carry a tab icon "
+          f"that resolves ({len(SKIPPED)} pkgdown alias redirect(s) skipped: "
+          f"they bounce before anything paints)")
     print(f"{counts['checked'] - counts['deferred']} internal link(s) across "
           f"{len(pages)} rendered page(s) all resolve, anchors included "
           f"({counts['deferred']} into downloads/ and r/ skipped: a later build "
