@@ -84,6 +84,27 @@ jobs:
       # ---- the R half ---------------------------------------------------------
       - uses: r-lib/actions/setup-pandoc@v2
 
+      # apt waits a very long time on a slow mirror by default, and on 18 and
+      # 19 Aug 2026 that took three jobs down: setup-r apt-installs R's system
+      # dependencies, the Azure mirror was failing over to archive.ubuntu.com,
+      # and the docs build hit its step cap while R-CMD-check and the release
+      # hit their 45-minute job ceilings. python-test, which needs no R, passed
+      # each time, so the machinery was fine and the mirror was not.
+      #
+      # Three retries with a fifteen-second connection timeout turn a stalled
+      # mirror into a retry against another one. The warm-up update is allowed
+      # to fail: it exists so setup-r meets a populated index rather than a
+      # cold one, not as a gate.
+      - name: Make apt give up on a stalled mirror
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-falconage-timeouts >/dev/null <<'CONF'
+          Acquire::Retries "3";
+          Acquire::http::Timeout "15";
+          Acquire::https::Timeout "15";
+          Acquire::ftp::Timeout "15";
+          CONF
+          sudo apt-get update -qq || true
+
       # A ceiling on this step, not on the job alone.
       #
       # This step apt-installs R and its system dependencies, and normally
@@ -96,11 +117,12 @@ jobs:
       # R-CMD-check ran the same step on the same commit in 19 minutes and
       # passed, which is what said the slowness was the mirror and not us.
       #
-      # 25 minutes is above the slowest run that has ever succeeded here and
-      # well under the job ceiling. A stalled mirror now fails this step by
-      # name, in half the time, and the fix is to re-run rather than to bisect.
+      # It happened again on 19 Aug, twice: this step burned the 25-minute cap
+      # it had then, and R-CMD-check and the release each hit 45. Hence the apt
+      # timeouts above, and 20 minutes here -- above the slowest run that has
+      # ever succeeded, and now well above what a retrying apt should need.
       - uses: r-lib/actions/setup-r@v2
-        timeout-minutes: 25
+        timeout-minutes: 20
         with:
           r-version: release
           use-public-rspm: true
