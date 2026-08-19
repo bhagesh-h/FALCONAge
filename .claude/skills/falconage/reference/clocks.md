@@ -33,8 +33,14 @@ has no acceleration left with which to detect anything.
 | Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `phenoage`, `hrsinchphenoage`, `kdm`, `hd`, `zhangmortality` | mixed |
 | Is damage separable from adaptation? | `yingdamage`, `yingadaptage` | `age_years_relative` |
 | How long are the telomeres? | `dnamtl` | `telomere_kb` |
+| How many times has this tissue divided? | `epitoc1` (mean over 385 polycomb-target CpGs), `hypoclock` (1 minus the mean over 678 solo-WCGWs) | `divisions` |
 | Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
 | What is the blood's cell composition? | none ship; the Salas panels are tier C | `proportion` |
+
+The two mitotic scores are relative, not counts: epiTOC1 is a mean beta and
+HypoClock is one minus a mean beta, both bounded by 0 and 1. Higher means more
+divisions accumulated for epiTOC1 and deeper PMD hypomethylation for HypoClock.
+Neither converts to years, and `acceleration()` refuses on both.
 
 `fa.registry.load().compatible_with(d)` answers this against a real dataset, which beats any table.
 
@@ -64,7 +70,7 @@ Horvath's 15. The residual and group differences are defined; `predicted − chr
 | Tier | n | What it means |
 |---|---:|---|
 | **A** | 25 | Scores offline. 22 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| **B** | 110 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
+| **B** | 108 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
 | **C** | 28 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
 
 Every architecture is implemented and tested regardless of tier.
