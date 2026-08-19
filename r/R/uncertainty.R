@@ -7,7 +7,7 @@
 #' Technical standard error on each score
 #'
 #' How much of a score is the assay rather than the person. Every
-#' implementation of every aging clock, including this one before v1.1,
+#' implementation of every aging clock, including this one at first,
 #' reported a point estimate for a quantity whose technical replicates differ
 #' by up to nine years (Nat Aging 2022, s43587-022-00248-2).
 #'

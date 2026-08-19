@@ -47,7 +47,7 @@ at pinned versions, so the same input gives the same numbers on any machine. Not
 install.
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
+docker pull bhagesh/falconage:1.0.0-cpu
 ```
 
 Or build the same image from source, which needs a clone and about ten minutes:
@@ -55,28 +55,28 @@ Or build the same image from source, which needs a clone and about ten minutes:
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git
 cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
 Score a dataset and get an HTML report with 31 figures, no code written:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   report betas.csv --outdir results/
 ```
 
 Python or R inside the same image:
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu R
 ```
 
 The image's entrypoint is `falconage` itself, so the first argument is a verb.
 Write `report`, not `falconage report`.
 
 On Windows PowerShell write `"${PWD}"`; on `cmd.exe`, `"%cd%"`. For GPU, pull
-`bhagesh/falconage:1.1.0-cuda` and add `--gpus all`. Measured, CUDA is
+`bhagesh/falconage:1.0.0-cuda` and add `--gpus all`. Measured, CUDA is
 [slower than CPU](docs/gpu.md) for the linear clocks that ship today.
 
 → [Step-by-step Docker walkthrough](https://bhagesh-h.github.io/FALCONAge/guide/FALCONAge.html),
@@ -162,7 +162,7 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 
 → [The science, §19](https://bhagesh-h.github.io/FALCONAge/science.html)
 
-## Changes in v1.1
+## Release highlights
 
 - **Raw IDATs end to end**, validated at **r = 0.99928** against the published betas for the same
   physical samples (median |Δ| = 0.011, 99.7% of probes within 0.05).
@@ -216,7 +216,7 @@ and floating-point precision, the imputation policy, and every warning raised.
 | [Figure gallery](https://bhagesh-h.github.io/FALCONAge/gallery.html) | Every figure type with its interpretation |
 | [Python](https://bhagesh-h.github.io/FALCONAge/reference/) · [R](https://bhagesh-h.github.io/FALCONAge/r/reference/) | Full API references |
 | [GPU](docs/gpu.md) | Measured, including where CUDA is *slower* |
-| [Docker Hub](https://hub.docker.com/r/bhagesh/falconage) | `bhagesh/falconage:1.1.0-cpu` and `:1.1.0-cuda`, built from the Dockerfiles here |
+| [Docker Hub](https://hub.docker.com/r/bhagesh/falconage) | `bhagesh/falconage:1.0.0-cpu` and `:1.0.0-cuda`, built from the Dockerfiles here |
 | [Claude skill](.claude/skills/falconage/) | Drive all of the above from Claude; CI-checked against the running package |
 | [test/README.md](test/README.md) | Every published number and the command that regenerates it |
 

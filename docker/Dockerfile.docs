@@ -1,7 +1,7 @@
 # FALCONAge --- documentation build image
 #
 # Renders the Quarto site in docs/ and regenerates the Python API reference with
-# quartodoc. Deliberately NOT the full falconage:1.1.0-cpu image: that one carries
+# quartodoc. Deliberately NOT the full falconage:1.0.0-cpu image: that one carries
 # R, torch and the coefficient files, none of which the site needs, because no
 # .qmd on this site executes code. Every code block in the documentation is a
 # static listing whose output was captured by hand and pasted into a

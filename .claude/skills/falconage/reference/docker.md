@@ -6,21 +6,21 @@ Every command runs from the repository root. On Windows PowerShell write `"${PWD
 ## Get the image
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
+docker pull bhagesh/falconage:1.0.0-cpu
 ```
 
 Or build the same image from a clone:
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
 One image carries Python, R, the CLI and all 20 bundled coefficient files. Prove it, with no
 clone needed, against the source the image was built from:
 
 ```bash
-docker run --rm bhagesh/falconage:1.1.0-cpu python -m pytest /opt/falconage/src/python/tests -q
+docker run --rm bhagesh/falconage:1.0.0-cpu python -m pytest /opt/falconage/src/python/tests -q
 ```
 
 452 tests, all passing. The R suite is 52 more:
@@ -29,19 +29,19 @@ docker run --rm bhagesh/falconage:1.1.0-cpu python -m pytest /opt/falconage/src/
 ## Three ways in
 
 The entrypoint **is** the `falconage` CLI, so a verb goes straight after the image name. Writing
-`... bhagesh/falconage:1.1.0-cpu falconage score ...` runs `falconage falconage score` and fails.
+`... bhagesh/falconage:1.0.0-cpu falconage score ...` runs `falconage falconage score` and fails.
 `python`, `R`, `Rscript`, `pytest` and `bash` are the exceptions, passed through as given.
 
 ```bash
 # a session
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu R
 
 # a single CLI command: the verb, with no `falconage` in front of it
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu report betas.csv --outdir results/
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu report betas.csv --outdir results/
 
 # a script in the working tree
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python my_analysis.py
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python my_analysis.py
 ```
 
 The mount is what makes this work: `-v "$PWD:/work"` puts the current directory inside the
@@ -156,12 +156,12 @@ Never commit such a file to a repository. That is exactly the redistribution the
 ## GPU
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cuda
-docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda python test/gpu_check.py
+docker pull bhagesh/falconage:1.0.0-cuda
+docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cuda python test/gpu_check.py
 ```
 
 14.6 GB against the CPU image's 2.5 GB, because it carries torch built against CUDA 12.4. To
-build it instead: `docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.1.0-cuda .`
+build it instead: `docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.0.0-cuda .`
 
 Measured, and worth knowing: **CUDA is slower** for the linear clocks that ship today. The
 transfer dominates a dot product. The GPU path exists for the neural architectures.

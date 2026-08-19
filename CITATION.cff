@@ -26,8 +26,8 @@ authors:
     family-names: "Hunakunti"
     email: "bhunakun@uni-bonn.de"
     orcid: "https://orcid.org/0000-0002-5957-8005"
-version: 1.1.0
-date-released: "2026-08-10"
+version: 1.0.0
+date-released: "2026-08-19"
 license: GPL-3.0-or-later
 repository-code: "https://github.com/bhagesh-h/FALCONAge"
 url: "https://bhagesh-h.github.io/FALCONAge/"

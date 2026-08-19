@@ -127,7 +127,7 @@ Two samples per platform is enough for correctness and not enough for a normalis
 estimates parameters across a plate, funnorm on n=2 is not funnorm. The full `RAW.tar` for either
 series is several hundred megabytes and does not fit the budget.
 
-**What this group exercises, as of v1.1.** The whole chain, not just the parser. `read_idat_dir`
+**What this group exercises, as of this release.** The whole chain, not just the parser. `read_idat_dir`
 decodes the binary to bead addresses with their Grn and Red means; `fetch_manifest` maps addresses
 to `cg########` ids and infers the platform from the address set; then pOOBAH detection masking,
 noob background correction with the out-of-band signal as the null, and optional BMIQ. The
@@ -241,10 +241,10 @@ Stated here rather than discovered later.
 - **FP64 gold-standard vectors.** The bench parquets are float32. Double-precision reference
   values come from the papers' own worked examples, not from here.
 - **Plate-level normalisation.** Four IDATs is not a plate. The frozen-reference batch correction
-  in v1.1 is unit-tested on synthetic plates instead, because the property that matters, that
+  is unit-tested on synthetic plates instead, because the property that matters, that
   an already-reported score does not move when the next plate arrives, is a statement about
   determinism, not about biology.
-- **Transcriptomic and proteomic clocks.** The v1.1 readers and preparation chains
+- **Transcriptomic and proteomic clocks.** The readers and preparation chains
   (`read_olink`, `read_somascan`, `read_counts`, RLE, YuGene) are exercised by the unit suite on
   synthetic matrices. No corpus group exists because no *clock* in either family is catalogued:
   every published model is licence-restricted, so there is nothing here for real data to score.

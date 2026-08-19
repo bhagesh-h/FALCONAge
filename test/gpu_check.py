@@ -20,9 +20,9 @@ fails:
 
 Run it, from the repository root::
 
-    docker build -f docker/Dockerfile.cuda -t falconage:1.1.0-cuda .
+    docker build -f docker/Dockerfile.cuda -t falconage:1.0.0-cuda .
     docker run --rm --gpus all -v "$PWD:/work" -w /work \\
-      falconage:1.1.0-cuda python test/gpu_check.py
+      falconage:1.0.0-cuda python test/gpu_check.py
 
 On a machine with no CUDA device it stops after step 1 with an explanation
 rather than an error, so it is safe to run anywhere.

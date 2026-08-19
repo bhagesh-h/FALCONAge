@@ -37,7 +37,7 @@ if [ -n "${FALCONAGE_SOURCE:-}" ]; then
   echo "FALCONAge: running mounted source at ${FALCONAGE_SOURCE}" >&2
 fi
 
-# `docker run falconage:1.1.0-cpu` with no arguments is somebody finding out
+# `docker run falconage:1.0.0-cpu` with no arguments is somebody finding out
 # what the image does, not a malformed command.
 case "${1:-}" in
   ""|-h|--help) exec falconage --help ;;

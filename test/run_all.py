@@ -131,7 +131,7 @@ def run_bench(records: dict) -> None:
 
         # How much of the table above is the assay. Written beside the scores
         # rather than offered separately: a score table without its measurement
-        # error is the thing v1.1 exists to stop shipping.
+        # error is the thing this check exists to stop shipping.
         se = conf = cons = None
         try:
             se = fa.technical_se(res, d)
@@ -248,7 +248,7 @@ def run_gestational(records: dict) -> None:
         return
     d = fa.prepare(fa.read_series_matrix(p))
     # GSE66459 is umbilical cord blood. Knight was trained on it; the three Lee
-    # clocks were trained on placenta. Until v1.1 this scored all four and
+    # clocks were trained on placenta. At first this scored all four and
     # checked only that the answers looked like gestational weeks -- which they
     # did, because gestational age is gestational age whatever tissue you read
     # it from. `compatible` now refuses the placenta clocks by name, and the
@@ -524,7 +524,7 @@ GALLERY_SOURCES = [
     ("forest",                "bench", "_combined", "effect sizes with intervals"),
     ("kaplan_meier",     "clinical", "synthetic", "the only cohort with a follow-up time; synthetic, and the gallery notes say so"),
     ("volcano",          "clinical", "synthetic", "same cohort, the only one with a continuous outcome to regress on"),
-    # ---- v1.1: how much of the numbers above is the assay ----------------
+    # ---- how much of the numbers above is the assay ----------------
     ("reliability_forest", "bench", "GSE182991", "EPIC, widest age range, so the spread the noise is measured against is real"),
     ("score_interval",     "bench", "GSE182991", "same cohort; both intervals drawn on one clock"),
     ("platform_bias",      "bench", "_combined", "read off the shipped measurement table, not this dataset"),

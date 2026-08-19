@@ -28,14 +28,14 @@ package exists to prevent.
 ## Setup, once
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
+docker pull bhagesh/falconage:1.0.0-cpu
 ```
 
 Or build the same image from a clone:
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
 On Windows PowerShell write `"${PWD}"` wherever `"$PWD"` appears below; on `cmd.exe`, `"%cd%"`.
@@ -46,14 +46,14 @@ An HTML report with 31 figures, no code written. The entrypoint is the CLI, so t
 straight after the image name with no `falconage` in front of it:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   report betas.csv --outdir results/
 ```
 
 ## The scripted path
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
 ```
 
 ```python
@@ -76,7 +76,7 @@ reason. Naming clocks explicitly is stricter: every one must work, because an ex
 should never be dropped quietly.
 
 R is the same verbs in the same image: `docker run --rm -it -v "$PWD:/work" -w /work
-bhagesh/falconage:1.1.0-cpu R`, then `prepare()`, `score()`, `interpretation()`. Both languages call one
+bhagesh/falconage:1.0.0-cpu R`, then `prepare()`, `score()`, `interpretation()`. Both languages call one
 numerical core, so the results are bit-identical rather than approximately equal.
 
 ## Rules to hold to

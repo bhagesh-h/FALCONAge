@@ -24,13 +24,13 @@ on a reviewer's. A plain `sh` fence, since this runs in a terminal rather than i
 
 ```sh
 git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
 
 # an R session with FALCONAge already installed
-docker run --rm -it -v "$PWD:/work" -w /work falconage:1.1.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.0.0-cpu R
 
 # or prove the install by running the R suite
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
   Rscript -e 'testthat::test_local("r")'
 ```
 
@@ -64,7 +64,7 @@ when anything looks wrong. It reports the interpreter, the registry version, and
 are usable:
 
 ```
-FALCONAge 1.1.0
+FALCONAge 1.0.0
   registry     1.1.0 (161 clocks)
   tiers        A 23 ship - B 110 need a traced source - C 28 scaffold only
   devices      cpu

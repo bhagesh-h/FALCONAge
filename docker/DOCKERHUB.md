@@ -23,8 +23,8 @@ Python core.
 
 | Tag | Base | Size |
 |---|---|---|
-| `latest`, `1.1.0-cpu` | `python:3.12-slim-bookworm` | 2.5 GB |
-| `1.1.0-cuda` | `nvidia/cuda:12.4.1-runtime-ubuntu22.04` | 14.6 GB |
+| `latest`, `1.0.0-cpu` | `python:3.12-slim-bookworm` | 2.5 GB |
+| `1.0.0-cuda` | `nvidia/cuda:12.4.1-runtime-ubuntu22.04` | 14.6 GB |
 
 Both carry Python 3.12, R, and the package for each. **Take the CPU image
 unless you know why you want the other one:** on the clocks that ship, CUDA is
@@ -35,35 +35,35 @@ even where a card exists. Details: https://bhagesh-h.github.io/FALCONAge/gpu.htm
 ## Use it
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
+docker pull bhagesh/falconage:1.0.0-cpu
 ```
 
 The entrypoint is the `falconage` CLI, so the first argument is a verb:
 
 ```bash
 # what this installation resolved to
-docker run --rm bhagesh/falconage:1.1.0-cpu config
+docker run --rm bhagesh/falconage:1.0.0-cpu config
 
 # score a beta matrix and write an HTML report with 31 figures
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   report betas.csv --outdir results/
 
 # scores only
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   score --input betas.csv --outdir results/ --clocks compatible
 ```
 
 `python`, `R`, `Rscript`, `pytest` and `bash` are passed through instead:
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu R
 ```
 
 GPU, which needs the NVIDIA container toolkit on the host and no CUDA toolkit:
 
 ```bash
-docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda \
+docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cuda \
   score --input betas.csv --outdir results/ --device cuda
 ```
 

@@ -89,7 +89,7 @@ def image_label_versions() -> list[tuple[str, str]]:
 
     A published image carries its labels wherever it is pulled from, and on a
     registry they are often the only provenance a reader gets. Both files said
-    ``1.0.0`` for the whole of the 1.1.0 cycle, so pushing them would have put
+    ``1.0.0`` for the whole of the 1.0.0 cycle, so pushing them would have put
     an image labelled as the previous release on Docker Hub. It went unnoticed
     because a label is not executed and nothing read it; reading it here costs
     nothing and makes it one more thing that has to agree before a tag.

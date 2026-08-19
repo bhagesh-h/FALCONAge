@@ -615,7 +615,7 @@ def bad_pairs(spec: dict) -> list[str]:
        the same group, and not paired.** That renders as two half-empty rows,
        ``foo() | —`` and, several rows lower, ``— | fa.foo()``. It reads as "R
        has this and Python does not" about a function both languages export
-       under the identical name. Eight v1.1 functions did exactly that.
+       under the identical name. Eight of the later functions did exactly that.
 
     A Python name that is a method path -- ``FalconResult.interpretation`` --
     is allowed without being in the group's ``python`` list, because the list

@@ -1,6 +1,6 @@
 Package: FALCONAge
 Title: Multiomic Biological Age and Aging Clock Scoring
-Version: 1.1.0
+Version: 1.0.0
 Authors@R:
     person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5957-8005"))

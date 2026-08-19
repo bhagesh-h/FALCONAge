@@ -43,7 +43,7 @@ class RunManifest:
     #: float32 request, and a model class declaring ``CPU_ONLY`` computes in
     #: numpy whatever device was asked for. Read ``compute`` for the breakdown.
     #:
-    #: Before v1.1.1 these three were overwritten once per clock inside the
+    #: Before this release these three were overwritten once per clock inside the
     #: scoring loop, so they reported the *last* clock scored and described a
     #: run that had not happened: ``device="cuda"`` for PhenoAge, which has no
     #: device path at all. A provenance field that is wrong is worse than one

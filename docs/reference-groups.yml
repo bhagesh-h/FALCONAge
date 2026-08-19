@@ -47,7 +47,7 @@ groups:
 
   - title: Raw arrays
     desc: >-
-      IDAT to scoreable betas, which until v1.1 meant leaving FALCONAge for
+      IDAT to scoreable betas, which at first meant leaving FALCONAge for
       sesame or minfi and coming back. The manifest is fetched from Illumina's
       public bucket and cached; it is the one step here that is not offline.
       Detection is computed before background correction, because pOOBAH's null

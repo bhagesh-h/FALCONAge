@@ -8,7 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 [semantic versioning](https://semver.org/spec/v2.0.0.html), with the clock registry carrying its
 own `registry_version` so a coefficient correction can be pinned independently of the code.
 
-## [Unreleased]
+## [1.0.0] - 2026-08-19
 
 ### Changed
 
@@ -94,7 +94,7 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
-- **Both images are published: `bhagesh/falconage:1.1.0-cpu`, `:1.1.0-cuda` and `:latest`**, on
+- **Both images are published: `bhagesh/falconage:1.0.0-cpu`, `:1.0.0-cuda` and `:latest`**, on
   [Docker Hub](https://hub.docker.com/r/bhagesh/falconage), built from the Dockerfiles here.
   `latest` tracks the CPU release. Compressed, the CPU image is 666 MB against a 2.5 GB local
   size, and the CUDA image is 5.2 GB against 14.6 GB. `docker/DOCKERHUB.md` holds the repository
@@ -127,7 +127,7 @@ own `registry_version` so a coefficient correction can be pinned independently o
   README quick start, the guide's first command, and both skill files, which is to say in every
   place a new user starts.
 
-- **The image labels said `version="1.0.0"` throughout the 1.1.0 cycle.** Publishing them would
+- **The image labels said `version="1.0.0"` throughout the 1.0.0 cycle.** Publishing them would
   have put an image on a registry labelled as the previous release. `test/check_versions.py` reads
   `org.opencontainers.image.version` out of both Dockerfiles now, so it is one of six sources that
   have to agree before a tag. The labels also gained `url` and `documentation`, pointing at the
@@ -139,7 +139,6 @@ own `registry_version` so a coefficient correction can be pinned independently o
   layer beneath it, so a one-character version bump meant a full rebuild: ten minutes for the CPU
   image and rather more for the 14.6 GB CUDA one. At the bottom it costs a second.
 
-## [1.1.0] - 2026-08-10
 
 Everything in v1.0 was about computing the number correctly. This release is about the fact that a
 correctly computed number is still not interpretable on its own, which the field's own literature
@@ -289,7 +288,7 @@ specimen-type enforcement.
   with the reason.
 
 - **`docs/check_docs_complete.py`**, which asserts the documentation describes the release that
-  ships. Seven defects were reported at once against v1.1.0, the landing page named none of the
+  ships. Seven defects were reported at once against v1.0.0, the landing page named none of the
   new inputs, the catalogue linked no papers, the architecture page still called itself v1.0,
   output was pasted into copyable command fences, the routing table did not cover every clock, the
   availability column spent half the page width on one letter, and the parity table claimed Python
@@ -337,7 +336,7 @@ specimen-type enforcement.
 - `_evidence_line` and the ICC provenance parser both mis-handled a second header line with no
   colon in it, overwriting the citation.
 
-### Also in 1.1.0: the raw-array chain and the missing model architectures
+### Also in 1.0.0: the raw-array chain and the missing model architectures
 
 The coverage half of the plan, built after the uncertainty work. Ten of the
 eleven outstanding items; the eleventh is a literature grind, noted below.
@@ -445,7 +444,7 @@ eleven outstanding items; the eleventh is a literature grind, noted below.
   commit rather than a branch, and `test/run_all.py` and the integration tests
   both call it.
 
-### Still outstanding after 1.1.0
+### Still outstanding after 1.0.0
 
 **Tier B coefficient provenance**: 110 clocks catalogued with no primary source
 traced. Not engineering: a per-clock literature hunt, and some have no public
@@ -467,7 +466,7 @@ which is accurate.
   and both intervals are all reported; a score adjusted by an untraceable factor would destroy the
   provenance discipline that is the reason to use this package.
 
-### Also shipping in 1.1.0
+### Also shipping in 1.0.0
 
 Completed after the v1.0.0 tag was pushed and never released on its own.
 
@@ -743,7 +742,7 @@ Corrections where the README described a package other than this one:
 - the coverage example attributed 513 CpGs to `phenoage`, which is a clinical-chemistry clock
   with none
 
-### Also in 1.1.0: what a run says about the device it used
+### Also in 1.0.0: what a run says about the device it used
 
 Found by audit after the first tag, which is why this section exists rather than a 1.1.1. The
 scoring path was correct throughout; what was wrong was the record it left, and one of the two
@@ -812,7 +811,7 @@ Docker images was not building at all.
   every other test passes `resolve("cpu")`, against which a model that ignores the argument is
   indistinguishable from one that honours it. The torch-backend arithmetic is checked against numpy
   for the neural pass and all three aggregation statistics; those tests skip where torch is absent,
-  which includes CI, and run in `falconage:1.1.0-cuda`.
+  which includes CI, and run in `falconage:1.0.0-cuda`.
 
 - `DeviceSpec.as_cpu()`, `RunManifest.record_compute()`, `RunManifest.compute_summary()`,
   `falconage.models.effective_spec()`.
@@ -822,7 +821,7 @@ Docker images was not building at all.
 - `docs/gpu.md` gains the coverage table: which model classes reach the device, which decline, and
   what that means for a mixed run's manifest, with a real mixed `cuda`/`cpu` manifest as the
   worked example. Every measurement on the page was re-taken on 2026-08-10 in the rebuilt
-  `falconage:1.1.0-cuda`. Worst CPU-versus-GPU disagreement is now 9.9e-14 years against 1.3e-13
+  `falconage:1.0.0-cuda`. Worst CPU-versus-GPU disagreement is now 9.9e-14 years against 1.3e-13
   before, and the CPU's margin at 16,384 samples widened from 4.6x to 7.4x, because the CPU column
   improved on a newer numpy while the CUDA column did not. The CUDA columns now carry their
   run-to-run spread: 12% across three consecutive runs on an idle machine, against under 7% for
@@ -845,7 +844,7 @@ Docker images was not building at all.
   is declared `"mean aggregation"` without the word methylation and was missed by the count, though
   not by the detection logic or the tests.
 
-## [1.0.0] - 2026-08-08
+### The first cut of the package
 
 First release. 161 catalogued clocks in three availability tiers; 23 score offline today, 28 ship
 as tested scaffolds whose research-use-only coefficients the user supplies, and 110 carry
@@ -863,6 +862,4 @@ metadata without traced coefficients.
 - One numerical core: R results are the same bits as Python results, asserted at tolerance
   exactly zero
 
-[Unreleased]: https://github.com/bhagesh-h/FALCONAge/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/bhagesh-h/FALCONAge/releases/tag/v1.1.0
 [1.0.0]: https://github.com/bhagesh-h/FALCONAge/releases/tag/v1.0.0

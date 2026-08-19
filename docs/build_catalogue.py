@@ -425,7 +425,7 @@ WHY_NOT = {
 def guide_scale_table() -> str:
     """Scale, what it permits, and what it refuses -- from LEGAL_OPS itself.
 
-    Hand-written until v1.1, and by then it was missing three of the nine
+    Hand-written at first, and by then it was missing three of the nine
     scales the registry uses, including the one added in the same release. A
     table of rules that omits a third of the rules is worse than no table.
     """

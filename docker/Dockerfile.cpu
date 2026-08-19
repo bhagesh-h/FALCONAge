@@ -19,13 +19,13 @@
 #   anndata 0.11.3 · scikit-learn 1.6.1 · R 4.4.3 · reticulate 1.40.0
 #
 # BUILD, from the repository root (the context must be the root, not docker/):
-#   docker build -f docker/Dockerfile.cpu -t falconage:1.1.0-cpu .
+#   docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
 #
 # RUN. Nothing is baked in: no data, no cohort, no credentials, no weights.
 #   docker run --rm \
 #     -v "$PWD/test/data:/data:ro" -v "$PWD/results:/results" \
 #     -v falconage-cache:/opt/falconage/cache \
-#     falconage:1.1.0-cpu \
+#     falconage:1.0.0-cpu \
 #     score --input /data/prepared.h5ad --clocks compatible --outdir /results
 #
 #   On Windows PowerShell replace "$PWD" with "${PWD}".
@@ -206,7 +206,7 @@ CMD ["--help"]
 #
 # These travel with the image wherever it is pulled from, and on a registry they
 # are often all a reader gets before deciding whether to pull 2.5 GB. `version`
-# said 1.0.0 for the whole of the 1.1.0 cycle, which would have published an
+# said 1.0.0 for the whole of the 1.0.0 cycle, which would have published an
 # image labelled as the previous release; nothing noticed, because a label is
 # not executed. `test/check_versions.py` reads it out of this file now, so it is
 # one of the six sources that have to agree before a tag can be cut.
@@ -216,5 +216,5 @@ LABEL org.opencontainers.image.title="FALCONAge" \
       org.opencontainers.image.url="https://bhagesh-h.github.io/FALCONAge/" \
       org.opencontainers.image.documentation="https://bhagesh-h.github.io/FALCONAge/" \
       org.opencontainers.image.licenses="GPL-3.0-or-later" \
-      org.opencontainers.image.version="1.1.0" \
+      org.opencontainers.image.version="1.0.0" \
       org.opencontainers.image.base.name="python:3.12-slim-bookworm"

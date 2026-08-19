@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Assert the documentation still says what v1.1.0 actually is.
+"""Assert the documentation still says what v1.0.0 actually is.
 
 WHY THIS EXISTS AS A SCRIPT RATHER THAN A REVIEW. Seven documentation defects
-were reported and fixed by hand: the main page did not name the v1.1 inputs, the
+were reported and fixed by hand: the main page did not name the inputs, the
 catalogue linked no papers, the architecture page still called itself v1.0, the
 getting-started page mixed commands with their output in one fence, the
 choosing-a-clock page did not route every clock, the availability column asked
@@ -35,7 +35,7 @@ sys.path.insert(0, str(ROOT / "python" / "src"))
 import falconage as fa                      # noqa: E402
 from falconage import registry              # noqa: E402
 
-#: Inputs v1.1 added. Naming them on the landing page is the difference between
+#: Inputs the raw-array chain added. Naming them on the landing page is the difference between
 #: a reader knowing the tool reads their data and assuming it does not.
 V11_INPUTS = ("olink", "somascan", "nanopore", "bedmethyl", "rna-seq", "idat")
 

@@ -145,7 +145,7 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
     # is never silently dropped. Not naming any means "the ones this makes sense
     # for", which excludes the pace and log-hazard scales rather than refusing
     # to compute anything because one column in the table is a rate.
-    # The conventions need different permissions, and until v1.1 both asked for
+    # The conventions need different permissions, and at first both asked for
     # the same one. `absolute` is predicted minus chronological, so it needs the
     # clock's zero to mean something; `residual` fits a line inside the data at
     # hand and therefore does not. LEGAL_OPS has listed the two separately since

@@ -4,7 +4,7 @@ Six entries in the registry are not linear models at all. epiTOC1, EPICmitHyper
 and HypoClock take the **mean** beta over a designated set of CpGs; stemTOC and
 stemTOCvitro take the **95th percentile**; ReedBMI takes a **weighted mean**.
 There is no intercept and no fitted slope -- the model *is* the probe list plus
-a summary statistic, and until v1.1 all six fell through to
+a summary statistic, and at first all six fell through to
 :class:`LinearClock`, which asked for coefficients that do not exist and
 refused.
 

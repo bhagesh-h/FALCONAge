@@ -148,7 +148,7 @@ jobs:
       # that does not exist; this catches a feature that does exist and is not
       # documented, or is documented as belonging to the previous release.
       #
-      # Seven such defects were reported at once against v1.1.0: the landing
+      # Seven such defects were reported at once against v1.0.0: the landing
       # page named none of the new inputs, the catalogue linked no papers, the
       # architecture page still called itself v1.0, output was pasted into
       # copyable command fences, the routing table did not cover every clock,

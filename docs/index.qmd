@@ -78,8 +78,8 @@ Both images are published on [Docker Hub](https://hub.docker.com/r/bhagesh/falco
 from the Dockerfiles in this repository. Two commands from nothing to a proven install:
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
-docker run --rm bhagesh/falconage:1.1.0-cpu python -m pytest /opt/falconage/src/python/tests -q
+docker pull bhagesh/falconage:1.0.0-cpu
+docker run --rm bhagesh/falconage:1.0.0-cpu python -m pytest /opt/falconage/src/python/tests -q
 ```
 
 The second line proves it by running the 452-test suite inside the image, against the source it
@@ -87,11 +87,11 @@ was built from. To build the same image yourself instead of pulling it:
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
 On Windows PowerShell write `"${PWD}"`. Open a session with
-`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python`, or `... R`, and
+`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python`, or `... R`, and
 every example below works unchanged.
 
 [Getting started](guide/FALCONAge.qmd) walks the same ground one command at a time, including
@@ -250,7 +250,7 @@ Said here rather than left to be inferred. [The science page](science.qmd) §19 
 in full, with the algorithms and the reason each is or is not blocked.
 
 - **It does not repair cross-platform probe loss.** It measures it twice over: by count, by
-  coefficient mass, and since v1.1 in *years* per clock per platform. It cannot undo it. The
+  coefficient mass, and now in *years* per clock per platform. It cannot undo it. The
   liftover mapping tables encode concordance measured on paired samples and are not derivable
   from the array manifests.
 - **It has no proteomic or transcriptomic clocks in the catalogue.** The readers and the full
@@ -266,7 +266,7 @@ in full, with the algorithms and the reason each is or is not blocked.
 - **110 of the 161 catalogued clocks have no traced coefficient source.** A per-clock literature
   hunt, not a technical problem, and `primary_source_traced: false` is the honest record of it.
 
-Removed from this list in v1.1, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
+Removed from this list, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
 probe masks), the raw-IDAT path, single-cell scoring, and the transcriptomic per-dataset centring
 refusal.
 
@@ -287,7 +287,7 @@ The whole site is also downloadable as PDF or markdown; see the **Download** men
 APA:
 
 ```
-Hunakunti, B. (2026). FALCONAge: Multiomic biological age and aging clock scoring in Python and R (Version 1.1.0) [Computer software]. https://github.com/bhagesh-h/FALCONAge
+Hunakunti, B. (2026). FALCONAge: Multiomic biological age and aging clock scoring in Python and R (Version 1.0.0) [Computer software]. https://github.com/bhagesh-h/FALCONAge
 ```
 
 BibTeX:
@@ -297,7 +297,7 @@ BibTeX:
   author  = {Bhagesh Hunakunti},
   title   = {FALCONAge: Multiomic Biological Age and Aging Clock Scoring in Python and R},
   year    = {2026},
-  version = {1.1.0},
+  version = {1.0.0},
   url     = {https://github.com/bhagesh-h/FALCONAge},
   license = {GPL-3.0-or-later}
 }

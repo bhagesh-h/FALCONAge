@@ -384,7 +384,7 @@ plots:
   # ---- uncertainty and platform ---------------------------------------------
   # The four figures that describe how much a score can be trusted, rather than
   # what it says. They exist because every implementation of every clock,
-  # including this one until v1.1, reported a point estimate for a quantity
+  # including this one at first, reported a point estimate for a quantity
   # whose technical replicates differ by up to nine years.
   reliability_forest:
     title: "How much of each score is the assay"

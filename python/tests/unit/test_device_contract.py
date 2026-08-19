@@ -260,7 +260,7 @@ def test_the_clinical_clocks_record_cpu(synthetic_clinical):
 # backend on the host. That exercises every line the CUDA path takes except the
 # transfer, which is the part least likely to be wrong and the only part that
 # needs hardware. CI has no torch, so these skip there and run in
-# `falconage:1.1.0-cuda`.
+# `falconage:1.0.0-cuda`.
 
 def _torch_host_spec(monkeypatch):
     pytest.importorskip("torch")

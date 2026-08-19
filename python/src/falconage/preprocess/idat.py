@@ -1,6 +1,6 @@
 """Raw IDAT to scoreable betas: the chain the clocks were actually fitted on.
 
-Until v1.1 FALCONAge asked users to normalise elsewhere -- sesame or minfi --
+At first FALCONAge asked users to normalise elsewhere -- sesame or minfi --
 and read the resulting betas. That was honest and it was the single largest
 reason somebody with their own arrays could not use this package. This module
 closes it.

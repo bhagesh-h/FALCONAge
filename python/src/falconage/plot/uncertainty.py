@@ -1,4 +1,4 @@
-"""How much a score can be trusted. Added in v1.1."""
+"""How much a score can be trusted. Added in this release."""
 
 from __future__ import annotations
 

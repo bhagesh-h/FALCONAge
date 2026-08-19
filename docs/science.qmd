@@ -1605,7 +1605,7 @@ against the running package rather than remembered. Where to look:
 
 | What the blueprint specified | Where it is documented now |
 |---|---|
-| Layered architecture, module boundaries | [Architecture §1.4](architecture.qmd), the file tree, with the v1.1 modules marked |
+| Layered architecture, module boundaries | [Architecture §1.4](architecture.qmd), the file tree |
 | Data model (`X`, `obs`, `var`, `uns`, multi-modality) | [Architecture §2](architecture.qmd), the shipped `FalconData`, AnnData-backed |
 | Clock registry schema | [Architecture §3](architecture.qmd), the schema as validated, field by field |
 | API surface, Python and R | [Getting started](guide/FALCONAge.qmd), and the [Python](reference/) and [R](r/reference/) references |
@@ -1868,7 +1868,7 @@ biomarkers.
 - ComputAge `model_definitions` + `library.yaml` (GEO dataset parsers).
 
 ## 19. Uncertainty, specimen and platform
-Added in v1.1. Sections 1–19 are about computing the number correctly. This one
+Added in this release. Sections 1–19 are about computing the number correctly. This one
 is about the fact that a correctly computed number is still not interpretable on
 its own, which is what the field's own literature says and what no
 implementation, including this one until now, did anything about.
@@ -1883,7 +1883,7 @@ most probes, the technical variance exceeds the biological variance. A reader
 handed "DNAmAge = 54.2" cannot tell whether a 1.5-year change between two draws
 is biology or the assay.
 
-Every package in the field emits that bare number. FALCONAge v1.1 emits an
+Every package in the field emits that bare number. FALCONAge emits an
 interval, and the arithmetic behind it is short enough to check by hand.
 
 ### 20.2 Propagating measurement error
@@ -2054,7 +2054,7 @@ And when `obs` has no `tissue` column at all, the run says so once, because
 silence was the previous behaviour, and silence is the bug.
 
 ::: {.callout-note title="This check found a real error in our own test suite"}
-Until v1.1 the integration tests scored the three Lee **placenta** clocks on
+At first the integration tests scored the three Lee **placenta** clocks on
 GSE66459, which is umbilical **cord blood**, and asserted only that the answers
 looked like gestational weeks. They did, because gestational age is gestational
 age whatever tissue you read it from. That is exactly the failure the check
@@ -2197,10 +2197,10 @@ Recorded so it does not appear by accident.
   changes weekly is not reproducible.
 
 ## 20. From raw arrays to betas
-Also v1.1, and the other half of it. Section 20 is about what a score is worth;
+Also new here, and the other half of it. Section 20 is about what a score is worth;
 this is about being able to produce one from what a laboratory actually has.
 
-Until v1.1 FALCONAge read beta matrices and told you to normalise elsewhere.
+At first FALCONAge read beta matrices and told you to normalise elsewhere.
 That was accurate and it was the single largest reason somebody with their own
 IDATs could not use the package.
 

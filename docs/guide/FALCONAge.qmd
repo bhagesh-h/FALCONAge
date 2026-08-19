@@ -29,7 +29,7 @@ carries Python, R, the CLI and all 20 bundled clocks at pinned versions, so the 
 the same numbers on your machine and on a reviewer's. Nothing else to install.
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
+docker pull bhagesh/falconage:1.0.0-cpu
 ```
 
 Or build the same image from a clone, which takes about ten minutes:
@@ -37,20 +37,20 @@ Or build the same image from a clone, which takes about ten minutes:
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git
 cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
 Then either open a session in the image:
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu R
 ```
 
 Or run a single command without opening one:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   report betas.csv --outdir results/
 ```
 
@@ -106,7 +106,7 @@ interpreter, the registry version, and how many clocks are usable:
 
 ::: {.falcon-output}
 ```
-FALCONAge 1.1.0
+FALCONAge 1.0.0
   registry     1.1.0 (161 clocks)
   tiers        A 23 ship - B 110 need a traced source - C 28 scaffold only
   devices      cpu
@@ -145,20 +145,20 @@ Every later command is run from inside this `FALCONAge` folder.
 One image carries Python, R, the CLI and all 20 bundled clocks. Pull the published one:
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cpu
+docker pull bhagesh/falconage:1.0.0-cpu
 ```
 
 Or build the same thing from the clone, which takes a few minutes the first time and is then
 cached:
 
 ```bash
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.1.0-cpu .
+docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
 Check it either way:
 
 ```bash
-docker run --rm bhagesh/falconage:1.1.0-cpu python -c "import falconage; print(falconage.__version__)"
+docker run --rm bhagesh/falconage:1.0.0-cpu python -c "import falconage; print(falconage.__version__)"
 ```
 
 ### Step 3: inspect the corpus before downloading it
@@ -167,14 +167,14 @@ fixture is the first thing you do when the package itself is broken, so it must 
 package.
 
 ```bash
-docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.1.0 .
+docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.0.0 .
 ```
 
 Now the dry run. **This transfers nothing.** It prints every group, file count and byte total so
 you can decide before committing to half a gigabyte:
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 plan
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 plan
 ```
 
 You should see:
@@ -195,8 +195,8 @@ selected          33    585.7 MB
 
 ### Step 4: download and verify
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 python
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 verify
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 python
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 verify
 ```
 
 The first fetches 33 files from GEO and Hugging Face into `test/data/` on your own disk, never
@@ -206,7 +206,7 @@ inside the image, so rebuilding never re-downloads. The second re-computes every
 Only smaller pieces, if 586 MB is too much:
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 \
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 \
   python test/data/fetch_test_data.py --groups clinical --out /data
 ```
 
@@ -217,7 +217,7 @@ Not decoration: the R fetcher writes a byte-identical `checksums.sha256`, so the
 are shown to agree on the input before any clock is scored.
 
 ```bash
-docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 R
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 R
 ```
 :::
 
@@ -227,7 +227,7 @@ docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.1.0 R
 #### Python, CPU
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   python test/run_all.py
 ```
 
@@ -238,7 +238,7 @@ the numbers in that document are the numbers the code just produced and cannot d
 To check the install without the corpus, run the unit suite instead, seconds, no data needed:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   python -m pytest python/tests -q
 ```
 
@@ -248,7 +248,7 @@ The same image. R calls the same Python core through reticulate, so these are th
 not a second implementation that agrees approximately.
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu \
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   Rscript -e 'testthat::test_local("r")'
 ```
 
@@ -258,7 +258,7 @@ exactly zero.
 Scoring from R interactively:
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu R
+docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu R
 ```
 
 ```r
@@ -279,26 +279,26 @@ Pull the CUDA image. It is 14.6 GB against the CPU image's 2.5 GB, because it ca
 against CUDA 12.4:
 
 ```bash
-docker pull bhagesh/falconage:1.1.0-cuda
+docker pull bhagesh/falconage:1.0.0-cuda
 ```
 
 Or build it:
 
 ```bash
-docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.1.0-cuda .
+docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.0.0-cuda .
 ```
 
 Check the card is visible inside a container before anything else:
 
 ```bash
-docker run --rm --gpus all bhagesh/falconage:1.1.0-cuda nvidia-smi
+docker run --rm --gpus all bhagesh/falconage:1.0.0-cuda nvidia-smi
 ```
 
 No output or an error here means GPU passthrough is not set up, and every command below will
 fail. On Linux that is usually a missing `nvidia-container-toolkit`.
 
 ```bash
-docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda \
+docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cuda \
   python test/gpu_check.py
 ```
 
@@ -311,7 +311,7 @@ raises rather than falling back, so a run that asked for a GPU cannot quietly be
 success:
 
 ```bash
-docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cuda \
+docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cuda \
   score --input test/data/prepared.h5ad --device cuda --outdir results
 ```
 
@@ -326,7 +326,7 @@ docker run --rm \
   -v "$PWD/mydata:/data:ro" \
   -v "$PWD/results:/results" \
   -v falconage-cache:/opt/falconage/cache \
-  bhagesh/falconage:1.1.0-cpu \
+  bhagesh/falconage:1.0.0-cpu \
   score --input /data/betas.csv --clocks compatible --outdir /results
 ```
 
@@ -337,7 +337,7 @@ the difference between a two-minute run and a twenty-minute one.
 ## Scoring
 
 Every Python and R snippet from here on runs unchanged in three places: inside the Docker image
-(`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.1.0-cpu python`, or `... R`), in a
+(`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python`, or `... R`), in a
 native install, or in the CLI-free path below. Only the way you open the session differs.
 
 ::: {.panel-tabset}
@@ -375,7 +375,7 @@ a reason. Naming clocks explicitly is different: then every one must work, becau
 request should never be dropped quietly.
 
 ## Raw IDATs
-New in v1.1. Before this you had to normalise in sesame or minfi and bring a beta matrix back.
+New in this release. Before this you had to normalise in sesame or minfi and bring a beta matrix back.
 
 ::: {.panel-tabset}
 
@@ -408,7 +408,7 @@ FalconData(2 samples x 865918 features, dna_methylation, EPICv1, 2.0% missing)
 :::
 
 ## Measurement uncertainty
-Also new in v1.1, and the reason the rest of this page is worth running. Technical replicates of
+Also new in this release, and the reason the rest of this page is worth running. Technical replicates of
 the *same DNA* differ by up to nine years on prominent clocks, so a bare number does not say
 whether a difference between two samples is real.
 

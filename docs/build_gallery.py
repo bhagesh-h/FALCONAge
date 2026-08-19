@@ -84,7 +84,7 @@ PNG cannot drift apart.
 ## Reproducing these
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work falconage:1.1.0-cpu \\
+docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \\
   python test/run_all.py
 ```
 

@@ -250,7 +250,7 @@ def build(registry, clock_id: str):
         return ClinicalClock(clock=c)
     # Five entries summarise a probe set rather than weighting it -- a mean, a
     # 95th percentile, a weighted mean. They have no intercept and no fitted
-    # slope, and until v1.1 they fell through to LinearClock and were refused
+    # slope, and at first they fell through to LinearClock and were refused
     # for want of coefficients that were never going to exist.
     from .aggregation import AggregationClock, is_aggregation
 

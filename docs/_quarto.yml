@@ -62,8 +62,8 @@ website:
       data, in Python and R, on CPU or GPU.</p>
 
       <div class="falcon-cite"><div class="falcon-cite-title">Cite FALCONAge</div><div class="falcon-cite-buttons"><button
-      class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjEuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
-      APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjEuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
+      class="falcon-copy" data-copy="SHVuYWt1bnRpLCBCLiAoMjAyNikuIEZBTENPTkFnZTogTXVsdGlvbWljIGJpb2xvZ2ljYWwgYWdlIGFuZCBhZ2luZyBjbG9jayBzY29yaW5nIGluIFB5dGhvbiBhbmQgUiAoVmVyc2lvbiAxLjAuMCkgW0NvbXB1dGVyIHNvZnR3YXJlXS4gaHR0cHM6Ly9naXRodWIuY29tL2JoYWdlc2gtaC9GQUxDT05BZ2U=">Copy
+      APA</button><button class="falcon-copy" data-copy="QHNvZnR3YXJle2ZhbGNvbmFnZTIwMjYsCiAgYXV0aG9yICA9IHtCaGFnZXNoIEh1bmFrdW50aX0sCiAgdGl0bGUgICA9IHtGQUxDT05BZ2U6IE11bHRpb21pYyBCaW9sb2dpY2FsIEFnZSBhbmQgQWdpbmcgQ2xvY2sgU2NvcmluZyBpbiBQeXRob24gYW5kIFJ9LAogIHllYXIgICAgPSB7MjAyNn0sCiAgdmVyc2lvbiA9IHsxLjAuMH0sCiAgdXJsICAgICA9IHtodHRwczovL2dpdGh1Yi5jb20vYmhhZ2VzaC1oL0ZBTENPTkFnZX0sCiAgbGljZW5zZSA9IHtHUEwtMy4wLW9yLWxhdGVyfQp9">Copy
       BibTeX</button></div></div>'
     collapse-level: 1
     contents:
@@ -141,10 +141,10 @@ quartodoc:
     - preprocess.read_counts
     - FalconData
   - title: Raw arrays
-    desc: IDAT to scoreable betas, which until v1.1 meant leaving FALCONAge for sesame or
-      minfi and coming back. The manifest is fetched from Illumina's public bucket and cached;
-      it is the one step here that is not offline. Detection is computed before background
-      correction, because pOOBAH's null is the uncorrected out-of-band signal.
+    desc: IDAT to scoreable betas, which at first meant leaving FALCONAge for sesame or minfi
+      and coming back. The manifest is fetched from Illumina's public bucket and cached; it
+      is the one step here that is not offline. Detection is computed before background correction,
+      because pOOBAH's null is the uncorrected out-of-band signal.
     contents:
     - idat_to_betas
     - read_idat_dir
