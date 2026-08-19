@@ -377,7 +377,12 @@ plots:
       clock that merely returned chronological age would be perfect in B, empty
       in D, and useless. Panel F separates the two ways of finding nothing --
       a clock that saw its features and detected no difference, from one that
-      never had the features to look with.
+      never had the features to look with. Panel G is for the clocks whose scale
+      admits no acceleration at all -- a pace, a telomere length, a division
+      count -- and asks the question their scale does allow: were cases and
+      controls separated. Cliff's delta, so 0 is no separation and 1 is
+      complete, and unlike D it is not adjusted for age, which matters when a
+      cohort's cases are older than its controls.
     xlab: ""
     ylab: ""
 

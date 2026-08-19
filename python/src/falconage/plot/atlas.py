@@ -57,6 +57,22 @@ __all__ = ["clock_atlas"]
 _GEN_ORDER = ["first", "second", "causal", "pace", "mitotic", "system", "other"]
 
 
+#: What the panel A badge says for each scale. The badge is one column wide,
+#: so "mortality log hazard" has to become something that fits inside it; the
+#: full name is in the returned frame and in the clock's registry entry.
+_SCALE_BADGE = {
+    "age_years": "agey",
+    "age_years_relative": "agey rel",
+    "gestational_weeks": "weeks",
+    "mortality_log_hazard": "log hz",
+    "pace_ratio": "pace",
+    "telomere_kb": "kb",
+    "proportion": "prop",
+    "divisions": "div",
+    "relative_score": "score",
+}
+
+
 def clock_atlas(result, bench, *, dataset_col: str = "dataset",
                 min_datasets: int = 2, coverage_floor: float = 0.8,
                 max_clocks: int = 40):
@@ -116,14 +132,29 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
 
     per = bench.per_dataset
     summary = bench.summary_table
+    ranks = getattr(bench, "rank_effects", None)
+    if ranks is None or not isinstance(ranks, pd.DataFrame):
+        ranks = pd.DataFrame(columns=["clock", "dataset", "condition",
+                                      "cliffs_delta", "significant"])
     if per.empty:
         raise NothingToPlot("clock_atlas: the benchmark produced no comparisons")
 
     # ---- one row per clock -------------------------------------------------
+    # Every clock a run scored, not every clock the AA1/AA2 benchmark could
+    # evaluate. Those two tests are defined on age acceleration, so the
+    # benchmark considers `age_years` clocks only -- correctly, since a median
+    # absolute error against chronological age is not a quantity for a pace
+    # ratio or a count of stem-cell divisions. The result was that a figure
+    # titled "every algorithm" drew ten of the seventeen clocks the same run
+    # scored, and the seven it dropped were exactly the ones whose question is
+    # a different one. They come back here on panel G, which asks what their
+    # scale does admit: are the cases separated from the controls at all.
     reg = result.registry
     clocks = [c for c in summary.index if c in result.scores.columns]
     if not clocks:
         raise NothingToPlot("clock_atlas: no scored clock appears in the benchmark")
+    extra = [c for c in result.scores.columns
+             if c not in clocks and c in set(ranks.get("clock", []))]
 
     # Ordered by what the benchmark found, then accuracy as a tie-break, so the
     # reading order is most-informative-first rather than alphabetical. Row 0 is
@@ -131,6 +162,15 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     ranked = summary.loc[clocks].sort_values(
         ["total", "AA2", "MedAE"], ascending=[True, True, False])
     order = ranked.index.tolist()
+    # The clocks the benchmark could not score sit below it, ordered by how
+    # far apart they held cases and controls. Below rather than interleaved:
+    # they are not ranked on the same evidence, and sorting them into one list
+    # would imply they were.
+    if extra:
+        by_sep = (ranks[ranks["clock"].isin(extra)]
+                  .assign(mag=lambda f: f["cliffs_delta"].abs())
+                  .groupby("clock")["mag"].median().sort_values())
+        order = by_sep.index.tolist() + order
     truncated = max(0, len(order) - max_clocks)
     if truncated:
         order = order[truncated:]
@@ -147,39 +187,66 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     rows = []
     for c in order:
         e = reg.get(c)
-        s = summary.loc[c]
+        benched = c in summary.index
+        s = summary.loc[c] if benched else None
+        r_sub = ranks[ranks["clock"] == c] if len(ranks) else ranks
         rows.append({
             "clock": c, "generation": e.generation, "scale_type": e.scale_type,
             "n_features": e.n_features, "availability": e.availability,
-            "AA2": int(s["AA2"]), "AA1": int(s["AA1"]),
-            "MedAE": float(s["MedAE"]), "MedE": float(s["MedE"]),
-            "total": float(s["total"]), "coverage": cov.get(c, np.nan),
+            "benchmarked": benched,
+            "AA2": int(s["AA2"]) if benched else 0,
+            "AA1": int(s["AA1"]) if benched else 0,
+            "MedAE": float(s["MedAE"]) if benched else np.nan,
+            "MedE": float(s["MedE"]) if benched else np.nan,
+            "total": float(s["total"]) if benched else np.nan,
+            "coverage": cov.get(c, np.nan),
             "n_studies": int((per["clock"] == c).sum()),
             "n_significant": int(((per["clock"] == c) & per["significant"]).sum()),
+            "median_cliffs_delta": (float(r_sub["cliffs_delta"].median())
+                                    if len(r_sub) else np.nan),
+            "n_rank_significant": (int(r_sub["significant"].sum())
+                                   if len(r_sub) else 0),
         })
     d = pd.DataFrame(rows).set_index("clock").loc[order]
     _require_signal(d["MedAE"], what="clock_atlas MedAE", min_n=1,
                     allow_constant=True)
 
     # ---- geometry ----------------------------------------------------------
+    # The caption is written last but has to be measured first: it sits in the
+    # bottom margin with the axis labels and the generation legend, and a
+    # fixed margin cropped it the moment the caption gained a paragraph about
+    # panel G. Wrapped here, drawn from the same list below.
+    cap_text = spec.text("clock_atlas", n_clocks=len(order),
+                         n_datasets=len(datasets),
+                         n_samples=result.scores.shape[0],
+                         n_significant=int(per["significant"].sum()),
+                         n_comparisons=len(per))["description"]
+    cap_lines = textwrap.wrap(" ".join(cap_text.split()), width=168)
+
     n = len(order)
     # Inches per clock row: floored so a three-clock atlas is not a stripe, and
     # bounded above by max_clocks so a full catalogue still fits a page.
     row_h = 0.32
-    height = max(5.0, n * row_h + 3.1)
+    # 0.17in per caption line, plus room for the axis labels under D and G and
+    # the generation legend beneath the badges.
+    foot = 0.78 + 0.17 * len(cap_lines)
+    height = max(5.0, n * row_h + 2.8 + foot)
     width = 13.6
     # Panel D is widest because it carries the answer; A is a badge strip.
-    widths = [0.50, 1.00, 1.00, 3.25, 0.92, 0.92]
+    # G is narrower than D and wider than the bar panels: it holds one dot per
+    # study on a bounded axis, so it needs room to separate them but not the
+    # dynamic range D needs.
+    widths = [0.50, 0.85, 0.85, 2.85, 1.55, 0.80, 0.80]
 
     fig = plt.figure(figsize=(width, height), dpi=theme_value("dpi"))
     # Explicit margins, not tight_layout: the clock names on the far left and
     # the caption at the bottom are drawn with fig.text(), which tight_layout
     # cannot see and would therefore crop.
     gs = fig.add_gridspec(
-        1, 6, width_ratios=widths, wspace=0.17,
+        1, 7, width_ratios=widths, wspace=0.17,
         left=0.145, right=0.985,
-        top=1 - 1.30 / height, bottom=1.05 / height)
-    axes = [fig.add_subplot(gs[0, i]) for i in range(6)]
+        top=1 - 1.62 / height, bottom=foot / height)
+    axes = [fig.add_subplot(gs[0, i]) for i in range(7)]
     y = np.arange(n)
 
     base = theme_value("base_size")
@@ -235,7 +302,8 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
         ax.add_patch(plt.Rectangle((0.06, i - 0.33), 0.88, 0.66,
                                    facecolor=gcol.get(r["generation"], "#B0B0B0"),
                                    edgecolor="none", alpha=0.92))
-        ax.text(0.5, i, r["scale_type"].replace("_", " ").replace(" years", "y"),
+        ax.text(0.5, i, _SCALE_BADGE.get(r["scale_type"],
+                                         r["scale_type"].replace("_", " ")),
                 ha="center", va="center", fontsize=small - 1.5, color="white")
     ax.set_xlim(0, 1)
     ax.set_xticks([])
@@ -252,21 +320,31 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     # ---- B: accuracy -------------------------------------------------------
     ax = axes[1]
     _panel(ax, "B  MedAE (years)")
-    ax.barh(y, d["MedAE"], height=0.62, color=semantic("neutral"), alpha=0.55)
+    ax.barh(y, d["MedAE"].fillna(0.0), height=0.62, color=semantic("neutral"),
+            alpha=0.55)
     ax.set_xlim(0, max(float(np.nanmax(d["MedAE"])) * 1.14, 1.0))
     ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=3))
 
     # ---- C: bias -----------------------------------------------------------
     ax = axes[2]
     _panel(ax, "C  MedE, signed")
-    ax.barh(y, d["MedE"], height=0.62, alpha=0.78,
-            color=[semantic("accelerated") if v > 0 else semantic("decelerated")
+    ax.barh(y, d["MedE"].fillna(0.0), height=0.62, alpha=0.78,
+            color=[semantic("accelerated") if (v or 0) > 0 else semantic("decelerated")
                    for v in d["MedE"]])
     ax.axvline(0, color=semantic("reference"), lw=0.9,
                ls=theme_value("reference_line"))
     lim = max(float(np.nanmax(np.abs(d["MedE"]))) * 1.16, 1.0)
     ax.set_xlim(-lim, lim)
     ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=3))
+
+    for i, (_, r) in enumerate(d.iterrows()):
+        if not r["benchmarked"]:
+            # Off-centre in C, where the centre is the zero reference line and
+            # the label would be struck through by it.
+            for a, x in ((axes[1], 0.5), (axes[2], 0.74)):
+                a.text(x, i, "n/a", transform=a.get_yaxis_transform(),
+                       ha="center", va="center", fontsize=small - 1,
+                       color="#999999")
 
     # ---- D: detection, one dot per study -----------------------------------
     ax = axes[3]
@@ -310,8 +388,33 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
               ncol=min(len(conds), 7), loc="lower center",
               bbox_to_anchor=(0.5, 1.055), handletextpad=0.3, columnspacing=1.0)
 
-    # ---- E: benchmark counts ----------------------------------------------
+    # ---- G: separation on the scales that admit no acceleration ------------
+    # Drawn before E and F so its axis index reads with the panel letters.
     ax = axes[4]
+    _panel(ax, "G  case vs control, rank effect")
+    for i in range(n):
+        if i % 2 == 0:
+            ax.axhspan(i - 0.5, i + 0.5, color="#000000", alpha=0.03, lw=0)
+    ax.axvline(0, color=semantic("reference"), lw=1.0,
+               ls=theme_value("reference_line"), zorder=2)
+    for i, c in enumerate(order):
+        sub_rows = ranks[ranks["clock"] == c] if len(ranks) else ranks
+        if len(sub_rows) == 0:
+            continue
+        offs = (np.linspace(-0.23, 0.23, len(sub_rows)) if len(sub_rows) > 1
+                else np.zeros(1))
+        for off, (_, r) in zip(offs, sub_rows.iterrows()):
+            sig = bool(r["significant"])
+            col = ccol.get(str(r["condition"]), semantic("neutral"))
+            ax.scatter(r["cliffs_delta"], i + off, s=44 if sig else 26,
+                       facecolor=col if sig else "none", edgecolor=col,
+                       linewidths=1.1, alpha=0.95 if sig else 0.6, zorder=3)
+    ax.set_xlim(-1.05, 1.05)
+    ax.set_xticks([-1, 0, 1])
+    ax.set_xlabel("Cliff's delta, not age adjusted", fontsize=tick)
+
+    # ---- E: benchmark counts ----------------------------------------------
+    ax = axes[5]
     _panel(ax, "E  datasets hit")
     ax.barh(y, d["AA2"], height=0.62, color=palette()[0], label="AA2")
     ax.barh(y, d["AA1"], height=0.62, left=d["AA2"], color=palette()[1], label="AA1")
@@ -322,7 +425,7 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
               columnspacing=0.8)
 
     # ---- F: coverage -------------------------------------------------------
-    ax = axes[5]
+    ax = axes[6]
     _panel(ax, "F  coverage")
     cv = d["coverage"].fillna(0.0)
     ax.barh(y, cv, height=0.62, alpha=0.85,
@@ -337,8 +440,12 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     # clock names already occupy, so it costs no panel width.
     ghandles = [plt.Rectangle((0, 0), 1, 1, facecolor=gcol[g], edgecolor="none",
                               label=g) for g in gens]
+    # Anchored in axes coordinates, so the gap below the badges is a fraction
+    # of a column that grows with the figure rather than a fixed offset that
+    # lands on the caption once there are seventeen rows instead of ten.
     axes[0].legend(handles=ghandles, frameon=False, fontsize=small - 0.5,
-                   loc="upper left", bbox_to_anchor=(-1.30, -0.012),
+                   loc="upper left",
+                   bbox_to_anchor=(-1.30, -0.30 / (n * row_h)),
                    ncol=min(len(gens), 4), handlelength=1.0, handletextpad=0.3,
                    columnspacing=0.8)
 
@@ -347,11 +454,16 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
                   n_samples=result.scores.shape[0],
                   n_significant=int(per["significant"].sum()),
                   n_comparisons=len(per))
-    sub = t["subtitle"] + "  ·  filled dot = BH q < 0.05"
+    sub = t["subtitle"]
+    key = "filled dot = BH q < 0.05"
+    n_extra = int((~d["benchmarked"]).sum())
+    if n_extra:
+        key += (f"  ·  panels B to D need a year scale, so {n_extra} clock(s) "
+                "are on G only")
     if truncated:
-        sub += f" · {truncated} lower-scoring clock(s) not shown"
+        key += f"  ·  {truncated} lower-scoring clock(s) not shown"
     cap_size = theme_value("caption_size")
-    cap = "\n".join(textwrap.wrap(" ".join(t["description"].split()), width=168))
+    cap = "\n".join(cap_lines)
 
     # Offsets in inches divided by height, so the gap between title and subtitle
     # is a physical distance rather than a fraction of a canvas whose height
@@ -362,7 +474,10 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
              fontsize=title_size, va="top", ha="left")
     fig.text(0.012, 1 - (0.20 + title_size * 1.5 / 72.0) / height, sub,
              fontsize=sub_size, color="#555555", va="top", ha="left")
-    fig.text(0.012, 0.16 / height, cap, fontsize=cap_size,
+    fig.text(0.012,
+             1 - (0.20 + (title_size * 1.5 + sub_size * 1.7) / 72.0) / height,
+             key, fontsize=sub_size - 0.5, color="#777777", va="top", ha="left")
+    fig.text(0.012, 0.12 / height, cap, fontsize=cap_size,
              color="#666666", va="bottom", ha="left")
 
     return fig, d.reset_index()

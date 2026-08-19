@@ -11,7 +11,7 @@ like every other number in the table.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Sequence
 
 import numpy as np
@@ -464,6 +464,10 @@ def agreement(result, method: str = "spearman") -> pd.DataFrame:
 class BenchmarkResult:
     per_dataset: pd.DataFrame
     summary_table: pd.DataFrame
+    #: One row per clock, dataset and condition for every clock whose scale
+    #: admits a group comparison at all -- not only the year-scaled ones AA1
+    #: and AA2 are defined for. See :func:`run_benchmark`.
+    rank_effects: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def summary(self) -> pd.DataFrame:
         return self.summary_table
@@ -587,7 +591,81 @@ def run_benchmark(result, *, condition_col: str = "condition", control: str = "H
                     "total": round(aa2 + aa1 * max(discount, 0.0), 3)})
 
     summary = pd.DataFrame(agg).set_index("clock").sort_values("total", ascending=False)
-    return BenchmarkResult(per_dataset=per, summary_table=summary)
+    ranks = _rank_effects(result, obs, datasets, condition_col, control, alpha)
+    return BenchmarkResult(per_dataset=per, summary_table=summary,
+                           rank_effects=ranks)
+
+
+def _rank_effects(result, obs, datasets, condition_col, control, alpha):
+    """Case-against-control separation for every clock the scale allows.
+
+    WHY THIS EXISTS SEPARATELY FROM AA1/AA2. Those two are defined on age
+    acceleration, so `run_benchmark` above considers only `age_years` clocks:
+    a median absolute error against chronological age is not a quantity for a
+    pace ratio or a division count. That is right, and it left seven of the
+    seventeen clocks a run scores with no group comparison of any kind, which
+    the clock atlas then drew as an absent row rather than as a clock whose
+    question is a different one.
+
+    What is legal for the rest is declared already. `LEGAL_OPS` gives
+    `divisions`, `pace_ratio` and `telomere_kb` a group `difference` and most
+    scales a `rank`, so a rank test between cases and controls on the score
+    itself is permitted where an acceleration is not. Cliff's delta reports it
+    without units: -1 and +1 are complete separation, 0 is none, and the
+    number means the same thing on a telomere length in kilobases as on a
+    count of stem-cell divisions.
+
+    NOT AGE ADJUSTED, deliberately and visibly. AA2 residualises against
+    chronological age before testing; this cannot, because residualising is
+    exactly the operation these scales do not admit. A cohort whose cases are
+    older than its controls will show separation here for that reason alone,
+    so the figure labels the panel as unadjusted and reports the group age gap
+    beside the effect rather than leaving a reader to assume it was handled.
+    """
+    rows = []
+    for cid in result.scores.columns:
+        legal = result.registry.get(cid).legal_operations
+        if not ({"rank", "difference"} & set(legal)):
+            continue
+        for ds, idx in datasets.groupby(datasets).groups.items():
+            sub_obs = obs.loc[idx]
+            y = pd.to_numeric(result.scores.loc[idx, cid], errors="coerce")
+            conds = sub_obs[condition_col].astype(str)
+            ctrl = y[(conds == control) & y.notna()]
+            if len(ctrl) < 3:
+                continue
+            ages = pd.to_numeric(sub_obs.get("age", pd.Series(index=sub_obs.index,
+                                                              dtype=float)),
+                                 errors="coerce")
+            for cond in [c for c in conds.unique() if c != control]:
+                case = y[(conds == cond) & y.notna()]
+                if len(case) < 3:
+                    continue
+                stat, p = stats.mannwhitneyu(case, ctrl, alternative="two-sided")
+                # Cliff's delta straight from U: the fraction of case-control
+                # pairs in which the case scores higher, rescaled to [-1, 1].
+                cliffs = 2.0 * float(stat) / (len(case) * len(ctrl)) - 1.0
+                gap = float(ages[(conds == cond)].median()
+                            - ages[(conds == control)].median()) \
+                    if ages.notna().any() else np.nan
+                rows.append({"clock": cid, "dataset": ds, "condition": cond,
+                             "scale_type": result.registry.get(cid).scale_type,
+                             "n_case": int(len(case)), "n_control": int(len(ctrl)),
+                             "cliffs_delta": round(cliffs, 4),
+                             "median_case": float(case.median()),
+                             "median_control": float(ctrl.median()),
+                             "age_gap_years": gap,
+                             "p": float(p)})
+
+    if not rows:
+        return pd.DataFrame(columns=["clock", "dataset", "condition", "scale_type",
+                                     "n_case", "n_control", "cliffs_delta",
+                                     "median_case", "median_control",
+                                     "age_gap_years", "p", "q", "significant"])
+    out = pd.DataFrame(rows)
+    out["q"] = _bh(out["p"].to_numpy())
+    out["significant"] = out["q"] < alpha
+    return out
 
 
 # ---------------------------------------------------------------------------

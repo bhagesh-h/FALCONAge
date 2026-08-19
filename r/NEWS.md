@@ -5,6 +5,25 @@
 
 ## Added
 
+- **The clock atlas draws every clock a run scored, not only the year-scaled
+  ones.** It had ten rows where the run had seventeen clocks, in a figure
+  titled "every algorithm across every pooled study". The cause was upstream:
+  AA1 and AA2 are defined on age acceleration, so `run_benchmark` considers
+  `age_years` clocks only, which is right -- a median absolute error against
+  chronological age is not a quantity for a pace ratio or a count of stem-cell
+  divisions -- and it left the seven clocks whose question is a different one
+  with no row at all.
+
+  `run_benchmark` now also returns `rank_effects`: Cliff's delta between cases
+  and controls for every clock whose scale admits a group comparison, which
+  `LEGAL_OPS` already declares for `divisions`, `pace_ratio`, `telomere_kb` and
+  the rest. The atlas draws it as panel G, and panels B to D are marked `n/a`
+  on the rows they are undefined for rather than showing a zero that reads as
+  a measurement. Panel G is not age adjusted, because residualising against
+  age is exactly the operation those scales do not admit; the axis says so and
+  the frame carries each comparison's case-minus-control age gap, which is a
+  median 3.8 years in this corpus and enough to move a delta on its own.
+
 - **epiTOC1 and HypoClock score offline**, taking the tier A count from 23 to 25
   and the bundled coefficient files from 20 to 22. Both are probe lists rather
   than fitted models, and both come from one 6 kB R object the method's author
