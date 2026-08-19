@@ -36,7 +36,7 @@ One figure for the question everyone actually has: which of these algorithms det
 
 ![Clock atlas: every algorithm across every pooled study](figures/gallery/clock_atlas.png)
 
-Read panel D down the page. A row of hollow circles on zero is an algorithm that detected nothing in any cohort; filled dots pushed right are the ones that did, and a row with several says the effect held across studies rather than in one. Panels B and C are diagnostics for reading D, not scores: a clock that merely returned chronological age would be perfect in B, empty in D, and useless. Panel F separates the two ways of finding nothing -- a clock that saw its features and detected no difference, from one that never had the features to look with.
+Read panel D down the page. A row of hollow circles on zero is an algorithm that detected nothing in any cohort; filled dots pushed right are the ones that did, and a row with several says the effect held across studies rather than in one. Panels B and C are diagnostics for reading D, not scores: a clock that merely returned chronological age would be perfect in B, empty in D, and useless. Panel F separates the two ways of finding nothing -- a clock that saw its features and detected no difference, from one that never had the features to look with. Panel G is for the clocks whose scale admits no acceleration at all -- a pace, a telomere length, a division count -- and asks the question their scale does allow: were cases and controls separated. Cliff's delta, so 0 is no separation and 1 is complete, and unlike D it is not adjusted for age, which matters when a cohort's cases are older than its controls.
 
 `plot.clock_atlas()` in Python.
 
