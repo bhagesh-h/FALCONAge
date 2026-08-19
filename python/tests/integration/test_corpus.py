@@ -33,16 +33,18 @@ def test_epic_progeria_scores_every_tier_a_clock_the_specimen_allows(corpus):
     five names are pinned -- a silent drop back to 18 would mean the check
     stopped running.
 
-    15 rather than 13 since epiTOC1 and HypoClock started shipping their probe
-    lists. Both are multi-tissue mitotic scores with no blood-specific
-    calibration to refuse on, so they score here.
+    24 rather than 13 since the mitotic clocks, AltumAge and Weidner started
+    shipping: epiTOC1, HypoClock, stemTOC, stemTOCvitro, epiCMIT-hyper,
+    epiCMIT-hypo, RepliTali, epiTOC2, epiTOC3, AltumAge and Weidner. The
+    mitotic ones and AltumAge are multi-tissue; Weidner is a blood clock and
+    this is blood.
     """
     d = _bench(corpus, "GSE182991")
     assert d.n_samples == 27
     assert d.platform == "EPICv1"
 
     res = fa.score(d, clocks="compatible")
-    assert res.scores.shape[1] == 15
+    assert res.scores.shape[1] == 24
     assert res.scores.notna().all().all()
 
     off_tissue = {cid for cid, why in res.skipped.items() if "tissue_policy=refuse" in why}

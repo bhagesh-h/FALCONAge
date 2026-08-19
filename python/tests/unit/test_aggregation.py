@@ -15,13 +15,19 @@ from falconage.models.aggregation import AggregationClock, is_aggregation, parse
 #: the mean beta over 678 solo-WCGW CpGs, inverted by its `one_minus`
 #: postprocess. Detection reads the word "aggregation", which caught it; the
 #: first version of this list did not.
-AGGREGATORS = {"epitoc1", "epicmithyper", "stemtoc", "stemtocvitro", "reedbmi",
-               "hypoclock"}
+AGGREGATORS = {"epitoc1", "epicmithyper", "epicmithypo", "stemtoc",
+               "stemtocvitro", "reedbmi", "hypoclock"}
 
-#: Two of the six now ship their probe list. Both come from one CC-BY record
-#: the method's own author published, which is why these two and not the other
-#: four: the rest are in a GPL-2 R package and this tree is GPL-3.
-SHIPPED = {"epitoc1": 385, "hypoclock": 678}
+#: Seven now, not six: `epicmithypo` was declared "complement of mean
+#: methylation", which does not contain the word this detection reads, so it
+#: fell through to LinearClock and asked for coefficients that never existed.
+#: It is a mean with the complement taken afterwards, exactly as hypoclock is,
+#: and it is described that way now.
+
+#: Six of the seven ship their probe list. Each came from the method author's
+#: own published data rather than from another scoring package.
+SHIPPED = {"epitoc1": 385, "hypoclock": 678, "stemtoc": 371,
+           "stemtocvitro": 629, "epicmithyper": 184, "epicmithypo": 1164}
 
 
 # ---------------------------------------------------------------------------
@@ -59,11 +65,11 @@ def test_every_one_of_them_parses(registry):
         assert (q is None) or (0 < q < 1)
 
 
-def test_the_four_without_a_published_list_are_still_scaffolds(registry):
-    """Architecture without data, exactly like PCLinearClock. The point is
-    that registering a probe list works the day one is obtained."""
-    for cid in AGGREGATORS - set(SHIPPED):
-        assert not registry.has_coefficients(cid)
+def test_the_one_without_a_published_list_is_still_a_scaffold(registry):
+    """`reedbmi` alone. Architecture without data, exactly like
+    PCLinearClock: registering a probe list works the day one is obtained."""
+    assert AGGREGATORS - set(SHIPPED) == {"reedbmi"}
+    assert not registry.has_coefficients("reedbmi")
 
 
 def test_the_two_shipped_lists_are_the_length_their_papers_state(registry):
@@ -118,9 +124,11 @@ def test_hypoclock_is_one_minus_the_mean_and_not_the_mean(registry, rng):
 def test_a_tier_b_clock_that_has_been_researched_says_where_the_data_is(registry):
     """The generic tier B message says no source has been established. For the
     entries where one has, repeating that sends a reader to redo the search."""
-    message = registry.unavailable_message("stemtoc")
-    assert "EpiMitClocks" in message
-    assert "371" in message
+    # bocklandt, which is tier B because nothing implementable was ever
+    # published for it rather than because nobody looked.
+    message = registry.unavailable_message("bocklandt")
+    assert "MassArray" in message
+    assert "not obtainable as published" in message
     assert "no primary" not in message
 
 

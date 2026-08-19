@@ -311,6 +311,12 @@ def _probe_se(result, data, reg, cid: str, table: pd.Series):
 
     if not reg.has_coefficients(cid):
         raise UncertaintyError(f"{cid}: no coefficients, so there are no weights to square")
+    if not reg.has_coefficient_vector(cid):
+        raise UncertaintyError(
+            f"{cid} is a network: the probe path propagates each probe's noise "
+            "through its own weight, and a network has no per-probe weight. Its "
+            "interval has to come from a published clock-level reliability "
+            "figure or from replicates.")
     if reg.get(cid).preprocess:
         raise UncertaintyError(
             f"{cid}: preprocess chains are not yet supported on the probe path")

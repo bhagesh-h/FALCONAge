@@ -43,7 +43,7 @@ from ..registry.registry import Clock
 from . import ops
 from .linear import Alignment, align
 
-__all__ = ["NeuralClock", "NeuralWeights", "read_neural_weights"]
+__all__ = ["NeuralClock", "NeuralWeights", "is_neural", "read_neural_weights"]
 
 
 @dataclass
@@ -64,6 +64,11 @@ class NeuralWeights:
         shapes = " -> ".join(str(w.shape[0]) for w, _ in self.layers)
         return (f"NeuralWeights({len(self.features)} features, {shapes} -> "
                 f"{self.layers[-1][1].size}, {self.n_parameters:,} parameters)")
+
+
+def is_neural(clock) -> bool:
+    """True for the entries whose forward pass is a feed-forward network."""
+    return "neural network" in (clock.model_type or "").lower()
 
 
 def read_neural_weights(path: str | Path, *, features: list[str] | None = None,
@@ -96,6 +101,18 @@ def read_neural_weights(path: str | Path, *, features: list[str] | None = None,
         ) from exc
 
     tensors = load_file(str(p))
+    # The metadata block, which this function has always documented and never
+    # read: a file written with its own feature order was still refused for
+    # want of one. safetensors keeps metadata out of load_file, so it takes a
+    # second open.
+    meta: dict[str, str] = {}
+    try:
+        from safetensors import safe_open
+
+        with safe_open(str(p), framework="numpy") as fh:
+            meta = fh.metadata() or {}
+    except Exception:                      # pragma: no cover - metadata is optional
+        meta = {}
     idx: dict[int, dict[str, np.ndarray]] = {}
     for name, arr in tensors.items():
         m = re.search(r"(\d+)", name)
@@ -116,7 +133,9 @@ def read_neural_weights(path: str | Path, *, features: list[str] | None = None,
             f"{p.name}: no numbered weight/bias pairs found. Expected names like "
             "layer0.weight and layer0.bias.")
 
-    feats = list(features) if features else []
+    feats = list(features) if features else [
+        f for f in (meta.get("features", "").split(chr(10))) if f]
+    activation = meta.get("activation", activation)
     if not feats:
         raise ScoringError(
             f"{p.name}: no feature list supplied.\n"
@@ -167,6 +186,15 @@ class NeuralClock:
             return xp.tanh(x)
         if a in ("sigmoid", "logistic"):
             return ops.expit(x, xp=xp)
+        if a == "selu":
+            # The two constants are not tuning: they are the fixed point that
+            # makes the activation self-normalising, and they are printed in
+            # Klambauer et al. 2017. A rounded copy would drift the output of
+            # a five-layer network by more than the third decimal.
+            alpha = 1.6732632423543772848170429916717
+            scale = 1.0507009873554804934193349852946
+            neg = alpha * (ops.exp_op(ops.clip(x, high=0.0, xp=xp), xp=xp) - 1.0)
+            return scale * (ops.clip(x, low=0.0, xp=xp) + neg)
         if a in ("identity", "linear"):
             return x
         raise ScoringError(f"unknown activation {a!r}")
@@ -211,6 +239,22 @@ class NeuralClock:
     @classmethod
     def from_registry(cls, registry, clock_id: str) -> NeuralClock:
         c = registry.get(clock_id)
+        # A network whose weights ship. AltumAge is the first: its authors
+        # publish under MIT, and python/tools/build_altumage_weights.py folds
+        # the published Keras model and its scaler into the safetensors file
+        # named here. The pickle stays in that build step, where a human runs
+        # it once, and never reaches score time.
+        src = c.coefficient_source.file or ""
+        if src.endswith(".safetensors"):
+            from ..registry.registry import DATA_DIR
+
+            path = DATA_DIR / src
+            if not path.exists():
+                raise WeightsUnavailableError(
+                    clock_id, f"{clock_id}: the registry declares {path.name} "
+                              "and it is missing from the installed package")
+            weights = read_neural_weights(path)
+            return cls(clock=c, weights=weights)
         raise WeightsUnavailableError(
             clock_id,
             f"{clock_id} is a neural clock and no weights ship with FALCONAge.\n"

@@ -37,6 +37,15 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
     for c in registry.filter(availability="A"):
         if c.formula:
             continue
+        if not registry.has_coefficient_vector(c.id):
+            # A network: layer matrices rather than one weight per feature. The
+            # digest still has to hold and the probe order still has to be the
+            # length the registry claims.
+            assert len(registry.feature_ids(c.id)) == c.n_features
+            path = DATA_DIR / c.coefficient_source.file
+            assert hashlib.sha256(path.read_bytes()).hexdigest() ==                 c.coefficient_source.sha256, f'{c.id}: digest drift'
+            checked += 1
+            continue
         feats, coefs = registry.coefficients(c.id)
         assert len(feats) == len(coefs) == c.n_features
         assert len(set(feats)) == len(feats), f"{c.id}: duplicate feature ids"
@@ -46,8 +55,9 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest == c.coefficient_source.sha256, f"{c.id}: digest drift"
         checked += 1
-    assert checked == 22, ("22 clocks ship coefficient files: the 20 linear and PC "
-                           "sets, plus the epiTOC1 and HypoClock probe lists")
+    assert checked == 31, ("31 clocks ship weights: 21 linear sets, the seven "
+                           "mitotic probe lists, RepliTali, the two epiTOC "
+                           "transmission-model files, and AltumAge's network")
 
 
 def test_known_feature_counts(registry):
@@ -143,6 +153,11 @@ DOCUMENTED_DISCREPANCIES = {
     "yingcausage", "yingdamage", "yingadaptage",
     "senchronoage", "sencultureage", "senmortalityage",
     "phenoage",
+    # Weidner ships with the equation exactly as its paper prints it, and the
+    # discrepancy is in the inputs rather than the numbers: the third term is
+    # an unnamed CpG upstream of cg17861230, measured by pyrosequencing, and
+    # every array implementation substitutes the probe.
+    "weidner",
 }
 
 

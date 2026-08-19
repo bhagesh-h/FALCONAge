@@ -84,20 +84,19 @@ clocks:
     scale_type: "age_years"
     model_type: "deep neural network"
     population: "all ages"
-    n_features: null
+    n_features: 20318
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "de Lima Camillo, L.P., Lapierre, L.R. & Singh, R. A pan-tissue DNA-methylation epigenetic clock based on deep learning. npj Aging 8, 4 (2022)."
     doi: "https://doi.org/10.1038/s41514-022-00085-y"
     notes: "Pan-tissue chronological-age predictor using a five-hidden-layer neural network and 20,318 CpGs shared across the 27K, 450K and EPIC manifests; the actual training data came from 27K and 450K datasets."
     coefficient_source:
-      file: null
+      file: "coefficients/altumage.safetensors"
+      sha256: "8cac6130624bd6ae8b3f1a4d1d8be16d2a7784ba5378942318aaf303f5872e07"
       url: "https://github.com/rsinghlab/AltumAge"
-      provenance: "weights public under MIT; blocked on a safe conversion rather than on a licence"
-      primary_source_traced: false
-      redistributable: null
-      why: "The licence question is settled: the authors' repository is MIT, so the weights are redistributable. Format is what blocks it. The trained model ships as AltumAge.pt with a scaler.pkl, and this package refuses to load pickles because torch.load executes arbitrary code while unpickling. The way in is AltumAge.h5 read with h5py and converted to safetensors, which NeuralClock already scores."
-      obtain: "https://github.com/rsinghlab/AltumAge (AltumAge.h5, CpGsites.csv with 20,318 probes, scaler.pkl), MIT"
+      provenance: "de Lima Camillo et al., rsinghlab/AltumAge (MIT): the published Keras model, its RobustScaler and its CpG order, folded into one safetensors file by python/tools/build_altumage_weights.py. Batch norm and the scaler are affine at inference, so the fold is exact and is checked against the unfolded chain at build time."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -1255,20 +1254,19 @@ clocks:
     scale_type: "divisions"
     model_type: "mean methylation aggregation"
     population: "human, age unspecified"
-    n_features: null
+    n_features: 184
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Duran-Ferrer, M., et al. \"The proliferative history shapes the DNA methylome of B-cell tumors and predicts clinical outcome.\" Nature Cancer 1 (2020): 1066-1081."
     doi: "https://doi.org/10.1038/s43018-020-00131-2"
     notes: "Hypermethylation component of epiCMIT: a 184-CpG score ranging from 0 to 1 that tracks low-to-high relative proliferative history in normal and neoplastic B cells."
     coefficient_source:
-      file: null
+      file: "coefficients/epicmithyper.csv"
+      sha256: "4619924b45e5420dbf70c8b5a402091444fd014831140caf283c3adfdd2d060d"
       url: "https://github.com/aet21/EpiMitClocks"
-      provenance: "probe list public in the authors' R package, licence review pending: EpiCMITcpgs.rda, GPL-2"
-      primary_source_traced: false
-      redistributable: null
-      why: "The mean over the 184 CpGs the authors label epiCMIT.hyper. The shape fits AggregationClock exactly; what blocks it is the GPL-2 source, as for stemtoc."
-      obtain: "https://github.com/aet21/EpiMitClocks data/EpiCMITcpgs.rda, rows whose epiCMIT.class is epiCMIT.hyper (184 of 1,348)"
+      provenance: "Teschendorff group, EpiMitClocks data/EpiCMITcpgs.rda (GPL-2), the 184 rows classed epiCMIT.hyper; Duran-Ferrer et al. 2020 Nature Cancer is the primary description"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -1284,24 +1282,24 @@ clocks:
     training_target: ["replicative history"]
     unit: ["proportion"]
     scale_type: "divisions"
-    model_type: "complement of mean methylation"
+    model_type: "mean methylation aggregation"
     population: "human, age unspecified"
-    n_features: null
+    n_features: 1164
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Duran-Ferrer, M., et al. \"The proliferative history shapes the DNA methylome of B-cell tumors and predicts clinical outcome.\" Nature Cancer 1 (2020): 1066-1081."
     doi: "https://doi.org/10.1038/s43018-020-00131-2"
     notes: "Hypomethylation component of epiCMIT: a 1,164-CpG score ranging from 0 to 1 that tracks low-to-high relative proliferative history in normal and neoplastic B cells."
     coefficient_source:
-      file: null
+      file: "coefficients/epicmithypo.csv"
+      sha256: "41db1f3e9cfacb3243e2b5b0ba97466a762b41d1d23c3b1ef14da65a9cbe13e1"
       url: "https://github.com/aet21/EpiMitClocks"
-      provenance: "probe list public in the authors' R package, licence review pending: EpiCMITcpgs.rda, GPL-2"
-      primary_source_traced: false
-      redistributable: null
-      why: "One minus the mean over the 1,164 CpGs labelled epiCMIT.hypo, which is AggregationClock plus the one_minus postprocess hypoclock already uses."
-      obtain: "https://github.com/aet21/EpiMitClocks data/EpiCMITcpgs.rda, rows whose epiCMIT.class is epiCMIT.hypo (1,164 of 1,348)"
+      provenance: "Teschendorff group, EpiMitClocks data/EpiCMITcpgs.rda (GPL-2), the 1,164 rows classed epiCMIT.hypo; Duran-Ferrer et al. 2020 Nature Cancer is the primary description"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "one_minus"
 
   epitoc1:
     name: "epitoc1"
@@ -1347,20 +1345,19 @@ clocks:
     scale_type: "divisions"
     model_type: "dynamic methylation transmission model"
     population: "adults"
-    n_features: null
+    n_features: 163
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Teschendorff, Andrew E. \"A comparison of epigenetic mitotic-like clocks for cancer risk prediction.\" Genome Medicine 12 (2020): 56."
     doi: "https://doi.org/10.1186/s13073-020-00752-3"
     notes: "Dynamic methylation-transmission model returning total cumulative stem-cell divisions per stem cell; an intrinsic rate additionally requires chronological age but is not this implementation's returned value."
     coefficient_source:
-      file: null
+      file: "coefficients/epitoc2.csv"
+      sha256: "d8b9daaa847b1094c984ab7ce472c6912d82fedea84fa193921fdecd8e1f97b7"
       url: "https://doi.org/10.5281/zenodo.2632938"
-      provenance: "parameters public and traced, not yet shipped: dataETOC2.Rd element 1, Zenodo 2632938, CC-BY 4.0"
-      primary_source_traced: false
-      redistributable: null
-      why: "The data is in hand and the licence is clear. What is missing is a model class: epiTOC2 is 2 * mean_i[(beta_i - beta0_i) / (delta_i * (1 - beta0_i))] over the CpGs present, which is not a fixed linear combination because the divisor is the count of represented CpGs, and each CpG carries two parameters rather than one weight. Neither LinearClock nor AggregationClock can express it."
-      obtain: "https://doi.org/10.5281/zenodo.2632938 (dataETOC2.Rd: 163 CpGs with de-novo rate delta and ground-state beta0; epiTOC2.R is the author's reference implementation)"
+      provenance: "Teschendorff, dataETOC2.Rd element 1, Zenodo 2632938, CC-BY 4.0: 163 sites with a de-novo rate and a ground state, stored here as the folded weight 1/(delta*(1-beta0)) and the ground state"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -1378,20 +1375,19 @@ clocks:
     scale_type: "divisions"
     model_type: "dynamic methylation transmission model"
     population: "all ages"
-    n_features: null
+    n_features: 170
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Teschendorff, Andrew E. \"A comparison of epigenetic mitotic-like clocks for cancer risk prediction.\" Genome Medicine 12 (2020): 56."
     doi: "https://doi.org/10.1186/s13073-020-00752-3"
     notes: "Code-defined 170-CpG extension of the dynamic mitotic model. Official EpiMitClocks data show that all 170 sites are a subset of the 371 stemTOC vivo-mitCpGs derived from fetal/neonatal references, six normal proliferating cell lines, and three adult whole-blood cohorts. The assigned 2020 dynamic-model paper does not name or define epiTOC3."
     coefficient_source:
-      file: null
+      file: "coefficients/epitoc3.csv"
+      sha256: "33246d0437d28c041a4c7c2e20bdaf5a120d3b5c8fe8fbf32f7e6351b222bf22"
       url: "https://github.com/aet21/EpiMitClocks"
-      provenance: "parameters public in the authors' R package, licence review pending: dataETOC3.rda, GPL-2"
-      primary_source_traced: false
-      redistributable: null
-      why: "The same missing model class as epitoc2, over 170 CpGs. Its parameters ship in the authors' EpiMitClocks package under GPL-2 and this package is GPL-3, so shipping the file needs a licence decision that the epitoc2 parameters, being CC-BY, do not."
-      obtain: "https://github.com/aet21/EpiMitClocks data/dataETOC3.rda element 1 (170 CpGs by delta, beta0)"
+      provenance: "Teschendorff group, EpiMitClocks data/dataETOC3.rda element 1 (GPL-2): 170 sites, same two parameters per site as epiTOC2"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -3359,22 +3355,23 @@ clocks:
     scale_type: "divisions"
     model_type: "elastic net regression"
     population: "human cell cultures"
-    n_features: null
+    n_features: 87
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Endicott, J.L., Nolte, P.A., Shen, H. & Laird, P.W. Cell division drives DNA methylation loss in late-replicating domains in primary human cells. Nature Communications 13, 6659 (2022)."
     doi: "https://doi.org/10.1038/s41467-022-34268-8"
     notes: "Final RepliTali model estimating relative cumulative replicative history from methylation in common partially methylated domains; it was fitted to normalized population doublings across serially cultured primary human cells."
     coefficient_source:
-      file: null
+      file: "coefficients/replitali.csv"
+      sha256: "269c0c52420d1dc82b7bdbcaf9350ec3a4a475c63c894fc9eaf29e5219d89df7"
       url: "https://github.com/aet21/EpiMitClocks"
-      provenance: "coefficients public in the authors' R package, licence review pending: Replitali.rda, GPL-2"
-      primary_source_traced: false
-      redistributable: null
-      why: "An ordinary linear model rather than a gap in the architecture: 87 CpG coefficients and an intercept, which LinearClock scores as it stands. Blocked on the same GPL-2 question as the other EpiMitClocks lists."
-      obtain: "https://github.com/aet21/EpiMitClocks data/Replitali.rda (replitali.cpg.v and replitali.coe: an intercept and 87 weights)"
+      provenance: "Teschendorff group, EpiMitClocks data/Replitali.rda (GPL-2): an intercept of 101.5896 and 87 CpG weights; Endicott et al. 2022 Nature is the primary description"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "add"
+        value: 101.589621740508
 
   replitalinorm:
     name: "replitalinorm"
@@ -3604,20 +3601,19 @@ clocks:
     scale_type: "divisions"
     model_type: "95th-percentile methylation aggregation"
     population: "all ages"
-    n_features: null
+    n_features: 371
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Zhu, Tianlei, et al. \"An improved epigenetic counter to track mitotic age in cells.\" Nature Communications 15 (2024): 4211."
     doi: "https://doi.org/10.1038/s41467-024-48649-8"
     notes: "Relative mitotic-age counter based on the 95th percentile across 371 in-vivo-filtered mitotic CpGs."
     coefficient_source:
-      file: null
+      file: "coefficients/stemtoc.csv"
+      sha256: "5330f208a44c7a13c2abe2b89f4de2b6534ecab5ebd461fbf0b0c21b501648e5"
       url: "https://github.com/aet21/EpiMitClocks"
-      provenance: "probe list public in the authors' R package, licence review pending: epiTOCcpgs3.rda, GPL-2"
-      primary_source_traced: false
-      redistributable: null
-      why: "Nothing architectural is missing: AggregationClock already computes the 95th percentile this clock is defined as. The 371 CpGs ship in the authors' GPL-2 R package and this package is GPL-3. Either that licence question is settled, or the same list is extracted from the paper's supplementary tables."
-      obtain: "https://github.com/aet21/EpiMitClocks data/epiTOCcpgs3.rda (371 CpGs), or Zhu et al. 2024 Nature Communications supplementary"
+      provenance: "Teschendorff group, EpiMitClocks data/epiTOCcpgs3.rda (GPL-2); the same 371 CpGs Zhu et al. 2024 Nature Communications selected for hypermethylation with age in vivo"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -3635,20 +3631,19 @@ clocks:
     scale_type: "divisions"
     model_type: "95th-percentile methylation aggregation"
     population: "prenatal and newborn"
-    n_features: null
+    n_features: 629
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Zhu, Tianlei, et al. \"An improved epigenetic counter to track mitotic age in cells.\" Nature Communications 15 (2024): 4211."
     doi: "https://doi.org/10.1038/s41467-024-48649-8"
     notes: "In-vitro precursor of stemTOC based on the 95th percentile across 629 population-doubling-associated CpGs."
     coefficient_source:
-      file: null
+      file: "coefficients/stemtocvitro.csv"
+      sha256: "f704b188115cb1b804773d6fef4f040e5f230129b33184afd23bddc76b02fa46"
       url: "https://github.com/aet21/EpiMitClocks"
-      provenance: "probe list public in the authors' R package, licence review pending: cugpmitclockCpG.rda, GPL-2"
-      primary_source_traced: false
-      redistributable: null
-      why: "As stemtoc, over the 629 CpGs selected in vitro rather than in vivo."
-      obtain: "https://github.com/aet21/EpiMitClocks data/cugpmitclockCpG.rda (629 CpGs)"
+      provenance: "Teschendorff group, EpiMitClocks data/cugpmitclockCpG.rda (GPL-2); the 629 CpGs selected in cultured cells rather than in vivo"
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -4574,22 +4569,25 @@ clocks:
     scale_type: "age_years"
     model_type: "linear regression"
     population: "adults"
-    n_features: null
+    n_features: 3
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Weidner, C. I., Lin, Q., Koch, C. M., et al. (2014). Aging of blood can be tracked by DNA methylation changes at just three CpG sites. Genome Biology, 15, R24."
     doi: "https://doi.org/10.1186/gb-2014-15-2-r24"
     notes: "Three-site whole-blood epigenetic-age estimator. The sites were selected from Illumina 27K blood profiles, and the final multivariate linear equation was fitted on targeted bisulfite-pyrosequencing beta values from 82 blood samples and validated in 69 independent samples."
     coefficient_source:
-      file: null
+      file: "coefficients/weidner.csv"
+      sha256: "5b7dbce12aba34170c9943cb0aeef92eea0e663e36306c87d1ffd7f2f4f5df4d"
       url: "https://doi.org/10.1186/gb-2014-15-2-r24"
-      provenance: "model printed in the paper; coefficients not yet read from the primary text"
-      primary_source_traced: false
-      redistributable: null
-      why: "Three CpGs, so the model is small enough to be printed rather than supplied as a file, and there are two of them: one fitted on pyrosequencing percentages and one refitted on Illumina beta values. Which is which matters, because feeding beta values to the pyrosequencing equation is wrong by two orders of magnitude. The primary text was not readable in this pass, so nothing was extracted rather than copying the numbers a secondary source quotes."
-      obtain: "Weidner et al. 2014 Genome Biology 15:R24, main text: the three-CpG equation refitted on Illumina beta values"
+      provenance: "Weidner et al. 2014, Genome Biology 15:R24, the equation printed in the Results: 38.0 - 26.4 cg02228185 - 23.7 cg25809905 + 164.7 gamma, read out of the article full text rather than copied from another package"
+      primary_source_traced: true
+      redistributable: true
+    known_discrepancies:
+      - "The third site is a substitution. The paper's gamma is not cg17861230 but an unnamed CpG upstream of it, measured by pyrosequencing and better correlated with age; no array id was ever published for it. Every array implementation of this clock, including this one, puts cg17861230 in its place, and gamma carries 164.7 of the model against 26.4 and 23.7 for the two genuine probes. Treat the result as the published model evaluated on a near neighbour."
     preprocess: []
-    postprocess: []
+    postprocess:
+      - op: "add"
+        value: 38.0
 
   wu:
     name: "wu"

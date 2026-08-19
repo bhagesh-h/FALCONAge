@@ -451,6 +451,18 @@ class ClockRegistry:
                 raise WeightsUnavailableError(
                     clock_id, f"{clock_id}: registry declares {p.name} but it is "
                               "missing from the installed package")
+            # A network's weights are not a coefficient vector, and asking for
+            # one used to reach this CSV reader and fail as a UnicodeDecodeError
+            # halfway through a tensor file. Everything that wants per-feature
+            # weights -- the probe-level standard error, the coefficient-mass
+            # coverage floor -- has to know that this clock cannot supply them.
+            if p.suffix == ".safetensors":
+                raise RegistryError(
+                    f"{clock_id} is a network: its weights are {p.name}, layer "
+                    "matrices rather than one weight per feature.\n"
+                    "  There is no per-feature coefficient to return. Use "
+                    f"feature_ids({clock_id!r}) for the probe order, or "
+                    "models.build() for the model itself.")
             return _read_coefficients(p)
 
         raise WeightsUnavailableError(clock_id, self.unavailable_message(clock_id))
@@ -512,7 +524,36 @@ class ClockRegistry:
 
     @functools.lru_cache(maxsize=256)  # noqa: B019 - registry is process-lifetime
     def feature_ids(self, clock_id: str) -> tuple[str, ...]:
+        # A network has no coefficients but it does have a probe order, and the
+        # order is the model: the columns have to arrive as they were trained.
+        # It travels in the safetensors metadata rather than in a sidecar file,
+        # so it cannot drift away from the weights it belongs to.
+        src = self.get(clock_id).coefficient_source.file or ""
+        if src.endswith(".safetensors") and clock_id not in self._local:
+            from safetensors import safe_open
+
+            with safe_open(str(DATA_DIR / src), framework="numpy") as fh:
+                meta = fh.metadata() or {}
+            feats = [f for f in meta.get("features", "").split("\n") if f]
+            if not feats:
+                raise RegistryError(
+                    f"{clock_id}: {Path(src).name} carries no feature order in "
+                    "its metadata, so there is no way to align a matrix to it")
+            return tuple(feats)
         return tuple(self.coefficients(clock_id)[0])
+
+    def has_coefficient_vector(self, clock_id: str) -> bool:
+        """True when this clock has one weight per feature to hand out.
+
+        False for a network, whose weights are layer matrices. The distinction
+        matters to anything that squares a weight or sums the absolute weights:
+        those operations are defined on a linear model and have no counterpart
+        in a five-layer network.
+        """
+        if clock_id in self._local:
+            return True
+        src = self.get(clock_id).coefficient_source.file or ""
+        return bool(src) and not src.endswith(".safetensors")
 
     def weight_record(self, clock_id: str) -> dict[str, Any]:
         """What the run manifest records about this clock's coefficients."""

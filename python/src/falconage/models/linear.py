@@ -256,4 +256,19 @@ def build(registry, clock_id: str):
 
     if is_aggregation(c):
         return AggregationClock.from_registry(registry, clock_id)
+    # Two entries invert a methylation transmission model per site instead of
+    # weighting the sites: epiTOC2 and epiTOC3 return divisions per stem cell,
+    # and the divisor is how many of their sites this dataset carries. See
+    # models/division.py for why that cannot be a coefficient vector.
+    from .division import DivisionClock, is_division_model
+
+    if is_division_model(c):
+        return DivisionClock.from_registry(registry, clock_id)
+    # A network is not a weighted sum either, and until AltumAge shipped there
+    # was nothing to dispatch to: every neural entry raised for want of
+    # weights, so the factory never needed the branch.
+    from .neural import NeuralClock, is_neural
+
+    if is_neural(c):
+        return NeuralClock.from_registry(registry, clock_id)
     return LinearClock.from_registry(registry, clock_id)

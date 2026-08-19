@@ -271,9 +271,15 @@ def test_adjusting_removes_the_covariate_it_is_given(synthetic_betas):
     res = fa.score(synthetic_betas, clocks=["horvath2013"])
     rng = np.random.default_rng(20260808)
 
-    y = res.scores["horvath2013"]
-    confounder = 0.4 * (y - y.mean()) / y.std() + rng.normal(0, 1, len(y))
-    res.obs["mono"] = confounder.to_numpy()
+    # Built from the acceleration rather than from the score. The score is
+    # mostly age, so how much of it survives residualising depends on how much
+    # age signal the synthetic fixture happens to carry -- and that moved when
+    # new clocks widened the fixture's feature set, taking the correlation
+    # below the threshold this test asserts. The quantity under test is the
+    # acceleration, so the covariate is built to confound that.
+    y = fa.acceleration(res)["horvath2013"]
+    confounder = 0.8 * (y - y.mean()) / y.std() + rng.normal(0, 1, len(y))
+    res.obs["mono"] = np.asarray(confounder)
 
     plain = fa.acceleration(res)["horvath2013"]
     fixed = fa.acceleration(res, adjust=["mono"])["horvath2013"]

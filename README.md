@@ -25,7 +25,7 @@ the unit, the provenance, and how much of the number is measurement noise**.
 The R and Python interfaces call one numerical core, so results are bit-identical, asserted at
 tolerance zero in CI rather than approximately.
 
-| | |
+
 |---|---|
 | **Clocks catalogued** | 161. **25 tier A score offline**: 22 ship a coefficient file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 108 tier B have no traced coefficient source |
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, nanopore bedMethyl, RRBS, targeted panels, Olink NPX, SomaScan RFU, bulk RNA-seq counts, clinical chemistry |
