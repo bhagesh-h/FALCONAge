@@ -46,7 +46,8 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest == c.coefficient_source.sha256, f"{c.id}: digest drift"
         checked += 1
-    assert checked == 20, "20 clocks ship coefficient files in v1.0"
+    assert checked == 22, ("22 clocks ship coefficient files: the 20 linear and PC "
+                           "sets, plus the epiTOC1 and HypoClock probe lists")
 
 
 def test_known_feature_counts(registry):

@@ -6,7 +6,8 @@ implemented incorrectly, and is any implementable from public material but left
 unimplemented. Everything below is measured against the shipped registry and
 the public corpus, not recalled.
 
-Date: 2026-08-18. Registry schema 1.1.0.
+First pass 2026-08-18; literature survey and corrections 2026-08-19.
+Registry schema 1.1.0.
 
 ## 1. Are any entries artefacts?
 
@@ -50,9 +51,13 @@ This is the main finding.
 
 | | traced to primary source | not traced |
 |---|---:|---:|
-| Tier A, scores offline | 5 | **18** |
-| Tier B | 0 | 110 |
+| Tier A, scores offline | 7 | **18** |
+| Tier B | 0 | 108 |
 | Tier C | 0 | 28 |
+
+Seven, not five, since `epitoc1` and `hypoclock` were shipped from the record
+their method's author published (section 3). The 18 untraced entries are
+unchanged: nothing in this pass re-traced one of them.
 
 All 18 untraced tier A entries carry the same provenance string: *"third-party
 package copy; primary source not re-traced"*. Their coefficients were taken
@@ -61,7 +66,7 @@ recorded honestly in the registry and is **not** what the documentation
 conveys: the landing page and README frame tier B as the untraced tier, which
 leaves a reader to assume tier A is verified against its publication.
 
-Five entries are traced: `horvath2013`, `dnamphenoage`, `phenoage`, `kdm`, `hd`.
+Seven entries are traced: `horvath2013`, `dnamphenoage`, `phenoage`, `kdm`, `hd`, and the two shipped in this pass, `epitoc1` and `hypoclock`.
 
 Eleven clocks additionally carry `known_discrepancies` where the paper and the
 circulating coefficients disagree, and these are raised as warnings at score
@@ -71,29 +76,58 @@ time rather than left on a page: `bocklandt`, `bohlin`, `cvdwesterman`,
 
 ## 3. Implementable from public material, not implemented
 
-All 110 tier B entries record no `why`, no `url` and no `obtain` text. There is
-no record of whether the coefficients were sought, found, or refused. Several
-are demonstrably obtainable.
+The first pass said several tier B entries were "demonstrably obtainable" and
+named them from their model shapes. Going after the material rather than
+reasoning about it changed the picture in both directions: more is obtainable
+than that list implied, and two of the three clocks it called trivial cannot be
+implemented at all.
 
-**Aggregation clocks, needing only a probe list.** `AggregationClock` ships and
-is tested; these need the published CpG set and nothing else, which makes them
-the cheapest gap in the catalogue: `epitoc1`, `epicmithyper`, `hypoclock`,
-`stemtoc`, `stemtocvitro`, `reedbmi`.
+The mitotic clocks turn out to be one find. Teschendorff publishes the epiTOC2
+parameters, the epiTOC1 probe list and the HypoClock probe list as a single
+6 kB R object on Zenodo under CC-BY 4.0, and the group's `EpiMitClocks` package
+carries the rest under GPL-2, with a reference implementation per clock:
 
-**Clocks whose entire model is printed in the paper.** A single-CpG or
-three-CpG model has no supplementary file to obtain; the equation is the paper:
-`bocklandt` (one CpG in EDARADD), `garagnani` (one CpG in ELOVL2), `weidner`
-(three CpGs).
+| clock | status now | material | what is in the way |
+|---|---|---|---|
+| `epitoc1` | **ships** | Zenodo 2632938, `dataETOC2.Rd` element 2, 385 CpGs, CC-BY 4.0 | nothing |
+| `hypoclock` | **ships** | same record, element 3, 678 solo-WCGWs | nothing |
+| `stemtoc` | obtainable | `EpiMitClocks` `epiTOCcpgs3.rda`, 371 CpGs, GPL-2 | GPL-2 into a GPL-3 tree, or re-extract from Zhu 2024's supplement |
+| `stemtocvitro` | obtainable | `cugpmitclockCpG.rda`, 629 CpGs, GPL-2 | as above |
+| `epicmithyper` | obtainable | `EpiCMITcpgs.rda`, the 184 rows classed hyper, GPL-2 | as above |
+| `epicmithypo` | obtainable | the same file's 1,164 hypo rows | as above |
+| `replitali` | obtainable | `Replitali.rda`, an intercept and 87 weights, GPL-2 | as above; it is an ordinary linear model |
+| `epitoc2` | data in hand | Zenodo 2632938, 163 CpGs with a de-novo rate and a ground state, CC-BY 4.0 | a model class, not data |
+| `epitoc3` | data public | `dataETOC3.rda`, 170 CpGs, GPL-2 | the same class, plus the licence question |
+| `altumage` | licence resolved | `rsinghlab/AltumAge`, **MIT** | the weights ship as `.pt` and `.pkl`, which this package refuses to load; `AltumAge.h5` read with h5py converts to safetensors |
+| `weidner` | printed in the paper | Genome Biology 15:R24 | two equations exist, one fitted on pyrosequencing percentages and one on beta values; the primary text was not readable in this pass |
+| `bocklandt` | **not implementable as published** | PLoS ONE 6:e14821 | no equation in beta units exists |
+| `garagnani` | **not implementable as published** | Aging Cell 11:1132 | no age model was ever published |
 
-**Architectures specified but unbuilt.** `epitoc2` and `epitoc3` use a mitotic
-division model rather than a linear combination, and the authors publish R
-code. `MultiStageCoxClock`, `DeconvolutionClock` and `CompositeClock` are named
-in the architecture page as specified and unbuilt, and 18 deconvolution entries
-depend on the third.
+Two corrections to the first pass, both in the direction of less optimism:
 
-**Weights public but licence unverified.** `altumage` has weights in the
-authors' repository and `NeuralClock` ships and is tested against synthetic
-weights. Whether the licence permits redistribution has not been recorded.
+**`bocklandt` and `garagnani` are not "the equation is the paper".** They were
+grouped with `weidner` as models small enough to be printed rather than
+supplied. Reading them says otherwise. Bocklandt regresses age on EDARADD
+methylation, EDARADD squared and NPTX2, measured by Sequenom MassArray and by
+pyrosequencing, and reports an R-squared instead of coefficients; there is no
+equation in Illumina beta units to implement. Garagnani establishes that ELOVL2
+methylation tracks age and publishes no predictor at all. What other packages
+ship under both names is a raw beta with weight 1, which is a probe readout and
+not an age. Only `weidner` is genuinely a printed model.
+
+**The two mitotic clocks that need a division model still need one.** epiTOC2 is
+`2 x mean_i[(beta_i - beta0_i) / (delta_i (1 - beta0_i))]` over the CpGs
+present. The divisor is the count of represented CpGs and each CpG carries two
+parameters, so neither `LinearClock` nor `AggregationClock` can express it. That
+is now a missing class with the data sitting beside it, rather than a missing
+data set.
+
+One thing the survey found that nobody was looking for: **the author's own two
+implementations of HypoClock disagree in sign.** The 2019 `epiTOC2.R` script
+returns the mean beta over the 678 solo-WCGWs; the later `EpiMitClocks` package
+returns one minus that mean. FALCONAge ships the later definition, which is also
+what pyaging returns, and the registry note now says so instead of describing
+pyaging's version as an inversion of the published one.
 
 ## 4. Does code align with logic, results and plots?
 
@@ -106,34 +140,58 @@ and "is correct".
 
 ## Todo
 
-Ordered by evidence value per unit of work.
+Ordered by evidence value per unit of work. Struck items are done.
 
+- [x] ~~**Ship the aggregation clocks whose probe list is public.**~~ `epitoc1`
+      and `hypoclock` ship, from the author's CC-BY record, verified to score
+      exactly the mean and one-minus-the-mean their papers define.
+- [x] ~~**Resolve the AltumAge licence question.**~~ MIT. The block is the
+      pickle format, not the licence.
+- [x] ~~**Record a `why` for every tier B entry that has been investigated.**~~
+      Eleven now carry the source, the licence and the obstacle, and
+      `unavailable_message()` prints them instead of the generic "no primary
+      source has been established".
+- [ ] **Settle GPL-2 material in a GPL-3 tree.** Five clocks are one decision
+      away from shipping: `stemtoc`, `stemtocvitro`, `epicmithyper`,
+      `epicmithypo`, `replitali`. Either take the lists from the papers'
+      supplements instead, or record a decision that a factual probe list
+      carries no licence claim.
+- [ ] **Build the division-model class** and ship `epitoc2` from the CC-BY
+      parameters already traced. `epitoc3` follows if the GPL-2 question above
+      is settled. This is the only genuinely new architecture the survey found.
+- [ ] **Convert AltumAge's weights safely.** Read `AltumAge.h5` with h5py, write
+      safetensors, check against the authors' example data. `NeuralClock` scores
+      it as it stands.
+- [ ] **Read the Weidner equation out of the primary text.** Three coefficients
+      and an intercept, but two published fits: on pyrosequencing percentages
+      and on beta values. Getting the wrong one wrong by a factor of a hundred
+      is the whole risk, so this needs the paper rather than a quotation of it.
 - [ ] **Correct the tier framing in the documentation.** README, `docs/index.qmd`
-      and the catalogue imply tier A is source-verified. State that 18 of 23
-      are third-party copies. This is a wording fix and it removes a false
-      impression from the most-read pages.
-- [ ] **Trace the 18 untraced tier A clocks to their primary sources.** Each
-      needs the paper's supplement fetched, the coefficient set compared to the
-      shipped file, and `primary_source_traced` set with a checksum. Start with
-      the four that carry a discrepancy warning already (`yingadaptage`,
+      and the catalogue imply tier A is source-verified. State that 18 of 25
+      are third-party copies.
+- [ ] **Trace the 18 untraced tier A clocks to their primary sources.** Start
+      with the four that already carry a discrepancy warning (`yingadaptage`,
       `yingcausage`, `yingdamage`, `zhangmortality`), since a mismatch there is
       most likely.
-- [ ] **Add a per-clock accuracy check against published performance.** For each
-      tier A clock, record the paper's reported r or MAE and assert the corpus
-      result is within a stated tolerance. This is what closes item 4 and turns
-      "correlates" into "agrees with the publication".
-- [ ] **Ship the six aggregation clocks.** Obtain the published probe lists for
-      `epitoc1`, `epicmithyper`, `hypoclock`, `stemtoc`, `stemtocvitro` and
-      `reedbmi`. The architecture is already implemented and tested.
-- [ ] **Ship the three printed-in-the-paper clocks:** `bocklandt`, `garagnani`,
-      `weidner`. No supplement needed.
-- [ ] **Record a `why` for every tier B entry.** 110 entries say nothing about
-      whether their coefficients are obtainable. Even "not yet attempted" is
-      more informative than silence, and it converts the tier into a work list.
-- [ ] **Resolve the AltumAge licence question** and ship the weights if it
-      permits, since the architecture already exists.
-- [ ] **Decide on epiTOC2 and epiTOC3.** They need a division model rather than
-      a dot product. Either build it or record the decision not to.
+- [ ] **Add a per-clock accuracy check against published performance.** Record
+      each paper's reported r or MAE and assert the corpus result is within a
+      stated tolerance. This is what turns "correlates" into "agrees with the
+      publication".
+- [ ] **Investigate the tier B entries nobody has looked at yet.** 97 of the 108
+      have no route recorded. `reedbmi` is the cheapest of them: a weighted mean
+      whose weights are the model.
 - [ ] **Re-run this audit on a larger cohort.** n = 16 rules out fabrication and
       little else. The corpus holds ten studies; use them all and report per
       clock per study.
+
+## Sources consulted in the 2026-08-19 pass
+
+- Teschendorff, *Epigenetic Timer of Cancer-2*, Zenodo, doi:10.5281/zenodo.2632938,
+  CC-BY 4.0 (`dataETOC2.Rd`, `epiTOC2.R`)
+- `github.com/aet21/EpiMitClocks`, GPL-2 (per-clock reference implementations and
+  the probe lists for stemTOC, stemTOCvitro, epiCMIT, RepliTali, epiTOC3)
+- `github.com/rsinghlab/AltumAge`, MIT (weights, scaler, CpG list)
+- Bocklandt et al. 2011, PLoS ONE 6:e14821
+- Garagnani et al. 2012, Aging Cell 11:1132
+- Weidner et al. 2014, Genome Biology 15:R24 (abstract and secondary summaries;
+  the full text was not reachable in this pass)

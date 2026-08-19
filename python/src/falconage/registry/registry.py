@@ -478,6 +478,25 @@ class ClockRegistry:
                    if alt_lines else "")
             )
 
+        # A tier B entry that has been looked into says so. The default text
+        # below is true of most of them and useless for the ones where somebody
+        # has already done the work: telling a reader "no source has been
+        # established" when the registry holds the DOI, the file name and the
+        # reason it is still not shipped wastes the search they are about to
+        # repeat.
+        if cs.why or cs.obtain:
+            found = f"{clock_id} is tier B: its coefficients are not bundled.\n\n"
+            if cs.why:
+                found += f"  Why: {cs.why}\n\n"
+            if cs.obtain:
+                found += f"  The material is at: {cs.obtain}\n\n"
+            found += (
+                "  Registering it yourself is one call:\n"
+                f"    falconage.registry.load().register_local_weights({clock_id!r}, <path>)\n"
+                "  and the run manifest will record the file's SHA-256 as user-supplied."
+            )
+            return found
+
         return (
             f"{clock_id} is tier B: its coefficients are not bundled and no "
             "primary\n  source has been established for it yet.\n\n"

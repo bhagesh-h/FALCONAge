@@ -6,7 +6,7 @@ description: Score biological aging clocks from DNA methylation, clinical chemis
 # FALCONAge
 
 Aging-clock scoring with the unit, the provenance, and the measurement error attached
-to every number. 161 clocks catalogued; 23 score offline.
+to every number. 161 clocks catalogued; 25 score offline.
 
 **Docker is the supported path.** Nothing else needs installing, and the image pins every
 dependency so the same input gives the same numbers on any machine.

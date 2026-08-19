@@ -18,6 +18,11 @@ from falconage.models.aggregation import AggregationClock, is_aggregation, parse
 AGGREGATORS = {"epitoc1", "epicmithyper", "stemtoc", "stemtocvitro", "reedbmi",
                "hypoclock"}
 
+#: Two of the six now ship their probe list. Both come from one CC-BY record
+#: the method's own author published, which is why these two and not the other
+#: four: the rest are in a GPL-2 R package and this tree is GPL-3.
+SHIPPED = {"epitoc1": 385, "hypoclock": 678}
+
 
 # ---------------------------------------------------------------------------
 # reading the statistic out of what the registry already declares
@@ -54,11 +59,69 @@ def test_every_one_of_them_parses(registry):
         assert (q is None) or (0 < q < 1)
 
 
-def test_they_are_all_still_scaffolds(registry):
-    """No probe list ships for any of them, so this is architecture, exactly
-    like PCLinearClock. The point is that registering one now works."""
-    for cid in AGGREGATORS:
+def test_the_four_without_a_published_list_are_still_scaffolds(registry):
+    """Architecture without data, exactly like PCLinearClock. The point is
+    that registering a probe list works the day one is obtained."""
+    for cid in AGGREGATORS - set(SHIPPED):
         assert not registry.has_coefficients(cid)
+
+
+def test_the_two_shipped_lists_are_the_length_their_papers_state(registry):
+    """385 and 678 are not round numbers anyone would land on by accident, so
+    a truncated or double-written file shows up here rather than as a score
+    that is merely a little off."""
+    for cid, n in SHIPPED.items():
+        features, weights = registry.coefficients(cid)
+        assert len(features) == n == registry.get(cid).n_features
+        assert len(set(features)) == n, "a repeated probe would weight it twice"
+        assert all(f.startswith("cg") for f in features)
+        assert (weights == 1.0).all(), "a probe list is membership, not weights"
+
+
+def test_the_shipped_lists_match_the_digest_the_registry_records(registry):
+    """The manifest reports this SHA-256 as the provenance of every score. If
+    the file can drift from the digest, that report is decoration."""
+    import hashlib
+
+    from falconage.registry.registry import DATA_DIR
+
+    for cid in SHIPPED:
+        source = registry.get(cid).coefficient_source
+        digest = hashlib.sha256((DATA_DIR / source.file).read_bytes()).hexdigest()
+        assert digest == source.sha256
+        assert source.primary_source_traced, "shipped means traced, or it does not ship"
+
+
+def test_epitoc1_is_the_mean_of_its_own_probe_list(registry, rng):
+    """The published definition is pcgtAge: the mean beta over the 385
+    polycomb-target CpGs. Not a mean of anything else, and not a percentile."""
+    features, _ = registry.coefficients("epitoc1")
+    d = _data(rng, list(features), n=6)
+    got = fa.score(d, clocks=["epitoc1"]).scores["epitoc1"].to_numpy()
+    assert np.allclose(got, d.X[list(features)].to_numpy().mean(axis=1), atol=0, rtol=0)
+
+
+def test_hypoclock_is_one_minus_the_mean_and_not_the_mean(registry, rng):
+    """The sign is the whole content of the score: higher means deeper PMD
+    hypomethylation. The author's own two implementations disagree here -- the
+    2019 epiTOC2.R returns the mean, the EpiMitClocks package returns 1 minus
+    it -- so scoring it the other way round is a live mistake, not a
+    hypothetical one."""
+    features, _ = registry.coefficients("hypoclock")
+    d = _data(rng, list(features), n=6)
+    got = fa.score(d, clocks=["hypoclock"]).scores["hypoclock"].to_numpy()
+    mean = d.X[list(features)].to_numpy().mean(axis=1)
+    assert np.allclose(got, 1.0 - mean, atol=0, rtol=0)
+    assert not np.allclose(got, mean)
+
+
+def test_a_tier_b_clock_that_has_been_researched_says_where_the_data_is(registry):
+    """The generic tier B message says no source has been established. For the
+    entries where one has, repeating that sends a reader to redo the search."""
+    message = registry.unavailable_message("stemtoc")
+    assert "EpiMitClocks" in message
+    assert "371" in message
+    assert "no primary" not in message
 
 
 # ---------------------------------------------------------------------------

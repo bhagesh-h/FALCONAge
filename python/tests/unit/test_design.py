@@ -88,16 +88,25 @@ def test_the_measured_icc_comes_from_the_pilot_when_there_is_one(synthetic_betas
 def test_a_cohort_narrower_than_its_own_noise_says_so(synthetic_betas):
     """Not clipped to a comfortable zero.
 
-    The synthetic fixture drifts each probe by 0.0012 per year, which is far
-    less true signal than a real cohort carries, so Horvath's propagated
-    measurement error exceeds the spread between its samples. That is a real
-    state of affairs -- it is what a study with too narrow an age range looks
-    like -- and the honest output is a negative implied ICC and a refusal to
-    quote a reliability-adjusted n, not an ICC of 0.0 reported without comment.
+    A cohort whose spread on a clock is no larger than that clock's propagated
+    measurement error has an implied ICC at or below zero. That is a real state
+    of affairs -- it is what a study with too narrow an age range looks like --
+    and the honest output is the negative number and a refusal to quote a
+    reliability-adjusted n, not an ICC of 0.0 reported without comment.
+
+    The condition is constructed here rather than borrowed from the fixture.
+    It used to arrive for free, because the synthetic cohort's true drift is
+    small enough that Horvath's error exceeded its spread -- until epiTOC1 and
+    HypoClock began shipping and added 1,063 probes to the fixture, which
+    shifted every draw after them in the same random stream and moved this
+    clock's implied ICC across zero. An assertion that an unrelated clock can
+    flip is not testing the branch it names.
     """
     d = _blood(synthetic_betas)
     res = fa.score(d, clocks=["horvath2013"], min_coverage=0.0)
     fa.technical_se(res, d)
+    sd = float(res.scores["horvath2013"].std(ddof=1))
+    res.se["horvath2013"] = 1.5 * sd          # assay noisier than the cohort
     p = fa.power("horvath2013", effect=1.0, result=res)
     assert p.icc <= 0
     assert "as large as the spread" in p.icc_source

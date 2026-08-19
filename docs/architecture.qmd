@@ -29,7 +29,7 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 
 | Area | Shipped in v1.0.0 | Specified, not built |
 |---|---|---|
-| Clock catalogue | 161 entries. **23 tier A score offline**: 20 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 28 tier C are tested scaffolds | The 110 tier B entries carry metadata but no traced coefficients |
+| Clock catalogue | 161 entries. **25 tier A score offline**: 22 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 28 tier C are tested scaffolds | The 108 tier B entries carry metadata but no traced coefficients |
 | Modalities | DNA methylation, clinical chemistry, RRBS, **nanopore**, **transcriptomics**, **proteomics** | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
 | Inputs | Beta matrix, GEO series matrix, **raw IDATs**, RRBS, **bedMethyl**, **targeted panels**, **Olink NPX**, **SomaScan RFU**, **bulk counts**, clinical tables, ComputAgeBench | — |
 | Normalisation | **pOOBAH, noob, BMIQ, probe masks** (§20 of the science page) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
@@ -84,7 +84,7 @@ Contents
 |---|---|---|
 | DNA methylation clocks | 158 catalogued: linear, PC, GrimAge family, mitotic, deconvolution, SystemsAge, AltumAge | — |
 | Clinical chemistry | PhenoAge (both unit variants), KDM, homeostatic dysregulation | — |
-| Clock coefficients | 20 bundled, 28 scaffold-only, 110 untraced (§3.7, §4.7) | tier B narrows as sources are traced |
+| Clock coefficients | 22 bundled, 28 scaffold-only, 108 untraced (§3.7, §4.7) | tier B narrows as sources are traced |
 | Raw arrays | full chain: manifest fetch, pOOBAH, noob, BMIQ, probe masks | control-probe dye correction |
 | Uncertainty | technical SE, conformal intervals, power, consensus | conformalised quantile regression |
 | Batch | frozen-reference ComBat | — |

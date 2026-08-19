@@ -3,6 +3,48 @@
 
 # FALCONAge 1.0.0 (2026-08-19)
 
+## Added
+
+- **epiTOC1 and HypoClock score offline**, taking the tier A count from 23 to 25
+  and the bundled coefficient files from 20 to 22. Both are probe lists rather
+  than fitted models, and both come from one 6 kB R object the method's author
+  published on Zenodo under CC-BY 4.0 (doi:10.5281/zenodo.2632938): 385
+  polycomb-target CpGs for epiTOC1, 678 constitutively methylated solo-WCGWs for
+  HypoClock. `AggregationClock` already computed the statistic each is defined
+  as, so this is data, not architecture. Both are asserted to reproduce the
+  author's own formula exactly rather than approximately.
+
+- **Eleven tier B entries now say where their coefficients are**, under what
+  licence, and what is actually in the way, and `unavailable_message()` prints
+  that instead of the generic "no primary source has been established". A reader
+  who asks for `stemtoc` gets the repository, the file, the probe count and the
+  GPL-2 question, rather than a sentence that sends them to repeat the search.
+
+## Fixed
+
+- **HypoClock's sign, and the note explaining it.** The registry described the
+  circulating implementation as an inversion of the published score. The
+  author's own two implementations disagree: the 2019 `epiTOC2.R` returns the
+  mean beta over the solo-WCGWs, the later `EpiMitClocks` package returns one
+  minus it. FALCONAge ships the later definition and the note now says which is
+  which, because scoring this one upside down is a live mistake rather than a
+  hypothetical.
+
+- **Two clocks the first audit called implementable are not.** `bocklandt` and
+  `garagnani` were grouped with `weidner` as models small enough to be printed
+  in the paper rather than supplied as a file. Reading the papers says
+  otherwise: Bocklandt regresses age on MassArray and pyrosequencing
+  measurements of EDARADD, EDARADD squared and NPTX2 and prints an R-squared
+  rather than coefficients, and Garagnani publishes an age association for
+  ELOVL2 and no predictor at all. Neither has an equation in Illumina beta units
+  to implement, and the registry now records that instead of an intention.
+
+- **A test that an unrelated clock could flip.** The implied-ICC test asserted
+  that Horvath's propagated error exceeds the synthetic cohort's spread. That
+  was true by accident of the fixture's random draw: shipping two clocks added
+  1,063 probes, shifted every subsequent draw in the same stream, and moved the
+  implied ICC across zero. The test now constructs the condition it names.
+
 ## Changed
 
 - **The documentation site is organised as a book.** It had three navbar menus, one of them a
@@ -837,8 +879,8 @@ Docker images was not building at all.
 
 ## The first cut of the package
 
-First release. 161 catalogued clocks in three availability tiers; 23 score offline today, 28 ship
-as tested scaffolds whose research-use-only coefficients the user supplies, and 110 carry
+First release. 161 catalogued clocks in three availability tiers; 25 score offline today, 28 ship
+as tested scaffolds whose research-use-only coefficients the user supplies, and 108 carry
 metadata without traced coefficients.
 
 - DNA methylation and clinical chemistry, from IDATs, series matrices, beta matrices, RRBS and

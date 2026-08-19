@@ -17,7 +17,7 @@ on a `pace_ratio` clock is refused rather than computed.
 **161 clocks**, registry schema `1.1.0`.
 
 
-## Tier A: 23 clocks
+## Tier A: 25 clocks
 
 Coefficients ship with the package, or the clock is a formula with none to ship. Works offline, no network, no licence.
 
@@ -26,10 +26,12 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `dnamphenoage` | 2018 | phenotypic age | `age_years` | 513 | whole blood | 27K, 450K, EPICv1 | [Levine 2018](https://doi.org/10.18632/aging.101414) |
 | `dnamtl` | 2019 | leukocyte telomere length | `telomere_kb` | 140 | whole blood | 450K, EPICv1 | [Lu 2019](https://doi.org/10.18632/aging.102173) |
 | `dunedinpoam38` | 2020 | pace of aging | `pace_ratio` | 46 | whole blood | 450K | [Belsky 2020](https://doi.org/10.7554/elife.54870) |
+| `epitoc1` | 2016 | mitotic age | `divisions` | 385 | multi-tissue, whole blood | 450K | [Yang 2016](https://doi.org/10.1186/s13059-016-1064-3) |
 | `hannum` | 2013 | chronological age | `age_years` | 71 | whole blood | 450K | [Hannum 2013](https://doi.org/10.1016/j.molcel.2012.10.016) |
 | `hd` | 2013 | physiological dysregulation | `relative_score` | — | blood | clinical laboratory assays | [Cohen 2013](https://doi.org/10.1016/j.mad.2013.01.004) |
 | `horvath2013` | 2013 | chronological age | `age_years` | 353 | multi-tissue | 27K, 450K | [Horvath 2013](https://doi.org/10.1186/gb-2013-14-10-r115) |
 | `hrsinchphenoage` | 2022 | phenotypic age | `age_years` | 959 | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
+| `hypoclock` | 2020 | mitotic age | `divisions` | 678 | multi-tissue | 450K | [Teschendorff 2020](https://doi.org/10.1186/s13073-020-00752-3) |
 | `kdm` | 2006 | biological age | `age_years` | — | blood | clinical laboratory assays | [Klemera 2006](https://doi.org/10.1016/j.mad.2005.10.004) |
 | `knight` | 2016 | gestational age | `gestational_weeks` | 148 | cord blood, neonatal blood spots | 27K, 450K | [Knight 2016](https://doi.org/10.1186/s13059-016-1068-z) |
 | `leecontrol` | 2019 | gestational age | `gestational_weeks` | 546 | placenta | 450K, EPICv1 | [Lee 2019](https://doi.org/10.18632/aging.102049) |
@@ -48,7 +50,7 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `zhangmortality` | 2017 | mortality risk | `mortality_log_hazard` | 10 | whole blood | 450K | [Zhang 2017](https://doi.org/10.1038/ncomms14617) |
 
 
-## Tier B: 110 clocks
+## Tier B: 108 clocks
 
 Catalogued, but no primary source for the coefficients has been established, so nothing is bundled. The metadata is real; the numbers are absent.
 
@@ -91,7 +93,6 @@ Catalogued, but no primary source for the coefficients has been established, so 
 | `epicga` | 2021 | gestational age | `gestational_weeks` | — | cord blood | EPICv1 | [Haftorn 2021](https://doi.org/10.1186/s13148-021-01055-z) |
 | `epicmithyper` | 2020 | mitotic age | `divisions` | — | B cells | 450K, EPICv1 | [Duran-Ferrer 2020](https://doi.org/10.1038/s43018-020-00131-2) |
 | `epicmithypo` | 2020 | mitotic age | `divisions` | — | B cells | 450K, EPICv1 | [Duran-Ferrer 2020](https://doi.org/10.1038/s43018-020-00131-2) |
-| `epitoc1` | 2016 | mitotic age | `divisions` | — | multi-tissue, whole blood | 450K | [Yang 2016](https://doi.org/10.1186/s13059-016-1064-3) |
 | `epitoc2` | 2020 | mitotic age | `divisions` | — | whole blood | 450K | [Teschendorff 2020](https://doi.org/10.1186/s13073-020-00752-3) |
 | `epitoc3` | 2020 | mitotic age | `divisions` | — | cultured primary human cells, whole blood, multi-tissue, cord blood | 450K, EPICv1 | [Teschendorff 2020](https://doi.org/10.1186/s13073-020-00752-3) |
 | `garagnani` | 2012 | ELOVL2 methylation | `relative_score` | — | whole blood | 450K | [Garagnani 2012](https://doi.org/10.1111/acel.12005) |
@@ -99,7 +100,6 @@ Catalogued, but no primary source for the coefficients has been established, so 
 | `han` | 2020 | chronological age | `age_years` | — | whole blood | 450K | [Han 2020](https://doi.org/10.1186/s12915-020-00807-2) |
 | `hep` | 2024 | chronological age | `age_years` | — | liver | EPICv1 | [Tong 2024](https://doi.org/10.18632/aging.206184) |
 | `hepatoxu` | 2017 | hepatocellular carcinoma | `relative_score` | — | plasma cell-free DNA | targeted bisulfite sequencing | [Xu 2017](https://doi.org/10.1038/nmat4997) |
-| `hypoclock` | 2020 | mitotic age | `divisions` | — | multi-tissue | 450K | [Teschendorff 2020](https://doi.org/10.1186/s13073-020-00752-3) |
 | `intrinclock` | 2024 | chronological age | `age_years` | — | multi-tissue | 450K, EPICv1 | [Tomusiak 2024](https://doi.org/10.1038/s42003-024-06609-4) |
 | `mammalian1` | 2023 | chronological age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
 | `mammalian2` | 2023 | chronological age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |

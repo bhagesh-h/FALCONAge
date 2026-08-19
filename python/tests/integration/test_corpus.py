@@ -29,16 +29,20 @@ def test_epic_progeria_scores_every_tier_a_clock_the_specimen_allows(corpus):
 
     This asserted 18 until the specimen check existed, which meant it was
     scoring three placenta clocks, a cord-blood clock and a buccal clock on
-    adult blood and calling the numbers results. They are refused now, so the
-    count is 13 and the five names are pinned -- a silent drop back to 18 would
-    mean the check stopped running.
+    adult blood and calling the numbers results. They are refused now, and the
+    five names are pinned -- a silent drop back to 18 would mean the check
+    stopped running.
+
+    15 rather than 13 since epiTOC1 and HypoClock started shipping their probe
+    lists. Both are multi-tissue mitotic scores with no blood-specific
+    calibration to refuse on, so they score here.
     """
     d = _bench(corpus, "GSE182991")
     assert d.n_samples == 27
     assert d.platform == "EPICv1"
 
     res = fa.score(d, clocks="compatible")
-    assert res.scores.shape[1] == 13
+    assert res.scores.shape[1] == 15
     assert res.scores.notna().all().all()
 
     off_tissue = {cid for cid, why in res.skipped.items() if "tissue_policy=refuse" in why}

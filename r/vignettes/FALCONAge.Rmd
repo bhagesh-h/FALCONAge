@@ -19,7 +19,7 @@ that agree approximately.
 ## Setup, once
 
 Docker is the supported path. One image carries R, this package, the Python core, the CLI and all
-20 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
+22 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
 on a reviewer's. A plain `sh` fence, since this runs in a terminal rather than in R:
 
 ```sh

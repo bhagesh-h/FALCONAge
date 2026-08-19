@@ -17,7 +17,7 @@ number that answer a different one in the same units.
 | Which organ system is aging fastest? | — | `dnamfitage`, `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, and 5 more | `age_years` |
 | Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `hd`, `hrsinchphenoage`, `kdm`, `phenoage`, `zhangmortality` | `dnamfili`, `dnamic`, `mammalianlifespan`, `pcphenoage`, `senmortalityage`, `weidner`, `cpgptgrimage3`, `cpgptpcgrimage3`, and 3 more | `age_years`, `mortality_log_hazard`, `relative_score` |
 | Is damage separable from adaptation? | `yingadaptage`, `yingdamage` | — | `age_years_relative` |
-| How much has this tissue divided? | — | `cellpopage`, `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, and 4 more | `divisions`, `relative_score` |
+| How much has this tissue divided? | `epitoc1`, `hypoclock` | `cellpopage`, `epicmithyper`, `epicmithypo`, `epitoc2`, `epitoc3`, `replitali`, `replitalinorm`, `sencultureage`, and 2 more | `divisions`, `relative_score` |
 | What is the blood's cell composition? | — | `deconvolutebloodepicbcell`, `deconvolutebloodepiccd4tcell`, `deconvolutebloodepiccd8tcell`, `deconvolutebloodepicmonocyte`, `deconvolutebloodepicneutrophil`, `deconvolutebloodepicnkcell`, `twelvecelldeconvolutebloodepicbas`, `twelvecelldeconvolutebloodepicbmem`, and 10 more | `proportion` |
 | How long are the telomeres? | `dnamtl` | `pcdnamtl` | `telomere_kb` |
 | What is this person exposed to, or how do they live? | — | `dnamfitagegaitf`, `dnamfitagegaitm`, `dnamfitagegripf`, `dnamfitagegripm`, `dnamfitagevo2max`, `dnamstress`, `mccartneyalcohol`, `mccartneybmi`, and 10 more | `gestational_weeks`, `relative_score` |
@@ -176,8 +176,8 @@ the measurements behind each.
 
 | Tier | n | What you do |
 |:--|--:|:-------------------------------------------------------------|
-| A | 23 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
-| B | 110 | Catalogued, but no primary source has been established, so no coefficients ship. |
+| A | 25 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
+| B | 108 | Catalogued, but no primary source has been established, so no coefficients ship. |
 | C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
 
 <!-- END GENERATED: tiers -->

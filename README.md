@@ -27,7 +27,7 @@ tolerance zero in CI rather than approximately.
 
 | | |
 |---|---|
-| **Clocks catalogued** | 161. **23 tier A score offline**: 20 ship a coefficient file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 110 tier B have no traced coefficient source |
+| **Clocks catalogued** | 161. **25 tier A score offline**: 22 ship a coefficient file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 108 tier B have no traced coefficient source |
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, nanopore bedMethyl, RRBS, targeted panels, Olink NPX, SomaScan RFU, bulk RNA-seq counts, clinical chemistry |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
@@ -42,7 +42,7 @@ tested scaffolds and take a file you supply.
 
 ## Installation
 
-**Docker is the supported path.** One image carries Python, R, the CLI and all 20 bundled clocks
+**Docker is the supported path.** One image carries Python, R, the CLI and all 22 bundled clocks
 at pinned versions, so the same input gives the same numbers on any machine. Nothing else to
 install.
 
@@ -185,7 +185,7 @@ Refusals are the design, not the edge cases. Each names the measurement behind i
 | Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
-| 110 tier B coefficient sources | A per-clock literature hunt; some have no public supplement |
+| 108 tier B coefficient sources | A per-clock literature hunt; some have no public supplement |
 
 ## Figures
 
