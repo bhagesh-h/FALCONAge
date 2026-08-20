@@ -31,11 +31,14 @@ say so in as many words.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
 from ..core.container import FalconData
 from ..core.errors import DataError
+from ..core.logging import get_logger
 
 __all__ = ["PLATFORMS", "prepare_proteomic", "read_olink", "read_somascan"]
 
@@ -51,13 +54,50 @@ PLATFORMS: dict[str, dict] = {
 
 
 def _read_table(path, index_col, sep=None) -> pd.DataFrame:
-    from pathlib import Path
-
     p = Path(path)
     if sep is None:
         sep = "\t" if p.suffix.lower() in (".tsv", ".txt") else ","
     df = pd.read_csv(p, sep=sep, index_col=index_col)
     return df.apply(pd.to_numeric, errors="coerce")
+
+
+#: What Olink's own export calls the three columns that make it long.
+_LONG_SAMPLE = ("sampleid", "sample_id", "sample")
+_LONG_ASSAY = ("assay", "olinkid", "uniprot", "protein")
+_LONG_VALUE = ("npx",)
+
+
+def _pivot_if_long(path, index_col):
+    """Read an NPX table, pivoting Olink's long export into a matrix.
+
+    The docstring below promised samples by proteins, and Olink ships long:
+    one row per sample per assay, with the value in an `NPX` column. Handed
+    that file this function used to return a matrix with the sample id repeated
+    down the index and half the cells missing -- a shape wrong enough to score
+    and quiet enough not to notice, which is the failure this package refuses
+    everywhere else. Long is detected by its own column names and pivoted, and
+    the pivot says so.
+    """
+    # Read it once without coercing to numbers: the columns that say a file
+    # is long are text, and _read_table drops them on the way in.
+    src = Path(path)
+    sep = chr(9) if src.suffix.lower() in (".tsv", ".txt") else ","
+    raw = pd.read_csv(src, sep=sep)
+    cols = {str(c).strip().lower(): c for c in raw.columns}
+    sample = next((cols[c] for c in _LONG_SAMPLE if c in cols), None)
+    assay = next((cols[c] for c in _LONG_ASSAY if c in cols), None)
+    value = next((cols[c] for c in _LONG_VALUE if c in cols), None)
+    if sample and assay and value:
+        wide = raw.pivot_table(index=sample, columns=assay, values=value,
+                               aggfunc="mean")
+        wide.index.name = "sample_id"
+        wide.columns.name = None
+        get_logger(__name__).info(
+            "read_olink: %s is Olink's long export (%s, %s, %s); pivoted to "
+            "%d sample(s) x %d assay(s)", Path(path).name, sample, assay, value,
+            wide.shape[0], wide.shape[1])
+        return wide
+    return _read_table(path, index_col)
 
 
 def read_olink(path, *, index_col: int | str = 0,
@@ -68,7 +108,7 @@ def read_olink(path, *, index_col: int | str = 0,
     were fitted in, and helpfully exponentiating it would produce a linear
     quantity no model here expects.
     """
-    X = _read_table(path, index_col)
+    X = _pivot_if_long(path, index_col)
     if X.empty:
         raise DataError(f"{path}: no numeric columns; is this an NPX table?")
     lo, hi = float(np.nanmin(X.to_numpy())), float(np.nanmax(X.to_numpy()))

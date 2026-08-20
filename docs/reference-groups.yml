@@ -311,6 +311,8 @@ book:
         file: index.qmd
       - title: Getting started
         file: guide/FALCONAge.qmd
+      - title: Loading your data
+        file: guide/loading.qmd
   - part: 2. Working with clocks
     chapters:
       - title: Choosing a clock

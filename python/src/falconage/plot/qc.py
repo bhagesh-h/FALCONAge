@@ -113,7 +113,12 @@ def sex_check(data, *, sex_col: str = "sex"):
                    s=theme_value("point_size") * 9, alpha=theme_value("point_alpha"),
                    edgecolor="none")
     ax.set_yticks([])
-    ax.legend(frameon=False, fontsize=theme_value("caption_size"))
+    # Outside the panel: a key drawn over a scatter hides exactly
+    # the points a reader is looking for. See clock_pca.
+    fig.set_size_inches(fig.get_figwidth() * 1.18, fig.get_figheight())
+    ax.legend(frameon=False, fontsize=theme_value("caption_size"),
+              loc="upper left", bbox_to_anchor=(1.015, 1.0),
+              borderaxespad=0.0, handletextpad=0.4, labelspacing=0.55)
 
     known = d[d["declared"].isin(["M", "F"])]
     mismatch = 0

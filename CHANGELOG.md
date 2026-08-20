@@ -12,6 +12,55 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **Eleven clocks that were recorded as unobtainable now score**, taking tier A
+  from 23 to 34 and the bundled weights from 20 files to 31. stemTOC,
+  stemTOCvitro, epiCMIT-hyper, epiCMIT-hypo and RepliTali were probe lists and
+  weights their authors publish and nobody had fetched. epiTOC2 and epiTOC3
+  needed a model class, not data: `models/division.py` inverts the methylation
+  transmission model site by site, where each site carries a de-novo rate and a
+  fetal ground state and the divisor is how many sites the dataset carries.
+  AltumAge needed a format, not a licence: its authors publish under MIT, and
+  `python/tools/build_altumage_weights.py` reads the Keras model and its two
+  pickles through an allow-listing Unpickler, folds the scaler and all six
+  batch-norm layers into the dense layers, and writes safetensors. Weidner
+  needed the paper, which prints its equation. Each is checked against the
+  author's own implementation: nine match to exactly zero, epiTOC3 to 3.6e-12.
+
+- **A loading guide**, one section per input type, with the call and the output
+  that call actually produces: IDATs, beta matrices, GEO series matrices,
+  ComputAgeBench, RRBS, nanopore bedMethyl, targeted panels, clinical
+  chemistry, Olink, SomaScan and RNA-seq counts. Every output on the page was
+  captured by running the code above it.
+
+### Fixed
+
+- **Two figures were unreadable, in two different ways.** The reliability
+  forest put every clock on one axis, and that axis is an unbounded ratio: one
+  clock at 55 left fifteen useful bars a millimetre wide. Bars past the break
+  are now cut and marked `...` with their true value on the label, so the
+  readable range keeps its resolution. And the clock-space PCA drew its legend
+  inside the panel, where matplotlib's "best" placement covered the HGPS and
+  IHD samples; it now sits outside, as do the two other scatter figures with
+  the same defect.
+
+- **`read_olink` mangled Olink's own export.** Olink ships long, one row per
+  sample per assay, and the reader documented and expected wide. Handed a long
+  file it returned a matrix with the sample id repeated down the index and half
+  the cells missing: a shape wrong enough to score and quiet enough not to
+  notice. Long is now detected by its own column names, pivoted, and the pivot
+  says so.
+
+- **`read_clinical(units="SI")` failed as a dictionary-construction error**
+  naming neither the argument nor the file. Units are per column because a
+  clinical table mixes them, and the message says that and shows the mapping.
+
+- **The PDF's tables ran their columns into each other.** Every table now takes
+  a landscape page of its own, table text is set two points smaller, and each
+  chapter starts on a new page under a numbered heading. Tables inside callouts
+  stay inline: Typst refuses page configuration inside a container, and those
+  tables are small by nature.
+
+
 - **The clock atlas draws every clock a run scored, not only the year-scaled
   ones.** It had ten rows where the run had seventeen clocks, in a figure
   titled "every algorithm across every pooled study". The cause was upstream:
@@ -908,8 +957,8 @@ Docker images was not building at all.
 
 ### The first cut of the package
 
-First release. 161 catalogued clocks in three availability tiers; 25 score offline today, 28 ship
-as tested scaffolds whose research-use-only coefficients the user supplies, and 108 carry
+First release. 161 catalogued clocks in three availability tiers; 34 score offline today, 28 ship
+as tested scaffolds whose research-use-only coefficients the user supplies, and 99 carry
 metadata without traced coefficients.
 
 - DNA methylation and clinical chemistry, from IDATs, series matrices, beta matrices, RRBS and

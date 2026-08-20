@@ -139,7 +139,17 @@ def clock_pca(result, *, colour_by: str | None = None, method: str = "pca"):
                 ax.scatter(d.loc[idx, "d1"], d.loc[idx, "d2"], label=g, color=cols[g],
                            s=theme_value("point_size") * 9, alpha=theme_value("point_alpha"),
                            edgecolor="none")
-            ax.legend(frameon=False, fontsize=theme_value("caption_size"))
+            # Outside the panel, not inside it. matplotlib's "best" location
+            # scores candidate corners by how few points they cover, and on a
+            # cloud that fills the panel every corner covers some: the legend
+            # landed on the HGPS and IHD samples, hiding the phenotype a
+            # reader is looking for. A key that can obscure the data is worth
+            # a little width instead.
+            fig.set_size_inches(fig.get_figwidth() * 1.18, fig.get_figheight())
+            ax.legend(frameon=False, fontsize=theme_value("caption_size"),
+                      loc="upper left", bbox_to_anchor=(1.015, 1.0),
+                      borderaxespad=0.0, handletextpad=0.4,
+                      labelspacing=0.55)
     else:
         ax.scatter(d["d1"], d["d2"], s=theme_value("point_size") * 9,
                    color=palette()[0], edgecolor="none")

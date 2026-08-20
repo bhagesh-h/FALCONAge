@@ -69,8 +69,8 @@ manifest(res)$warnings
 
 | Tier | n | What you do |
 |---|---:|---|
-| A | 25 | Nothing. Coefficients ship inside the package. |
-| B | 108 | Catalogued, but no primary source has been established, so no coefficients ship. Eleven now record where the material is and what blocks it. |
+| A | 34 | Nothing. Coefficients ship inside the package. |
+| B | 99 | Catalogued, but no primary source has been established, so no coefficients ship. Eleven now record where the material is and what blocks it. |
 | C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
 
 ```{r}

@@ -28,6 +28,37 @@ __all__ = [
 ]
 
 
+def _units(units, path) -> dict:
+    """Validate the units argument before pandas turns it into a puzzle.
+
+    `units="SI"` is the obvious thing to try, and it used to fail as
+    "dictionary update sequence element #0 has length 1; 2 is required" from
+    inside dict(), which names neither the argument nor the file. The units are
+    per column because a table mixes them -- albumin in g/L beside creatinine
+    in umol/L -- so there is no single name to accept, and saying so is the
+    whole job of this function.
+    """
+    if units is None:
+        return {}
+    if isinstance(units, str):
+        raise DataError(
+            f"read_clinical({str(path)!r}, units={units!r}): units are declared "
+            "per column, not per file.\n"
+            "  A clinical table mixes them: albumin in g/L beside creatinine in "
+            "umol/L beside glucose in mmol/L.\n"
+            "  Pass a mapping, for example:\n"
+            "    units={'albumin': 'g/L', 'creatinine': 'umol/L', "
+            "'glucose': 'mmol/L'}\n"
+            "  falconage.core.units.require_units() lists the exact keys each "
+            "clinical clock needs.")
+    try:
+        return dict(units)
+    except (TypeError, ValueError) as exc:
+        raise DataError(
+            f"read_clinical({str(path)!r}): units must be a mapping of column "
+            f"name to unit; got {type(units).__name__}.") from exc
+
+
 def read_clinical(path: str | Path, *, units: dict[str, str] | None = None,
                   index_col: int | str = 0) -> FalconData:
     """Read a clinical chemistry table.
@@ -46,7 +77,7 @@ def read_clinical(path: str | Path, *, units: dict[str, str] | None = None,
     obs_cols = [c for c in ("age", "sex", "gender", "tissue", "condition", "mortstat",
                             "permth_exm", "permth_int") if c in df.columns]
     return FalconData(X=df, obs=df[obs_cols].copy() if obs_cols else pd.DataFrame(index=df.index),
-                      modality="clinical_chemistry", units=dict(units or {}))
+                      modality="clinical_chemistry", units=_units(units, path))
 
 
 def read(path: str | Path, **kw) -> FalconData:

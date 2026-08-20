@@ -1,0 +1,285 @@
+---
+title: "Loading your data"
+subtitle: "Every input type this package reads, what the file looks like, the call, and what comes back"
+---
+
+Nine input types reach the same place: a `FalconData` carrying a samples-by-features
+matrix, the modality, the platform, and whatever sample annotation came with the file.
+Once you have one, scoring is the same call whatever you loaded.
+
+Every output on this page was produced by running the code above it, against the public
+test corpus where the corpus has that input type and against a small file written inline
+where it does not. Nothing here is illustrative.
+
+## What reads what
+
+| Your data | Call | Modality |
+|---|---|---|
+| Raw Illumina IDATs | `read_idat_dir()` | `dna_methylation` |
+| A beta matrix, CSV, TSV or parquet | `read_betas()` | `dna_methylation` |
+| A GEO series matrix | `read_series_matrix()` | `dna_methylation` |
+| A ComputAgeBench study | `read_computage_bench()` | `dna_methylation` |
+| RRBS or bisulfite coverage files | `read_rrbs_dir()` | `rrbs` |
+| Nanopore bedMethyl | `read_bedmethyl_dir()` | `dna_methylation` |
+| A targeted assay: pyrosequencing, EpiTYPER, ddPCR | `read_panel()` | `dna_methylation` |
+| Clinical chemistry | `read_clinical()` | `clinical_chemistry` |
+| Olink NPX | `preprocess.read_olink()` | `proteomics` |
+| SomaScan RFU | `preprocess.read_somascan()` | `proteomics` |
+| Bulk RNA-seq counts | `preprocess.read_counts()` | `transcriptomics` |
+
+`fa.read(path)` dispatches on the file name when you would rather not choose. It is
+convenience, not magic: it says which reader it picked, and any argument that reader
+needs has to be passed to the reader itself.
+
+## Raw Illumina IDATs
+
+A directory of `_Grn.idat` and `_Red.idat` pairs, one pair per sample, exactly as the
+scanner writes them. The array manifest is fetched once and cached.
+
+```python
+import falconage as fa
+
+d = fa.read_idat_dir("idats/")
+d = fa.prepare(d)              # noob, BMIQ, probe masks, id harmonisation
+```
+
+```
+INFO    fetched ebc36febf212e1d2_HumanMethylationEPIC_manifest_v2.csv.gz (23.7 MB)
+FalconData(2 samples x 865918 features, dna_methylation, EPICv1, 2.0% missing)
+FalconData(2 samples x 865859 features, dna_methylation, EPICv1, 2.0% missing)
+```
+
+The feature count drops by 59 across `prepare()`: those are the probes the published
+masks exclude, not samples lost. Platform is detected from the manifest and the probe
+count rather than declared.
+
+**EPIC v2 needs one more thing, and it is automatic.** Its probe ids carry a suffix
+(`cg00000029_TC21`), and a clock fitted on 450K sees zero overlap with them until the
+suffixes are collapsed. `prepare()` does that by default; `aggregate_epicv2=False` turns
+it off, and there is no good reason to.
+
+## A beta matrix
+
+Probes down the rows, samples across the columns, or the transpose: the orientation is
+detected from which axis carries probe ids.
+
+```python
+d = fa.read_betas("betas.csv")
+```
+
+```
+FalconData(3 samples x 3 features, dna_methylation, 0.0% missing)
+```
+
+The file that produced it:
+
+```
+probe,S001,S002,S003
+cg00000029,0.512,0.488,0.559
+cg00000165,0.113,0.096,0.140
+cg00000236,0.842,0.871,0.836
+```
+
+Betas belong in 0 to 1. A matrix of percentages is a factor of a hundred out and every
+clock will return a confidently wrong number, so `prepare()` checks the range and says so.
+
+## A GEO series matrix
+
+The `*_series_matrix.txt.gz` GEO offers for most published studies. Sample metadata
+comes with it.
+
+```python
+d = fa.read_series_matrix("GSE330325_series_matrix.txt.gz")
+d.obs.head(3)
+```
+
+```
+FalconData(8 samples x 888987 features, dna_methylation, EPICv2, 0.0% missing)
+
+                 title            tissue    cell_type
+sample_id
+GSM9723838  GSD1a_rep1  Skin Fibroblasts  Fibroblasts
+GSM9723839  GSD1a_rep2  Skin Fibroblasts  Fibroblasts
+GSM9723840  GSD1a_rep3  Skin Fibroblasts  Fibroblasts
+```
+
+The `characteristics:` lines become `obs` columns. Set `obs["tissue"]` before scoring
+and the specimen check runs; leave it and every clock's tissue assumption goes unchecked.
+
+## A ComputAgeBench study
+
+65 curated case-control studies with age, sex, tissue and condition already normalised.
+
+```python
+fa.io.list_computage_bench().head()
+d = fa.read_computage_bench("GSE107143")
+```
+
+```
+              n platform tissue      conditions  age_min  age_max
+dataset
+GSE56046   1128     450K  Blood  AS=789, HC=339     44.0     83.0
+GSE42861    689     450K  Blood  HC=335, RA=354     18.0     70.0
+GSE117859   608     450K  Blood         HIV=608     25.0     75.0
+GSE111629   572     450K  Blood  HC=237, PD=335     35.0     92.0
+GSE117860   529   EPICv1  Blood         HIV=529     25.0     75.0
+
+FalconData(16 samples x 460295 features, dna_methylation, 450K, 0.0% missing)
+
+              dataset       gpl tissue    cell_type sex   age condition class
+SampleID
+GSM2861662  GSE107143  GPL13534  Blood  Whole blood   M  79.0        AS   CVD
+GSM2861663  GSE107143  GPL13534  Blood  Whole blood   M  88.0        AS   CVD
+GSM2861664  GSE107143  GPL13534  Blood  Whole blood   M  88.0        AS   CVD
+```
+
+This is the input `run_benchmark()` expects: it needs `condition`, a control group, and
+`age`, and this reader supplies all three.
+
+## RRBS and bisulfite coverage
+
+One file per sample, each a table of positions with methylated and unmethylated counts.
+Sites are intersected across samples and thresholded on coverage.
+
+```python
+d = fa.read_rrbs_dir(["20D02.overlap.txt.gz", "20D03.overlap.txt.gz",
+                      "M3503.overlap.txt.gz"], min_coverage=5)
+```
+
+```
+FalconData(3 samples x 1976936 features, rrbs, RRBS, 1.9% missing)
+```
+
+Two million shared sites from three files, and the sites are genomic coordinates rather
+than probe ids. An array clock cannot be scored on them directly; that needs a liftover
+this package does not ship, and it says so rather than matching on position and hoping.
+
+## Nanopore bedMethyl
+
+`modkit` output, one row per site with the modification fraction in column 11.
+
+```python
+s = fa.read_bedmethyl("sample.bed", sample_id="ONT01", min_coverage=10)
+```
+
+```
+feature_id
+chr1:10468    0.733
+chr1:10470    0.120
+chr1:10483    0.902
+Name: ONT01, dtype: float64
+```
+
+One file gives a Series; `read_bedmethyl_dir()` gives a `FalconData` across the sites the
+files share. The fraction is converted from the percentage the format stores, so what you
+get back is already a beta.
+
+## A targeted assay
+
+Pyrosequencing, EpiTYPER, ddPCR: a handful of CpGs measured directly, with samples down
+the rows.
+
+```python
+d = fa.read_panel("panel.csv")
+```
+
+```
+FalconData(2 samples x 3 features, dna_methylation, targeted panel, 0.0% missing)
+```
+
+```
+sample,cg16867657,cg09809672,cg02228185
+P01,0.68,0.41,0.55
+P02,0.72,0.38,0.51
+```
+
+A panel almost never carries a whole clock, and the coverage floor is what stops a
+three-probe file being scored as though it were a 353-probe model. `probe_loss()` says
+what a partial set costs before you score anything.
+
+## Clinical chemistry
+
+The clinical clocks take laboratory values, and they take them in declared units.
+
+```python
+UNITS = {"albumin": "g/L", "creatinine": "umol/L", "glucose": "mmol/L",
+         "crp": "mg/L", "lymphocyte_percent": "%", "mean_cell_volume": "fL",
+         "red_cell_distribution_width": "%", "alkaline_phosphatase": "U/L",
+         "white_blood_cell_count": "10^9/L"}
+
+d = fa.read_clinical("labs.csv", units=UNITS)
+fa.score(d, clocks=["phenoage"]).scores.round(2)
+```
+
+```
+FalconData(2 samples x 10 features, clinical_chemistry, 0.0% missing)
+
+WARNING [phenoage] Two constants circulate in the divisor of the Gompertz inversion:
+0.090165 and 0.09165. FALCONAge uses 0.090165, the value BioAge corrected to in April
+2026. Code still using 0.09165 differs by several years on the same input.
+
+           phenoage
+sample_id
+C01           55.79
+C02           69.61
+```
+
+**Units are per column, not per file.** A clinical table mixes them, so there is no single
+name to pass; `units="SI"` is refused with the mapping it wants. PhenoAge exists in an SI
+and a conventional variant that disagree by years, and `units=` has no default for that
+reason.
+
+## Olink NPX
+
+Olink exports long: one row per sample per assay. That is detected and pivoted.
+
+```python
+from falconage import preprocess as pp
+
+d = pp.read_olink("olink_npx.csv")
+```
+
+```
+INFO    read_olink: olink_npx.csv is Olink's long export (SampleID, Assay, NPX);
+        pivoted to 2 sample(s) x 2 assay(s)
+FalconData(2 samples x 2 features, proteomics, olink, 0.0% missing)
+```
+
+A wide matrix of samples by assays is read as it stands. Values stay in NPX, which is
+already log2 and is the scale the coefficients were fitted in.
+
+For SomaScan, `pp.read_somascan()` takes RFU and logs it by default, because every
+published SomaScan aging model here was fitted on logged RFU and feeding it linear values
+is an order-of-magnitude error that looks like a plausible number.
+
+## Bulk RNA-seq counts
+
+Genes down the rows, samples across, raw counts rather than TPM.
+
+```python
+d = pp.read_counts("counts.csv")
+d = pp.prepare_transcriptomic(d)   # RLE, log10, per-sample z, YuGene
+```
+
+```
+FalconData(2 samples x 3 features, transcriptomics, 0.0% missing)
+```
+
+The preparation chain ships and is tested. No transcriptomic clock has a registry entry
+yet: tAge's models are licence-restricted, which is a rights problem rather than a
+technical one, and the chain is here so that supplying one is all that stands between you
+and a score.
+
+## After loading
+
+Whatever you loaded, the rest is the same:
+
+```python
+res = fa.score(d, clocks="compatible")   # only the clocks this data supports
+res.interpretation()                     # scale, unit, legal operations, caveats
+fa.technical_se(res, d)                  # how much of each score is the assay
+```
+
+`clocks="compatible"` is the safe default: it asks the registry which clocks this
+platform, modality and specimen actually support, and skips the rest by name rather than
+scoring them on whatever features happen to match.

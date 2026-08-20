@@ -42,7 +42,12 @@ def ba_vs_ca(result, clock: str, *, age_col: str = "age", group: str | None = No
             ax.scatter(sub["chronological"], sub["predicted"], s=theme_value("point_size") * 8,
                        alpha=theme_value("point_alpha"), color=cols[g], label=g,
                        edgecolor="none")
-        ax.legend(frameon=False, fontsize=theme_value("caption_size"))
+        # Outside the panel: a key drawn over a scatter hides exactly
+        # the points a reader is looking for. See clock_pca.
+        fig.set_size_inches(fig.get_figwidth() * 1.18, fig.get_figheight())
+        ax.legend(frameon=False, fontsize=theme_value("caption_size"),
+                  loc="upper left", bbox_to_anchor=(1.015, 1.0),
+                  borderaxespad=0.0, handletextpad=0.4, labelspacing=0.55)
     else:
         ax.scatter(d["chronological"], d["predicted"], s=theme_value("point_size") * 8,
                    alpha=theme_value("point_alpha"), color=palette()[0], edgecolor="none")

@@ -27,20 +27,37 @@ has no acceleration left with which to detect anything.
 
 | The question | Clocks that ship and score offline | Scale |
 |---|---|---|
-| How old does this sample look? | `horvath2013`, `hannum`, `skinandblood`, `lin`, `pedbe`, `vidalbralo`, `yingcausage`, `zhangblup`, `zhangen` | `age_years` |
+| How old does this sample look? | `horvath2013`, `hannum`, `skinandblood`, `lin`, `pedbe`, `vidalbralo`, `yingcausage`, `zhangblup`, `zhangen`, `altumage` (20,318-CpG network), `weidner` (three CpGs) | `age_years` |
 | How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerobust`, `leerefinedrobust` | `gestational_weeks` |
 | How fast is this person aging? | `dunedinpoam38` | `pace_ratio` |
 | Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `phenoage`, `hrsinchphenoage`, `kdm`, `hd`, `zhangmortality` | mixed |
 | Is damage separable from adaptation? | `yingdamage`, `yingadaptage` | `age_years_relative` |
 | How long are the telomeres? | `dnamtl` | `telomere_kb` |
-| How many times has this tissue divided? | `epitoc1` (mean over 385 polycomb-target CpGs), `hypoclock` (1 minus the mean over 678 solo-WCGWs) | `divisions` |
+| How many times has this tissue divided, relative to another sample? | `epitoc1` (mean over 385 polycomb-target CpGs), `hypoclock` (1 minus the mean over 678 solo-WCGWs), `stemtoc` (95th percentile over 371), `stemtocvitro` (over 629), `epicmithyper` (mean over 184), `epicmithypo` (1 minus the mean over 1,164), `replitali` (87 CpGs, linear) | `divisions` |
+| How many times has it divided, in divisions per stem cell? | `epitoc2` (163 sites), `epitoc3` (170 sites) | `divisions` |
 | Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
 | What is the blood's cell composition? | none ship; the Salas panels are tier C | `proportion` |
 
-The two mitotic scores are relative, not counts: epiTOC1 is a mean beta and
-HypoClock is one minus a mean beta, both bounded by 0 and 1. Higher means more
-divisions accumulated for epiTOC1 and deeper PMD hypomethylation for HypoClock.
-Neither converts to years, and `acceleration()` refuses on both.
+**The two questions in that pair are different questions.** The seven relative
+scores are summaries of a probe set, bounded by 0 and 1, and they compare
+samples to each other: higher means more divisions accumulated, or deeper PMD
+hypomethylation for the two that take a complement. They do not convert to a
+number of divisions and they do not convert to years.
+
+epiTOC2 and epiTOC3 do return a count. Each site carries a de-novo methylation
+rate and a fetal ground state, and the model inverts them site by site to
+estimate cumulative divisions per stem cell, with a real zero at the fetal
+stage. Expect four figures. `acceleration()` refuses on all nine: a division
+count is not elapsed time.
+
+Two things worth knowing before you read one of these numbers. epiTOC2 and
+epiTOC3 warn when measured betas fall below the fitted fetal ground state,
+which makes a site contribute a negative count; that is usually a
+normalisation difference and the estimate is reported unchanged rather than
+clipped. And `weidner`'s third CpG is a substitution the paper did not make:
+its published equation uses an unnamed site upstream of `cg17861230`, measured
+by pyrosequencing, which carries 164.7 of the model against 26.4 and 23.7 for
+the two real probes. It warns at score time.
 
 `fa.registry.load().compatible_with(d)` answers this against a real dataset, which beats any table.
 
@@ -69,8 +86,8 @@ Horvath's 15. The residual and group differences are defined; `predicted − chr
 
 | Tier | n | What it means |
 |---|---:|---|
-| **A** | 25 | Scores offline. 22 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| **B** | 108 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
+| **A** | 34 | Scores offline. 31 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
+| **B** | 99 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
 | **C** | 28 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
 
 Every architecture is implemented and tested regardless of tier.

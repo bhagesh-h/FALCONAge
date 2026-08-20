@@ -19,7 +19,7 @@ that agree approximately.
 ## Setup, once
 
 Docker is the supported path. One image carries R, this package, the Python core, the CLI and all
-22 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
+31 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
 on a reviewer's. A plain `sh` fence, since this runs in a terminal rather than in R:
 
 ```sh
@@ -66,7 +66,7 @@ are usable:
 ```
 FALCONAge 1.0.0
   registry     1.1.0 (161 clocks)
-  tiers        A 25 ship - B 108 need a traced source - C 28 scaffold only
+  tiers        A 34 ship - B 99 need a traced source - C 28 scaffold only
   devices      cpu
 ```
 

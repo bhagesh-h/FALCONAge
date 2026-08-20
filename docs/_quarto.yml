@@ -26,6 +26,8 @@ website:
         file: index.qmd
       - text: Getting started
         file: guide/FALCONAge.qmd
+      - text: Loading your data
+        file: guide/loading.qmd
       - text: 2. Working with clocks
       - text: Choosing a clock
         file: guide/clocks.qmd
@@ -73,6 +75,8 @@ website:
         file: index.qmd
       - text: Getting started
         file: guide/FALCONAge.qmd
+      - text: Loading your data
+        file: guide/loading.qmd
     - section: 2. Working with clocks
       contents:
       - text: Choosing a clock

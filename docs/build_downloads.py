@@ -99,6 +99,79 @@ def demote(markdown: str) -> str:
     return "\n".join(out)
 
 
+#: Typst renders a table at whatever width its content needs and lets the
+#: columns collide when that is wider than the page, which is what the PDF's
+#: tables were doing: a six-column table of clock metadata printed one column
+#: on top of the next. Two things fix it together. Every table goes on its own
+#: page turned sideways, which is 40% more width, and table text is set two
+#: points smaller than body text, which buys the rest.
+LANDSCAPE_OPEN = "```{=typst}\n#set page(flipped: true)\n```\n\n"
+LANDSCAPE_CLOSE = "\n```{=typst}\n#set page(flipped: false)\n```\n"
+
+#: Applied once, at the top of the document.
+TYPST_PREAMBLE = (
+    "```{=typst}\n"
+    "#show table: set text(size: 8pt)\n"
+    "#show table.cell: set par(justify: false)\n"
+    "```\n"
+)
+
+
+def rotate_tables(markdown: str) -> tuple[str, int]:
+    """Put every pipe table on a landscape page of its own.
+
+    A table is a run of consecutive lines starting with `|`. Two kinds are
+    left where they are. Fenced code, because a shell block can contain a line
+    that starts with a pipe and turning the page sideways around a command
+    would be strange. And anything inside a `:::` div, because Typst refuses
+    page configuration inside a container: a table in a callout raised "page
+    configuration is not allowed inside of containers" and took the whole
+    build down with it. Those tables are small by nature -- a callout holding a
+    six-column table is a different problem -- so leaving them inline costs
+    nothing.
+    """
+    out: list[str] = []
+    fenced = False
+    depth = 0
+    i = 0
+    lines = markdown.split("\n")
+    count = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            out.append(line)
+            i += 1
+            continue
+        if not fenced and line.lstrip().startswith(":::"):
+            # An opening fence carries a class; a bare `:::` closes one.
+            depth += 1 if line.strip().strip(":").strip() else -1
+            depth = max(depth, 0)
+            out.append(line)
+            i += 1
+            continue
+        if not fenced and depth == 0 and line.startswith("|"):
+            start = i
+            while i < len(lines) and lines[i].startswith("|"):
+                i += 1
+            block = lines[start:i]
+            # Two lines is a header and its rule with no rows: not a table.
+            if len(block) > 2:
+                count += 1
+                out.append("")
+                out.append(LANDSCAPE_OPEN.rstrip("\n"))
+                out.append("")
+                out.extend(block)
+                out.append(LANDSCAPE_CLOSE.strip("\n"))
+                out.append("")
+            else:
+                out.extend(block)
+            continue
+        out.append(line)
+        i += 1
+    return "\n".join(out), count
+
+
 def combine() -> Path:
     """Concatenate the chapters into one .qmd and return its path."""
     site = yaml.safe_load(GROUPS.read_text(encoding="utf-8"))["site"]
@@ -123,8 +196,10 @@ def combine() -> Path:
         "execute:\n  enabled: false\n"
         "---\n",
         f"_Generated from the FALCONAge documentation site, {site['url']}_\n",
+        TYPST_PREAMBLE,
     ]
-    for c in chapters:
+    rotated = 0
+    for n, c in enumerate(chapters, start=1):
         text = (HERE / c).read_text(encoding="utf-8")
         fm = FRONTMATTER.match(text)
         title = ""
@@ -136,11 +211,19 @@ def combine() -> Path:
             m = re.search(r"^#\s+(.+)$", text, re.M)
             title = m.group(1).strip() if m else Path(c).stem
             text = re.sub(r"^#\s+.+$", "", text, count=1, flags=re.M)
-        parts.append(f"\n\n# {title}\n\n" + ANCHOR_LINK.sub(r"\1", demote(text)))
+        # Numbered, and each one starts a page. `number-sections` is not the
+        # way to get there: two of these chapters number their own sections in
+        # the heading text ("## 15. The layer that says what a score is
+        # worth"), so turning Quarto's numbering on would print "1.15 15."
+        # down the whole of the architecture chapter.
+        body, k = rotate_tables(ANCHOR_LINK.sub(r"\1", demote(text)))
+        rotated += k
+        parts.append(f"\n\n{{{{< pagebreak >}}}}\n\n# Chapter {n}. {title}\n\n" + body)
 
     combined = HERE / "_combined.qmd"
     combined.write_text("\n".join(parts), encoding="utf-8", newline="\n")
-    print(f"  combined {len(chapters)} chapters into {combined.name}")
+    print(f"  combined {len(chapters)} chapters into {combined.name}, "
+          f"{rotated} table(s) turned sideways")
     return combined
 
 
