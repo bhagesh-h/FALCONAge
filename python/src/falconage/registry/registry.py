@@ -530,7 +530,13 @@ class ClockRegistry:
         # so it cannot drift away from the weights it belongs to.
         src = self.get(clock_id).coefficient_source.file or ""
         if src.endswith(".safetensors") and clock_id not in self._local:
-            from safetensors import safe_open
+            try:
+                from safetensors import safe_open
+            except ImportError as exc:      # pragma: no cover - declared dep
+                raise RegistryError(
+                    f"{clock_id} ships as {Path(src).name} and reading it needs "
+                    "safetensors, which is a required dependency of this "
+                    "package. Reinstall with: pip install falconage") from exc
 
             with safe_open(str(DATA_DIR / src), framework="numpy") as fh:
                 meta = fh.metadata() or {}

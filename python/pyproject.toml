@@ -43,6 +43,11 @@ dependencies = [
   "pandas>=2.0,<4",
   "scipy>=1.10,<2",
   "PyYAML>=6.0,<7",
+  # AltumAge ships as safetensors, so reading it is not optional any more: a
+  # tier A clock that a default install cannot score is a clock that does not
+  # ship. The package is small and pure data -- that is the point of the
+  # format, and why the weights are in it rather than in a pickle.
+  "safetensors>=0.4,<1",
 ]
 
 [project.optional-dependencies]
