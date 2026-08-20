@@ -181,12 +181,25 @@ ENV RETICULATE_PYTHON=/usr/local/bin/python \
 # the CLI parser, the registry load, the R bridge, and every import both sides
 # need. `clocks list` in particular proves the packaged registry YAML survived
 # the wheel build, which a plain `import falconage` does not.
+#
+# The second python check opens no file and reads no weight: it asks whether
+# every weights file the registry NAMES is actually inside the image.
+# AltumAge ships as safetensors, and both ignore files exclude that
+# extension by pattern to stop licensed weights leaking -- which is the rule
+# working. The wheel was therefore built without it and the image declared a
+# clock it did not carry, and nothing failed until somebody asked for it.
 RUN falconage --version \
  && falconage clocks list --limit 5 \
  && falconage config \
  && python -c "import falconage; r = falconage.registry.load(); \
 assert len(r.list()) == 161, f'registry has {len(r.list())} clocks, expected 161'; \
 print('falconage', falconage.__version__, '·', len(r.list()), 'clocks')" \
+ && python -c "import falconage; from falconage.registry.registry import DATA_DIR; \
+r = falconage.registry.load(); \
+missing = [c.id for c in r.filter(availability='A') if c.coefficient_source.file \
+           and not (DATA_DIR / c.coefficient_source.file).exists()]; \
+assert not missing, f'declared weights missing from the wheel: {missing}'; \
+print(len([c.id for c in r.filter(availability='A') if c.coefficient_source.file]), 'weight file(s) present')" \
  && Rscript -e "library(FALCONAge); stopifnot(falconage_available()); print(falconage_config())"
 
 # A non-root user by default. Nothing here needs root, and a container that

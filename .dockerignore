@@ -89,6 +89,10 @@ hf_cache
 **/*.safetensors
 **/*.pt
 **/*.pth
+# Except the one set that is meant to be in the image: AltumAge is MIT and its
+# network is a bundled tier A clock. Excluded here, it built an image whose
+# registry declared a weights file the image did not contain.
+!python/src/falconage/registry/data/coefficients/*.safetensors
 results
 results_*
 **/*.h5ad

@@ -205,6 +205,14 @@ hf_cache/
 *.pth
 licensed_weights/
 
+# The one exception, and it is the rule working rather than an oversight in it:
+# AltumAge is MIT, its weights are meant to travel, and hatchling builds the
+# wheel from what git tracks -- so an ignored file is a clock that is absent
+# from every install. It stayed hidden until a rebuilt image raised
+# FileNotFoundError on a path the registry had just declared. Anything else
+# under this pattern is still refused: that is what the rule above is for.
+!/python/src/falconage/registry/data/coefficients/*.safetensors
+
 # ---- run outputs -------------------------------------------------------------
 results/
 results_*/
