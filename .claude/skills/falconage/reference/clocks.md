@@ -37,6 +37,7 @@ has no acceleration left with which to detect anything.
 | How many times has it divided, in divisions per stem cell? | `epitoc2` (163 sites), `epitoc3` (170 sites) | `divisions` |
 | Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
 | What is the blood's cell composition? | none ship; the Salas panels are tier C | `proportion` |
+| How old is this **mouse**? | `meer` (435 RRBS sites, whole-lifespan multi-tissue) | `age_years`, reported in months |
 
 **The two questions in that pair are different questions.** The seven relative
 scores are summaries of a probe set, bounded by 0 and 1, and they compare
@@ -58,6 +59,13 @@ clipped. And `weidner`'s third CpG is a substitution the paper did not make:
 its published equation uses an unnamed site upstream of `cg17861230`, measured
 by pyrosequencing, which carries 164.7 of the model against 26.4 and 23.7 for
 the two real probes. It warns at score time.
+
+**The mouse clock is keyed differently from every other entry.** Its features
+are mm10 `chromosome:position`, not `cg` probe ids, which is what
+`read_bedmethyl` produces and what an mm10-aligned RRBS pipeline gives you.
+Data whose contigs are named some other way will match nothing, and the
+coverage floor is what stops that being scored anyway. Its output is months,
+converted from the days the model returns.
 
 `fa.registry.load().compatible_with(d)` answers this against a real dataset, which beats any table.
 
