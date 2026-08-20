@@ -72,7 +72,7 @@ error in the same people). Cell-free DNA on any array clock. Age acceleration on
 clock. A cohort-centred clock given one sample. Each refusal names the measurement behind it.
 
 ## Installation
-Docker is the supported path. One image carries Python, R, the CLI and all 31 bundled clocks at
+Docker is the supported path. One image carries Python, R, the CLI and all 32 bundled clocks at
 pinned versions, so the same input gives the same numbers on your machine and on a reviewer's.
 Both images are published on [Docker Hub](https://hub.docker.com/r/bhagesh/falconage) and built
 from the Dockerfiles in this repository. Two commands from nothing to a proven install:

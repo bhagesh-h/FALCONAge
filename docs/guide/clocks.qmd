@@ -11,7 +11,7 @@ number that answer a different one in the same units.
 
 | Question | Ready to score | Needs a coefficient file | Scale |
 |:-----------------|:----------------------------|:-------------|:------|
-| How old does this sample look? | `altumage`, `hannum`, `horvath2013`, `lin`, `pedbe`, `skinandblood`, `vidalbralo`, `yingcausage`, and 2 more | `abec`, `cabec`, `corticalclock`, `ctsliver`, `eabec`, `encen100`, `encen40`, `ensembleagehumanmouse`, and 29 more | `age_years`, `relative_score` |
+| How old does this sample look? | `altumage`, `hannum`, `horvath2013`, `lin`, `meer`, `pedbe`, `skinandblood`, `vidalbralo`, and 3 more | `abec`, `cabec`, `corticalclock`, `ctsliver`, `eabec`, `encen100`, `encen40`, `ensembleagehumanmouse`, and 28 more | `age_years`, `relative_score` |
 | How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerefinedrobust`, `leerobust` | `bohlin`, `epicga`, `mayne` | `gestational_weeks` |
 | How fast is this person aging? | `dunedinpoam38` | `ensembleagestatic`, `ensembleagestatictop`, `dunedinpace` | `age_years`, `pace_ratio` |
 | Which organ system is aging fastest? | — | `dnamfitage`, `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, and 5 more | `age_years` |
@@ -176,8 +176,8 @@ the measurements behind each.
 
 | Tier | n | What you do |
 |:--|--:|:-------------------------------------------------------------|
-| A | 34 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
-| B | 99 | Catalogued, but no primary source has been established, so no coefficients ship. |
+| A | 35 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
+| B | 98 | Catalogued, but no primary source has been established, so no coefficients ship. |
 | C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
 
 <!-- END GENERATED: tiers -->

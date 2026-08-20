@@ -41,7 +41,7 @@ acceleration(res)
 
 \section{What ships}{
 
-161 catalogued clocks. 34 carry coefficients inside the package and run
+161 catalogued clocks. 35 carry coefficients inside the package and run
 offline; 28 are scaffolds whose coefficients are research-use-only and are
 not ours to distribute -- \code{list_clocks(tier = "C")} names each one, why,
 and where to obtain a file. The rest are catalogued with metadata and await a

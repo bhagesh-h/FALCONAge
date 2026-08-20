@@ -12,6 +12,14 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **Meer's whole-lifespan mouse clock**, from its own supplement rather than
+  from anyone's copy of it: eLife publishes the 435 sites and their weights
+  under CC-BY, with a row that reads `intercept 234.64`, and the paper prints
+  the model those two make. It scores to exactly the printed formula. The
+  feature ids are mm10 chromosome:position, which is the convention
+  `read_bedmethyl` produces; the corpus's own mouse RRBS files use GenBank
+  contig names instead, so the clock cannot be exercised on them.
+
 - **Eleven clocks that were recorded as unobtainable now score**, taking tier A
   from 23 to 34 and the bundled weights from 20 files to 31. stemTOC,
   stemTOCvitro, epiCMIT-hyper, epiCMIT-hypo and RepliTali were probe lists and
@@ -957,8 +965,8 @@ Docker images was not building at all.
 
 ### The first cut of the package
 
-First release. 161 catalogued clocks in three availability tiers; 34 score offline today, 28 ship
-as tested scaffolds whose research-use-only coefficients the user supplies, and 99 carry
+First release. 161 catalogued clocks in three availability tiers; 35 score offline today, 28 ship
+as tested scaffolds whose research-use-only coefficients the user supplies, and 98 carry
 metadata without traced coefficients.
 
 - DNA methylation and clinical chemistry, from IDATs, series matrices, beta matrices, RRBS and

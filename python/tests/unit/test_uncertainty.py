@@ -132,6 +132,11 @@ def test_every_tier_a_clock_has_most_of_its_probes_in_the_table(registry):
     for c in registry.filter(availability="A"):
         if not registry.has_coefficients(c.id) or c.formula:
             continue
+        if c.species != "Homo sapiens":
+            # The published ICC table is a human 450K/EPIC reliability study,
+            # so it cannot cover a mouse clock keyed on mm10 coordinates. Not
+            # an exception to this rule: the rule is about human array probes.
+            continue
         feats = registry.feature_ids(c.id)
         frac = sum(f in have for f in feats) / len(feats)
         if c.id in SPARSE_ICC:

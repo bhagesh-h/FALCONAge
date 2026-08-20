@@ -25,7 +25,7 @@ this is what it printed
 
 ## Installation
 **Docker is the supported path**, and it is the one the rest of this page assumes. One image
-carries Python, R, the CLI and all 31 bundled clocks at pinned versions, so the same input gives
+carries Python, R, the CLI and all 32 bundled clocks at pinned versions, so the same input gives
 the same numbers on your machine and on a reviewer's. Nothing else to install.
 
 ```bash
@@ -142,7 +142,7 @@ cd FALCONAge
 Every later command is run from inside this `FALCONAge` folder.
 
 ### Step 2: obtain the image
-One image carries Python, R, the CLI and all 31 bundled clocks. Pull the published one:
+One image carries Python, R, the CLI and all 32 bundled clocks. Pull the published one:
 
 ```bash
 docker pull bhagesh/falconage:1.0.0-cpu

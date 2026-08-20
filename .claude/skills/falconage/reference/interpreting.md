@@ -78,7 +78,7 @@ valid one and is not.
 | Dye-bias correction on by default | Ships opt-in. Moves the median beta by +0.10 to +0.12 on real IDATs, because the control probes are not in the fetchable manifest. |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship. No catalogue entry, because every published model in both families is licence-restricted. |
 | A foundation-model imputation backend | `NeuralClock` ships, safetensors only. CpGPT and MethylGPT as zero-shot probe imputation do not. |
-| Coefficients for 99 tier B clocks | A per-clock literature hunt; some have no public supplement. |
+| Coefficients for 98 tier B clocks | A per-clock literature hunt; some have no public supplement. |
 | Silent correction of anything | Batch reference, platform offset and interval are all *reported*. A score adjusted by an untraceable factor destroys the provenance that is the reason to use this package. |
 | Percentiles against an unnamed population | The same person reads as accelerated or decelerated depending on the comparator. |
 | Diagnostic thresholds | None exist in the literature. Nothing is coloured red above a cut-off. |

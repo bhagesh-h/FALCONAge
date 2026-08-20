@@ -213,7 +213,7 @@ machine that has one, silently. The GPU is opt-in: `device="cuda"` or
 
 ### When the GPU will be worth it
 
-Not for the 34 tier A clocks. It should pay for itself on:
+Not for the 35 tier A clocks. It should pay for itself on:
 
 - **the PC clocks** - 78,464 features and coefficient tensors of 78 MB to 1.2 GB.
   Thirty times the feature count of the current largest, so the matmul stops

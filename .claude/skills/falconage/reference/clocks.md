@@ -86,8 +86,8 @@ Horvath's 15. The residual and group differences are defined; `predicted − chr
 
 | Tier | n | What it means |
 |---|---:|---|
-| **A** | 34 | Scores offline. 31 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| **B** | 99 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
+| **A** | 35 | Scores offline. 32 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
+| **B** | 98 | Catalogued, no traced coefficient source. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
 | **C** | 28 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
 
 Every architecture is implemented and tested regardless of tier.

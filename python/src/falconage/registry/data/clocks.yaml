@@ -2840,20 +2840,23 @@ clocks:
     scale_type: "age_years"
     model_type: "elastic net regression"
     population: "mice"
-    n_features: null
+    n_features: 435
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Meer, M. V., Podolskiy, D. I., Tyshkovskiy, A. & Gladyshev, V. N. A whole lifespan mouse multi-tissue DNA methylation clock. eLife 7, e40675 (2018)."
     doi: "https://doi.org/10.7554/elife.40675"
     notes: "Whole Lifespan Multi-Tissue (WLMT) mouse clock trained by elastic net on RRBS methylation percentages from untreated wild-type C57BL/6 samples."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/meer.csv"
+      sha256: "48dfcaf0c1166196418f4b4d9fd1e3fd57238828ff3197c4a491704eb7dcc401"
+      url: "https://doi.org/10.7554/eLife.40675"
+      provenance: "Meer et al. 2018, eLife 7:e40675, Supplementary file 3, sheet 'Whole lifespan multi-tissue' (CC-BY): 435 sites with weights and an intercept row of 234.64, matching the model the paper prints. Coordinates are mm10 and the feature ids are chromosome:position."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess:
+      - op: "add"
+        value: 234.64
       - op: "days_to_months"
 
   neusin:

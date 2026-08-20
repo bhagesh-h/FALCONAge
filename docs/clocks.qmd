@@ -17,7 +17,7 @@ on a `pace_ratio` clock is refused rather than computed.
 **161 clocks**, registry schema `1.1.0`.
 
 
-## Tier A: 34 clocks
+## Tier A: 35 clocks
 
 Coefficients ship with the package, or the clock is a formula with none to ship. Works offline, no network, no licence.
 
@@ -43,6 +43,7 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `leerefinedrobust` | 2019 | gestational age | `gestational_weeks` | 395 | placenta | 450K, EPICv1 | [Lee 2019](https://doi.org/10.18632/aging.102049) |
 | `leerobust` | 2019 | gestational age | `gestational_weeks` | 558 | placenta | 450K, EPICv1 | [Lee 2019](https://doi.org/10.18632/aging.102049) |
 | `lin` | 2016 | chronological age | `age_years` | 99 | whole blood | 27K, 450K | [Lin 2016](https://doi.org/10.18632/aging.100908) |
+| `meer` | 2018 | chronological age | `age_years` | 435 | multi-tissue | RRBS | [Meer 2018](https://doi.org/10.7554/elife.40675) |
 | `pedbe` | 2020 | chronological age | `age_years` | 94 | buccal epithelium | 450K, EPICv1 | [McEwen 2020](https://doi.org/10.1073/pnas.1820843116) |
 | `phenoage` | 2018 | phenotypic age | `age_years` | 10 | blood | clinical laboratory assays | [Levine 2018](https://doi.org/10.18632/aging.101414) |
 | `replitali` | 2022 | replicative history | `divisions` | 87 | cultured primary human cells | EPICv1 | [Endicott 2022](https://doi.org/10.1038/s41467-022-34268-8) |
@@ -59,7 +60,7 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `zhangmortality` | 2017 | mortality risk | `mortality_log_hazard` | 10 | whole blood | 450K | [Zhang 2017](https://doi.org/10.1038/ncomms14617) |
 
 
-## Tier B: 99 clocks
+## Tier B: 98 clocks
 
 Catalogued, but no primary source for the coefficients has been established, so nothing is bundled. The metadata is real; the numbers are absent.
 
@@ -125,7 +126,6 @@ Catalogued, but no primary source for the coefficients has been established, so 
 | `mccartneytotalcholesterol` | 2018 | total cholesterol | `relative_score` | — | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneytotalhdlratio` | 2018 | total-to-HDL cholesterol ratio | `relative_score` | — | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneywhr` | 2018 | waist-to-hip ratio | `relative_score` | — | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
-| `meer` | 2018 | chronological age | `age_years` | — | multi-tissue | RRBS | [Meer 2018](https://doi.org/10.7554/elife.40675) |
 | `neusin` | 2024 | chronological age | `age_years` | — | brain cortex | 450K | [Tong 2024](https://doi.org/10.18632/aging.206184) |
 | `pcdnamtl` | 2022 | leukocyte telomere length | `telomere_kb` | — | whole blood | 450K | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
 | `pchannum` | 2022 | chronological age | `age_years` | — | whole blood | 450K | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |

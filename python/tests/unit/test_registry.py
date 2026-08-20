@@ -55,7 +55,7 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest == c.coefficient_source.sha256, f"{c.id}: digest drift"
         checked += 1
-    assert checked == 31, ("31 clocks ship weights: 21 linear sets, the seven "
+    assert checked == 32, ("32 clocks ship weights: 22 linear sets, the seven "
                            "mitotic probe lists, RepliTali, the two epiTOC "
                            "transmission-model files, and AltumAge's network")
 
