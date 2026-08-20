@@ -178,6 +178,47 @@ jobs:
       #
       # Building here to catch it would cost ten minutes a push. Comparing the
       # pin against a measured floor costs a second and catches the same thing.
+      # WHY A WHEEL IS BUILT HERE AND NOT ONLY AT RELEASE. Everything above runs
+      # against the source tree, where every file exists whether or not git
+      # tracks it. The wheel is built from what git tracks, so a data file the
+      # registry names and .gitignore excludes is present for every test and
+      # absent from every install. That is exactly what happened to AltumAge:
+      # its weights are safetensors, both ignore files exclude that extension by
+      # pattern to keep licensed tensors out, the wheel shipped without them,
+      # and the first sign was FileNotFoundError from a rebuilt image.
+      #
+      # This opens the wheel and asks the registry, for every tier A clock,
+      # whether the file it names is inside. Twenty seconds, and it fails here
+      # rather than on Docker Hub.
+      - name: Every weights file the registry names is inside the wheel
+        run: |
+          python -m pip install --quiet build
+          python -m build --wheel --outdir /tmp/wheel python/
+          python - <<'PY'
+          import glob, zipfile
+          import yaml
+
+          wheel = glob.glob("/tmp/wheel/*.whl")[0]
+          names = set(zipfile.ZipFile(wheel).namelist())
+          spec = yaml.safe_load(
+              open("python/src/falconage/registry/data/clocks.yaml", encoding="utf-8"))
+          missing = []
+          declared = 0
+          for cid, c in spec["clocks"].items():
+              f = (c.get("coefficient_source") or {}).get("file")
+              if c.get("availability") != "A" or not f:
+                  continue
+              declared += 1
+              if f"falconage/registry/data/{f}" not in names:
+                  missing.append((cid, f))
+          if missing:
+              raise SystemExit(
+                  f"{len(missing)} clock(s) declare a weights file the wheel does "
+                  f"not contain:\n  " + "\n  ".join(f"{c}: {f}" for c, f in missing)
+                  + "\n\nHatchling builds from what git tracks. Check .gitignore.")
+          print(f"{declared} weight file(s) declared, all present in {wheel.split('/')[-1]}")
+          PY
+
       - name: The Docker images can read the lock they install from
         run: python test/check_docker_lock.py
 
