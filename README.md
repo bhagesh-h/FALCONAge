@@ -148,17 +148,25 @@ into checking; it becomes a command.
 
 ## Out-of-scope use
 
-Refusals are the design, not the edge cases. Each names the measurement behind it.
+Refusals are the design, not the edge cases. Each names the measurement or the
+mechanism behind it, and each is enforced in code rather than documented as advice.
 
-| Refused | Measured reason |
+| Refused | Why, measured |
 |---|---|
-| Age acceleration on a pace-of-aging clock | A pace is already a rate. Across 39 biomarkers in >20,000 people, chronological-age accuracy and mortality prediction are uncorrelated (R = 0.12, P = 0.67), so "accurate" and "useful" are different axes |
-| A whole-blood clock on saliva | Saliva clock ages ran **3.83–16.46 years** above buffy coat in the same 91 people, while still correlating with them at Spearman 0.45–0.69. Correlation is not agreement |
-| Any array clock on cell-free DNA | Not a tissue, but a fragment population shed from many. Array clocks applied directly perform poorly |
-| A cohort-centred clock given one sample | Centring one row against itself zeroes every feature; the model returns its intercept for anybody |
-| `predicted − chronological` on DamAge/AdaptAge | Slope against age is 0.967, but the offset swings **162 years** between cohorts against Horvath's 15 |
-| A clock below the coverage **or** coefficient-mass floor | 96% of probes present can be 61% of the model |
-| A `.pt` file of neural weights | `torch.load` executes arbitrary code while unpickling |
+| Age acceleration on a pace, a division count, a log-hazard or a relative score | The subtraction is undefined for the scale. 14 of the 35 clocks that ship are on one of those scales, and a pace is already a rate |
+| `predicted − chronological` on DamAge/AdaptAge | Slope against age is 0.967, but the offset swings **162 years** between cohorts against Horvath's 15, so the difference is not a quantity |
+| A whole-blood clock on saliva | Saliva clock ages ran **3.83–16.46 years** above buffy coat in the same 91 people while still correlating at Spearman 0.45–0.69. Correlation is not agreement |
+| Any array clock on cell-free DNA | Not a tissue but a fragment population shed from many. 12 clocks refuse a specimen outright; 127 more warn |
+| A clock below the coverage **or** the coefficient-mass floor | 96% of probes present can be 61% of the model |
+| Clinical chemistry with undeclared units | PhenoAge has an SI and a conventional variant that disagree by years, so `units=` has no default and `units="SI"` is not a unit |
+| A `.pt` or `.pkl` file of weights | `torch.load` executes arbitrary code while unpickling. AltumAge ships because its weights were converted to safetensors once, in a build step, not because the refusal was relaxed |
+| A per-probe weight from a network | AltumAge has layer matrices, not one weight per feature, so the probe-level standard error and the coefficient-mass floor say so instead of computing something else |
+
+Two more are implemented and quiet today. `requires_cohort` refuses a
+cohort-centred clock handed a single sample, and no clock currently ships with
+it set. And every clock that disagrees with its own paper carries the
+discrepancy as a warning at score time: Weidner's third CpG is a substitution
+the paper did not make, and it says so on every run.
 
 → [The science, §19](https://bhagesh-h.github.io/FALCONAge/science.html)
 
