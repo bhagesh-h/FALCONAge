@@ -25,13 +25,13 @@ the unit, the provenance, and how much of the number is measurement noise**.
 The R and Python interfaces call one numerical core, so results are bit-identical, asserted at
 tolerance zero in CI rather than approximately.
 
-
+| | What ships today |
 |---|---|
-| **Clocks catalogued** | 161. **35 tier A score offline**: 32 ship a coefficient file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 98 tier B have no traced coefficient source |
-| **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, nanopore bedMethyl, RRBS, targeted panels, Olink NPX, SomaScan RFU, bulk RNA-seq counts, clinical chemistry |
+| **Clocks catalogued** | 161. **35 tier A score offline**: 32 ship a weights file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 98 tier B have no traced coefficient source |
+| **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, ComputAgeBench studies, RRBS, nanopore bedMethyl, targeted panels, clinical chemistry, Olink NPX, SomaScan RFU, bulk RNA-seq counts. [How to load each](https://bhagesh-h.github.io/FALCONAge/guide/loading.html) |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
-| **Tested** | 452 Python tests, 52 R tests, all passing |
+| **Tested** | 457 Python tests and 52 R tests passing, 5 skipped, including the R-to-Python conformance pass at tolerance zero |
 
 Every clock algorithm is implemented from its published description; no clock implementation is
 imported from another package. Coefficients are fitted data rather than a procedure, and 28 clocks
