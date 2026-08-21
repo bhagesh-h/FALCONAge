@@ -37,6 +37,10 @@
 !/colorscheme.yaml
 !/docker/
 !/docs/
+# Concept diagrams and the prompts that generate them. The prompts are the
+# source: an image here is regenerable from images/prompt.md, which is why the
+# folder is tracked rather than treated as build output.
+!/images/
 !/logo/
 !/python/
 !/r/

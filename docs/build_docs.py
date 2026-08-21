@@ -204,7 +204,8 @@ def quarto_yaml(spec: dict) -> str:
         # HTML. Without this Quarto either tries to render those files itself
         # or drops them from _site, and the "R reference" navbar link 404s.
         "project": {"type": "website", "output-dir": "_site",
-                    "resources": ["r/**", "logo.png", "favicon.png"]},
+                    "resources": ["r/**", "logo.png", "favicon.png",
+                                  "../images/**"]},
         "website": {
             "title": site["title"],
             "description": " ".join(site["description"].split()),
