@@ -7,7 +7,7 @@ project:
   - r/**
   - logo.png
   - favicon.png
-  - ../images/**
+  - images/**
 website:
   title: FALCONAge
   description: Biological age and aging-clock scoring from multiomic data, in Python and R,
@@ -49,6 +49,9 @@ website:
         file: architecture.qmd
       - text: GPU and performance
         file: gpu.md
+      - text: 6. References
+      - text: References
+        file: references.qmd
     right:
     - text: Download
       menu:
@@ -102,6 +105,10 @@ website:
         file: architecture.qmd
       - text: GPU and performance
         file: gpu.md
+    - section: 6. References
+      contents:
+      - text: References
+        file: references.qmd
     footer: "[Bhagesh Hunakunti](https://orcid.org/0000-0002-5957-8005)  \n[GPL-3.0-or-later](https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE)\
       \ · [source](https://github.com/bhagesh-h/FALCONAge)\n"
 format:

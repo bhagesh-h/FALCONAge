@@ -10,7 +10,6 @@ generated from real runs and are not to be re-drawn here -- those are data, thes
 are explanation. If a diagram would show numbers that come from a run, put the
 number in the caption, not in the picture, so the two cannot disagree.
 
----
 
 ## How to use this file
 
@@ -22,7 +21,6 @@ number in the caption, not in the picture, so the two cannot disagree.
 3. Generate, save into `images/`, and say which ones are done. Nothing is wired
    into the documentation until the file exists.
 
----
 
 ## House style
 
@@ -74,14 +72,12 @@ that implies something false is worse than no diagram. Two specific traps:
 - Do not draw a clock output as "age" when the prompt says it is a rate, a
   division count or a hazard. That distinction is the point of several of these.
 
----
 
 # The images
 
 Ordered by where they appear in the argument, not by priority. The **Used in**
 line for each says which of the three destinations it serves.
 
----
 
 ## three-quantities.png
 
@@ -103,7 +99,6 @@ Under all three, one rule in `#404040` with the text
 
 **Used in.** Site landing page, PDF chapter 1, Notion §1.
 
----
 
 ## clock-anatomy.png
 
@@ -125,7 +120,6 @@ Under box 4, a small `#D55E00` caret with the label
 
 **Used in.** Site architecture page, PDF chapter 5, Notion §5.1.
 
----
 
 ## clock-generations.png
 
@@ -143,7 +137,6 @@ the training target in the middle, what the output means on the right.
 
 **Used in.** Site guide, PDF chapter 5, Notion §5.2.
 
----
 
 ## methylation-chemistry.png
 
@@ -161,7 +154,6 @@ cytosine and an arrow to what the sequencer reads:
 
 **Used in.** Site science page, PDF chapter 3, Notion §3.
 
----
 
 ## array-probe-types.png
 
@@ -178,7 +170,6 @@ Labels: `Type I`, `Type II`, `Beta`, `BMIQ`.
 
 **Used in.** Site science page, PDF chapter 3, Notion §3.3 and §4.3.
 
----
 
 ## idat-to-beta-pipeline.png
 
@@ -197,7 +188,6 @@ label, connected by arrows, with a thin `#7F7F7F` margin note beside each:
 
 **Used in.** Site guide, PDF chapter 4, Notion §4.1.
 
----
 
 ## scale-types-and-legal-operations.png
 
@@ -216,7 +206,6 @@ Ticks: everything under `Correlate`. `Difference` for all but log hazard.
 
 **Used in.** Site landing page and architecture page, PDF chapter 5, Notion §5.3.
 
----
 
 ## coverage-vs-coefficient-mass.png
 
@@ -234,7 +223,6 @@ image.
 
 **Used in.** Site landing page, PDF chapter 4, Notion §4.5.
 
----
 
 ## tissue-mismatch.png
 
@@ -250,7 +238,6 @@ Labels: `Buffy coat`, `Saliva`, `Same 91 people`.
 
 **Used in.** Site landing page, PDF chapter 2, Notion §2.4.
 
----
 
 ## mitotic-vs-chronological.png
 
@@ -266,7 +253,6 @@ accumulated visibly different counts.
 
 **Used in.** Site guide, PDF chapter 2 and 6, Notion §2.3.
 
----
 
 ## epitoc2-inversion.png
 
@@ -284,7 +270,6 @@ Labels: `Measured`, `Ground state`, `Rate per division`, `mean`, `x2`,
 
 **Used in.** Site architecture page, PDF chapter 6, Notion §6.4.
 
----
 
 ## uncertainty-decomposition.png
 
@@ -299,7 +284,6 @@ interval glyph.
 
 **Used in.** Site landing page, PDF chapter 7, Notion §7.3.
 
----
 
 ## tiers-and-provenance.png
 
@@ -318,7 +302,6 @@ Beneath, one horizontal chain in `#404040`:
 
 **Used in.** Site clock catalogue, PDF chapter 9, Notion §9.2.
 
----
 
 ## refusal-gates.png
 
@@ -335,7 +318,6 @@ Gates and their exit labels: `Specimen` → `wrong tissue`; `Coverage` →
 
 **Used in.** Site landing page and architecture page, PDF chapter 9, Notion §9.4.
 
----
 
 ## falconage-dataflow.png
 
@@ -354,7 +336,6 @@ spanning all four bands, with a small note `Python and R, identical results`.
 
 **Used in.** Site architecture page, PDF chapter 9, Notion §9.1.
 
----
 
 ## aa1-aa2-benchmark.png
 
@@ -370,7 +351,6 @@ labelled `Total` with a `#7F7F7F` slice cut out of it labelled `bias discount`.
 
 **Used in.** Site science page, PDF chapter 8, Notion §8.1.
 
----
 
 ## Wiring an image in once it exists
 

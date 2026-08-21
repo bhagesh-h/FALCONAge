@@ -6,12 +6,21 @@ subtitle: "By the question, by the scale, and by whether the coefficients transf
 There is no best clock. There is a clock that answers the question you asked, and a much larger
 number that answer a different one in the same units.
 
+![Five generations of clock, and what the output of each one actually is](../images/clock-generations.png)
+
+The generations are not successive improvements on one measurement. Each was trained against a
+different target, so each returns a different quantity: a predicted age whose signal is the
+residual, a mortality composite rescaled into year-like units, a rate, a pair of scores with no
+shared origin, and a division count. A later generation is not a better answer to the earlier
+question, and the first generation is still the right choice when the question really is how old a
+sample looks.
+
 ## Choosing by research question
 <!-- BEGIN GENERATED: by-question -->
 
 | Question | Ready to score | Needs a coefficient file | Scale |
 |:-----------------|:----------------------------|:-------------|:------|
-| How old does this sample look? | `altumage`, `hannum`, `horvath2013`, `lin`, `meer`, `pedbe`, `skinandblood`, `vidalbralo`, and 3 more | `abec`, `cabec`, `corticalclock`, `ctsliver`, `eabec`, `encen100`, `encen40`, `ensembleagehumanmouse`, and 28 more | `age_years`, `relative_score` |
+| How old does this sample look? | `altumage`, `corticalclock`, `hannum`, `horvath2013`, `lin`, `meer`, `pedbe`, `skinandblood`, and 4 more | `abec`, `cabec`, `ctsliver`, `eabec`, `encen100`, `encen40`, `ensembleagehumanmouse`, `gliasin`, and 27 more | `age_years`, `relative_score` |
 | How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerefinedrobust`, `leerobust` | `bohlin`, `epicga`, `mayne` | `gestational_weeks` |
 | How fast is this person aging? | `dunedinpoam38` | `ensembleagestatic`, `ensembleagestatictop`, `dunedinpace` | `age_years`, `pace_ratio` |
 | Which organ system is aging fastest? | — | `dnamfitage`, `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, and 5 more | `age_years` |
@@ -20,7 +29,7 @@ number that answer a different one in the same units.
 | How much has this tissue divided? | `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, `stemtoc`, and 1 more | `cellpopage`, `replitalinorm`, `sencultureage` | `divisions`, `relative_score` |
 | What is the blood's cell composition? | — | `deconvolutebloodepicbcell`, `deconvolutebloodepiccd4tcell`, `deconvolutebloodepiccd8tcell`, `deconvolutebloodepicmonocyte`, `deconvolutebloodepicneutrophil`, `deconvolutebloodepicnkcell`, `twelvecelldeconvolutebloodepicbas`, `twelvecelldeconvolutebloodepicbmem`, and 10 more | `proportion` |
 | How long are the telomeres? | `dnamtl` | `pcdnamtl` | `telomere_kb` |
-| What is this person exposed to, or how do they live? | — | `dnamfitagegaitf`, `dnamfitagegaitm`, `dnamfitagegripf`, `dnamfitagegripm`, `dnamfitagevo2max`, `dnamstress`, `mccartneyalcohol`, `mccartneybmi`, and 10 more | `gestational_weeks`, `relative_score` |
+| What is this person exposed to, or how do they live? | `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, `mccartneytotalcholesterol`, and 2 more | `dnamfitagegaitf`, `dnamfitagegaitm`, `dnamfitagegripf`, `dnamfitagegripm`, `dnamfitagevo2max`, `dnamstress`, `reedbmi`, `grimage2packyrs` | `gestational_weeks`, `relative_score` |
 | What is a specific protein or lab value likely to be? | — | `bocklandt`, `compil6`, `downsyndrome`, `garagnani`, `grimage2adm`, `grimage2b2m`, `grimage2cystatinc`, `grimage2gdf15`, and 5 more | `relative_score` |
 | Is a named disease more likely? | — | `adbahadosingh`, `cvdwesterman`, `depressionbarbu`, `hepatoxu`, `prostatecancerkirby` | `relative_score` |
 | What is the sample's chromosomal sex, or its species? | — | `mammalianfemale`, `xchrom`, `ychrom` | `relative_score` |
@@ -101,9 +110,13 @@ fa.probe_loss(d, clocks="scoreable")
 #> horvath2013   coverage 0.9632   mass_coverage 0.6117   cg16867657 (14.1%), ...
 ```
 
+![Horvath 2013 on one EPIC v2 array: probes present against model weight present](../images/coverage-vs-coefficient-mass.png)
+
 Ninety-six per cent of probes present, sixty-one per cent of the model. The scoring floor applies
 to both, so this is refused with the heaviest absent probes named rather than scored into a
-confident number.
+confident number. The gap opens because elastic-net coefficients are far from uniform: a handful
+of probes carry a disproportionate share of the total weight, and losing four per cent of the
+probes loses thirty-five per cent of the model when the missing four per cent are those.
 
 → [The science, §19.5](../science.qmd#probe-loss-priced) prices the same loss in years, per clock
 per platform, and explains why the PC clocks barely move where first-generation clocks shift by
@@ -158,9 +171,15 @@ At ICC 0.9 a tenth of the sample size exists only to average out the instrument,
 says so. It refuses to default the standard deviation, because n scales with its square.
 
 ## Specimen type
+
+![The same 91 donors, scored from saliva and from buffy coat](../images/tissue-mismatch.png)
+
 Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91 people**, while still
 correlating with them at Spearman 0.45–0.69. A correlation check passes and the output is a decade
-out, because correlation is not agreement.
+out, because correlation is not agreement. The left panel is the whole argument: every point sits
+above the line of identity, which is a bias, and the scatter around it stays tight, which is what
+a correlation coefficient reports. The paired lines on the right show the same donors shifting in
+the same direction, so no amount of averaging removes it.
 
 **The rule:** set `obs["tissue"]` on every dataset. FALCONAge then compares it against what each
 clock was fitted on. Pan-tissue clocks say nothing, most warn with the measured discordance, and
@@ -168,7 +187,7 @@ twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` col
 warning saying the check did not run.
 
 → [The science, §19.4](../science.qmd#specimen-type-is-not-metadata) for the twelve refusals and
-the measurements behind each.
+the measurements behind each. Reliability, technical against biological, is [[42]](../references.qmd#ref-42).
 
 ## Availability
 
@@ -176,8 +195,8 @@ the measurements behind each.
 
 | Tier | n | What you do |
 |:--|--:|:-------------------------------------------------------------|
-| A | 35 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
-| B | 98 | Catalogued, but no primary source has been established, so no coefficients ship. |
+| A | 46 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
+| B | 87 | Catalogued, but no primary source has been established, so no coefficients ship. |
 | C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
 
 <!-- END GENERATED: tiers -->

@@ -270,20 +270,23 @@ clocks:
     scale_type: "age_years"
     model_type: "elastic net regression"
     population: "human, age unspecified"
-    n_features: null
+    n_features: 347
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "Shireby, G. L., et al. \"Recalibrating the epigenetic clock: implications for assessing biological age in the human cortex.\" Brain 143.12 (2020): 3763-3775."
     doi: "https://doi.org/10.1093/brain/awaa334"
     notes: "Cortex-specific DNA-methylation chronological-age estimator trained by elastic net on 1,047 post-mortem cortical samples; its 347-CpG weighted score is back-transformed to years."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/corticalclock.csv"
+      sha256: "257a23aec7b690c3ef7b2718b542872153af239c907f1197b9df10e8a07d6207"
+      url: "https://github.com/gemmashireby/CorticalClock"
+      provenance: "Shireby et al. 2020, Brain 143(12):3763-3775, Supplementary Table 3 (CC BY): 347 sites with regression coefficients, the count the paper states. The machine-readable copy bundled here is PredCorticalAge/CorticalClockCoefs.txt from the authors' own reference implementation, which is also where the intercept comes from: the supplement prints the weights, and CorticalClock.r prints the offset applied to their sum as 0.577682570446177."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 0.577682570446177}
+      - {op: "anti_log_linear", adult_age: 20}
 
   cpgptgrimage3:
     name: "cpgptgrimage3"
@@ -2540,21 +2543,28 @@ clocks:
     scale_type: "gestational_weeks"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for alcohol consumption, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneyalcohol.csv"
+      sha256: "d8f768c1f7daf317f809b4ab04445b79ec3ee49f2d3fbb90a3d5a2838f846149"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S3 - Alcohol' (CC BY): 450 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneybmi:
     name: "mccartneybmi"
@@ -2570,21 +2580,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 1109
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for body mass index (BMI), trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneybmi.csv"
+      sha256: "12e4e8b8c8e6bb8ce40d3d65e7c589514e1d6aed61d42c2bdbf333ed5fac2f1e"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S1 - BMI' (CC BY): 1109 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneybodyfat:
     name: "mccartneybodyfat"
@@ -2600,21 +2617,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 968
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for body fat percentage, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneybodyfat.csv"
+      sha256: "4b190cb627d78e36cc1fbf0869eda5e04892267628a8649478bf8c9944e86132"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S10 - % Body fat' (CC BY): 968 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneyeducation:
     name: "mccartneyeducation"
@@ -2630,21 +2654,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 373
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for educational attainment, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneyeducation.csv"
+      sha256: "4e6777c75fa10d7da3f170093a901c848815c8d83efc83c6058a4b392e521c25"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S4 - Education' (CC BY): 373 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneyhdlcholesterol:
     name: "mccartneyhdlcholesterol"
@@ -2660,21 +2691,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 737
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for HDL cholesterol, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneyhdlcholesterol.csv"
+      sha256: "b2542c24a1365b108e1980fa0c90584a6bad6a98dd835b4e0d0c78dbd36e58f5"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S6 - HDL cholesterol' (CC BY): 737 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneyldlcholesterol:
     name: "mccartneyldlcholesterol"
@@ -2690,21 +2728,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 233
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for LDL with remnant cholesterol, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneyldlcholesterol.csv"
+      sha256: "65418b5d4425ef5fa041374aa9845520b18966752d932b6c347a98b3fff41093"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S7 - LDL cholesterol' (CC BY): 233 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneysmoking:
     name: "mccartneysmoking"
@@ -2720,21 +2765,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 233
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for smoking exposure (pack-years), trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneysmoking.csv"
+      sha256: "0601bb6ddd9ca00bf7af2cf9050868131f2595746deaa13ebd09eab742343e43"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S2 - Smoking' (CC BY): 233 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneytotalcholesterol:
     name: "mccartneytotalcholesterol"
@@ -2750,21 +2802,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 204
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for total cholesterol, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneytotalcholesterol.csv"
+      sha256: "5d29a222cfa227060a53ff364f2c529068d54e1facf819f505d0df4d59360f92"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S5 - Total cholesterol' (CC BY): 204 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneytotalhdlratio:
     name: "mccartneytotalhdlratio"
@@ -2780,21 +2839,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 412
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for total-to-HDL cholesterol ratio, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneytotalhdlratio.csv"
+      sha256: "347255f1318d6177811590217fa61d8017b4d176c392c46a3082485f779620ae"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S8 - Total-HDL ratio' (CC BY): 412 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   mccartneywhr:
     name: "mccartneywhr"
@@ -2810,21 +2876,28 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "adults"
-    n_features: null
+    n_features: 226
     requires_fp64: false
-    availability: "B"
+    availability: "A"
     citation: "McCartney, D. L., et al. “Epigenetic prediction of complex traits and death.” Genome Biology 19, 136 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1514-1"
     notes: "Whole-blood DNAm LASSO score for waist-to-hip ratio, trained in Generation Scotland on an age-, sex-, and ancestry-adjusted phenotype residual and evaluated out of sample in LBC1936."
+    known_discrepancies:
+      - "The paper defines this predictor as a weighted sum of beta values and
+        applies no link function; the ROC analysis it reports dichotomises the
+        phenotype, not the score. Packages that pass the sum through a sigmoid
+        report a different number. The scale is relative_score, whose legal
+        operations are correlate and rank, and a sigmoid is monotone, so no
+        permitted result changes either way."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mccartneywhr.csv"
+      sha256: "93666bb5ab1494cb0427e5fa53239945bdc3082b649c3841e243f42c124c314b"
+      url: "https://doi.org/10.1186/s13059-018-1514-1"
+      provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S9 - Waist-to-Hip ratio' (CC BY): 226 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess:
-      - op: "sigmoid"
+    postprocess: []
 
   meer:
     name: "meer"

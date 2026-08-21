@@ -55,9 +55,10 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest == c.coefficient_source.sha256, f"{c.id}: digest drift"
         checked += 1
-    assert checked == 32, ("32 clocks ship weights: 22 linear sets, the seven "
+    assert checked == 43, ("43 clocks ship weights: 22 linear sets, the seven "
                            "mitotic probe lists, RepliTali, the two epiTOC "
-                           "transmission-model files, and AltumAge's network")
+                           "transmission-model files, AltumAge's network, the "
+                           "cortical clock and the ten McCartney EpiScores")
 
 
 def test_known_feature_counts(registry):
@@ -158,6 +159,14 @@ DOCUMENTED_DISCREPANCIES = {
     # an unnamed CpG upstream of cg17861230, measured by pyrosequencing, and
     # every array implementation substitutes the probe.
     "weidner",
+    # The ten McCartney EpiScores are weighted sums in their own paper. Other
+    # packages pass the sum through a sigmoid, which the paper does not do; its
+    # ROC analysis dichotomises the phenotype, not the score. Recorded on all
+    # ten because a reader comparing against another implementation will see a
+    # different number and is owed the reason.
+    "mccartneyalcohol", "mccartneybmi", "mccartneybodyfat", "mccartneyeducation",
+    "mccartneyhdlcholesterol", "mccartneyldlcholesterol", "mccartneysmoking",
+    "mccartneytotalcholesterol", "mccartneytotalhdlratio", "mccartneywhr",
 }
 
 

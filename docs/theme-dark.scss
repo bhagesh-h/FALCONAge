@@ -100,3 +100,22 @@ pre:not(.sourceCode) {
   color: $falcon-fg;
   border-color: $border-color;
 }
+
+// THE CONCEPT DIAGRAMS ARE DRAWN ON NOTHING, AND THEIR INK IS DARK.
+//
+// Fourteen of the sixteen carry an alpha channel, so on a light page they sit
+// on the page itself with no visible edge, which is what they were drawn for.
+// On this ground the background shows through and dark grey line work on near
+// black is unreadable. Giving them their own light panel is the fix that keeps
+// one file serving both themes: the picture is unchanged, it just stops being
+// transparent to a background it was never designed against.
+//
+// Scoped to figures, not to every image. The logo and the generated gallery
+// figures already carry their own opaque backgrounds and would gain a white
+// box around a white box.
+main figure img,
+main p > img {
+  background-color: #fbfbfa;
+  border-radius: 6px;
+  padding: 0.75rem;
+}

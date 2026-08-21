@@ -1,0 +1,180 @@
+# The bibliography, in one place, numbered once.
+#
+# WHY THIS FILE EXISTS. The reference list used to live inside science.qmd,
+# which meant a source cited on three pages was numbered on one of them and
+# spelled out in prose on the other two. Numbers only mean something if they
+# mean the same thing everywhere, so the list moved here and every page links
+# into the single page generated from it.
+#
+# ORDER IS THE CONTRACT. An entry's position is its citation number and pages
+# refer to it by that number, so entries are APPENDED, never inserted or
+# reordered. docs/build_references.py checks that every number a page cites
+# exists here.
+
+groups:
+  - title: "The four sources named in the brief"
+    entries:
+      - n: 1
+        text: "de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. *Bioinformatics* 40(4):btae200 (2024). doi:10.1093/bioinformatics/btae200"
+        doi: "10.1093/bioinformatics/btae200"
+      - n: 2
+        text: "Computational Aging Lab. Introduction to Aging Biology, in *Computational Aging Course*. computationalaginglab.github.io/computational_aging_course/bio/intro_aging_biology.html"
+      - n: 3
+        text: "Table 1 of the pyaging paper (academic.oup.com/view-large/447873551), the 50-clock inventory as of publication; the registry has since grown to 173."
+      - n: 4
+        text: "Yu D, Li M, Linghu G, Hu Y, Hajdarovic KH, Wang A, Singh R, Webb AE. CellBiAge: Improved single-cell age classification using data binarization. *Cell Reports* 42(12):113500 (2023). doi:10.1016/j.celrep.2023.113500 - PMC10791072."
+        doi: "10.1016/j.celrep.2023.113500"
+  - title: "Foundational clocks"
+    entries:
+      - n: 5
+        text: "Bocklandt S et al. Epigenetic predictor of age. *PLoS ONE* 6(6):e14821 (2011)."
+      - n: 6
+        text: "Hannum G et al. Genome-wide methylation profiles reveal quantitative views of human aging rates. *Mol Cell* 49(2):359–367 (2013)."
+      - n: 7
+        text: "Horvath S. DNA methylation age of human tissues and cell types. *Genome Biol* 14:R115 (2013)."
+      - n: 8
+        text: "Weidner CI et al. Aging of blood can be tracked by DNA methylation changes at just three CpG sites. *Genome Biol* 15:R24 (2014)."
+      - n: 9
+        text: "Yang Z et al. Correlation of an epigenetic mitotic clock with cancer risk. *Genome Biol* 17:205 (2016). - epiTOC"
+      - n: 10
+        text: "Levine ME et al. An epigenetic biomarker of aging for lifespan and healthspan. *Aging* 10(4):573–591 (2018). doi:10.18632/aging.101414"
+        doi: "10.18632/aging.101414"
+      - n: 11
+        text: "Liu Z, Kuo P-L, Horvath S, Crimmins E, Ferrucci L, Levine M. A new aging measure captures morbidity and mortality risk across diverse subpopulations from NHANES IV. *PLoS Med* 15(12):e1002718 (2018)."
+      - n: 12
+        text: "Horvath S et al. Epigenetic clock for skin and blood cells. *Aging* 10(7):1758–1775 (2018)."
+      - n: 13
+        text: "Lu AT et al. DNA methylation GrimAge strongly predicts lifespan and healthspan. *Aging* 11(2):303–327 (2019)."
+      - n: 14
+        text: "Lu AT et al. DNA methylation GrimAge version 2. *Aging* 14(23):9484–9549 (2022)."
+      - n: 15
+        text: "Zhang Q et al. Improved precision of epigenetic clock estimates across tissues and its implication for biological ageing. *Genome Med* 11:54 (2019)."
+      - n: 16
+        text: "Belsky DW et al. Quantification of the pace of biological aging in humans through a blood test, the DunedinPoAm DNA methylation algorithm. *eLife* 9:e54870 (2020)."
+      - n: 17
+        text: "Belsky DW et al. DunedinPACE, a DNA methylation biomarker of the pace of aging. *eLife* 11:e73420 (2022)."
+      - n: 18
+        text: "Higgins-Chen AT et al. A computational solution for bolstering reliability of epigenetic clocks. *Nat Aging* 2:644–661 (2022). - PC clocks"
+      - n: 19
+        text: "de Lima Camillo LP, Lapierre LR, Singh R. A pan-tissue DNA-methylation epigenetic clock based on deep learning. *npj Aging* 8:4 (2022). - AltumAge"
+      - n: 20
+        text: "Lu AT et al. Universal DNA methylation age across mammalian tissues. *Nat Aging* 3:1144–1166 (2023)."
+      - n: 21
+        text: "Ying K et al. Causality-enriched epigenetic age uncouples damage and adaptation. *Nat Aging* 4:231–246 (2024). - CausAge, DamAge, AdaptAge"
+      - n: 22
+        text: "Teschendorff AE et al. epiTOC2 and HypoClock. *Genome Med* 12:56 (2020)."
+      - n: 23
+        text: "Higgins-Chen AT, Levine ME et al. Systems Age: a single blood methylation test to quantify aging heterogeneity across 11 physiological systems. *Nat Aging* (2025). doi:10.1038/s43587-025-00958-3"
+        doi: "10.1038/s43587-025-00958-3"
+  - title: "Non-methylation clocks"
+    entries:
+      - n: 24
+        text: "Meyer DH, Schumacher B. BiT age: a transcriptome-based aging clock near the theoretical limit of accuracy. *Aging Cell* 20:e13320 (2021)."
+      - n: 25
+        text: "Oh HS-H et al. Organ aging signatures in the plasma proteome track health and disease. *Nature* 624:164–172 (2023). doi:10.1038/s41586-023-06802-1"
+        doi: "10.1038/s41586-023-06802-1"
+      - n: 26
+        text: "Goeminne LJE et al. Plasma protein-based organ-specific aging and mortality models unveil diseases as accelerated aging of organismal systems. *Cell Metab* 37(1):205–222.e6 (2025). doi:10.1016/j.cmet.2024.10.005"
+        doi: "10.1016/j.cmet.2024.10.005"
+      - n: 27
+        text: "Tyshkovskiy A, Kholdina D, Davitadze M et al. Universal transcriptomic hallmarks of mammalian ageing and mortality. *Nature* 654(8117):173–188 (2026). doi:10.1038/s41586-026-10542-3"
+        doi: "10.1038/s41586-026-10542-3"
+      - n: 28
+        text: "Sun ED, Zhou OY, Hauptschein M, Rappoport N, Xu L, Navarro Negredo P, Ling L, Rando TA, Zou J, Brunet A. Spatial transcriptomic clocks reveal cell proximity effects in brain ageing. *Nature* 638:160–171 (2025). doi:10.1038/s41586-024-08334-8"
+        doi: "10.1038/s41586-024-08334-8"
+      - n: 29
+        text: "Li W et al. Single-cell immune aging clocks reveal inter-individual heterogeneity during infection and vaccination. *Nat Aging* (2025). doi:10.1038/s43587-025-00819-z"
+        doi: "10.1038/s43587-025-00819-z"
+      - n: 30
+        text: "Mao S et al. SCALE: Single Cell Aging Level Estimator. github.com/ChengLiLab/SCALE"
+      - n: 31
+        text: "Trapp A, Kerepesi C, Gladyshev VN. Profiling epigenetic age in single cells. *Nat Aging* 1:1189–1201 (2021). - scAge"
+      - n: 32
+        text: "Bonder MJ et al. scEpiAge: an age predictor highlighting single-cell ageing heterogeneity in mouse blood. *Nat Commun* 15:7567 (2024)."
+      - n: 33
+        text: "Ren X, Kuan PF. RNAAgeCalc: a multi-tissue transcriptional age calculator. *PLoS ONE* 15(8):e0237006 (2020)."
+      - n: 34
+        text: "Krištić J et al. Glycans are a novel biomarker of chronological and biological ages. *J Gerontol A* 69(7):779–789 (2014)."
+      - n: 35
+        text: "Putin E et al. Deep biomarkers of human aging. *Aging* 8(5):1021–1033 (2016)."
+      - n: 36
+        text: "Hao M et al. Gompertz law-based biological age (GOLD BioAge). *Adv Sci* 12(32) (2025)."
+      - n: 37
+        text: "Chen Q, Dwaraka VB, Carreras-Gallo N et al. OMICmAge quantifies biological age by integrating multi-omics with electronic medical records. *Nat Aging* (2026). doi:10.1038/s43587-026-01073-7"
+        doi: "10.1038/s43587-026-01073-7"
+  - title: "Methods, tooling, benchmarking"
+    entries:
+      - n: 38
+        text: "Kwon D, Belsky DW. A toolkit for quantification of biological age from blood chemistry and organ function test data: BioAge. *GeroScience* 43:2795–2808 (2021)."
+      - n: 39
+        text: "Kriukov D, Efimov E, Kuzmina EA, Khrameeva EE, Dylov DV. ComputAgeBench: epigenetic aging clocks benchmark. bioRxiv 2024.06.06.597715; KDD '25."
+      - n: 40
+        text: "Ying K et al. Biolearn, an open-source library for biomarkers of aging / A unified framework for systematic curation and evaluation of aging biomarkers. *Nat Aging* (2025). doi:10.1038/s43587-025-00987-y"
+        doi: "10.1038/s43587-025-00987-y"
+      - n: 41
+        text: "TranslAGE: a comprehensive platform for systematic validation of epigenetic aging biomarkers. bioRxiv 2025.10.16.682960."
+      - n: 42
+        text: "Biological versus technical reliability of epigenetic clocks and implications for disease prognosis and intervention response. bioRxiv 2025.10.13.682176."
+      - n: 43
+        text: "Teschendorff AE. Epigenetic ageing clocks: statistical methods and emerging computational challenges. *Nat Rev Genet* 26 (2025). doi:10.1038/s41576-024-00807-w"
+        doi: "10.1038/s41576-024-00807-w"
+      - n: 44
+        text: "Zoller JA, Horvath S. MammalMethylClock R package. bioRxiv 2023.09.06.556506."
+      - n: 45
+        text: "Thrush KL, Higgins-Chen AT et al. R methylCIPHER: a methylation clock investigational package. bioRxiv 2022.07.13.499978."
+      - n: 46
+        text: "de Lima Camillo LP, Horvath S, Wang B et al. CpGPT: a foundation model for DNA methylation. bioRxiv 2024.10.24.619766."
+      - n: 47
+        text: "Varshavsky M et al. Accurate age prediction from blood using a small set of DNA methylation sites and a cohort-based machine learning algorithm. *Cell Rep Methods* 3(9):100567 (2023). - GP-age"
+      - n: 48
+        text: "Liu Z et al. Underlying features of epigenetic aging clocks in vivo and in vitro. *Aging Cell* 19(10):e13229 (2020)."
+      - n: 49
+        text: "Porter HL et al. Many chronological aging clocks can be found throughout the epigenome. *Aging Cell* 20:e13492 (2021)."
+      - n: 50
+        text: "Nelson PG, Promislow DEL, Masel J. Biomarkers for aging identified in cross-sectional studies tend to be non-causative. *J Gerontol A* 75(3):466–472 (2020)."
+      - n: 51
+        text: "Ying K et al. ClockBase: a comprehensive platform for biological age profiling in human and mouse. bioRxiv 2023.02.28.530532."
+      - n: 52
+        text: "Vasileiou et al. Multi-omics signatures of organ clocks in biological aging and disease. *Aging Cell* (2026). doi:10.1111/acel.70518"
+        doi: "10.1111/acel.70518"
+      - n: 53
+        text: "Liu et al. The evolving landscape of clinical aging clocks: from epigenetic to multi-omics integration. *Aging Cell* (2026). doi:10.1111/acel.70579"
+        doi: "10.1111/acel.70579"
+      - n: 54
+        text: "Turning back time: a comprehensive list of interventions that decrease next-generation epigenetic aging clocks in humans. *Front Genet* (2026). doi:10.3389/fgene.2026.1836446"
+        doi: "10.3389/fgene.2026.1836446"
+      - n: 55
+        text: "Waziry R et al. Effect of long-term caloric restriction on DNA methylation measures of biological aging in healthy adults from the CALERIE trial. *Nat Aging* 3:248–257 (2023)."
+      - n: 56
+        text: "DeepStrataAge: an interpretable deep-learning clock. *npj Aging* (2026). doi:10.1038/s41514-026-00358-w"
+        doi: "10.1038/s41514-026-00358-w"
+      - n: 57
+        text: "GraphAge: unleashing the power of graph neural networks to decode epigenetic aging. *PNAS Nexus* 4(6):pgaf177 (2025)."
+  - title: "Biology of aging"
+    entries:
+      - n: 58
+        text: "López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G. The hallmarks of aging. *Cell* 153(6):1194–1217 (2013)."
+      - n: 59
+        text: "López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G. Hallmarks of aging: an expanding universe. *Cell* 186(2):243–278 (2023)."
+      - n: 60
+        text: "Vijg J, Dong X. Pathogenic mechanisms of somatic mutation and genome mosaicism in aging. *Cell* 182(1):12–23 (2020)."
+      - n: 61
+        text: "Cagan A et al. Somatic mutation rates scale with lifespan across mammals. *Nature* 604:517–524 (2022)."
+      - n: 62
+        text: "Horvath S, Raj K. DNA methylation-based biomarkers and the epigenetic clock theory of ageing. *Nat Rev Genet* 19:371–384 (2018)."
+      - n: 63
+        text: "Field AE et al. DNA methylation clocks in aging: categories, causes, and consequences. *Mol Cell* 71(6):882–895 (2018)."
+      - n: 64
+        text: "Moqri M et al. Biomarkers of aging for the identification and evaluation of longevity interventions. *Cell* 186(18):3758–3775 (2023)."
+  # Appended, not inserted: an entry's position is its citation number.
+  - title: "Sources traced while implementing the clocks they describe"
+    entries:
+      - n: 65
+        text: "Shireby GL, Davies JP, Francis PT et al. Recalibrating the epigenetic clock: implications for assessing biological age in the human cortex. *Brain* 143(12):3763-3775 (2020). Supplementary Table 3 carries the 347 weights the cortical clock uses here."
+        doi: "10.1093/brain/awaa334"
+      - n: 66
+        text: "McCartney DL, Hillary RF, Stevenson AJ et al. Epigenetic prediction of complex traits and death. *Genome Biology* 19:136 (2018). Additional file 1 carries the ten EpiScore weight sets."
+        doi: "10.1186/s13059-018-1514-1"
+      - n: 67
+        text: "Horvath S. Putting epigenetic aging clocks on trial. *Nature Medicine* (2026). Asks whether a methylation clock behaves as a surrogate endpoint should, which is the question a score has to survive before it is used to judge an intervention."
+        doi: "10.1038/s41591-026-04524-1"

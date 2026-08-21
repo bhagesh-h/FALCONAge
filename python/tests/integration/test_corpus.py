@@ -38,17 +38,25 @@ def test_epic_progeria_scores_every_tier_a_clock_the_specimen_allows(corpus):
     epiCMIT-hypo, RepliTali, epiTOC2, epiTOC3, AltumAge and Weidner. The
     mitotic ones and AltumAge are multi-tissue; Weidner is a blood clock and
     this is blood.
+
+    34 since the ten McCartney EpiScores were traced to their own supplement.
+    All ten were fitted in whole blood, so all ten are compatible here. The
+    cortical clock arrived in the same batch and is NOT among them: it refuses
+    blood, which is the check doing its job on a clock added the same day.
     """
     d = _bench(corpus, "GSE182991")
     assert d.n_samples == 27
     assert d.platform == "EPICv1"
 
     res = fa.score(d, clocks="compatible")
-    assert res.scores.shape[1] == 24
+    assert res.scores.shape[1] == 34
     assert res.scores.notna().all().all()
 
     off_tissue = {cid for cid, why in res.skipped.items() if "tissue_policy=refuse" in why}
-    assert off_tissue == {"knight", "leecontrol", "leerobust", "leerefinedrobust", "pedbe"}
+    # Three placenta clocks, a cord-blood clock, a buccal clock, and the cortical
+    # clock, which is post-mortem brain and has no peripheral counterpart.
+    assert off_tissue == {"knight", "leecontrol", "leerobust", "leerefinedrobust",
+                          "pedbe", "corticalclock"}
 
     # Horvath on blood spanning 0-41 should land in a human range, not a
     # transform-gone-wrong range.

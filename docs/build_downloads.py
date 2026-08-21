@@ -65,7 +65,7 @@ DEFAULT_OUT = HERE / "_site" / "downloads"
 # narrative: what the thing is, how to use it, how to choose a clock, and the
 # two long-form documents. Seven pages, all hand-written, all stable.
 FRONT = ["index.qmd", "guide/FALCONAge.qmd", "guide/clocks.qmd", "clocks.qmd",
-         "gpu.md", "science.qmd", "architecture.qmd"]
+         "gpu.md", "science.qmd", "architecture.qmd", "references.qmd"]
 
 FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.S)
 # `[text](#anchor)` -> `text`. Every page carries a hand-written contents list
@@ -74,6 +74,26 @@ FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.S)
 # label that does not exist. The combined document has its own table of
 # contents, so the per-page ones are redundant anyway.
 ANCHOR_LINK = re.compile(r"\[([^\]\[]*)\]\(#[^)]*\)")
+
+#: `![caption](../images/x.png)` in a page that lives in docs/guide/.
+#:
+#: The combined document is written to docs/ and rendered from there, so every
+#: chapter's relative paths are read from one directory up from where they were
+#: written. A figure on a guide page points at `../images/`, which from docs/
+#: resolves outside the project and silently drops out of the PDF: Typst prints
+#: the alt text where the picture should be and the build still succeeds, so
+#: nothing fails and the figure is simply missing.
+GUIDE_IMAGE = re.compile(r"(!\[[^\]]*\]\()\.\./(images/)")
+
+#: `[[7]](references.qmd#ref-7)` -> `[7]`.
+#:
+#: On the site a citation is a link to the references page. Bound into one
+#: document that page is a chapter, so the link would point at a file that no
+#: longer exists as a separate thing, and typst treats an unresolvable label as
+#: a hard error rather than a dead link. The number is what carries the meaning
+#: and the References chapter is in the same document with the same numbering,
+#: so the bracket is kept and the link is dropped.
+PDF_CITATION = re.compile(r"\[(\[\d+\])\]\((?:\.\./)?references\.qmd#ref-\d+\)")
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -216,6 +236,9 @@ def combine() -> Path:
         # the heading text ("## 15. The layer that says what a score is
         # worth"), so turning Quarto's numbering on would print "1.15 15."
         # down the whole of the architecture chapter.
+        if Path(c).parent != Path("."):
+            text = GUIDE_IMAGE.sub(r"\1\2", text)
+        text = PDF_CITATION.sub(r"\1", text)
         body, k = rotate_tables(ANCHOR_LINK.sub(r"\1", demote(text)))
         rotated += k
         parts.append(f"\n\n{{{{< pagebreak >}}}}\n\n# Chapter {n}. {title}\n\n" + body)

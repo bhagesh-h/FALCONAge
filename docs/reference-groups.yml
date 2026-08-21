@@ -337,6 +337,12 @@ book:
         file: architecture.qmd
       - title: GPU and performance
         file: gpu.md
+  # Last, and its own part, because it is what the bracketed numbers on every
+  # other page point at rather than a topic somebody reads through.
+  - part: 6. References
+    chapters:
+      - title: References
+        file: references.qmd
 
 articles:
   - title: Getting started

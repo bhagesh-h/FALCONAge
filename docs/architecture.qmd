@@ -78,6 +78,16 @@ Contents
 
 ## 1. Scope, decisions and repository layout
 
+![The four stages a dataset passes through, and the one numerical core beneath them](images/falconage-dataflow.png)
+
+The R package does not reimplement any of this. It calls the same Python
+functions through reticulate, which is why the two languages return identical
+numbers rather than numbers that agree to a tolerance. The stages are separable:
+a beta matrix that is already normalised enters at Prepare, and a clinical table
+skips the methylation path entirely. What every route shares is the last stage,
+where a score is never emitted without the manifest recording how it was
+produced.
+
 ### 1.1 What each release delivered
 
 | Capability | Ships in 1.0.0 | Later |
@@ -954,10 +964,23 @@ Rules:
 
 ## 4. Algorithms, the complete operation catalogue
 
+![The four parts every clock has, and where implementations disagree](images/clock-anatomy.png)
+
+The shape is the field's, not this package's: the reviews that survey it describe
+the same four parts [[62]](references.qmd#ref-62) [[63]](references.qmd#ref-63).
+
 Every clock in the registry is expressible as
 `select features → preprocess ops → architecture forward → postprocess ops`, with ten exceptions
 that need their own forward pass (§4.3). The ops are the vocabulary; implementing all of them is
 what makes adding a clock a YAML edit rather than a code change.
+
+The weights are the part everybody agrees on, because they are published. The
+disagreements between implementations of the same clock are almost all in the
+last box: whether an anti-log is applied, which of two published transforms was
+meant, whether an intercept was already folded into the coefficients. That is
+why the registry stores the postprocess chain as declared data rather than
+burying it in each model class, and why the clocks whose packaged coefficients
+contradict their own paper carry the discrepancy as a warning at score time.
 
 > **v1.0 implements seven of the fifteen preprocess ops below and nine postprocess transforms**,
 > the ones the 23 scoring clocks reach for. The rest are specified and unbuilt, because each is
@@ -1196,6 +1219,16 @@ proportions as one frame, which is what users actually want.
 
 **8. epiTOC2 / epiTOC3.** `tnsc = (2/k) Σ_c (β_c − β₀_c) / (δ_c(1 − β₀_c))`, with per-CpG `δ` and
 `β₀` vectors stored as weights and a guard against `δ(1−β₀) == 0`.
+
+![The division model inverted per site, then averaged](images/epitoc2-inversion.png)
+
+This is not a weighted sum with a different name. Each site is inverted on its
+own: the drift observed since the ground state is divided by that site's drift
+per division, which turns a methylation fraction into a division count. Only
+then are the per-site estimates averaged, and `k` is the number of sites
+actually present rather than the number the clock declares, so a missing site
+drops out of both the sum and the divisor instead of contributing a zero. The
+factor of two converts from the per-allele rate to divisions per stem cell.
 
 **9. XChrom / YChrom.** Autosomal z-score, then `Σ (z_sex − mean) · coef` over the
 sex-chromosome probe subset. Exposed both as clocks and through

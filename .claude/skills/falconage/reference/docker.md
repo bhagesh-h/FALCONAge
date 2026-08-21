@@ -16,7 +16,7 @@ git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
 docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
-One image carries Python, R, the CLI and all 32 bundled weight files: 31 coefficient
+One image carries Python, R, the CLI and all 43 bundled weight files: 42 coefficient
 tables and AltumAge's safetensors network. Prove it, with no
 clone needed, against the source the image was built from:
 

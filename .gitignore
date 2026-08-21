@@ -177,6 +177,11 @@ docs/.quarto/
 # staged gallery copies, written by docs/build_gallery.py from the tracked
 # originals in test/output_figures/gallery/
 docs/figures/
+# staged concept diagrams, copied in from the tracked originals in images/ by
+# docs/build_docs.py. Quarto will not follow a resource path out of its own
+# project directory and the PDF renders from a file in docs/, so both need the
+# pictures to be here rather than one level up.
+docs/images/
 # quartodoc output, generated from docstrings by `quartodoc build`
 docs/reference/
 # pkgdown output, generated from roxygen

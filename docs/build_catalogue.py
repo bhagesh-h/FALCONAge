@@ -101,6 +101,17 @@ downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
 **{n} clocks**, registry schema `{schema}`.
+
+![What separates the three tiers, and what a traced coefficient source means](images/tiers-and-provenance.png)
+
+The tiers are about provenance, not about quality. A tier A clock has a
+coefficient file whose origin was followed back to the paper or its supplement
+and checksummed, so the same numbers come out on any machine with no network.
+Tier B has no traced public source for its coefficients, and tier C has one that
+its licence will not let this package redistribute. Copying a coefficient vector
+out of another package would move clocks up a tier and is the one route not
+taken here, because a number with no source behind it cannot be checked against
+anything.
 """
 
 TAIL = """

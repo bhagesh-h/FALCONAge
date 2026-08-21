@@ -27,7 +27,7 @@ tolerance zero in CI rather than approximately.
 
 | | What ships today |
 |---|---|
-| **Clocks catalogued** | 161. **35 tier A score offline**: 32 ship a weights file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 98 tier B have no traced coefficient source |
+| **Clocks catalogued** | 161. **46 tier A score offline**: 43 ship a weights file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 87 tier B have no traced coefficient source yet |
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, ComputAgeBench studies, RRBS, nanopore bedMethyl, targeted panels, clinical chemistry, Olink NPX, SomaScan RFU, bulk RNA-seq counts. [How to load each](https://bhagesh-h.github.io/FALCONAge/guide/loading.html) |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
@@ -153,7 +153,7 @@ mechanism behind it, and each is enforced in code rather than documented as advi
 
 | Refused | Why, measured |
 |---|---|
-| Age acceleration on a pace, a division count, a log-hazard or a relative score | The subtraction is undefined for the scale. 14 of the 35 clocks that ship are on one of those scales, and a pace is already a rate |
+| Age acceleration on a pace, a division count, a log-hazard or a relative score | The subtraction is undefined for the scale. 23 of the 46 clocks that ship are on one of those scales, and a pace is already a rate |
 | `predicted − chronological` on DamAge/AdaptAge | Slope against age is 0.967, but the offset swings **162 years** between cohorts against Horvath's 15, so the difference is not a quantity |
 | A whole-blood clock on saliva | Saliva clock ages ran **3.83–16.46 years** above buffy coat in the same 91 people while still correlating at Spearman 0.45–0.69. Correlation is not agreement |
 | Any array clock on cell-free DNA | Not a tissue but a fragment population shed from many. 12 clocks refuse a specimen outright; 127 more warn |
@@ -193,7 +193,7 @@ the paper did not make, and it says so on every run.
 | Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
-| 98 tier B coefficient sources | A per-clock literature hunt; some have no public supplement |
+| 87 tier B coefficient sources | A per-clock literature hunt; some have no public supplement |
 
 ## Figures
 
