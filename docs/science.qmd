@@ -2383,7 +2383,7 @@ to the imputer.
 
 So nothing is masked automatically, and `mask_report()` prices the decision:
 
-| clock | probes masked | share of model | share of |coefficient| |
+| clock | probes masked | share of model | share of \|coefficient\| |
 |---|---:|---:|---:|
 | dunedinpoam38 | 5 / 46 | 10.9% | **6.1%** |
 | dnamtl | 15 / 140 | 10.7% | 5.4% |

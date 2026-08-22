@@ -119,25 +119,228 @@ def demote(markdown: str) -> str:
     return "\n".join(out)
 
 
-#: Typst renders a table at whatever width its content needs and lets the
-#: columns collide when that is wider than the page, which is what the PDF's
-#: tables were doing: a six-column table of clock metadata printed one column
-#: on top of the next. Two things fix it together. Every table goes on its own
-#: page turned sideways, which is 40% more width, and table text is set two
-#: points smaller than body text, which buys the rest.
+#: A rotated page is 40% wider, and it costs the reader a page turn and a head
+#: tilt. That trade is worth making for a fifteen-column table and is not worth
+#: making for a three-column one, which was the bug: every table in the document
+#: was being turned sideways, 75 of them, when only nine were wide enough to
+#: need it.
+#:
+#: WHY NOT SIMPLY "FIVE COLUMNS OR A LONG CELL". That is the sibling project's
+#: rule and it rotates two shapes of table that do not need it. A five-column
+#: table of short numbers, like the GPU timings, is 69 characters wide and fits
+#: portrait with room to spare. A two-column table whose second column holds a
+#: paragraph also fits, because the paragraph WRAPS: a cell does not need its
+#: natural width, it needs a column it can wrap inside.
+#:
+#: So the test is about what wrapping cannot fix. Wrapping trades width for
+#: height, and it stops working when there are so many columns that none of them
+#: is wide enough to hold a word, or when the table's natural width is so far
+#: past the page that wrapping it produces a block taller than it is readable.
+#:
+#: PORTRAIT_BUDGET is the text block in characters: US Letter at 2.5cm margins
+#: is 6.5 inches, which is about 118 characters of 9pt proportional text.
+PORTRAIT_BUDGET = 118
+#: Six columns on 6.5 inches is 1.08 inches each before padding, which is not
+#: enough for prose in any of them. Five still works when the content is short.
+LANDSCAPE_MIN_COLS = 6
+#: How far past the budget a table's natural width may run before wrapping it
+#: into portrait costs more in height than the rotation costs in page turns.
+LANDSCAPE_WIDTH_FACTOR = 2.5
+
 LANDSCAPE_OPEN = "```{=typst}\n#set page(flipped: true)\n```\n\n"
 LANDSCAPE_CLOSE = "\n```{=typst}\n#set page(flipped: false)\n```\n"
 
-#: Applied once, at the top of the document.
-TYPST_PREAMBLE = (
-    "```{=typst}\n"
-    "#show table: set text(size: 8pt)\n"
-    "#show table.cell: set par(justify: false)\n"
-    "```\n"
+#: A pipe that is part of a cell's text rather than a column separator. The
+#: catalogue writes `\|coefficient\|` for absolute value, and counting those as
+#: separators reports a three-column table as five and rotates it.
+CELL_SPLIT = re.compile(r"(?<!\\)\|")
+
+#: The `|---|:--:|` rule under a header. It is not data and its dashes would be
+#: measured as though they were the widest cell in a narrow column.
+ALIGN_ROW = re.compile(r"^[\s|:-]+$")
+
+
+def table_cells(block: list[str]) -> list[list[str]]:
+    """The rows of a pipe table, split into cells, with the alignment rule out."""
+    rows = []
+    for line in block:
+        if ALIGN_ROW.match(line):
+            continue
+        # ZWSP is zero width on the page, so counting it would make a softened
+        # identifier look wider than it prints and rotate tables that fit.
+        cells = [c.strip().replace(ZWSP, "") for c in CELL_SPLIT.split(line)]
+        # A row written `| a | b |` splits to an empty cell at each end.
+        if cells and not cells[0]:
+            cells = cells[1:]
+        if cells and not cells[-1]:
+            cells = cells[:-1]
+        rows.append(cells)
+    return rows
+
+
+#: A token with no space in it that is longer than a narrow column. Typst breaks
+#: lines between words and will not break inside one, so a cell holding
+#: `quantile_normalize_and_scale_with_gold_standard` sets it on a single line,
+#: overruns its column and prints on top of the neighbouring cell. That is the
+#: overlap that survives rotation, because no amount of extra page width helps a
+#: token that is never allowed to break.
+LONG_TOKEN = re.compile(r"[^\s|]{25,}")
+#: U+200B. Invisible, zero width, and a legal break point. Inserting it after the
+#: separators inside a long identifier lets the cell wrap at a readable place
+#: rather than at an arbitrary glyph.
+ZWSP = "​"
+
+
+def soften_long_tokens(row: str) -> str:
+    """Let long identifiers in a table cell wrap, without changing what they say."""
+    # The `|-----------|:---:|` rule is a run of dashes and would match the long
+    # token pattern. Breaking it up stops it being an alignment row at all, and
+    # the table then renders as ordinary paragraphs.
+    if ALIGN_ROW.match(row):
+        return row
+
+    def fix(m: re.Match) -> str:
+        token = m.group(0)
+        # Never touch a URL: a zero-width space inside one is invisible here and
+        # breaks the link if anybody copies it out of the PDF.
+        if "://" in token:
+            return token
+        return re.sub(r"([_\-./])", r"\1" + ZWSP, token)
+
+    return LONG_TOKEN.sub(fix, row)
+
+
+def natural_width(rows: list[list[str]]) -> int:
+    """Characters the table would occupy if nothing wrapped, padding included."""
+    cols = max((len(r) for r in rows), default=0)
+    if not cols:
+        return 0
+    per_column = [
+        max((len(r[i]) for r in rows if i < len(r)), default=0)
+        for i in range(cols)
+    ]
+    # Four characters an edge is the 8pt horizontal inset either side of a cell.
+    return sum(per_column) + 4 * cols
+
+
+def needs_landscape(block: list[str]) -> bool:
+    """Whether this table earns a rotated page of its own."""
+    rows = table_cells(block)
+    if not rows:
+        return False
+    width = natural_width(rows)
+    # A table that fits the text block as written is never rotated, whatever its
+    # column count. The probe-masking table has six columns and is 83 characters
+    # wide; turning it sideways would be a page turn to read something that was
+    # already going to fit.
+    if width <= PORTRAIT_BUDGET:
+        return False
+    cols = max(len(r) for r in rows)
+    if cols >= LANDSCAPE_MIN_COLS:
+        return True
+    return width > PORTRAIT_BUDGET * LANDSCAPE_WIDTH_FACTOR
+
+
+#: Applied once, at the top of the document. Everything here is layout that
+#: Quarto's typst template does not give us and that the sibling project's
+#: manual gets from its LaTeX preamble: a chapter opening that reads as a
+#: chapter, section headings that are distinguishable from body text at a
+#: glance, and tables with enough structure that a wrapped cell cannot be
+#: mistaken for its neighbour.
+#:
+#: WHY THE TABLE STROKE MATTERS MORE THAN THE ROTATION. Quarto emits tables with
+#: `stroke: none`, so a cell whose text wraps to three lines sits beside another
+#: doing the same with nothing between them. That reads as overlap even when the
+#: columns are correctly laid out and the text is wrapping properly. A hairline
+#: under every row and a rule under the header is what separates them; the extra
+#: horizontal inset is what keeps the text off the column boundary.
+#:
+#: The orange is `$falcon-orange` from the stylesheet, which was sampled from the
+#: logo rather than chosen, so the PDF and the site carry the same accent. The
+#: darker variant is the one used for links, because the brand orange does not
+#: reach 4.5:1 on white.
+BRAND = "#e06000"
+ACCENT = "#a84800"
+INK = "#1a1a1a"
+
+TYPST_PREAMBLE = f"""```{{=typst}}
+#let brand = rgb("{BRAND}")
+#let accent = rgb("{ACCENT}")
+#let ink = rgb("{INK}")
+
+#set par(justify: true, leading: 0.62em)
+#show link: set text(fill: accent)
+
+// A running header naming the chapter, so a page torn out of a printed copy
+// still says which chapter it came from. Queried rather than tracked by hand:
+// `before(here())` finds the most recent chapter opening, which is the one this
+// page belongs to. The title page and the contents have no chapter before them
+// and correctly get no header.
+#set page(header: context {{
+  let seen = query(selector(heading.where(level: 1)).before(here()))
+  if seen.len() > 0 {{
+    set text(size: 8pt, fill: luma(95))
+    grid(columns: (1fr, auto),
+      align(left, seen.last().body),
+      align(right)[FALCONAge])
+    v(-7pt)
+    line(length: 100%, stroke: 0.4pt + luma(185))
+  }}
+}})
+
+// A chapter opens on its own page, names itself in the brand colour, and is
+// separated from its first paragraph by a rule and real space. The pagebreak
+// is emitted by the assembler rather than here, so a chapter that is already
+// at the top of a page does not gain a blank one.
+#show heading.where(level: 1): it => block(width: 100%, above: 0pt, below: 20pt)[
+  #set text(size: 21pt, weight: "bold", fill: ink)
+  #it.body
+  #v(7pt)
+  #line(length: 100%, stroke: 1.2pt + brand)
+]
+
+// WHICH LEVEL IS A SECTION. `demote()` pushes every heading in a page down one
+// level so the chapter title can be the only level 1, and the source pages start
+// their own sections at `##`. So in this document a section is level THREE, not
+// two, and level two is empty. Styling two as the section and three as the
+// subsection is why sections were setting at 11.5pt and reading as bold
+// paragraphs rather than as headings. Two and three are both given the section
+// treatment: two is unused today and would be a section if it ever appeared.
+//
+// The gap above each heading is larger than the gap below, so a heading sits
+// with the text it introduces rather than floating between two paragraphs.
+#show heading.where(level: 2): it => block(width: 100%, above: 24pt, below: 10pt)[
+  #set text(size: 14.5pt, weight: "bold", fill: accent)
+  #it.body
+]
+#show heading.where(level: 3): it => block(width: 100%, above: 24pt, below: 10pt)[
+  #set text(size: 14.5pt, weight: "bold", fill: accent)
+  #it.body
+]
+#show heading.where(level: 4): it => block(width: 100%, above: 17pt, below: 7pt)[
+  #set text(size: 11.5pt, weight: "bold", fill: ink)
+  #it.body
+]
+#show heading.where(level: 5): it => block(width: 100%, above: 13pt, below: 5pt)[
+  #set text(size: 10.5pt, weight: "bold", style: "italic", fill: ink)
+  #it.body
+]
+
+#set table(
+  inset: (x: 8pt, y: 5pt),
+  stroke: (_, y) => (bottom: if y == 0 {{ 0.7pt + ink }} else {{ 0.3pt + luma(190) }}),
 )
+#show table: set text(size: 9pt)
+#show table.cell: set par(justify: false, leading: 0.5em)
+#show table.cell.where(y: 0): set text(weight: "bold")
+
+// Long commands and long clock ids are the two things that run past a column.
+#show raw: set text(size: 8.5pt)
+```
+"""
 
 
-def rotate_tables(markdown: str) -> tuple[str, int]:
+def rotate_tables(markdown: str, soften: bool = True) -> tuple[str, int]:
     """Put every pipe table on a landscape page of its own.
 
     A table is a run of consecutive lines starting with `|`. Two kinds are
@@ -175,8 +378,10 @@ def rotate_tables(markdown: str) -> tuple[str, int]:
             while i < len(lines) and lines[i].startswith("|"):
                 i += 1
             block = lines[start:i]
+            if soften:
+                block = [soften_long_tokens(r) for r in block]
             # Two lines is a header and its rule with no rows: not a table.
-            if len(block) > 2:
+            if len(block) > 2 and needs_landscape(block):
                 count += 1
                 out.append("")
                 out.append(LANDSCAPE_OPEN.rstrip("\n"))
@@ -192,8 +397,15 @@ def rotate_tables(markdown: str) -> tuple[str, int]:
     return "\n".join(out), count
 
 
-def combine() -> Path:
-    """Concatenate the chapters into one .qmd and return its path."""
+def combine(*, soften: bool = True) -> Path:
+    """Concatenate the chapters into one .qmd and return its path.
+
+    ``soften`` inserts zero-width break points inside long identifiers so typst
+    can wrap them. It is wanted for the PDF and not for the markdown bundle: in
+    a .md file the characters are still invisible, but anyone who copies a clock
+    id out of the appendix table would carry them into their code, where the
+    name silently stops matching.
+    """
     site = yaml.safe_load(GROUPS.read_text(encoding="utf-8"))["site"]
     chapters = [c for c in FRONT if (HERE / c).exists()]
     if len(chapters) < 2:
@@ -207,8 +419,22 @@ def combine() -> Path:
         f'subtitle: "{" ".join(site["description"].split())}"\n'
         "author: Bhagesh Hunakunti\n"
         "toc: true\n"
-        "toc-depth: 2\n"
+        # Three, not two. `demote()` makes a section level 3, so a depth of 2
+        # listed the eight chapters and nothing else: a table of contents for a
+        # two-hundred-page document with eight entries in it.
+        "toc-depth: 3\n"
         "number-sections: false\n"
+        # Quarto's typst default is 1.25in a side, which leaves six inches of
+        # text on US Letter and is the single largest reason a table ran out of
+        # room. 2.5cm is what the sibling project's manual uses and it returns
+        # about three quarters of an inch of width to every table on every page,
+        # rotated or not.
+        "format:\n"
+        "  typst:\n"
+        "    papersize: us-letter\n"
+        "    margin:\n"
+        "      x: 2.5cm\n"
+        "      y: 2.5cm\n"
         # Nothing here executes. clocks.qmd carries a live Python chunk that
         # queries the registry; it already ran when the site was rendered, and
         # running it again from a concatenated file with a different working
@@ -239,7 +465,7 @@ def combine() -> Path:
         if Path(c).parent != Path("."):
             text = GUIDE_IMAGE.sub(r"\1\2", text)
         text = PDF_CITATION.sub(r"\1", text)
-        body, k = rotate_tables(ANCHOR_LINK.sub(r"\1", demote(text)))
+        body, k = rotate_tables(ANCHOR_LINK.sub(r"\1", demote(text)), soften)
         rotated += k
         parts.append(f"\n\n{{{{< pagebreak >}}}}\n\n# Chapter {n}. {title}\n\n" + body)
 
@@ -278,7 +504,7 @@ def build_markdown(out: Path) -> Path:
     shutil.rmtree(stage, ignore_errors=True)
     stage.mkdir(parents=True)
 
-    src = combine()
+    src = combine(soften=False)
     try:
         run(["quarto", "render", src.name, "--to", "gfm",
              "--output", "FALCONAge.md"], cwd=HERE)
