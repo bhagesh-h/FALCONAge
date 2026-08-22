@@ -1,0 +1,198 @@
+# Getting started with FALCONAge
+
+FALCONAge scores DNA methylation and clinical chemistry against a
+catalogue of 161 published aging clocks. The numerical work happens in
+one Python core that this package calls through reticulate, so an R
+result and a Python result are the same bits rather than two
+implementations that agree approximately.
+
+## Setup, once
+
+Docker is the supported path. One image carries R, this package, the
+Python core, the CLI and all 32 bundled clocks at pinned versions, so
+the same input gives the same numbers on your machine and on a
+reviewer’s. A plain `sh` fence, since this runs in a terminal rather
+than in R:
+
+``` sh
+git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
+docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
+
+# an R session with FALCONAge already installed
+docker run --rm -it -v "$PWD:/work" -w /work falconage:1.0.0-cpu R
+
+# or prove the install by running the R suite
+docker run --rm -v "$PWD:/work" -w /work falconage:1.0.0-cpu \
+  Rscript -e 'testthat::test_local("r")'
+```
+
+On Windows PowerShell write `"${PWD}"` in place of `"$PWD"`.
+
+If you would rather install into your own R library, FALCONAge is not on
+CRAN yet, so both halves install from GitHub. The R package is in the
+`r/` subdirectory, hence `subdir`. Again a plain fence, so `remotes` and
+`pak` do not become declared dependencies of a package that only
+mentions them:
+
+``` r
+
+remotes::install_github("bhagesh-h/FALCONAge", subdir = "r")
+# or, resolving dependencies better and taking the subdirectory inline:
+pak::pak("bhagesh-h/FALCONAge/r")
+```
+
+``` r
+
+library(FALCONAge)
+falconage_install()   # creates a managed Python environment; a few minutes
+falconage_config()    # what resolved: versions, devices, registry size
+```
+
+[`falconage_install()`](https://bhagesh-h.github.io/FALCONAge/r/reference/falconage_install.md)
+fetches the Python core from the same GitHub tag this package was built
+from, so the two halves cannot drift - which matters here more than
+usual, because the test suite asserts that R and Python return the same
+bits, and a mismatched pair fails that assertion in a way that reads as
+a numerical bug rather than as version skew. Inside the Docker image the
+environment is already built, so
+[`falconage_install()`](https://bhagesh-h.github.io/FALCONAge/r/reference/falconage_install.md)
+is not needed there.
+
+Every code chunk below is identical in both, and
+[`falconage_config()`](https://bhagesh-h.github.io/FALCONAge/r/reference/falconage_config.md)
+is the first thing to run when anything looks wrong. It reports the
+interpreter, the registry version, and how many clocks are usable:
+
+    FALCONAge 1.0.0
+      registry     1.1.0 (161 clocks)
+      tiers        A 35 ship - B 98 need a traced source - C 28 scaffold only
+      devices      cpu
+
+## Scoring
+
+``` r
+
+d   <- prepare(read_betas("betas.csv"))
+res <- score(d, clocks = "compatible")
+
+summary(res)
+as.data.frame(res)                  # samples x clocks
+as.data.frame(res, form = "long")   # one row per sample per clock, with the scale
+```
+
+`clocks = "compatible"` scores what this dataset can support and reports
+the rest as skipped with a reason. Naming clocks explicitly is
+different: then every one must work, because an explicit request should
+never be dropped quietly.
+
+``` r
+
+coverage(res)     # per-clock feature coverage and skip reasons
+manifest(res)     # versions, device, and the SHA-256 of every coefficient file used
+```
+
+## Age acceleration, and which convention you mean
+
+The three conventions disagree by several years on the same data, and
+papers frequently do not say which they used.
+
+``` r
+
+acceleration(res, method = "absolute")      # predicted - chronological
+acceleration(res, method = "residual")      # residual of predicted on chronological
+acceleration(res, method = "within_group", group = "dataset")
+```
+
+Absolute is interpretable in years and carries the clock’s own bias: a
+clock five years high on everybody gives everybody five years of
+acceleration. Residual removes that bias, and removes any real
+cohort-wide effect with it. Within-group is what the AA2 benchmark
+needs - it asks whether cases accelerate relative to *their own*
+controls.
+
+Ask for acceleration on a pace-of-aging clock and it refuses:
+
+``` r
+
+acceleration(res, clocks = "dunedinpoam38")
+#> Error: 'acceleration' is not defined for dunedinpoam38, whose output is
+#>   pace_ratio (biological years per chronological year).
+#>   A pace of aging is already a rate; subtracting chronological age from it is
+#>   a units error, not a conservative choice.
+```
+
+That refusal is the point. A wrong number in a column of numbers is
+invisible.
+
+## The clock catalogue
+
+``` r
+
+list_clocks(tier = "A")             # ship with coefficients, run offline
+list_clocks(search = "mortality")
+clock_info("horvath2013")
+cite_clock("dnamphenoage", "bibtex")
+```
+
+Twenty-eight clocks are scaffolds: the model, the feature list, the
+transform chain and the expected shapes all ship, but the coefficients
+are research-use-only and are not ours to distribute.
+[`clock_info()`](https://bhagesh-h.github.io/FALCONAge/r/reference/clock_info.md)
+on one says why, where to obtain a file, and which open clocks answer
+the same question.
+
+``` r
+
+register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
+score(d, clocks = "grimage2")
+```
+
+## Clinical chemistry, and units
+
+``` r
+
+d <- read_clinical("nhanes.csv", units = list(
+  albumin = "g/L", creatinine = "umol/L", glucose = "mmol/L", crp = "mg/dL",
+  lymphocyte_percent = "%", mean_cell_volume = "fL",
+  red_cell_distribution_width = "%", alkaline_phosphatase = "U/L",
+  white_blood_cell_count = "10^3/uL", age = "years"))
+
+score(d, clocks = "phenoage")
+```
+
+Units are required and never guessed. Albumin at 4.2 is g/dL and albumin
+at 42 is g/L; both are clinically normal, and PhenoAge fitted on one
+returns nonsense for the other. No range check can separate them, so the
+only correct behaviour is to ask.
+
+KDM and homeostatic dysregulation have no fixed coefficients at all -
+they are defined relative to a reference cohort:
+
+``` r
+
+ref <- fit_kdm(nhanes3, markers = markers)
+score(d, clocks = "kdm", reference = ref)
+```
+
+## Benchmarking
+
+``` r
+
+res <- combine(list(r1, r2, r3), keys = c("GSE1", "GSE2", "GSE3"))
+b   <- run_benchmark(res, condition_col = "condition", control = "HC",
+                     dataset_col = "dataset")
+b$summary
+```
+
+Median absolute error against chronological age is reported but never
+ranked on: a perfect chronological oracle would score best on it and be
+useless, because it would have no age acceleration left to detect
+anything with.
+
+## Reporting
+
+``` r
+
+write_results(res, "results/")
+report(res, "report.html", group = "condition")
+```
