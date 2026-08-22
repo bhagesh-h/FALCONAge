@@ -147,8 +147,35 @@ LANDSCAPE_MIN_COLS = 6
 #: into portrait costs more in height than the rotation costs in page turns.
 LANDSCAPE_WIDTH_FACTOR = 2.5
 
-LANDSCAPE_OPEN = "```{=typst}\n#set page(flipped: true)\n```\n\n"
-LANDSCAPE_CLOSE = "\n```{=typst}\n#set page(flipped: false)\n```\n"
+#: Type size against column count, for a table on a rotated page. A landscape
+#: text block is about 648pt, so fifteen columns get 43pt each: at the 9pt the
+#: rest of the document's tables use, that is eight characters, and `methylation`
+#: and `chronological` do not fit in eight characters. They printed over the next
+#: column. Rotation had already been spent; the only thing left to give is type
+#: size, which is what the sibling project's `\footnotesize` does on the same
+#: problem.
+COLUMN_SIZES = ((12, 6.5), (9, 7.0), (7, 8.0))
+DEFAULT_TABLE_PT = 9.0
+
+
+def table_pt(cols: int) -> float:
+    for threshold, size in COLUMN_SIZES:
+        if cols >= threshold:
+            return size
+    return DEFAULT_TABLE_PT
+
+
+def landscape_open(cols: int) -> str:
+    return ("```{=typst}\n"
+            "#set page(flipped: true)\n"
+            f"#show table: set text(size: {table_pt(cols)}pt)\n"
+            "```\n")
+
+
+LANDSCAPE_CLOSE = ("\n```{=typst}\n"
+                   "#set page(flipped: false)\n"
+                   f"#show table: set text(size: {DEFAULT_TABLE_PT}pt)\n"
+                   "```\n")
 
 #: A pipe that is part of a cell's text rather than a column separator. The
 #: catalogue writes `\|coefficient\|` for absolute value, and counting those as
@@ -184,7 +211,26 @@ def table_cells(block: list[str]) -> list[list[str]]:
 #: overruns its column and prints on top of the neighbouring cell. That is the
 #: overlap that survives rotation, because no amount of extra page width helps a
 #: token that is never allowed to break.
-LONG_TOKEN = re.compile(r"[^\s|]{25,}")
+LONG_TOKEN = re.compile(r"[^\s|]{13,}")
+
+#: Below this length a token is only softened when it looks like an identifier
+#: rather than a word. `chronological` is thirteen characters and breaking it at
+#: a zero-width space gives "chronologi cal" with nothing to show a break
+#: happened; hyphenation gives "chrono-logical", which is what a reader expects.
+#: So ordinary words are left to hyphenate and only identifiers are cut, until a
+#: token is long enough that it cannot be a word in this documentation.
+ALWAYS_SOFTEN_AT = 18
+#: What makes a token an identifier rather than a word. `grimage2loga1c` and
+#: `mammalianskin2` are the cases: fourteen characters, no separator, and a digit
+#: that no English word has.
+IDENTIFIERISH = re.compile(r"[\d_]")
+
+#: Longest run with no break opportunity that a narrow column can hold. The
+#: deconvolution ids are the case that forced this: `deconvolutebloodepicneutrophil`
+#: is thirty characters of lowercase with no separator anywhere in it, so
+#: breaking at separators had nothing to work with and the cell printed over the
+#: year beside it. An ugly break is better than a collision.
+MAX_UNBROKEN_RUN = 10
 #: U+200B. Invisible, zero width, and a legal break point. Inserting it after the
 #: separators inside a long identifier lets the cell wrap at a readable place
 #: rather than at an arbitrary glyph.
@@ -205,9 +251,45 @@ def soften_long_tokens(row: str) -> str:
         # breaks the link if anybody copies it out of the PDF.
         if "://" in token:
             return token
-        return re.sub(r"([_\-./])", r"\1" + ZWSP, token)
+        if len(token) < ALWAYS_SOFTEN_AT and not IDENTIFIERISH.search(token):
+            return token
+        parts = re.sub(r"([_\-./])", r"\1" + ZWSP, token).split(ZWSP)
+        out = []
+        for part in parts:
+            if len(part) > MAX_UNBROKEN_RUN:
+                part = ZWSP.join(part[i:i + MAX_UNBROKEN_RUN]
+                                 for i in range(0, len(part), MAX_UNBROKEN_RUN))
+            out.append(part)
+        return ZWSP.join(out)
 
     return LONG_TOKEN.sub(fix, row)
+
+
+#: Anything that means the heading above is introducing something else.
+STRUCTURAL = ("|", "```", ":::", "![")
+
+
+def landscape_starts_at(out: list[str], lookback: int = 10) -> int:
+    """Where the rotated page should begin, so a heading keeps its table.
+
+    A section heading and the sentence under it belong with the table they
+    introduce. `#set page(flipped: true)` starts a new page, so emitting it
+    immediately before the table strands the heading at the top of a portrait
+    page with the rest of it blank and the table overleaf: which is exactly what
+    "Tier B: 87 clocks" was doing. Pulling the opening back to the heading puts
+    the three on one rotated page.
+    """
+    i, seen = len(out) - 1, 0
+    while i >= 0 and seen < lookback:
+        line = out[i]
+        if line.strip():
+            seen += 1
+            if re.match(r"^#{1,6} ", line):
+                return i
+            if line.lstrip().startswith(STRUCTURAL):
+                break
+        i -= 1
+    return len(out)
 
 
 def natural_width(rows: list[list[str]]) -> int:
@@ -331,7 +413,13 @@ TYPST_PREAMBLE = f"""```{{=typst}}
   stroke: (_, y) => (bottom: if y == 0 {{ 0.7pt + ink }} else {{ 0.3pt + luma(190) }}),
 )
 #show table: set text(size: 9pt)
-#show table.cell: set par(justify: false, leading: 0.5em)
+// Hyphenation is off by default and is what lets an ordinary long word break.
+// In a fifteen-column table a column is eight characters wide, and `methylation`
+// and `chronological` have to break somewhere or they print over the neighbour.
+// Only inside tables: hyphenating the body text as well would be a different
+// decision and this one is forced.
+#show table.cell: set par(justify: false, leading: 0.5em, linebreaks: "optimized")
+#show table.cell: set text(hyphenate: true)
 #show table.cell.where(y: 0): set text(weight: "bold")
 
 // Long commands and long clock ids are the two things that run past a column.
@@ -383,9 +471,9 @@ def rotate_tables(markdown: str, soften: bool = True) -> tuple[str, int]:
             # Two lines is a header and its rule with no rows: not a table.
             if len(block) > 2 and needs_landscape(block):
                 count += 1
-                out.append("")
-                out.append(LANDSCAPE_OPEN.rstrip("\n"))
-                out.append("")
+                cols = max(len(r) for r in table_cells(block))
+                at = landscape_starts_at(out)
+                out[at:at] = ["", landscape_open(cols).rstrip("\n"), ""]
                 out.extend(block)
                 out.append(LANDSCAPE_CLOSE.strip("\n"))
                 out.append("")
