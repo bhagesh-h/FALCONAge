@@ -967,7 +967,7 @@ Rules:
 ![The four parts every clock has, and where implementations disagree](images/clock-anatomy.png)
 
 The shape is the field's, not this package's: the reviews that survey it describe
-the same four parts [[62]](references.qmd#ref-62) [[63]](references.qmd#ref-63).
+the same four parts [[59]](references.qmd#ref-59) [[60]](references.qmd#ref-60).
 
 Every clock in the registry is expressible as
 `select features → preprocess ops → architecture forward → postprocess ops`, with ten exceptions

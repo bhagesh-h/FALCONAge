@@ -20,162 +20,156 @@ faster than journal review, and a claim resting on one is worth knowing about.
 
 [1]{#ref-1}. de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. *Bioinformatics* 40(4):btae200 (2024). [https://doi.org/10.1093/bioinformatics/btae200](https://doi.org/10.1093/bioinformatics/btae200)
 
-[2]{#ref-2}. Computational Aging Lab. Introduction to Aging Biology, in *Computational Aging Course*. computationalaginglab.github.io/computational_aging_course/bio/intro_aging_biology.html
-
-[3]{#ref-3}. Table 1 of the pyaging paper (academic.oup.com/view-large/447873551), the 50-clock inventory as of publication; the registry has since grown to 173.
-
-[4]{#ref-4}. Yu D, Li M, Linghu G, Hu Y, Hajdarovic KH, Wang A, Singh R, Webb AE. CellBiAge: Improved single-cell age classification using data binarization. *Cell Reports* 42(12):113500 (2023). - PMC10791072. [https://doi.org/10.1016/j.celrep.2023.113500](https://doi.org/10.1016/j.celrep.2023.113500)
+[2]{#ref-2}. Yu D, Li M, Linghu G, Hu Y, Hajdarovic KH, Wang A, Singh R, Webb AE. CellBiAge: Improved single-cell age classification using data binarization. *Cell Reports* 42(12):113500 (2023). - PMC10791072. [https://doi.org/10.1016/j.celrep.2023.113500](https://doi.org/10.1016/j.celrep.2023.113500)
 
 
 ## Foundational clocks
 
-[5]{#ref-5}. Bocklandt S et al. Epigenetic predictor of age. *PLoS ONE* 6(6):e14821 (2011).
+[3]{#ref-3}. Bocklandt S et al. Epigenetic predictor of age. *PLoS ONE* 6(6):e14821 (2011). [https://doi.org/10.1371/journal.pone.0014821](https://doi.org/10.1371/journal.pone.0014821)
 
-[6]{#ref-6}. Hannum G et al. Genome-wide methylation profiles reveal quantitative views of human aging rates. *Mol Cell* 49(2):359–367 (2013).
+[4]{#ref-4}. Hannum G et al. Genome-wide methylation profiles reveal quantitative views of human aging rates. *Mol Cell* 49(2):359–367 (2013). [https://doi.org/10.1016/j.molcel.2012.10.016](https://doi.org/10.1016/j.molcel.2012.10.016)
 
-[7]{#ref-7}. Horvath S. DNA methylation age of human tissues and cell types. *Genome Biol* 14:R115 (2013).
+[5]{#ref-5}. Horvath S. DNA methylation age of human tissues and cell types. *Genome Biol* 14:R115 (2013). [https://doi.org/10.1186/gb-2013-14-10-r115](https://doi.org/10.1186/gb-2013-14-10-r115)
 
-[8]{#ref-8}. Weidner CI et al. Aging of blood can be tracked by DNA methylation changes at just three CpG sites. *Genome Biol* 15:R24 (2014).
+[6]{#ref-6}. Weidner CI et al. Aging of blood can be tracked by DNA methylation changes at just three CpG sites. *Genome Biol* 15:R24 (2014). [https://doi.org/10.1186/gb-2014-15-2-r24](https://doi.org/10.1186/gb-2014-15-2-r24)
 
-[9]{#ref-9}. Yang Z et al. Correlation of an epigenetic mitotic clock with cancer risk. *Genome Biol* 17:205 (2016). - epiTOC
+[7]{#ref-7}. Yang Z et al. Correlation of an epigenetic mitotic clock with cancer risk. *Genome Biol* 17:205 (2016). - epiTOC [https://doi.org/10.1186/s13059-016-1064-3](https://doi.org/10.1186/s13059-016-1064-3)
 
-[10]{#ref-10}. Levine ME et al. An epigenetic biomarker of aging for lifespan and healthspan. *Aging* 10(4):573–591 (2018). [https://doi.org/10.18632/aging.101414](https://doi.org/10.18632/aging.101414)
+[8]{#ref-8}. Levine ME et al. An epigenetic biomarker of aging for lifespan and healthspan. *Aging* 10(4):573–591 (2018). [https://doi.org/10.18632/aging.101414](https://doi.org/10.18632/aging.101414)
 
-[11]{#ref-11}. Liu Z, Kuo P-L, Horvath S, Crimmins E, Ferrucci L, Levine M. A new aging measure captures morbidity and mortality risk across diverse subpopulations from NHANES IV. *PLoS Med* 15(12):e1002718 (2018).
+[9]{#ref-9}. Liu Z, Kuo P-L, Horvath S, Crimmins E, Ferrucci L, Levine M. A new aging measure captures morbidity and mortality risk across diverse subpopulations from NHANES IV. *PLoS Med* 15(12):e1002718 (2018). [https://doi.org/10.1371/journal.pmed.1002760](https://doi.org/10.1371/journal.pmed.1002760)
 
-[12]{#ref-12}. Horvath S et al. Epigenetic clock for skin and blood cells. *Aging* 10(7):1758–1775 (2018).
+[10]{#ref-10}. Horvath S et al. Epigenetic clock for skin and blood cells. *Aging* 10(7):1758–1775 (2018). [https://doi.org/10.18632/aging.101508](https://doi.org/10.18632/aging.101508)
 
-[13]{#ref-13}. Lu AT et al. DNA methylation GrimAge strongly predicts lifespan and healthspan. *Aging* 11(2):303–327 (2019).
+[11]{#ref-11}. Lu AT et al. DNA methylation GrimAge strongly predicts lifespan and healthspan. *Aging* 11(2):303–327 (2019). [https://doi.org/10.18632/aging.101684](https://doi.org/10.18632/aging.101684)
 
-[14]{#ref-14}. Lu AT et al. DNA methylation GrimAge version 2. *Aging* 14(23):9484–9549 (2022).
+[12]{#ref-12}. Lu AT et al. DNA methylation GrimAge version 2. *Aging* 14(23):9484–9549 (2022). [https://doi.org/10.18632/aging.204434](https://doi.org/10.18632/aging.204434)
 
-[15]{#ref-15}. Zhang Q et al. Improved precision of epigenetic clock estimates across tissues and its implication for biological ageing. *Genome Med* 11:54 (2019).
+[13]{#ref-13}. Zhang Q et al. Improved precision of epigenetic clock estimates across tissues and its implication for biological ageing. *Genome Med* 11:54 (2019). [https://doi.org/10.1186/s13073-019-0667-1](https://doi.org/10.1186/s13073-019-0667-1)
 
-[16]{#ref-16}. Belsky DW et al. Quantification of the pace of biological aging in humans through a blood test, the DunedinPoAm DNA methylation algorithm. *eLife* 9:e54870 (2020).
+[14]{#ref-14}. Belsky DW et al. Quantification of the pace of biological aging in humans through a blood test, the DunedinPoAm DNA methylation algorithm. *eLife* 9:e54870 (2020). [https://doi.org/10.7554/elife.54870](https://doi.org/10.7554/elife.54870)
 
-[17]{#ref-17}. Belsky DW et al. DunedinPACE, a DNA methylation biomarker of the pace of aging. *eLife* 11:e73420 (2022).
+[15]{#ref-15}. Belsky DW et al. DunedinPACE, a DNA methylation biomarker of the pace of aging. *eLife* 11:e73420 (2022). [https://doi.org/10.7554/elife.73420](https://doi.org/10.7554/elife.73420)
 
-[18]{#ref-18}. Higgins-Chen AT et al. A computational solution for bolstering reliability of epigenetic clocks. *Nat Aging* 2:644–661 (2022). - PC clocks
+[16]{#ref-16}. Higgins-Chen AT et al. A computational solution for bolstering reliability of epigenetic clocks. *Nat Aging* 2:644–661 (2022). - PC clocks [https://doi.org/10.1038/s43587-022-00248-2](https://doi.org/10.1038/s43587-022-00248-2)
 
-[19]{#ref-19}. de Lima Camillo LP, Lapierre LR, Singh R. A pan-tissue DNA-methylation epigenetic clock based on deep learning. *npj Aging* 8:4 (2022). - AltumAge
+[17]{#ref-17}. de Lima Camillo LP, Lapierre LR, Singh R. A pan-tissue DNA-methylation epigenetic clock based on deep learning. *npj Aging* 8:4 (2022). - AltumAge [https://doi.org/10.1038/s41514-022-00085-y](https://doi.org/10.1038/s41514-022-00085-y)
 
-[20]{#ref-20}. Lu AT et al. Universal DNA methylation age across mammalian tissues. *Nat Aging* 3:1144–1166 (2023).
+[18]{#ref-18}. Lu AT et al. Universal DNA methylation age across mammalian tissues. *Nat Aging* 3:1144–1166 (2023). [https://doi.org/10.1038/s43587-023-00462-6](https://doi.org/10.1038/s43587-023-00462-6)
 
-[21]{#ref-21}. Ying K et al. Causality-enriched epigenetic age uncouples damage and adaptation. *Nat Aging* 4:231–246 (2024). - CausAge, DamAge, AdaptAge
+[19]{#ref-19}. Ying K et al. Causality-enriched epigenetic age uncouples damage and adaptation. *Nat Aging* 4:231–246 (2024). - CausAge, DamAge, AdaptAge [https://doi.org/10.1038/s43587-023-00557-0](https://doi.org/10.1038/s43587-023-00557-0)
 
-[22]{#ref-22}. Teschendorff AE et al. epiTOC2 and HypoClock. *Genome Med* 12:56 (2020).
+[20]{#ref-20}. Teschendorff AE. A comparison of epigenetic mitotic-like clocks for cancer risk prediction. *Genome Med* 12:56 (2020). The paper that introduces epiTOC2 and HypoClock, which is what this entry is cited for. [https://doi.org/10.1186/s13073-020-00752-3](https://doi.org/10.1186/s13073-020-00752-3)
 
-[23]{#ref-23}. Higgins-Chen AT, Levine ME et al. Systems Age: a single blood methylation test to quantify aging heterogeneity across 11 physiological systems. *Nat Aging* (2025). [https://doi.org/10.1038/s43587-025-00958-3](https://doi.org/10.1038/s43587-025-00958-3)
+[21]{#ref-21}. Higgins-Chen AT, Levine ME et al. Systems Age: a single blood methylation test to quantify aging heterogeneity across 11 physiological systems. *Nat Aging* (2025). [https://doi.org/10.1038/s43587-025-00958-3](https://doi.org/10.1038/s43587-025-00958-3)
 
 
 ## Non-methylation clocks
 
-[24]{#ref-24}. Meyer DH, Schumacher B. BiT age: a transcriptome-based aging clock near the theoretical limit of accuracy. *Aging Cell* 20:e13320 (2021).
+[22]{#ref-22}. Meyer DH, Schumacher B. BiT age: a transcriptome-based aging clock near the theoretical limit of accuracy. *Aging Cell* 20:e13320 (2021). [https://doi.org/10.1111/acel.13320](https://doi.org/10.1111/acel.13320)
 
-[25]{#ref-25}. Oh HS-H et al. Organ aging signatures in the plasma proteome track health and disease. *Nature* 624:164–172 (2023). [https://doi.org/10.1038/s41586-023-06802-1](https://doi.org/10.1038/s41586-023-06802-1)
+[23]{#ref-23}. Oh HS-H et al. Organ aging signatures in the plasma proteome track health and disease. *Nature* 624:164–172 (2023). [https://doi.org/10.1038/s41586-023-06802-1](https://doi.org/10.1038/s41586-023-06802-1)
 
-[26]{#ref-26}. Goeminne LJE et al. Plasma protein-based organ-specific aging and mortality models unveil diseases as accelerated aging of organismal systems. *Cell Metab* 37(1):205–222.e6 (2025). [https://doi.org/10.1016/j.cmet.2024.10.005](https://doi.org/10.1016/j.cmet.2024.10.005)
+[24]{#ref-24}. Goeminne LJE et al. Plasma protein-based organ-specific aging and mortality models unveil diseases as accelerated aging of organismal systems. *Cell Metab* 37(1):205–222.e6 (2025). [https://doi.org/10.1016/j.cmet.2024.10.005](https://doi.org/10.1016/j.cmet.2024.10.005)
 
-[27]{#ref-27}. Tyshkovskiy A, Kholdina D, Davitadze M et al. Universal transcriptomic hallmarks of mammalian ageing and mortality. *Nature* 654(8117):173–188 (2026). [https://doi.org/10.1038/s41586-026-10542-3](https://doi.org/10.1038/s41586-026-10542-3)
+[25]{#ref-25}. Tyshkovskiy A, Kholdina D, Davitadze M et al. Universal transcriptomic hallmarks of mammalian ageing and mortality. *Nature* 654(8117):173–188 (2026). [https://doi.org/10.1038/s41586-026-10542-3](https://doi.org/10.1038/s41586-026-10542-3)
 
-[28]{#ref-28}. Sun ED, Zhou OY, Hauptschein M, Rappoport N, Xu L, Navarro Negredo P, Ling L, Rando TA, Zou J, Brunet A. Spatial transcriptomic clocks reveal cell proximity effects in brain ageing. *Nature* 638:160–171 (2025). [https://doi.org/10.1038/s41586-024-08334-8](https://doi.org/10.1038/s41586-024-08334-8)
+[26]{#ref-26}. Sun ED, Zhou OY, Hauptschein M, Rappoport N, Xu L, Navarro Negredo P, Ling L, Rando TA, Zou J, Brunet A. Spatial transcriptomic clocks reveal cell proximity effects in brain ageing. *Nature* 638:160–171 (2025). [https://doi.org/10.1038/s41586-024-08334-8](https://doi.org/10.1038/s41586-024-08334-8)
 
-[29]{#ref-29}. Li W et al. Single-cell immune aging clocks reveal inter-individual heterogeneity during infection and vaccination. *Nat Aging* (2025). [https://doi.org/10.1038/s43587-025-00819-z](https://doi.org/10.1038/s43587-025-00819-z)
+[27]{#ref-27}. Li W et al. Single-cell immune aging clocks reveal inter-individual heterogeneity during infection and vaccination. *Nat Aging* (2025). [https://doi.org/10.1038/s43587-025-00819-z](https://doi.org/10.1038/s43587-025-00819-z)
 
-[30]{#ref-30}. Mao S et al. SCALE: Single Cell Aging Level Estimator. github.com/ChengLiLab/SCALE
+[28]{#ref-28}. Trapp A, Kerepesi C, Gladyshev VN. Profiling epigenetic age in single cells. *Nat Aging* 1:1189–1201 (2021). - scAge [https://doi.org/10.1038/s43587-021-00134-3](https://doi.org/10.1038/s43587-021-00134-3)
 
-[31]{#ref-31}. Trapp A, Kerepesi C, Gladyshev VN. Profiling epigenetic age in single cells. *Nat Aging* 1:1189–1201 (2021). - scAge
+[29]{#ref-29}. Bonder MJ et al. scEpiAge: an age predictor highlighting single-cell ageing heterogeneity in mouse blood. *Nat Commun* 15:7567 (2024). [https://doi.org/10.1038/s41467-024-51833-5](https://doi.org/10.1038/s41467-024-51833-5)
 
-[32]{#ref-32}. Bonder MJ et al. scEpiAge: an age predictor highlighting single-cell ageing heterogeneity in mouse blood. *Nat Commun* 15:7567 (2024).
+[30]{#ref-30}. Ren X, Kuan PF. RNAAgeCalc: a multi-tissue transcriptional age calculator. *PLoS ONE* 15(8):e0237006 (2020). [https://doi.org/10.1371/journal.pone.0237006](https://doi.org/10.1371/journal.pone.0237006)
 
-[33]{#ref-33}. Ren X, Kuan PF. RNAAgeCalc: a multi-tissue transcriptional age calculator. *PLoS ONE* 15(8):e0237006 (2020).
+[31]{#ref-31}. Krištić J et al. Glycans are a novel biomarker of chronological and biological ages. *J Gerontol A* 69(7):779–789 (2014). [https://doi.org/10.1093/gerona/glt202](https://doi.org/10.1093/gerona/glt202)
 
-[34]{#ref-34}. Krištić J et al. Glycans are a novel biomarker of chronological and biological ages. *J Gerontol A* 69(7):779–789 (2014).
+[32]{#ref-32}. Putin E et al. Deep biomarkers of human aging. *Aging* 8(5):1021–1033 (2016). [https://doi.org/10.18632/aging.100968](https://doi.org/10.18632/aging.100968)
 
-[35]{#ref-35}. Putin E et al. Deep biomarkers of human aging. *Aging* 8(5):1021–1033 (2016).
+[33]{#ref-33}. Hao M et al. Gompertz law-based biological age (GOLD BioAge). *Adv Sci* 12(32) (2025). [https://doi.org/10.1002/advs.202501765](https://doi.org/10.1002/advs.202501765)
 
-[36]{#ref-36}. Hao M et al. Gompertz law-based biological age (GOLD BioAge). *Adv Sci* 12(32) (2025).
-
-[37]{#ref-37}. Chen Q, Dwaraka VB, Carreras-Gallo N et al. OMICmAge quantifies biological age by integrating multi-omics with electronic medical records. *Nat Aging* (2026). [https://doi.org/10.1038/s43587-026-01073-7](https://doi.org/10.1038/s43587-026-01073-7)
+[34]{#ref-34}. Chen Q, Dwaraka VB, Carreras-Gallo N et al. OMICmAge quantifies biological age by integrating multi-omics with electronic medical records. *Nat Aging* (2026). [https://doi.org/10.1038/s43587-026-01073-7](https://doi.org/10.1038/s43587-026-01073-7)
 
 
 ## Methods, tooling, benchmarking
 
-[38]{#ref-38}. Kwon D, Belsky DW. A toolkit for quantification of biological age from blood chemistry and organ function test data: BioAge. *GeroScience* 43:2795–2808 (2021).
+[35]{#ref-35}. Kwon D, Belsky DW. A toolkit for quantification of biological age from blood chemistry and organ function test data: BioAge. *GeroScience* 43:2795–2808 (2021). [https://doi.org/10.1007/s11357-021-00480-5](https://doi.org/10.1007/s11357-021-00480-5)
 
-[39]{#ref-39}. Kriukov D, Efimov E, Kuzmina EA, Khrameeva EE, Dylov DV. ComputAgeBench: epigenetic aging clocks benchmark. bioRxiv 2024.06.06.597715; KDD '25.
+[36]{#ref-36}. Kriukov D, Efimov E, Kuzmina EA, Khrameeva EE, Dylov DV. ComputAgeBench: epigenetic aging clocks benchmark. bioRxiv 2024.06.06.597715; KDD '25. [https://doi.org/10.1101/2024.06.06.597715](https://doi.org/10.1101/2024.06.06.597715)
 
-[40]{#ref-40}. Ying K et al. Biolearn, an open-source library for biomarkers of aging / A unified framework for systematic curation and evaluation of aging biomarkers. *Nat Aging* (2025). [https://doi.org/10.1038/s43587-025-00987-y](https://doi.org/10.1038/s43587-025-00987-y)
+[37]{#ref-37}. Ying K et al. Biolearn, an open-source library for biomarkers of aging / A unified framework for systematic curation and evaluation of aging biomarkers. *Nat Aging* (2025). [https://doi.org/10.1038/s43587-025-00987-y](https://doi.org/10.1038/s43587-025-00987-y)
 
-[41]{#ref-41}. TranslAGE: a comprehensive platform for systematic validation of epigenetic aging biomarkers. bioRxiv 2025.10.16.682960.
+[38]{#ref-38}. TranslAGE: a comprehensive platform for systematic validation of epigenetic aging biomarkers. bioRxiv 2025.10.16.682960. [https://doi.org/10.1101/2025.10.16.682960](https://doi.org/10.1101/2025.10.16.682960)
 
-[42]{#ref-42}. Biological versus technical reliability of epigenetic clocks and implications for disease prognosis and intervention response. bioRxiv 2025.10.13.682176.
+[39]{#ref-39}. Biological versus technical reliability of epigenetic clocks and implications for disease prognosis and intervention response. bioRxiv 2025.10.13.682176. [https://doi.org/10.1101/2025.10.13.682176](https://doi.org/10.1101/2025.10.13.682176)
 
-[43]{#ref-43}. Teschendorff AE. Epigenetic ageing clocks: statistical methods and emerging computational challenges. *Nat Rev Genet* 26 (2025). [https://doi.org/10.1038/s41576-024-00807-w](https://doi.org/10.1038/s41576-024-00807-w)
+[40]{#ref-40}. Teschendorff AE. Epigenetic ageing clocks: statistical methods and emerging computational challenges. *Nat Rev Genet* 26 (2025). [https://doi.org/10.1038/s41576-024-00807-w](https://doi.org/10.1038/s41576-024-00807-w)
 
-[44]{#ref-44}. Zoller JA, Horvath S. MammalMethylClock R package. bioRxiv 2023.09.06.556506.
+[41]{#ref-41}. Zoller JA, Horvath S. MammalMethylClock R package. bioRxiv 2023.09.06.556506. [https://doi.org/10.1101/2023.09.06.556506](https://doi.org/10.1101/2023.09.06.556506)
 
-[45]{#ref-45}. Thrush KL, Higgins-Chen AT et al. R methylCIPHER: a methylation clock investigational package. bioRxiv 2022.07.13.499978.
+[42]{#ref-42}. Thrush KL, Higgins-Chen AT et al. R methylCIPHER: a methylation clock investigational package. bioRxiv 2022.07.13.499978. [https://doi.org/10.1101/2022.07.13.499978](https://doi.org/10.1101/2022.07.13.499978)
 
-[46]{#ref-46}. de Lima Camillo LP, Horvath S, Wang B et al. CpGPT: a foundation model for DNA methylation. bioRxiv 2024.10.24.619766.
+[43]{#ref-43}. de Lima Camillo LP, Horvath S, Wang B et al. CpGPT: a foundation model for DNA methylation. bioRxiv 2024.10.24.619766. [https://doi.org/10.1101/2024.10.24.619766](https://doi.org/10.1101/2024.10.24.619766)
 
-[47]{#ref-47}. Varshavsky M et al. Accurate age prediction from blood using a small set of DNA methylation sites and a cohort-based machine learning algorithm. *Cell Rep Methods* 3(9):100567 (2023). - GP-age
+[44]{#ref-44}. Varshavsky M et al. Accurate age prediction from blood using a small set of DNA methylation sites and a cohort-based machine learning algorithm. *Cell Rep Methods* 3(9):100567 (2023). - GP-age [https://doi.org/10.1016/j.crmeth.2023.100567](https://doi.org/10.1016/j.crmeth.2023.100567)
 
-[48]{#ref-48}. Liu Z et al. Underlying features of epigenetic aging clocks in vivo and in vitro. *Aging Cell* 19(10):e13229 (2020).
+[45]{#ref-45}. Liu Z et al. Underlying features of epigenetic aging clocks in vivo and in vitro. *Aging Cell* 19(10):e13229 (2020). [https://doi.org/10.1111/acel.13229](https://doi.org/10.1111/acel.13229)
 
-[49]{#ref-49}. Porter HL et al. Many chronological aging clocks can be found throughout the epigenome. *Aging Cell* 20:e13492 (2021).
+[46]{#ref-46}. Porter HL et al. Many chronological aging clocks can be found throughout the epigenome. *Aging Cell* 20:e13492 (2021). [https://doi.org/10.1111/acel.13492](https://doi.org/10.1111/acel.13492)
 
-[50]{#ref-50}. Nelson PG, Promislow DEL, Masel J. Biomarkers for aging identified in cross-sectional studies tend to be non-causative. *J Gerontol A* 75(3):466–472 (2020).
+[47]{#ref-47}. Nelson PG, Promislow DEL, Masel J. Biomarkers for aging identified in cross-sectional studies tend to be non-causative. *J Gerontol A* 75(3):466–472 (2020). [https://doi.org/10.1093/gerona/glz174](https://doi.org/10.1093/gerona/glz174)
 
-[51]{#ref-51}. Ying K et al. ClockBase: a comprehensive platform for biological age profiling in human and mouse. bioRxiv 2023.02.28.530532.
+[48]{#ref-48}. Ying K et al. ClockBase: a comprehensive platform for biological age profiling in human and mouse. bioRxiv 2023.02.28.530532. [https://doi.org/10.1101/2023.02.28.530532](https://doi.org/10.1101/2023.02.28.530532)
 
-[52]{#ref-52}. Vasileiou et al. Multi-omics signatures of organ clocks in biological aging and disease. *Aging Cell* (2026). [https://doi.org/10.1111/acel.70518](https://doi.org/10.1111/acel.70518)
+[49]{#ref-49}. Vasileiou et al. Multi-omics signatures of organ clocks in biological aging and disease. *Aging Cell* (2026). [https://doi.org/10.1111/acel.70518](https://doi.org/10.1111/acel.70518)
 
-[53]{#ref-53}. Liu et al. The evolving landscape of clinical aging clocks: from epigenetic to multi-omics integration. *Aging Cell* (2026). [https://doi.org/10.1111/acel.70579](https://doi.org/10.1111/acel.70579)
+[50]{#ref-50}. Liu et al. The evolving landscape of clinical aging clocks: from epigenetic to multi-omics integration. *Aging Cell* (2026). [https://doi.org/10.1111/acel.70579](https://doi.org/10.1111/acel.70579)
 
-[54]{#ref-54}. Turning back time: a comprehensive list of interventions that decrease next-generation epigenetic aging clocks in humans. *Front Genet* (2026). [https://doi.org/10.3389/fgene.2026.1836446](https://doi.org/10.3389/fgene.2026.1836446)
+[51]{#ref-51}. Turning back time: a comprehensive list of interventions that decrease next-generation epigenetic aging clocks in humans. *Front Genet* (2026). [https://doi.org/10.3389/fgene.2026.1836446](https://doi.org/10.3389/fgene.2026.1836446)
 
-[55]{#ref-55}. Waziry R et al. Effect of long-term caloric restriction on DNA methylation measures of biological aging in healthy adults from the CALERIE trial. *Nat Aging* 3:248–257 (2023).
+[52]{#ref-52}. Waziry R et al. Effect of long-term caloric restriction on DNA methylation measures of biological aging in healthy adults from the CALERIE trial. *Nat Aging* 3:248–257 (2023). [https://doi.org/10.1038/s43587-022-00357-y](https://doi.org/10.1038/s43587-022-00357-y)
 
-[56]{#ref-56}. DeepStrataAge: an interpretable deep-learning clock. *npj Aging* (2026). [https://doi.org/10.1038/s41514-026-00358-w](https://doi.org/10.1038/s41514-026-00358-w)
+[53]{#ref-53}. DeepStrataAge: an interpretable deep-learning clock. *npj Aging* (2026). [https://doi.org/10.1038/s41514-026-00358-w](https://doi.org/10.1038/s41514-026-00358-w)
 
-[57]{#ref-57}. GraphAge: unleashing the power of graph neural networks to decode epigenetic aging. *PNAS Nexus* 4(6):pgaf177 (2025).
+[54]{#ref-54}. GraphAge: unleashing the power of graph neural networks to decode epigenetic aging. *PNAS Nexus* 4(6):pgaf177 (2025). [https://doi.org/10.1093/pnasnexus/pgaf294](https://doi.org/10.1093/pnasnexus/pgaf294)
 
 
 ## Biology of aging
 
-[58]{#ref-58}. López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G. The hallmarks of aging. *Cell* 153(6):1194–1217 (2013).
+[55]{#ref-55}. López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G. The hallmarks of aging. *Cell* 153(6):1194–1217 (2013). [https://doi.org/10.1016/j.cell.2013.05.039](https://doi.org/10.1016/j.cell.2013.05.039)
 
-[59]{#ref-59}. López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G. Hallmarks of aging: an expanding universe. *Cell* 186(2):243–278 (2023).
+[56]{#ref-56}. López-Otín C, Blasco MA, Partridge L, Serrano M, Kroemer G. Hallmarks of aging: an expanding universe. *Cell* 186(2):243–278 (2023). [https://doi.org/10.1016/j.cell.2022.11.001](https://doi.org/10.1016/j.cell.2022.11.001)
 
-[60]{#ref-60}. Vijg J, Dong X. Pathogenic mechanisms of somatic mutation and genome mosaicism in aging. *Cell* 182(1):12–23 (2020).
+[57]{#ref-57}. Vijg J, Dong X. Pathogenic mechanisms of somatic mutation and genome mosaicism in aging. *Cell* 182(1):12–23 (2020). [https://doi.org/10.1016/j.cell.2020.06.024](https://doi.org/10.1016/j.cell.2020.06.024)
 
-[61]{#ref-61}. Cagan A et al. Somatic mutation rates scale with lifespan across mammals. *Nature* 604:517–524 (2022).
+[58]{#ref-58}. Cagan A et al. Somatic mutation rates scale with lifespan across mammals. *Nature* 604:517–524 (2022). [https://doi.org/10.1038/s41586-022-04618-z](https://doi.org/10.1038/s41586-022-04618-z)
 
-[62]{#ref-62}. Horvath S, Raj K. DNA methylation-based biomarkers and the epigenetic clock theory of ageing. *Nat Rev Genet* 19:371–384 (2018).
+[59]{#ref-59}. Horvath S, Raj K. DNA methylation-based biomarkers and the epigenetic clock theory of ageing. *Nat Rev Genet* 19:371–384 (2018). [https://doi.org/10.1038/s41576-018-0004-3](https://doi.org/10.1038/s41576-018-0004-3)
 
-[63]{#ref-63}. Field AE et al. DNA methylation clocks in aging: categories, causes, and consequences. *Mol Cell* 71(6):882–895 (2018).
+[60]{#ref-60}. Field AE et al. DNA methylation clocks in aging: categories, causes, and consequences. *Mol Cell* 71(6):882–895 (2018). [https://doi.org/10.1016/j.molcel.2018.08.008](https://doi.org/10.1016/j.molcel.2018.08.008)
 
-[64]{#ref-64}. Moqri M et al. Biomarkers of aging for the identification and evaluation of longevity interventions. *Cell* 186(18):3758–3775 (2023).
+[61]{#ref-61}. Moqri M et al. Biomarkers of aging for the identification and evaluation of longevity interventions. *Cell* 186(18):3758–3775 (2023). [https://doi.org/10.1016/j.cell.2023.08.003](https://doi.org/10.1016/j.cell.2023.08.003)
 
 
 ## Sources traced while implementing the clocks they describe
 
-[65]{#ref-65}. Shireby GL, Davies JP, Francis PT et al. Recalibrating the epigenetic clock: implications for assessing biological age in the human cortex. *Brain* 143(12):3763-3775 (2020). Supplementary Table 3 carries the 347 weights the cortical clock uses here. [https://doi.org/10.1093/brain/awaa334](https://doi.org/10.1093/brain/awaa334)
+[62]{#ref-62}. Shireby GL, Davies JP, Francis PT et al. Recalibrating the epigenetic clock: implications for assessing biological age in the human cortex. *Brain* 143(12):3763-3775 (2020). Supplementary Table 3 carries the 347 weights the cortical clock uses here. [https://doi.org/10.1093/brain/awaa334](https://doi.org/10.1093/brain/awaa334)
 
-[66]{#ref-66}. McCartney DL, Hillary RF, Stevenson AJ et al. Epigenetic prediction of complex traits and death. *Genome Biology* 19:136 (2018). Additional file 1 carries the ten EpiScore weight sets. [https://doi.org/10.1186/s13059-018-1514-1](https://doi.org/10.1186/s13059-018-1514-1)
+[63]{#ref-63}. McCartney DL, Hillary RF, Stevenson AJ et al. Epigenetic prediction of complex traits and death. *Genome Biology* 19:136 (2018). Additional file 1 carries the ten EpiScore weight sets. [https://doi.org/10.1186/s13059-018-1514-1](https://doi.org/10.1186/s13059-018-1514-1)
 
-[67]{#ref-67}. Horvath S. Putting epigenetic aging clocks on trial. *Nature Medicine* (2026). Asks whether a methylation clock behaves as a surrogate endpoint should, which is the question a score has to survive before it is used to judge an intervention. [https://doi.org/10.1038/s41591-026-04524-1](https://doi.org/10.1038/s41591-026-04524-1)
+[64]{#ref-64}. Horvath S. Putting epigenetic aging clocks on trial. *Nature Medicine* (2026). Asks whether a methylation clock behaves as a surrogate endpoint should, which is the question a score has to survive before it is used to judge an intervention. [https://doi.org/10.1038/s41591-026-04524-1](https://doi.org/10.1038/s41591-026-04524-1)
 
 
 ## Mechanism, limits and translation
 
-[68]{#ref-68}. Tong H, Dwaraka VB, Chen Q et al. Quantifying the stochastic component of epigenetic aging. *Nature Aging* 4(6):886-901 (2024). Across 22,770 blood samples from 25 cohorts, 66 to 75 per cent of Horvath's accuracy is reproducible by drift alone, rising to about 90 per cent for Zhang and falling to about 63 per cent for PhenoAge. [https://doi.org/10.1038/s43587-024-00600-8](https://doi.org/10.1038/s43587-024-00600-8)
+[65]{#ref-65}. Tong H, Dwaraka VB, Chen Q et al. Quantifying the stochastic component of epigenetic aging. *Nature Aging* 4(6):886-901 (2024). Across 22,770 blood samples from 25 cohorts, 66 to 75 per cent of Horvath's accuracy is reproducible by drift alone, rising to about 90 per cent for Zhang and falling to about 63 per cent for PhenoAge. [https://doi.org/10.1038/s43587-024-00600-8](https://doi.org/10.1038/s43587-024-00600-8)
 
-[69]{#ref-69}. Tarkhov AE, Denisov KA, Fedichev PO. Aging clocks based on accumulating stochastic variation. *Nature Aging* 4(6):871-885 (2024). [https://doi.org/10.1038/s43587-024-00619-x](https://doi.org/10.1038/s43587-024-00619-x)
+[66]{#ref-66}. Tarkhov AE, Denisov KA, Fedichev PO. Aging clocks based on accumulating stochastic variation. *Nature Aging* 4(6):871-885 (2024). [https://doi.org/10.1038/s43587-024-00619-x](https://doi.org/10.1038/s43587-024-00619-x)
 
-[70]{#ref-70}. Meyer DH, Schumacher B. Epigenetic drift underlies epigenetic clock signals, but displays distinct responses to lifespan interventions, development, and cellular dedifferentiation. *Aging* 16(2) (2024). [https://doi.org/10.18632/aging.205503](https://doi.org/10.18632/aging.205503)
+[67]{#ref-67}. Meyer DH, Schumacher B. Epigenetic drift underlies epigenetic clock signals, but displays distinct responses to lifespan interventions, development, and cellular dedifferentiation. *Aging* 16(2) (2024). [https://doi.org/10.18632/aging.205503](https://doi.org/10.18632/aging.205503)
 
-[71]{#ref-71}. From population science to the clinic? Limits of epigenetic clocks as personal biomarkers. *Epigenomics* 17:1447-1461 (2025). PMC12714307. The source of the cross-tissue 20 to 30 year error figure and the replicate spread this package cites at score time.
+[68]{#ref-68}. From population science to the clinic? Limits of epigenetic clocks as personal biomarkers. *Epigenomics* 17:1447-1461 (2025). PMC12714307. The source of the cross-tissue 20 to 30 year error figure and the replicate spread this package cites at score time. [https://doi.org/10.1080/17501911.2025.2603880](https://doi.org/10.1080/17501911.2025.2603880)
 
-[72]{#ref-72}. Fahy GM et al. Reversal of epigenetic aging and immunosenescent trends in humans. *Aging Cell* 18(6):e13028 (2019). The TRIIM trial: nine men, no control arm. [https://doi.org/10.1111/acel.13028](https://doi.org/10.1111/acel.13028)
+[69]{#ref-69}. Fahy GM et al. Reversal of epigenetic aging and immunosenescent trends in humans. *Aging Cell* 18(6):e13028 (2019). The TRIIM trial: nine men, no control arm. [https://doi.org/10.1111/acel.13028](https://doi.org/10.1111/acel.13028)

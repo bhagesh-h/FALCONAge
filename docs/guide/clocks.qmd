@@ -187,7 +187,7 @@ twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` col
 warning saying the check did not run.
 
 → [The science, §19.4](../science.qmd#specimen-type-is-not-metadata) for the twelve refusals and
-the measurements behind each. Reliability, technical against biological, is [[42]](../references.qmd#ref-42).
+the measurements behind each. Reliability, technical against biological, is [[39]](../references.qmd#ref-39).
 
 ## Availability
 

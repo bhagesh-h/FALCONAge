@@ -163,11 +163,11 @@ which is why a registry entry declares a `scale_type` and not only a unit.
 What a clock's output *means* is set by the outcome it was regressed on. Six families are in
 common use, and they are not variants of one quantity:
 
-- **Chronological-age clocks** (Horvath 2013 [[7]](references.qmd#ref-7), Hannum 2013 [[6]](references.qmd#ref-6)) are fitted to calendar age. Their error
+- **Chronological-age clocks** (Horvath 2013 [[5]](references.qmd#ref-5), Hannum 2013 [[4]](references.qmd#ref-4)) are fitted to calendar age. Their error
   bars are prediction error against a known truth.
-- **Mortality- and morbidity-trained clocks** (PhenoAge [[10]](references.qmd#ref-10), GrimAge [[13]](references.qmd#ref-13)) are fitted to a survival-weighted
+- **Mortality- and morbidity-trained clocks** (PhenoAge [[8]](references.qmd#ref-8), GrimAge [[11]](references.qmd#ref-11)) are fitted to a survival-weighted
   composite and then rescaled into years. The unit is years; the target was never age.
-- **Pace-of-aging clocks** (DunedinPACE [[17]](references.qmd#ref-17)) are fitted to the *rate of change* in organ-system
+- **Pace-of-aging clocks** (DunedinPACE [[15]](references.qmd#ref-15)) are fitted to the *rate of change* in organ-system
   biomarkers tracked longitudinally. Belsky and colleagues draw the distinction directly:
 
   > [Pace-of-aging measures capture] the rate of deterioration in system integrity occurring over a
@@ -176,11 +176,11 @@ common use, and they are not variants of one quantity:
   >
   > [Belsky et al., *eLife* 2022](https://doi.org/10.7554/eLife.73420)
 
-- **Mitotic clocks** (epiTOC2 [[22]](references.qmd#ref-22), StemTOC) estimate cumulative stem-cell divisions. The quantity is a
+- **Mitotic clocks** (epiTOC2 [[20]](references.qmd#ref-20), StemTOC) estimate cumulative stem-cell divisions. The quantity is a
   count, not elapsed time.
 - **Causality-enriched clocks** (CausAge, DamAge, AdaptAge) restrict features to CpGs with
   Mendelian-randomisation support, separating damaging from adaptive change
-  ([Ying et al., *Nature Aging* 2024](https://doi.org/10.1038/s43587-023-00557-0), [[21]](references.qmd#ref-21)).
+  ([Ying et al., *Nature Aging* 2024](https://doi.org/10.1038/s43587-023-00557-0), [[19]](references.qmd#ref-19)).
 - **Deconvolution models** return cell-type proportions, which are a composition and must sum to
   one.
 

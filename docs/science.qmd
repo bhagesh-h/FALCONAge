@@ -129,7 +129,7 @@ carry the same chronological age and very different division counts. This is
 why a division count is not reported in years and why subtracting a
 chronological age from one is refused: the quantity was never elapsed time.
 
-The 12 hallmarks (López-Otín 2013 [[58]](references.qmd#ref-58), updated 2023 [[59]](references.qmd#ref-59)) are the biological vocabulary the scores are
+The 12 hallmarks (López-Otín 2013 [[55]](references.qmd#ref-55), updated 2023 [[56]](references.qmd#ref-56)) are the biological vocabulary the scores are
 trying to summarise. Grouped as primary (damage), antagonistic (compensatory responses that
 turn harmful), integrative (system-level consequence). A hallmark must show age-associated
 manifestation, experimental acceleration of aging when worsened, and therapeutic reversibility.
@@ -1362,7 +1362,7 @@ error on healthy controls, measured on the same data, which is the correction
 that separates a clock that detects disease from a clock with a broken
 intercept.
 
-`computage` (Kriukov, Efimov, Kuzmina, Khrameeva, Dylov; bioRxiv 2024.06.06.597715; KDD '25) [[39]](references.qmd#ref-39).
+`computage` (Kriukov, Efimov, Kuzmina, Khrameeva, Dylov; bioRxiv 2024.06.06.597715; KDD '25) [[36]](references.qmd#ref-36).
 
 **Premise.** MAE against chronological age is the wrong metric because a perfect chronological
 oracle is useless. Instead, a good clock must show higher age acceleration in people with
@@ -2411,7 +2411,7 @@ once and cited by number from every page of this site. It reads the same in the
 PDF, where it is bound as the last chapter.
 
 Citations in this document are the bracketed numbers, for example
-[[7]](references.qmd#ref-7) for Horvath 2013. The numbering is global, so a
+[[5]](references.qmd#ref-5) for Horvath 2013. The numbering is global, so a
 source keeps its number wherever it appears.
 
 ## Appendix A - Full pyaging clock registry (173 clocks)
