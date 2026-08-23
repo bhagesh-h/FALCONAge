@@ -31,7 +31,7 @@ error per sample, and calibrates distribution-free prediction intervals against 
 
 It is one numerical core in Python, called from R through reticulate, so a result obtained in
 either language is the same bits rather than two implementations that agree approximately. The
-catalogue holds 161 clocks; 46 of them score offline, and the rest are documented with the reason
+catalogue holds 175 clocks; 46 of them score offline, and the rest are documented with the reason
 they cannot, which is licensing or untraced provenance rather than missing code.
 
 These are instruments for population research, not a clinical judgement about one person.
@@ -57,7 +57,7 @@ say what else it cannot do.
 
 **Output**
 
-- One score per sample per clock, for as many of the 161 catalogued clocks as your features support
+- One score per sample per clock, for as many of the 175 catalogued clocks as your features support
 - **A standard error on every score**, propagated from published per-probe reliability through each
   clock's own weights, and a distribution-free prediction interval
 - A coverage figure per clock, and what the probes you are missing cost in *years*
@@ -136,14 +136,14 @@ arithmetic to the Python core through reticulate, and the R suite asserts equali
 exactly zero rather than approximate agreement.
 
 ## The clock catalogue
-161 clocks, in three availability tiers. The tiers are about redistribution rights, not about
-whether the algorithm works, every architecture is implemented and tested regardless of tier.
+175 clocks, in three availability groups. Availability is about redistribution rights, not about
+whether the algorithm works: every architecture is implemented and tested whatever the group.
 
-| Tier | n | What you do |
+| Availability | n | What you do |
 |---|---:|---|
-| **A** | 46 | Nothing. Forty-three ship a weights file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
-| **B** | 87 | Catalogued, but no primary source for the numbers has been established yet, so nothing is bundled. |
-| **C** | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are research-use-only. |
+| `bundled` | 46 | Nothing. Forty-three ship a weights file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
+| `untraced` | 89 | Catalogued, but no primary source for the numbers has been established yet, so nothing is bundled. |
+| `licensed` | 40 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are research-use-only. |
 
 ```python
 fa.registry.load().filter(availability="A")
@@ -204,8 +204,8 @@ perform:
 
 | `scale_type` | n | What the number is | Units in the registry | Operations permitted |
 |---|---:|---|---|---|
-| `age_years` | 73 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
-| `relative_score` | 44 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
+| `age_years` | 77 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
+| `relative_score` | 54 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
 | `proportion` | 18 | A composition. The estimates are fractions of a whole and are constrained to sum to one. | proportion | compositional, correlate, difference, mean |
 | `divisions` | 10 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
 | `gestational_weeks` | 8 | An age, before birth. | weeks, days, units per week | acceleration, correlate, difference, mean, residual |
@@ -283,7 +283,7 @@ in full, with the algorithms and the reason each is or is not blocked.
   from the array manifests.
 - **It has no proteomic or transcriptomic clocks in the catalogue.** The readers and the full
   preparation chains ship; no entry declares either `data_type`, because every published model in
-  both families is licence-restricted and would enter as a tier C scaffold. Scoring a proteomic
+  both families is licence-restricted and would enter as a `licensed` scaffold. Scoring a proteomic
   matrix today refuses with "no clocks to score", which is accurate rather than broken.
 - **It does not correct dye bias by default.** The step exists and is opt-in. Measured on real
   IDATs our implementation moves the median beta by +0.10 to +0.12, because a correct correction
@@ -291,7 +291,7 @@ in full, with the algorithms and the reason each is or is not blocked.
 - **It has no foundation-model backend.** The `NeuralClock` architecture ships, safetensors only.
   CpGPT and MethylGPT are interesting here for zero-shot imputation and array conversion rather
   than as another age predictor.
-- **110 of the 161 catalogued clocks have no traced coefficient source.** A per-clock literature
+- **147 of the 175 catalogued clocks have no traced coefficient source.** A per-clock literature
   hunt, not a technical problem, and `primary_source_traced: false` is the honest record of it.
 
 Removed from this list, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
@@ -302,7 +302,7 @@ refusal.
 - [Getting started](guide/FALCONAge.qmd), install, score, interpret, in both languages.
 - [Choosing a clock](guide/clocks.qmd), by the question you asked, by what the scale permits, and
   by whether the coefficients transfer to your data at all.
-- [Clock catalogue](clocks.qmd), all 161, searchable.
+- [Clock catalogue](clocks.qmd), all 175, searchable.
 - [Python reference](reference/index.qmd) · [R reference](r/index.html)
 - [GPU support](gpu.md), what was verified on real hardware, and why `device="auto"` is CPU.
 

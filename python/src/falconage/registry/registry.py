@@ -1,4 +1,4 @@
-"""The clock registry: metadata, availability tiers, and coefficient resolution.
+"""The clock registry: metadata, availability, and coefficient resolution.
 
 The registry is a data artefact, not code. It ships inside the wheel as one
 YAML file plus a directory of coefficient CSVs, it carries its own version
@@ -7,20 +7,21 @@ produced it. A bug fix in the scoring loop must not silently change which
 numbers a result came from, and a coefficient correction must be visible even
 when no code changed.
 
-Three availability tiers, and the difference is about redistribution rights
+Three availability groups, and the difference is about redistribution rights
 rather than about difficulty:
 
-``A``
+``bundled``
     Coefficients ship in the wheel. Extracted from a named source, checksummed,
     and usable offline.
-``B``
-    Architecture and metadata ship; coefficients are fetched from the authors'
-    URL on first use and cached. Scoring one offline raises.
-``C``
+``untraced``
+    Architecture and metadata ship; no primary source for the numbers has been
+    established, so nothing is bundled. Scoring one raises and says what is
+    known about where the coefficients might be.
+``licensed``
     Scaffold only. The architecture is implemented and testable, the
-    coefficients are research-use-only or have no traceable public source, and
-    FALCONAge will not redistribute them. The error names where to obtain a
-    file and which open clocks answer the same question.
+    coefficients are research-use-only, and FALCONAge will not redistribute
+    them. The error names where to obtain a file and which open clocks answer
+    the same question.
 """
 
 from __future__ import annotations
@@ -41,6 +42,29 @@ from .._version import REGISTRY_VERSION
 from ..core.errors import ClockNotFoundError, RegistryError, WeightsUnavailableError
 
 DATA_DIR = Path(__file__).with_name("data")
+
+#: What a user has to do before a clock will score. Words rather than the A, B
+#: and C this used to be: the letters carried their meaning in one legend at the
+#: top of clocks.yaml and nowhere else, so every error message, plot label and
+#: table column that printed one had to re-explain it or leave the reader to
+#: guess whether B was better or worse than C.
+BUNDLED = "bundled"      #: ships inside the wheel, traced to a named source
+UNTRACED = "untraced"    #: catalogued; no primary source for the numbers is established
+LICENSED = "licensed"    #: architecture implemented; coefficients not ours to give
+
+AVAILABILITY = (BUNDLED, UNTRACED, LICENSED)
+
+#: The old letters still resolve, because they are what is in circulation: an
+#: existing script filtering `availability="A"` should keep working rather than
+#: silently returning nothing, which is what an unrecognised value would do.
+AVAILABILITY_ALIASES = {"a": BUNDLED, "b": UNTRACED, "c": LICENSED}
+
+
+def normalise_availability(value: str | None) -> str:
+    """Accept a word or one of the retired letters, return the word."""
+    v = (value or UNTRACED).strip()
+    return AVAILABILITY_ALIASES.get(v.lower(), v.lower())
+
 
 #: Which downstream operations each scale admits. Enforced in analysis/, not
 #: here, but declared here because it is a property of the clock.
@@ -186,11 +210,11 @@ class Clock:
 
     @property
     def is_scaffold(self) -> bool:
-        return self.availability == "C"
+        return self.availability == LICENSED
 
     @property
     def ships_coefficients(self) -> bool:
-        return self.availability == "A" and self.coefficient_source.file is not None
+        return self.availability == BUNDLED and self.coefficient_source.file is not None
 
     def cite(self, style: str = "plain") -> str:
         if style == "bibtex":
@@ -203,7 +227,7 @@ class Clock:
     def __repr__(self) -> str:  # pragma: no cover - display only
         n = f"{self.n_features} features" if self.n_features else "features unknown"
         return (f"Clock({self.id!r}, {self.year}, {self.scale_type}, "
-                f"tier {self.availability}, {n})")
+                f"{self.availability}, {n})")
 
 
 #: Policies that are a property of the tissue list rather than of the clock, so
@@ -247,7 +271,7 @@ class ClockRegistry:
         self._clocks = clocks
         self.version = version
         self.path = path
-        #: clock_id -> (path, sha256) supplied by the user for a tier C clock.
+        #: clock_id -> (path, sha256) supplied by the user for a licensed clock.
         self._local: dict[str, tuple[Path, str]] = {}
 
     # -- construction ------------------------------------------------------
@@ -284,7 +308,7 @@ class ClockRegistry:
                 population=e.get("population") or "",
                 n_features=e.get("n_features"),
                 requires_fp64=bool(e.get("requires_fp64", False)),
-                availability=e.get("availability") or "B",
+                availability=normalise_availability(e.get("availability")),
                 citation=e.get("citation") or "",
                 doi=e.get("doi") or "",
                 notes=e.get("notes") or "",
@@ -341,8 +365,13 @@ class ClockRegistry:
     def filter(self, **criteria: Any) -> list[Clock]:
         """Exact-match filter; tuple-valued fields match on membership.
 
-        >>> reg.filter(availability="A", scale_type="age_years")
+        >>> reg.filter(availability="bundled", scale_type="age_years")
         """
+        # `availability="A"` is what every script written before the rename
+        # says. Translating it here means those keep working instead of
+        # returning an empty list, which is the silent way to be wrong.
+        if "availability" in criteria:
+            criteria["availability"] = normalise_availability(criteria["availability"])
         out = []
         for c in self._clocks.values():
             ok = True
@@ -366,8 +395,8 @@ class ClockRegistry:
         Compatibility is coverage, not platform. A clock trained on 450K runs
         perfectly well on EPIC data that happens to carry its probes, and fails
         on 450K data that has been filtered down to 20,000 probes. Only the
-        feature list can answer the question, so tier A clocks are checked
-        against it and tier B/C clocks are reported by declared platform, with
+        feature list can answer the question, so bundled clocks are checked
+        against it and the rest are reported by declared platform, with
         the difference made explicit in the reason string.
         """
         out = []
@@ -437,7 +466,7 @@ class ClockRegistry:
         Raises
         ------
         WeightsUnavailableError
-            For a tier C clock with nothing registered, or a tier B clock whose
+            For a licensed clock with nothing registered, or an untraced clock whose
             fetch has not happened. The message names the remedy.
         """
         c = self.get(clock_id)
@@ -445,7 +474,7 @@ class ClockRegistry:
         if clock_id in self._local:
             return _read_coefficients(self._local[clock_id][0])
 
-        if c.availability == "A" and c.coefficient_source.file:
+        if c.availability == BUNDLED and c.coefficient_source.file:
             p = DATA_DIR / c.coefficient_source.file
             if not p.exists():
                 raise WeightsUnavailableError(
@@ -472,11 +501,11 @@ class ClockRegistry:
         c = self.get(clock_id)
         cs = c.coefficient_source
 
-        if c.availability == "C":
+        if c.availability == LICENSED:
             alts = [self.get(a) for a in cs.alternatives if a in self]
             alt_lines = "\n".join(
                 f"    {a.id:<16}{a.data_type.replace('_', ' '):<20}"
-                f"{a.n_features or '?'} features, tier {a.availability}"
+                f"{a.n_features or '?'} features, {a.availability}"
                 for a in alts)
             return (
                 f"{clock_id} is a scaffold-only clock.\n\n"
@@ -490,18 +519,18 @@ class ClockRegistry:
                    if alt_lines else "")
             )
 
-        # A tier B entry that has been looked into says so. The default text
+        # An untraced entry that has been looked into says so. The default text
         # below is true of most of them and useless for the ones where somebody
         # has already done the work: telling a reader "no source has been
         # established" when the registry holds the DOI, the file name and the
         # reason it is still not shipped wastes the search they are about to
         # repeat.
         if cs.why or cs.obtain:
-            found = f"{clock_id} is tier B: its coefficients are not bundled.\n\n"
+            found = f"{clock_id} is untraced: its coefficients are not bundled.\n\n"
             if cs.why:
                 found += f"  Why: {cs.why}\n\n"
             if cs.obtain:
-                found += f"  The material is at: {cs.obtain}\n\n"
+                found += f"  How to get them: {cs.obtain}\n\n"
             found += (
                 "  Registering it yourself is one call:\n"
                 f"    falconage.registry.load().register_local_weights({clock_id!r}, <path>)\n"
@@ -510,14 +539,14 @@ class ClockRegistry:
             return found
 
         return (
-            f"{clock_id} is tier B: its coefficients are not bundled and no "
+            f"{clock_id} is untraced: its coefficients are not bundled and no "
             "primary\n  source has been established for it yet.\n\n"
             "  FALCONAge v1.0 ships coefficients for the clocks whose source it "
             "could\n  name and check. Copying a coefficient set out of another "
             "package without\n  knowing where that package got it is how the "
             "eleven known paper-versus-\n  implementation discrepancies spread in "
             "the first place.\n\n"
-            f"  falconage clocks list --tier A   shows the {len(self.filter(availability='A'))} "
+            f"  falconage clocks list --tier bundled   shows the {len(self.filter(availability='bundled'))} "
             "that do ship.\n"
             "  Contributions of a traced extractor are welcome: see CONTRIBUTING.md."
         )

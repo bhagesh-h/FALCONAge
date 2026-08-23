@@ -72,9 +72,9 @@ class WeightsUnavailableError(RegistryError):
     The three tiers behave differently here, and the message says which one
     applies:
 
-    * tier A never raises -- the coefficients ship inside the wheel;
-    * tier B raises only when the fetch fails, and names the URL;
-    * tier C always raises until the user registers a file, and names both
+    * bundled never raises: the coefficients ship inside the wheel;
+    * untraced raises and names what is known about the source;
+    * licensed always raises until the user registers a file, and names both
       where to obtain one and which open clocks answer the same question.
     """
 

@@ -55,7 +55,7 @@ Ten verbs, and `--help` on any of them is authoritative:
 
 ```bash
 falconage config                       # versions, devices, registry size; run this first when confused
-falconage clocks list --tier A         # browse the registry; list, info and cite are the actions
+falconage clocks list --tier bundled   # browse the registry; list, info and cite are the actions
 falconage clocks list --search mortality
 falconage clocks info horvath2013
 falconage download GSE40279 --dry-run  # what it would fetch, and how many bytes, before fetching

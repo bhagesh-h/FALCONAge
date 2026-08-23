@@ -185,10 +185,10 @@ def _resolve_clocks(registry, data, clocks, min_coverage: float) -> tuple[list[s
         chosen = [c.id for c in registry.compatible_with(data, min_coverage=min_coverage)]
         for c in registry:
             if c.id not in chosen and c.data_type == data.modality:
-                if c.availability == "C":
+                if c.availability == "licensed":
                     skipped[c.id] = "scaffold: coefficients not distributed (see README section 6)"
                 elif not registry.has_coefficients(c.id):
-                    skipped[c.id] = "tier B: coefficients not bundled and no primary source traced"
+                    skipped[c.id] = "untraced: coefficients not bundled and no primary source traced"
                 else:
                     skipped[c.id] = f"below the {min_coverage:.0%} feature-coverage floor"
         return chosen, skipped
@@ -320,7 +320,7 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             + (f" on {data.platform}" if data.platform else "")
             + f", and none of the {len(reg)} registry entries reached the "
               f"{min_coverage:.0%} coverage floor.\n"
-              "  falconage clocks list --tier A  shows what ships with coefficients."
+              "  falconage clocks list --tier bundled  shows what ships with coefficients."
         )
 
     manifest = RunManifest(caller=caller)

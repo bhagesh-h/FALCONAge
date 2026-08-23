@@ -29,9 +29,9 @@ def cmd_config(args) -> int:
         return 0
     _p(f"FALCONAge {cfg['falconage']}")
     _p(f"  registry     {cfg['registry_version']}  ({cfg['n_clocks']} clocks)")
-    t = cfg["clocks_by_tier"]
-    _p(f"  tiers        A {t['A']} ship - B {t['B']} need a traced source - "
-       f"C {t['C']} scaffold only")
+    t = cfg["clocks_by_availability"]
+    _p(f"  availability {t['bundled']} bundled - {t['untraced']} untraced - "
+       f"{t['licensed']} licensed")
     _p(f"  numpy        {cfg['numpy']}")
     _p(f"  torch        {cfg['torch'] or 'not installed (CPU path needs none)'}")
     _p(f"  devices      {', '.join(cfg['devices'])}")
@@ -83,11 +83,11 @@ def cmd_clocks(args) -> int:
         _p(f"  tissue        {', '.join(c.tissue) or 'unspecified'}")
         _p(f"  features      {c.n_features or 'unknown'}")
         _p(f"  postprocess   {describe_chain(c.postprocess)}")
-        _p(f"  availability  tier {c.availability}")
+        _p(f"  availability  {c.availability}")
         cs = c.coefficient_source
         _p(f"  provenance    {cs.provenance or 'unrecorded'}")
         _p(f"  traced        {cs.primary_source_traced}")
-        if c.availability == "C":
+        if c.availability == "licensed":
             _p("")
             _p(reg.unavailable_message(c.id))
         if c.notes:
@@ -343,7 +343,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("clocks", help="browse the registry")
     p.add_argument("action", choices=["list", "info", "cite"])
     p.add_argument("clock", nargs="?")
-    p.add_argument("--tier", choices=["A", "B", "C"])
+    p.add_argument("--tier", metavar="AVAILABILITY",
+                   choices=["bundled", "untraced", "licensed", "A", "B", "C"],
+                   help="bundled, untraced or licensed (A, B, C still accepted)")
     p.add_argument("--data-type", dest="data_type")
     p.add_argument("--generation")
     p.add_argument("--search")

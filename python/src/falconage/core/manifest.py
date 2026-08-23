@@ -64,7 +64,7 @@ class RunManifest:
     config: dict[str, Any] = field(default_factory=dict)
     inputs: list[dict[str, str]] = field(default_factory=list)
     #: clock_id -> {sha256, source, n_features, tier}. The sha256 is of the
-    #: coefficient file actually used, so a licensed tier C copy is visibly
+    #: coefficient file actually used, so a user-supplied licensed copy is visibly
     #: different from a redistributed one.
     weights: dict[str, dict[str, Any]] = field(default_factory=dict)
     #: clock_id -> {device, dtype, backend} actually used for that clock.

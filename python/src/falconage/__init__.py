@@ -17,7 +17,7 @@ What ships
 offline; 28 are scaffolds whose coefficients are research-use-only and are not
 ours to distribute (:mod:`falconage.registry` explains each one and names an
 open alternative); the rest are catalogued with metadata and await a traced
-extractor. ``fa.registry.load().filter(availability="A")`` is the list that
+extractor. ``fa.registry.load().filter(availability="bundled")`` is the list that
 works today.
 """
 
@@ -41,7 +41,7 @@ from .core import (
     configure,
     describe,
 )
-from .download import download
+from .download import download, download_intervention, how_to_get, interventions
 from .io import (list_computage_bench, read, read_bedmethyl, read_bedmethyl_dir,
                  read_betas, read_clinical, read_computage_bench, read_panel,
                  read_rrbs_dir, read_series_matrix, write_results)
@@ -59,7 +59,8 @@ __all__ = [
     "agreement", "analysis", "associate", "combine", "configure",
     "conformal_interval", "consensus",
     "core", "cox_hazard", "detectable_effect",
-    "describe", "download", "icc", "icc_from_replicates", "interval", "io",
+    "describe", "download", "download_intervention", "how_to_get", "icc",
+    "icc_from_replicates", "interval", "interventions", "io",
     "list_computage_bench", "read_computage_bench",
     "models", "plot", "power", "prepare",
     "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_bedmethyl",
@@ -79,13 +80,14 @@ def config() -> dict:
     dict crosses the reticulate bridge, so both languages report identically.
     """
     reg = registry.load()
-    tiers = {t: len(reg.filter(availability=t)) for t in ("A", "B", "C")}
+    tiers = {t: len(reg.filter(availability=t))
+             for t in ("bundled", "untraced", "licensed")}
     return {
         "falconage": __version__,
         "registry_version": reg.version,
         "registry_path": str(reg.path),
         "n_clocks": len(reg),
-        "clocks_by_tier": tiers,
-        "runnable_offline": tiers["A"],
+        "clocks_by_availability": tiers,
+        "runnable_offline": tiers["bundled"],
         **describe(),
     }

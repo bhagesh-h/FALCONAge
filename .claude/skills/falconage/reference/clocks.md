@@ -36,7 +36,7 @@ has no acceleration left with which to detect anything.
 | How many times has this tissue divided, relative to another sample? | `epitoc1` (mean over 385 polycomb-target CpGs), `hypoclock` (1 minus the mean over 678 solo-WCGWs), `stemtoc` (95th percentile over 371), `stemtocvitro` (over 629), `epicmithyper` (mean over 184), `epicmithypo` (1 minus the mean over 1,164), `replitali` (87 CpGs, linear) | `divisions` |
 | How many times has it divided, in divisions per stem cell? | `epitoc2` (163 sites), `epitoc3` (170 sites) | `divisions` |
 | Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
-| What is the blood's cell composition? | none ship; the Salas panels are tier C | `proportion` |
+| What is the blood's cell composition? | none ship; the Salas panels are `licensed` | `proportion` |
 | How old is this **mouse**? | `meer` (435 RRBS sites, whole-lifespan multi-tissue) | `age_years`, reported in months |
 
 **The two questions in that pair are different questions.** The seven relative
@@ -92,13 +92,15 @@ Horvath's 15. The residual and group differences are defined; `predicted − chr
 
 ## Availability, which is about rights and not about quality
 
-| Tier | n | What it means |
+| Availability | n | What it means |
 |---|---:|---|
-| **A** | 46 | Scores offline. 43 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| **B** | 87 | Catalogued, no traced coefficient source yet. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
-| **C** | 28 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
+| `bundled` | 46 | Scores offline. 43 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
+| `untraced` | 89 | Catalogued, no traced coefficient source yet. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
+| `licensed` | 40 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
 
-Every architecture is implemented and tested regardless of tier.
+Every architecture is implemented and tested whatever the group. The values were
+A, B and C until they were renamed to say what they mean; the letters are still
+accepted by `--tier` and by `filter(availability=)` so older scripts keep working.
 
 ## Traps that bite
 

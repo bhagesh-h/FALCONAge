@@ -1,0 +1,961 @@
+# =============================================================================
+# Longitudinal interventional methylation studies
+# =============================================================================
+# The one kind of data this package had never been pointed at. Everything else
+# it reads is cross-sectional: one sample per person, and the question is
+# whether a clock's number is right. An intervention study asks whether the
+# number MOVES, which is the question that decides whether a clock can be a
+# trial endpoint at all.
+#
+# WHY A CURATED LIST RATHER THAN A SEARCH. "Find me methylation intervention
+# studies" returns cross-sectional cohorts, animal work and studies with one
+# timepoint. What makes a dataset usable here is narrow: the same individuals
+# measured before and after something, with the pairing recoverable from the
+# metadata. That is a judgement per study, and it is made here once.
+#
+# EVERY ENTRY DECLARES ITS ACCESS ROUTE, because three of the four routes are
+# not a download. A partner dataset needs approval from two parties; a
+# controlled-access one needs IRB review. Recording that as `access` means the
+# tool can refuse with the actual next step rather than a 403.
+#
+# `size` is what the archive reports for the series and is approximate. A series
+# with IDATs is one to two orders of magnitude larger than its beta matrix,
+# which is why `want` matters more than the number.
+#
+# NOT EXHAUSTIVE, and not a substitute for Supplementary Table 1 of the
+# TranslAGE paper, which is the authoritative mapping of study to accession for
+# all 51 of their datasets. Entries here are the ones whose accession has been
+# checked against the archive.
+
+schema_version: 1
+
+#: Where a dataset can actually be got from, and what that costs the user.
+access_routes:
+  open:
+    label: "Open"
+    how: "Downloads without an account."
+  translage:
+    label: "TranslAGE"
+    how: >-
+      Harmonised copies of the public datasets, ready to score. Browse and
+      download at https://www.translage.io
+    url: "https://www.translage.io"
+  partner:
+    label: "Partner, application required"
+    how: >-
+      TruDiagnostic partner datasets. Academic non-profit use only, and needs
+      approval from BOTH TruDiagnostic and the original research partner.
+      Apply at https://www.trudiagnostic.com/softwarerequest/
+    url: "https://www.trudiagnostic.com/softwarerequest/"
+  controlled:
+    label: "Controlled access"
+    how: >-
+      Needs IRB review and a data use agreement with the study team. The
+      contact is recorded per study.
+
+studies:
+  # Generated from TranslAGE's own dataset table
+  # (https://www.translage.io/data/datatables/dataset_metadata.csv), filtered to
+  # longitudinal intervention and event datasets carrying a GEO accession. Those
+  # are the ones a user can actually fetch today; the rest of TranslAGE's 179
+  # datasets sit behind the partner and controlled routes above.
+  - id: "allergen-exposure-ar-non-atopic"
+    name: "Allergen exposure - AR non-atopic"
+    intervention: "Control"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE100386"
+    access: "open"
+    platform: "450k"
+    samples: 30
+    subjects: 15
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Pollen exposure in the Environmental Exposure Unit (EEU). Allergic rhinitis (AR)-sufferers and non-allergic controls were exposed to grass pollen for 3h on two consecutive days."
+    citation: "TranslAGE dataset GSE100386 - AR"
+    doi: null
+  - id: "allergen-exposure"
+    name: "Allergen exposure"
+    intervention: "Control"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE100386"
+    access: "open"
+    platform: "450k"
+    samples: 46
+    subjects: 23
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Pollen exposure in the Environmental Exposure Unit (EEU). Allergic rhinitis (AR)-sufferers and non-allergic controls were exposed to grass pollen for 3h on two consecutive days."
+    citation: "TranslAGE dataset GSE100386 - full"
+    doi: null
+  - id: "allergen-exposure-ar-atopic"
+    name: "Allergen exposure - AR atopic"
+    intervention: "Control"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE100386"
+    access: "open"
+    platform: "450k"
+    samples: 30
+    subjects: 15
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Pollen exposure in the Environmental Exposure Unit (EEU). Allergic rhinitis (AR)-sufferers and non-allergic controls were exposed to grass pollen for 3h on two consecutive days."
+    citation: "TranslAGE dataset GSE100386 - noAR"
+    doi: null
+  - id: "high-altitude-acclimation"
+    name: "High Altitude Acclimation"
+    intervention: "Control"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE105123"
+    access: "open"
+    platform: "450k"
+    samples: 107
+    subjects: 19
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "107 total samples representing 21 subjects at 7 time points (not all subjects represented at all time points) were taken during acclimatization to high altitude over 21 days, and upon re-ascent 7 and 21 days post-descent."
+    citation: "TranslAGE dataset GSE105123"
+    doi: null
+  - id: "seasonal-allergic-rhinitis-sar"
+    name: "Seasonal allergic rhinitis (SAR)"
+    intervention: "Control"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE50222"
+    access: "open"
+    platform: "450k"
+    samples: 32
+    subjects: 8
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Seasonal allergic rhinitis (SAR) is an optimal disease model for the study of DNA methylation because of its well-defined phenotype and etiology. We generated genome-wide DNA methylation (Npatients = 8, Ncontrols = 8) and gene expression (Npatients= 9, Ncontrols = 10) profiles of CD4+ T-cells from S"
+    citation: "TranslAGE dataset GSE50222"
+    doi: null
+  - id: "exhaust-exposure"
+    name: "Exhaust Exposure"
+    intervention: "Control"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE56553"
+    access: "open"
+    platform: "450k"
+    samples: 96
+    subjects: 16
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "A double-blind crossover study of filtered air and diesel exhaust exposures was performed on sixteen non-smoking asthmatic subjects. Blood samples were collected pre-exposure, and then 6 and 30 hours post-exposure. Peripheral blood mononuclear cell DNA methylation was interrogated using the Illumina"
+    citation: "TranslAGE dataset GSE56553"
+    doi: null
+  - id: "low-fat-diet-2"
+    name: "Low Fat Diet 2"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE107205"
+    access: "open"
+    platform: "450k"
+    samples: 24
+    subjects: 12
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "The objective was to analyse whether an intervention with two Mediterranean diets, one rich in extra-virgin olive oil (MedDiet+EVOO) and the other one in nuts (MedDiet+nuts), was influencing the methylation status of PWBC genes. A group with a low-fat diet was considered as control."
+    citation: "TranslAGE dataset GSE107205LFD"
+    doi: null
+  - id: "mediterranean-diet-nuts"
+    name: "Mediterranean Diet - Nuts"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE107205"
+    access: "open"
+    platform: "450k"
+    samples: 24
+    subjects: 12
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "The objective was to analyse whether an intervention with two Mediterranean diets, one rich in extra-virgin olive oil (MedDiet+EVOO) and the other one in nuts (MedDiet+nuts), was influencing the methylation status of PWBC genes. A group with a low-fat diet was considered as control."
+    citation: "TranslAGE dataset GSE107205MDN"
+    doi: null
+  - id: "mediterranean-diet-olive-oil"
+    name: "Mediterranean Diet - Olive Oil"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE107205"
+    access: "open"
+    platform: "450k"
+    samples: 24
+    subjects: 12
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "The objective was to analyse whether an intervention with two Mediterranean diets, one rich in extra-virgin olive oil (MedDiet+EVOO) and the other one in nuts (MedDiet+nuts), was influencing the methylation status of PWBC genes. A group with a low-fat diet was considered as control."
+    citation: "TranslAGE dataset GSE107205MDO"
+    doi: null
+  - id: "fitzgerald-lifestyle-study"
+    name: "Fitzgerald Lifestyle Study"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE149747"
+    access: "open"
+    platform: "EPICv1"
+    samples: 122
+    subjects: 22
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "we report on a randomized controlled clinical trial conducted among 43 healthy adult males between the ages of 50-72. The 8-week treatment program included diet, sleep, exercise and relaxation guidance, and supplemental probiotics and phytonutrients. The control group received no intervention."
+    citation: "TranslAGE dataset GSE149747"
+    doi: null
+  - id: "diabetes-social-support"
+    name: "Diabetes & Social Support"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE197881"
+    access: "open"
+    platform: "450k"
+    samples: 18
+    subjects: 8
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Genome-wide DNA methylation profiling of bead-enriched total monocytes collected from Native Hawaiian participants with known type 2 diabetes mellitus enrolled in a 3 month diabetes-specific social support education intervention. DNA methylation profiling was performed across ~450,000 CpGs from mono"
+    citation: "TranslAGE dataset GSE197881"
+    doi: null
+  - id: "exercise"
+    name: "Exercise"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE199700"
+    access: "open"
+    platform: "EPICv1"
+    samples: 100
+    subjects: 53
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Study included post-menopausal women aged 50-70 who are sedentary at baseline. Exclusion criteria included current smokers, unable to exercise, caffeine consumption in last 24 hours before blood draws, and more than 25% training absence. Women were divided into a prediabetes group and normal glucose"
+    citation: "TranslAGE dataset GSE199700"
+    doi: null
+  - id: "smoking-cessation"
+    name: "Smoking Cessation"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE201532"
+    access: "open"
+    platform: "EPICv1"
+    samples: 16
+    subjects: 8
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Whole blood and clinical data were collected in 8 patients before and after short-term smoking cessation with varenicline tartrate for smokers. Pulmonary function tests were conducted according to the patient’s wishes or the clinician’s evaluation. Whole blood and clinical data were collected separa"
+    citation: "TranslAGE dataset GSE201532"
+    doi: null
+  - id: "pos-aerobic-exercise"
+    name: "POS Aerobic exercise"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE213363"
+    access: "open"
+    platform: "EPICv1"
+    samples: 52
+    subjects: 26
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Whole blood samples were collected from 56 females with PCOS. 30 were placed on a Resistence Training workout, and 26 were placed on an Aerobic Continuous workout."
+    citation: "TranslAGE dataset GSE213363_Aerobic"
+    doi: null
+  - id: "pos-resistance-exercise"
+    name: "POS Resistance exercise"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE213363"
+    access: "open"
+    platform: "EPICv1"
+    samples: 60
+    subjects: 30
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Whole blood samples were collected from 56 females with PCOS. 30 were placed on a Resistence Training workout, and 26 were placed on an Aerobic Continuous workout."
+    citation: "TranslAGE dataset GSE213363_Resistance"
+    doi: null
+  - id: "mediterranean-diet-2a"
+    name: "Mediterranean Diet 2a"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE219217"
+    access: "open"
+    platform: "EPICv1"
+    samples: 54
+    subjects: 19
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Participants with NAFLD. All of them were instructed to change their dietary habits to a Mediterranean diet and to eat high-fiber rolls with no change of physical activity. From all participants we took whole blood samples 3 times: before diet change, 1 month after a diet change, and 2 months after "
+    citation: "TranslAGE dataset GSE219217 (30 day)"
+    doi: null
+  - id: "mediterranean-diet-2b"
+    name: "Mediterranean Diet 2b"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE219217"
+    access: "open"
+    platform: "EPICv1"
+    samples: 54
+    subjects: 19
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Participants with NAFLD. All of them were instructed to change their dietary habits to a Mediterranean diet and to eat high-fiber rolls with no change of physical activity. From all participants we took whole blood samples 3 times: before diet change, 1 month after a diet change, and 2 months after "
+    citation: "TranslAGE dataset GSE219217 (60 day)"
+    doi: null
+  - id: "cr-imf"
+    name: "CR / IMF"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE240184"
+    access: "open"
+    platform: "EPICv1"
+    samples: 128
+    subjects: 62
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Participants were healthy adults aged 18–55 with overweight or obesity (BMI 27–45 kg/m²) enrolled in a year-long randomized trial comparing daily caloric restriction (DCR) and intermittent fasting (IMF). All received behavioral support, targeting a 34% weekly calorie reduction and 300 minutes of wee"
+    citation: "TranslAGE dataset GSE240184"
+    doi: null
+  - id: "healthy-hiit"
+    name: "Healthy HIIT"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE268211"
+    access: "open"
+    platform: "EPICv1"
+    samples: 20
+    subjects: 5
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Twenty healthy subjects (25±5yrs) completed two high-intensity interval training interventions (training and retraining) lasting 8 weeks separated by 12 weeks of detraining. Measurements at baseline and after training, detraining and retraining included maximal oxygen consumption (V̇O2max), along wi"
+    citation: "TranslAGE dataset GSE268211"
+    doi: null
+  - id: "brazil-8wk-exercise"
+    name: "Brazil 8wk Exercise"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE296180"
+    access: "open"
+    platform: "EPICv1"
+    samples: 22
+    subjects: 11
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "13 women with a BMI of 33±2 kg/m², aged 34±5 years, underwent evaluation of body composition, waist circumference, physical performance (VO2max), and peripheral blood collection for DNA methylation analysis (EPIC Beadchip Illumina) before and after eight weeks of combined physical training intervent"
+    citation: "TranslAGE dataset GSE296180"
+    doi: null
+  - id: "alcohol-treatment-program"
+    name: "Alcohol Treatment Program"
+    intervention: "Lifestyle"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE98876"
+    access: "open"
+    platform: "450k"
+    samples: 71
+    subjects: 24
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "This case-control study includes 16 polysomnographically evaluated OSA patients and 8 controls. a well-characterized cohort of long-term chronic alcohol dependent (AD) patients participating in a clinical 3-week alcohol treatment program (before and after), along with the profiles of closely matched"
+    citation: "TranslAGE dataset GSE98876"
+    doi: null
+  - id: "acupuncture"
+    name: "Acupuncture"
+    intervention: "Medical Procedures"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE184202"
+    access: "open"
+    platform: "EPICv1"
+    samples: 24
+    subjects: 11
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Longitudinal study comparing methylome variations in the same patients before and after acupuncture"
+    citation: "TranslAGE dataset GSE184202"
+    doi: null
+  - id: "cpap-therapy"
+    name: "CPAP therapy"
+    intervention: "Medical Procedures"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE190164"
+    access: "open"
+    platform: "450k"
+    samples: 48
+    subjects: 16
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Blood samples were collected at initial visit (V1) and a year later (V2). OSA patients received Continuous Positive Air Pressure (CPAP) therapy with high adherence (> 4 hours/night). Control individuals did not receive CPAP therapy."
+    citation: "TranslAGE dataset GSE190164"
+    doi: null
+  - id: "umbilical-cord-blood-transfusion"
+    name: "Umbilical Cord Blood Transfusion"
+    intervention: "Medical Procedures"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE210245"
+    access: "open"
+    platform: "EPICv1"
+    samples: 36
+    subjects: 18
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Elderly participants aged 65 to 95 were selected and treated with weekly injections of human umbilical cord plasma concentrate (1 ml intramuscular) over 10 weeks. Blood was drawn before and after the treatment. Participants were obtained from among existing patients of the Study Physician, and indiv"
+    citation: "TranslAGE dataset GSE210245"
+    doi: null
+  - id: "addiction-dhea-treatment"
+    name: "Addiction DHEA Treatment"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE118570"
+    access: "open"
+    platform: "EPICv1"
+    samples: 43
+    subjects: 10
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Examination of DNA methylation signatures in T cells from drug addicts before and after dehydroepiandrosterone treatment and control patients"
+    citation: "TranslAGE dataset GSE118570"
+    doi: null
+  - id: "anti-tnf-therapy-2"
+    name: "Anti-TNF therapy 2"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE176168"
+    access: "open"
+    platform: "EPICv1"
+    samples: 113
+    subjects: 62
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Rheumatoid arthritis adult patients with DAS28 disease activity scores > 3.2 were recruited from rheumatology departments at 12 different university hospitals in Spain. They were treated with tumor necrosis factor (TNF) inhibitors including adalimumab, certolizumab, etanercept, golimumab, and inflix"
+    citation: "TranslAGE dataset GSE176168"
+    doi: null
+  - id: "antiretroviral-therapy-cd4s"
+    name: "Antiretroviral therapy CD4s"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE180130"
+    access: "open"
+    platform: "EPICv1"
+    samples: 51
+    subjects: 22
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Genome-wide DNA methylation profiling of monocytes and CD4+ T cells during acute HIV infection and following ART. \"the median days of infection was 16 days for the baseline pre-ART timepoint examined and 232 days for the post-ART timepoint\""
+    citation: "TranslAGE dataset GSE180130_CD4"
+    doi: null
+  - id: "antiretroviral-therapy-monocytes"
+    name: "Antiretroviral therapy Monocytes"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE180130"
+    access: "open"
+    platform: "EPICv1"
+    samples: 51
+    subjects: 22
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Genome-wide DNA methylation profiling of monocytes and CD4+ T cells during acute HIV infection and following ART. \"the median days of infection was 16 days for the baseline pre-ART timepoint examined and 232 days for the post-ART timepoint\""
+    citation: "TranslAGE dataset GSE180130_Mono"
+    doi: null
+  - id: "anti-hiv-vaccine-v1-week-1"
+    name: "anti-HIV vaccine v1 Week 1"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE185389"
+    access: "open"
+    platform: "450k"
+    samples: 56
+    subjects: 14
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "60 PBMC samples from 15 individuals in 4 different timepoints from the BCN02 clinical trial. Specifically, PBMCs samples from the 15 individuals were taken at baseline (w0), one week after 1st vaccination with HIVconsv (w1), one week after the 3-cycle treatment with romidepsin (w6) and one week afte"
+    citation: "TranslAGE dataset GSE185389_Week1"
+    doi: null
+  - id: "anti-hiv-vaccine-v1-week-10"
+    name: "anti-HIV vaccine v1 Week 10"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE185389"
+    access: "open"
+    platform: "450k"
+    samples: 56
+    subjects: 14
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "60 PBMC samples from 15 individuals in 4 different timepoints from the BCN02 clinical trial. Specifically, PBMCs samples from the 15 individuals were taken at baseline (w0), one week after 1st vaccination with HIVconsv (w1), one week after the 3-cycle treatment with romidepsin (w6) and one week afte"
+    citation: "TranslAGE dataset GSE185389_Week10"
+    doi: null
+  - id: "anti-hiv-vaccine-v1-week-6"
+    name: "anti-HIV vaccine v1 Week 6"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE185389"
+    access: "open"
+    platform: "450k"
+    samples: 56
+    subjects: 14
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "60 PBMC samples from 15 individuals in 4 different timepoints from the BCN02 clinical trial. Specifically, PBMCs samples from the 15 individuals were taken at baseline (w0), one week after 1st vaccination with HIVconsv (w1), one week after the 3-cycle treatment with romidepsin (w6) and one week afte"
+    citation: "TranslAGE dataset GSE185389_Week6"
+    doi: null
+  - id: "anti-tnf-therapy-1a"
+    name: "Anti-TNF therapy 1a"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE191297"
+    access: "open"
+    platform: "EPICv1"
+    samples: 85
+    subjects: 35
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Two independent cohorts of IBD patients receiving anti-TNF therapy as well as a cohort of IBD patients receiving vedolizumab as a therapy control were recruited for longitudinal biomaterial collection and subsequent RNA and DNA methylome profiling. All patients had clinically active disease (as asse"
+    citation: "TranslAGE dataset GSE191297 (2 weeks)"
+    doi: null
+  - id: "anti-tnf-therapy-1b"
+    name: "Anti-TNF therapy 1b"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE191297"
+    access: "open"
+    platform: "EPICv1"
+    samples: 85
+    subjects: 35
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Two independent cohorts of IBD patients receiving anti-TNF therapy as well as a cohort of IBD patients receiving vedolizumab as a therapy control were recruited for longitudinal biomaterial collection and subsequent RNA and DNA methylome profiling. All patients had clinically active disease (as asse"
+    citation: "TranslAGE dataset GSE191297 (6 weeks)"
+    doi: null
+  - id: "antiretroviral-therapy"
+    name: "Antiretroviral Therapy"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE217633"
+    access: "open"
+    platform: "EPICv1"
+    samples: 411
+    subjects: 185
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "Participants from the NEAT001/ANRS143 clinical trial: a randomised open-label, non-inferiority trial conducted between August 2010 and October 2013 in 78 clinical sites in 15 European countries. Briefly, this trial showed, in ART-naïve adults with HIV, non-inferiority over 96 weeks of ritonavir-boos"
+    citation: "TranslAGE dataset GSE217633"
+    doi: null
+  - id: "il-17-inhibitor"
+    name: "IL-17 inhibitor"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE236695"
+    access: "open"
+    platform: "EPICv1"
+    samples: 17
+    subjects: 4
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "PBMCs were collected from 12 patients with chronic plaque psoriasis and 8 PsA patients, and 8 healthy controls. CD4+ T-cells were separated through FACS sorting"
+    citation: "TranslAGE dataset GSE236695"
+    doi: null
+  - id: "schizophrenia-clozapine-2-cohorts"
+    name: "Schizophrenia Clozapine (2 cohorts)"
+    intervention: "Pharmacological"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE237561"
+    access: "open"
+    platform: "450k"
+    samples: 126
+    subjects: 38
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "clozapine use in treatment-resistant schizophrenia. 126 Peripheral whole blood samples from 26 individuals across two independent cohorts were collected prior to clozapine initiation, 4-12 weeks after initiation, and a 6 months after initiation."
+    citation: "TranslAGE dataset GSE237561"
+    doi: null
+  - id: "radiotherapy"
+    name: "Radiotherapy"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE140038"
+    access: "open"
+    platform: "EPICv1"
+    samples: 74
+    subjects: 37
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "We examined epigenetic changes in peripheral blood in early stage breast cancer patients undergoing either adjuvant radiotherapy, or adjuvant chemotherapy and radiotherapy. DNA methylation experiments were performed on peripheral blood samples from women collected prior to and following completion o"
+    citation: "TranslAGE dataset GSE140038A"
+    doi: null
+  - id: "chemotherapy-radiotherapy"
+    name: "Chemotherapy + Radiotherapy"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE140038"
+    access: "open"
+    platform: "EPICv1"
+    samples: 70
+    subjects: 35
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "We examined epigenetic changes in peripheral blood in early stage breast cancer patients undergoing either adjuvant radiotherapy, or adjuvant chemotherapy and radiotherapy. DNA methylation experiments were performed on peripheral blood samples from women collected prior to and following completion o"
+    citation: "TranslAGE dataset GSE140038B"
+    doi: null
+  - id: "colorectal-or-hip-surgery"
+    name: "Colorectal or Hip Surgery"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE142536"
+    access: "open"
+    platform: "450k"
+    samples: 90
+    subjects: 30
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "A cohort of elderly patients (average age = 77.9 years (range 62-91)) undergoing major surgery (either elective colorectal surgery, elective hip replacement surgery, or emergency hip surgery following fracture). Samples collected at three time-points: i) immediately before surgery, ii) in the mornin"
+    citation: "TranslAGE dataset GSE142536"
+    doi: null
+  - id: "dox-chemotherapy"
+    name: "DOX chemotherapy"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE178887"
+    access: "open"
+    platform: "450k"
+    samples: 37
+    subjects: 21
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Patients with early breast cancer eligible for DOX-based chemotherapy were enrolled at the Winthrop Rockefeller Cancer Institute, UAMS. All patients were treated with a predefined protocol which included a combination of DOX (60 mg/m2) with cyclophosphamide (600 mg/m2) in each cycle for 4 cycles eve"
+    citation: "TranslAGE dataset GSE178887"
+    doi: null
+  - id: "covid-1-2-months"
+    name: "COVID 1-2 months"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE219037"
+    access: "open"
+    platform: "EPICv1"
+    samples: 553
+    subjects: 232
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Prospective longitudinal cohort designed to assess immune and molecular responses to SARS-CoV-2 infection in U.S. Marine recruits. Participants underwent a 2-week home quarantine followed by a supervised 2-week quarantine with regular SARS-CoV-2 testing, symptom tracking, and strict mitigation proto"
+    citation: "TranslAGE dataset GSE219037 (30-60 days)"
+    doi: null
+  - id: "covid-2-months"
+    name: "COVID 2 months"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE219037"
+    access: "open"
+    platform: "EPICv1"
+    samples: 553
+    subjects: 232
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Prospective longitudinal cohort designed to assess immune and molecular responses to SARS-CoV-2 infection in U.S. Marine recruits. Participants underwent a 2-week home quarantine followed by a supervised 2-week quarantine with regular SARS-CoV-2 testing, symptom tracking, and strict mitigation proto"
+    citation: "TranslAGE dataset GSE219037 (60 plus days)"
+    doi: null
+  - id: "air-pollution"
+    name: "Air pollution"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE226257"
+    access: "open"
+    platform: "EPICv1"
+    samples: 130
+    subjects: 35
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Exposure to pollution at 0, 3, 6, 9, 12 months, including lung function info and exposure to various types of pollution. All participants have asthma. CD3+ T cells."
+    citation: "TranslAGE dataset GSE226257"
+    doi: null
+  - id: "psychosocial-stress-control-arm"
+    name: "Psychosocial Stress - Control Arm"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE227809"
+    access: "open"
+    platform: "EPICv1"
+    samples: 54
+    subjects: 0
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Two weekday visits one week apart, with each participant undergoing both a stress (TSST) and a no-stress control session in randomized, counterbalanced order. Both participants and lab personnel were blinded to session conditions and group status. The TSST, scheduled at noon to control for circadian"
+    citation: "TranslAGE dataset GSE227809NoStress"
+    doi: null
+  - id: "psychosocial-stress"
+    name: "Psychosocial Stress"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE227809"
+    access: "open"
+    platform: "EPICv1"
+    samples: 128
+    subjects: 34
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Two weekday visits one week apart, with each participant undergoing both a stress (TSST) and a no-stress control session in randomized, counterbalanced order. Both participants and lab personnel were blinded to session conditions and group status. The TSST, scheduled at noon to control for circadian"
+    citation: "TranslAGE dataset GSE227809Stress"
+    doi: null
+  - id: "dexamethasone-treatment"
+    name: "Dexamethasone Treatment"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE249113"
+    access: "open"
+    platform: "EPICv1"
+    samples: 398
+    subjects: 199
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Genome-wide DNA methylation profiling was conducted on 199 individuals (398 samples, pre- and post-treatment with Dex) recruited at the Max Planck Institute of Psychiatry (MPIP)"
+    citation: "TranslAGE dataset GSE249113"
+    doi: null
+  - id: "dementia"
+    name: "Dementia"
+    intervention: "Pro-Aging"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE62003"
+    access: "open"
+    platform: "450k"
+    samples: 58
+    subjects: 16
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "A subpopulation of the longitudinal Israel Diabetes and Cognitive Decline (IDCD) cohort examines early cognitive decline in elderly individuals with type 2 diabetes (T2D). It included 18 participants who progressed to pre-symptomatic dementia (CDR = 0.5) within 18 months and 18 matched controls who "
+    citation: "TranslAGE dataset GSE62003"
+    doi: null
+  - id: "dexamethasone"
+    name: "Dexamethasone"
+    intervention: "Pro-Aging"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE74414"
+    access: "open"
+    platform: "450k"
+    samples: 161
+    subjects: 33
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "DNA methylation was assessed in whole blood at baseline and 3 hours after stimulation with the selective GR agonist dexamethasone (1.5 mg dexamethasone p.o.). Blood was collected in EDTA vacuum tubes prior to extraction"
+    citation: "TranslAGE dataset GSE74414"
+    doi: null
+  - id: "2yr-cognitivefunction"
+    name: "2yr CognitiveFunction"
+    intervention: "Supplement"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE190540"
+    access: "open"
+    platform: "EPICv1"
+    samples: 90
+    subjects: 25
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Baseline and 2-year follow-up samples from 25 persons with mild cognitive impairment (cases) and 20 persons with cognitively normal (controls)"
+    citation: "TranslAGE dataset GSE190540"
+    doi: null
+  - id: "monomeric-oligomeric-flavanols"
+    name: "Monomeric/Oligomeric Flavanols"
+    intervention: "Supplement"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE54643"
+    access: "open"
+    platform: "450k"
+    samples: 20
+    subjects: 10
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "This was an 8-week, single-arm intervention study in healthy (BMI 18-28, median: 25) male smokers aged 30–58 years who had smoked ≥10 cigarettes daily for at least 5 years. Participants consumed two capsules daily containing 100 mg of monomeric and oligomeric flavanols (MOF) extracted from Vitis vin"
+    citation: "TranslAGE dataset GSE54643"
+    doi: null
+  - id: "folate"
+    name: "Folate"
+    intervention: "Supplement"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE63499"
+    access: "open"
+    platform: "450k"
+    samples: 24
+    subjects: 12
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "This study examined the impact of 8-week folic acid supplementation in twelve healthy, normal-weight Caucasian women aged 18–35 with low serum folate (<60 nmol/L) and specific MTHFR 677 genotypes (CC or CT). Participants took 800 μg of folic acid daily, avoided high-folate foods, and were monitored "
+    citation: "TranslAGE dataset GSE63499"
+    doi: null
+  - id: "vitamin-b12-folate"
+    name: "Vitamin B12 + Folate"
+    intervention: "Supplement"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE74548"
+    access: "open"
+    platform: "450k"
+    samples: 174
+    subjects: 44
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "A randomized, placebo-controlled intervention trial was used to study the effects of long-term supplementation (2 year) with folic acid (400 µg/day) and vitamin B12 (500 µg/day) on DNA methylation in elderly subjects. This entry contains the DNA methylation data of DNA isolated from buffy coats coll"
+    citation: "TranslAGE dataset GSE74548"
+    doi: null
+  - id: "omega-3-fas"
+    name: "Omega-3 FAs"
+    intervention: "Supplement"
+    category: "intervention"
+    design: "longitudinal, paired"
+    accession: "GSE98056"
+    access: "open"
+    platform: "450k"
+    samples: 69
+    subjects: 2
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: true
+    notes: "A total of 36 non-smokers subjects, aged between 18 and 50 with a BMI between 25 and 40 kg/m2 were recruited. They received 3g of n-3 Fas (1.9-2.2g of EPA and 1.1g of DHA) per day for 6 weeks. Blood samples were taken before and after the supplementation period."
+    citation: "TranslAGE dataset GSE98056"
+    doi: null
+  - id: "gender-affirming-hormone-therapy-ftm"
+    name: "Gender affirming hormone therapy FTM"
+    intervention: "Unclassified Event"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE176394"
+    access: "open"
+    platform: "EPICv1"
+    samples: 39
+    subjects: 13
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Longitudinal blood samples were collected from male-to-female GAHT donors (transwomen) and female-to-male GAHT donors (transmen). Blood was collected at baseline, before hormone therapy started, and 6 months and 12 month after GAHT. Male-to-Female individuals received estrogen therapy, while Female-"
+    citation: "TranslAGE dataset GSE176394 - FTM"
+    doi: null
+  - id: "gender-affirming-hormone-therapy-mtf"
+    name: "Gender affirming hormone therapy MTF"
+    intervention: "Unclassified Event"
+    category: "event"
+    design: "longitudinal, paired"
+    accession: "GSE176394"
+    access: "open"
+    platform: "EPICv1"
+    samples: 38
+    subjects: 13
+    size: "see GEO; a series with IDATs is 1-2 orders larger than its matrix"
+    paired: true
+    in_responsiveness_51: false
+    notes: "Longitudinal blood samples were collected from male-to-female GAHT donors (transwomen) and female-to-male GAHT donors (transmen). Blood was collected at baseline, before hormone therapy started, and 6 months and 12 month after GAHT. Male-to-Female individuals received estrogen therapy, while Female-"
+    citation: "TranslAGE dataset GSE176394 - MTF"
+    doi: null
+  - id: "translage-all"
+    name: "TranslAGE, the whole harmonised database"
+    intervention: "179 datasets, all categories"
+    category: "mixed"
+    design: "mixed"
+    accession: null
+    access: "translage"
+    platform: "mixed"
+    samples: 41900
+    subjects: 14060
+    size: "unknown"
+    paired: false
+    in_responsiveness_51: false
+    notes: >-
+      129 longitudinal and 50 cross-sectional, 114 of them longitudinal
+      intervention or event datasets. Harmonised copies download from the site
+      without an accession hunt, which is the reason to start there rather than
+      assembling the 55 GEO series one at a time.
+    citation: "Sehgal R et al. Nature Medicine (2026)"
+    doi: "10.1038/s41591-026-04562-9"

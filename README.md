@@ -27,7 +27,7 @@ tolerance zero in CI rather than approximately.
 
 | | What ships today |
 |---|---|
-| **Clocks catalogued** | 161. **46 tier A score offline**: 43 ship a weights file, 3 are formulas with none to ship. 28 tier C scaffolds await a licensed file; 87 tier B have no traced coefficient source yet |
+| **Clocks catalogued** | 175. **46 score offline**: 43 ship a weights file, 3 are formulas with none to ship. 40 are `licensed`, implemented but awaiting a file you supply; 89 are `untraced`, with no primary coefficient source established |
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, ComputAgeBench studies, RRBS, nanopore bedMethyl, targeted panels, clinical chemistry, Olink NPX, SomaScan RFU, bulk RNA-seq counts. [How to load each](https://bhagesh-h.github.io/FALCONAge/guide/loading.html) |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
@@ -193,7 +193,7 @@ the paper did not make, and it says so on every run.
 | Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
-| 87 tier B coefficient sources | A per-clock literature hunt; some have no public supplement |
+| 89 untraced coefficient sources | A per-clock literature hunt; some have no public supplement |
 
 ## Figures
 
@@ -217,7 +217,7 @@ and floating-point precision, the imputation policy, and every warning raised.
 |---|---|
 | [About](https://bhagesh-h.github.io/FALCONAge/) | What a clock is, what this computes, what it refuses |
 | [Getting started](https://bhagesh-h.github.io/FALCONAge/guide/FALCONAge.html) | Docker first, then Python and R; score, interpret, reproduce |
-| [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html) | All 161 routed by the question they answer |
+| [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html) | All 175 routed by the question they answer |
 | [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) | Every clock with its scale, tissue, platform and paper |
 | [The science](https://bhagesh-h.github.io/FALCONAge/science.html) | The algorithms, the failure modes, the citations |
 | [Architecture](https://bhagesh-h.github.io/FALCONAge/architecture.html) | Which file computes what, and why |
@@ -244,7 +244,7 @@ res.registry.get("horvath2013").cite("bibtex")
 
 ## Contributing
 
-Most valuable first: tracing a tier B clock's coefficients to a primary source.
+Most valuable first: tracing an untraced clock's coefficients to a primary source.
 → [PUBLISHING.md](PUBLISHING.md) for release process, [CHANGELOG.md](CHANGELOG.md) for history.
 
 ## How the documentation was written

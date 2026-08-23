@@ -217,7 +217,7 @@ class LinearClock:
 
 @dataclass
 class ScaffoldClock:
-    """A tier C clock: everything except the numbers.
+    """A licensed clock: everything except the numbers.
 
     Instantiating one is fine and is what the shape tests exercise. Calling
     :meth:`predict` without registered coefficients raises, by design -- a
@@ -242,7 +242,7 @@ class ScaffoldClock:
 def build(registry, clock_id: str):
     """Return the right model object for a registry entry."""
     c = registry.get(clock_id)
-    if c.availability == "C" and not registry.has_coefficients(clock_id):
+    if c.availability == "licensed" and not registry.has_coefficients(clock_id):
         return ScaffoldClock(clock=c, registry=registry)
     if c.formula:
         from .clinical import ClinicalClock

@@ -31,7 +31,9 @@ from ..core.config import default_cache_dir
 from ..core.errors import ChecksumMismatchError, DownloadError
 from ..core.logging import get_logger
 
-__all__ = ["DownloadResult", "cache_info", "clear_cache", "download", "resolve_source"]
+__all__ = ["DownloadResult", "InterventionStudy", "cache_info", "clear_cache",
+           "download", "download_intervention", "how_to_get", "interventions",
+           "resolve_source"]
 
 log = get_logger("download")
 UA = f"FALCONAge/{__version__} (+https://github.com/bhagesh-h/FALCONAge)"
@@ -543,6 +545,15 @@ def download(accession: str, *, cache_dir: Path | None = None, dry_run: bool = F
     """
     a = accession.strip()
     low = a.lower()
+    # A catalogued intervention study is resolved by NAME, before the shape
+    # rules run. "calerie" has no accession shape and would otherwise fall
+    # through to the "cannot tell what this is" error, which is true of the
+    # string and unhelpful about the dataset.
+    from .interventions import load as _load_interventions
+    if low in _load_interventions():
+        from .interventions import download_intervention
+        return download_intervention(low, cache_dir=cache_dir,
+                                     dry_run=dry_run, **kw)
     if low in CREDENTIALED:
         raise DownloadError(
             f"{a} is a credentialed archive and FALCONAge does not automate it.\n"
@@ -602,3 +613,22 @@ def clear_cache(cache_dir: Path | None = None, *, confirm: bool = False) -> int:
 
     shutil.rmtree(root)
     return total
+
+
+# ---------------------------------------------------------------------------
+# intervention studies
+# ---------------------------------------------------------------------------
+# Re-exported here so `fa.download.interventions()` works alongside
+# `fa.download(...)`, rather than making the caller import a submodule for the
+# one part of this module that is a catalogue rather than a transfer.
+from .interventions import (InterventionStudy, download_intervention,  # noqa: E402
+                            interventions)
+from .interventions import load as load_interventions  # noqa: E402
+
+
+def how_to_get(study_id: str) -> str:
+    """The next step for one intervention study, printed for a human.
+
+    >>> print(fa.download.how_to_get("calerie"))
+    """
+    return load_interventions().how_to_get(study_id)

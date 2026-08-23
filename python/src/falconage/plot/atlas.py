@@ -310,10 +310,11 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     ax.spines["bottom"].set_visible(False)
 
     # Names once, on the leftmost panel, rather than repeated across six
-    # columns. Tier is marked only when it is not A, so the common case stays
-    # quiet and a user-supplied-coefficient row is obvious.
+    # columns. Availability is marked only when the clock is not bundled, so
+    # the common case stays quiet and a user-supplied-coefficient row is
+    # obvious at a glance.
     for i, (c, r) in enumerate(d.iterrows()):
-        tier = "" if r["availability"] == "A" else f"  [{r['availability']}]"
+        tier = "" if r["availability"] == "bundled" else f"  [{r['availability']}]"
         ax.text(-0.12, i, f"{c}{tier}", transform=ax.get_yaxis_transform(),
                 ha="right", va="center", fontsize=base - 1.5, color="#222222")
 

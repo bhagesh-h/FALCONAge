@@ -161,6 +161,10 @@ r/inst/doc/
 # man/ is roxygen output and NEWS.md is generated from CHANGELOG.md, but both
 # ship in the CRAN tarball and CRAN requires them present, so both stay tracked.
 
+# A working note about where intervention data can be obtained, including
+# partner and controlled-access routes that are not ours to publish.
+/interventionstudy.md
+
 # ---- documentation -----------------------------------------------------------
 # Quarto and pkgdown both render into the tree. The rendered site is published
 # by CI from a clean checkout; a committed copy only ever goes stale.

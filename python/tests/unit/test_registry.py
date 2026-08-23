@@ -9,21 +9,41 @@ import pytest
 
 import falconage as fa
 from falconage.core.errors import ClockNotFoundError, RegistryError, WeightsUnavailableError
-from falconage.registry.registry import DATA_DIR, LEGAL_OPS
+from falconage.registry.registry import AVAILABILITY, DATA_DIR, LEGAL_OPS
 
 
-def test_registry_size_and_tiers(registry):
-    assert len(registry) == 161
-    tiers = {t: len(registry.filter(availability=t)) for t in "ABC"}
-    assert sum(tiers.values()) == 161
-    assert tiers["C"] == 28, "the 28 scaffold-only clocks in README section 6"
+def test_registry_size_and_availability(registry):
+    assert len(registry) == 175
+    tiers = {t: len(registry.filter(availability=t)) for t in AVAILABILITY}
+    assert sum(tiers.values()) == 175
+    assert tiers["licensed"] == 40, (
+        "28 scaffolds, plus the 12 biomarkers Figure 1c of the TranslAGE paper "
+        "computes: the eight PC GrimAge sub-scores, SystemsAge's age-prediction "
+        "component, OMICmAge, DNAmEMRAge and RetroClock")
+    assert tiers["untraced"] == 89, (
+        "87, plus the two frailty clocks from the TranslAGE panel. eFRS "
+        "publishes its twenty CpGs and not their weights; FIAge has no paper "
+        "at all. Both are catalogued so the panel can be reproduced or its "
+        "gaps stated, rather than quietly omitted")
+
+
+def test_the_retired_tier_letters_still_resolve(registry):
+    """Every script written before the rename filters on A, B or C.
+
+    Translating them is the difference between an old script continuing to work
+    and it silently returning nothing, which is the failure mode that looks like
+    "there are no bundled clocks" rather than like an error.
+    """
+    for letter, word in (("A", "bundled"), ("B", "untraced"), ("C", "licensed")):
+        assert registry.filter(availability=letter) == registry.filter(
+            availability=word), f"{letter} should still mean {word}"
 
 
 def test_every_entry_is_well_formed(registry):
     for c in registry:
         assert c.id and c.name
         assert c.scale_type in LEGAL_OPS, f"{c.id}: unknown scale {c.scale_type}"
-        assert c.availability in "ABC"
+        assert c.availability in AVAILABILITY, f"{c.id}: {c.availability}"
         assert c.data_type in ("dna_methylation", "clinical_chemistry")
         assert c.generation in ("first", "second", "pace", "causal", "mitotic",
                                 "system", "other")
@@ -81,7 +101,7 @@ def test_horvath_came_from_the_paper_not_a_package(registry):
 def test_scaffold_clocks_refuse_and_say_why(registry):
     for cid in ("grimage2", "dunedinpace", "systemsage", "pcgrimage"):
         c = registry.get(cid)
-        assert c.availability == "C"
+        assert c.availability == "licensed"
         assert c.coefficient_source.redistributable is False
         with pytest.raises(WeightsUnavailableError) as exc:
             registry.coefficients(cid)

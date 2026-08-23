@@ -263,4 +263,4 @@ class NeuralClock:
             "    w = fa.models.read_neural_weights(path, features=[...])\n"
             "    m = fa.models.NeuralClock(clock=reg.get(%r), weights=w)\n"
             "  %s" % (clock_id, registry.unavailable_message(clock_id)
-                      if c.availability == "C" else ""))
+                      if c.availability == "licensed" else ""))

@@ -4,9 +4,11 @@
 
 #' List the clock catalogue
 #'
-#' @param tier `"A"`, `"B"` or `"C"`, or `NULL` for all. A ships with
-#'   coefficients and runs offline; B is catalogued but has no traced primary
-#'   source yet; C is a scaffold whose coefficients are research-use-only.
+#' @param tier `"bundled"`, `"untraced"` or `"licensed"`, or `NULL` for all.
+#'   The retired `"A"`, `"B"`, `"C"` are still accepted. Bundled ships with
+#'   coefficients and runs offline; untraced is catalogued but has no traced
+#'   primary source yet; licensed is implemented but its coefficients are
+#'   research-use-only.
 #' @param data_type `"dna_methylation"` or `"clinical_chemistry"`.
 #' @param generation `"first"`, `"second"`, `"pace"`, `"causal"`, `"mitotic"`,
 #'   `"system"` or `"other"`.
@@ -16,16 +18,22 @@
 #' @return A data frame, one row per clock.
 #' @examples
 #' \dontrun{
-#' list_clocks(tier = "A")
+#' list_clocks(tier = "bundled")
 #' list_clocks(search = "mortality")
-#' list_clocks(tier = "C")   # the ones needing author permission
+#' list_clocks(tier = "licensed")   # the ones needing author permission
 #' }
 #' @export
 list_clocks <- function(tier = NULL, data_type = NULL, generation = NULL,
                         untraced = FALSE, search = NULL) {
   reg <- py_do(fa()$registry$load())
   df <- as_df(reg$summary())
-  if (!is.null(tier))       df <- df[df$availability == tier, , drop = FALSE]
+  if (!is.null(tier)) {
+    # The letters are what every script written before the rename says, so
+    # they are translated rather than silently matching nothing.
+    tier <- switch(as.character(tier), A = "bundled", B = "untraced",
+                   C = "licensed", tier)
+    df <- df[df$availability == tier, , drop = FALSE]
+  }
   if (!is.null(data_type))  df <- df[df$data_type == data_type, , drop = FALSE]
   if (!is.null(generation)) df <- df[df$generation == generation, , drop = FALSE]
   if (isTRUE(untraced))     df <- df[!df$traced, , drop = FALSE]
@@ -39,7 +47,7 @@ list_clocks <- function(tier = NULL, data_type = NULL, generation = NULL,
 
 #' Everything the registry knows about one clock
 #'
-#' For a tier C clock this also prints why its coefficients are not distributed,
+#' For a licensed clock this also prints why its coefficients are not distributed,
 #' where to obtain them, and which open clocks answer the same question.
 #'
 #' @param clock_id A clock identifier.
@@ -79,7 +87,7 @@ clock_info <- function(clock_id) {
   cat("  legal ops    ", paste(out$legal_operations, collapse = ", "), "\n")
   cat("  platform     ", paste(out$platform, collapse = ", "), "\n")
   cat("  features     ", out$n_features %||% "unknown", "\n")
-  cat("  availability ", "tier ", out$availability, "\n", sep = "")
+  cat("  availability ", out$availability, "\n", sep = "")
   cat("  provenance   ", out$provenance, "\n")
   cat("  traced       ", out$primary_source_traced, "\n")
   if (identical(out$availability, "C")) {

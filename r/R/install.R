@@ -32,7 +32,7 @@
 #'   (0.58 s against 3.74 s at 16,384 samples on an RTX 4060), because a linear
 #'   clock over a few thousand features is too small a matrix multiplication to
 #'   pay for the transfer. It earns its place on the PC clocks and on neural
-#'   architectures, none of which are tier A yet.
+#'   architectures, none of which are bundled yet.
 #' @param cuda CUDA version for the torch wheel index, e.g. `"cu124"`. The
 #'   `gpu` extra alone is not enough: pip's default index serves a CUDA build on
 #'   Linux and a CPU-only build on Windows under the same name, so the wheel has
@@ -108,9 +108,9 @@ falconage_config <- function() {
 print.falcon_config <- function(x, ...) {
   cat("FALCONAge", x$falconage, "\n")
   cat("  registry     ", x$registry_version, " (", x$n_clocks, " clocks)\n", sep = "")
-  t <- x$clocks_by_tier
-  cat("  tiers        A ", t$A, " ship - B ", t$B,
-      " need a traced source - C ", t$C, " scaffold only\n", sep = "")
+  t <- x$clocks_by_availability
+  cat("  availability ", t$bundled, " bundled - ", t$untraced, " untraced - ",
+      t$licensed, " licensed\n", sep = "")
   cat("  numpy        ", x$numpy, "\n", sep = "")
   cat("  torch        ", x$torch %||% "not installed (the CPU path needs none)", "\n", sep = "")
   cat("  devices      ", paste(unlist(x$devices), collapse = ", "), "\n", sep = "")

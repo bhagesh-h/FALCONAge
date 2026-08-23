@@ -20,21 +20,21 @@ sample looks.
 
 | Question | Ready to score | Needs a coefficient file | Scale |
 |:-----------------|:----------------------------|:-------------|:------|
-| How old does this sample look? | `altumage`, `corticalclock`, `hannum`, `horvath2013`, `lin`, `meer`, `pedbe`, `skinandblood`, and 4 more | `abec`, `cabec`, `ctsliver`, `eabec`, `encen100`, `encen40`, `ensembleagehumanmouse`, `gliasin`, and 27 more | `age_years`, `relative_score` |
-| How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerefinedrobust`, `leerobust` | `bohlin`, `epicga`, `mayne` | `gestational_weeks` |
-| How fast is this person aging? | `dunedinpoam38` | `ensembleagestatic`, `ensembleagestatictop`, `dunedinpace` | `age_years`, `pace_ratio` |
-| Which organ system is aging fastest? | — | `dnamfitage`, `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, and 5 more | `age_years` |
-| Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `hd`, `hrsinchphenoage`, `kdm`, `phenoage`, `weidner`, `zhangmortality` | `dnamfili`, `dnamic`, `mammalianlifespan`, `pcphenoage`, `senmortalityage`, `cpgptgrimage3`, `cpgptpcgrimage3`, `grimage`, and 2 more | `age_years`, `mortality_log_hazard`, `relative_score` |
-| Is damage separable from adaptation? | `yingadaptage`, `yingdamage` | — | `age_years_relative` |
-| How much has this tissue divided? | `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, `stemtoc`, and 1 more | `cellpopage`, `replitalinorm`, `sencultureage` | `divisions`, `relative_score` |
+| How old does this sample look? | — | `altumage`, `corticalclock`, `hannum`, `horvath2013`, `lin`, `meer`, `pedbe`, `skinandblood`, and 41 more | `age_years`, `relative_score` |
+| How old is this newborn, gestationally? | — | `knight`, `leecontrol`, `leerefinedrobust`, `leerobust`, `bohlin`, `epicga`, `mayne` | `gestational_weeks` |
+| How fast is this person aging? | — | `dunedinpoam38`, `dunedinpace`, `ensembleagestatic`, `ensembleagestatictop` | `age_years`, `pace_ratio` |
+| Which organ system is aging fastest? | — | `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, `systemsagekidney`, and 5 more | `age_years` |
+| Who is at risk of dying sooner, or is frailer? | — | `dnamphenoage`, `hd`, `hrsinchphenoage`, `kdm`, `phenoage`, `weidner`, `zhangmortality`, `cpgptgrimage3`, and 13 more | `age_years`, `mortality_log_hazard`, `relative_score` |
+| Is damage separable from adaptation? | — | `yingadaptage`, `yingdamage` | `age_years_relative` |
+| How much has this tissue divided? | — | `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, `stemtoc`, and 4 more | `divisions`, `relative_score` |
 | What is the blood's cell composition? | — | `deconvolutebloodepicbcell`, `deconvolutebloodepiccd4tcell`, `deconvolutebloodepiccd8tcell`, `deconvolutebloodepicmonocyte`, `deconvolutebloodepicneutrophil`, `deconvolutebloodepicnkcell`, `twelvecelldeconvolutebloodepicbas`, `twelvecelldeconvolutebloodepicbmem`, and 10 more | `proportion` |
-| How long are the telomeres? | `dnamtl` | `pcdnamtl` | `telomere_kb` |
-| What is this person exposed to, or how do they live? | `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, `mccartneytotalcholesterol`, and 2 more | `dnamfitagegaitf`, `dnamfitagegaitm`, `dnamfitagegripf`, `dnamfitagegripm`, `dnamfitagevo2max`, `dnamstress`, `reedbmi`, `grimage2packyrs` | `gestational_weeks`, `relative_score` |
-| What is a specific protein or lab value likely to be? | — | `bocklandt`, `compil6`, `downsyndrome`, `garagnani`, `grimage2adm`, `grimage2b2m`, `grimage2cystatinc`, `grimage2gdf15`, and 5 more | `relative_score` |
+| How long are the telomeres? | — | `dnamtl`, `pcdnamtl` | `telomere_kb` |
+| What is this person exposed to, or how do they live? | — | `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, `mccartneytotalcholesterol`, and 11 more | `gestational_weeks`, `relative_score` |
+| What is a specific protein or lab value likely to be? | — | `grimage2adm`, `grimage2b2m`, `grimage2cystatinc`, `grimage2gdf15`, `grimage2leptin`, `grimage2loga1c`, `grimage2logcrp`, `grimage2pai1`, and 12 more | `relative_score` |
 | Is a named disease more likely? | — | `adbahadosingh`, `cvdwesterman`, `depressionbarbu`, `hepatoxu`, `prostatecancerkirby` | `relative_score` |
 | What is the sample's chromosomal sex, or its species? | — | `mammalianfemale`, `xchrom`, `ychrom` | `relative_score` |
 
-Every one of the 161 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](../clocks.qmd).
+Every one of the 175 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](../clocks.qmd).
 
 <!-- END GENERATED: by-question -->
 
@@ -67,8 +67,8 @@ Every clock carries a `scale_type`, and it decides which downstream operations a
 
 | Scale | Clocks | Permitted | Refused, and why |
 |:------------|---:|:------------------|:---------------------------|
-| `age_years` | 73 | acceleration, correlate, difference, mean, residual | — |
-| `relative_score` | 44 | correlate, rank | everything except correlation and rank: there is no external unit to difference or average |
+| `age_years` | 77 | acceleration, correlate, difference, mean, residual | — |
+| `relative_score` | 54 | correlate, rank | everything except correlation and rank: there is no external unit to difference or average |
 | `proportion` | 18 | compositional, correlate, difference, mean | anything ignoring the sum-to-one constraint |
 | `divisions` | 10 | correlate, difference, mean, rank | acceleration: a division count is not elapsed time |
 | `gestational_weeks` | 8 | acceleration, correlate, difference, mean, residual | mixing with an age in years |
@@ -193,11 +193,11 @@ the measurements behind each. Reliability, technical against biological, is [[39
 
 <!-- BEGIN GENERATED: tiers -->
 
-| Tier | n | What you do |
-|:--|--:|:-------------------------------------------------------------|
-| A | 46 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
-| B | 87 | Catalogued, but no primary source has been established, so no coefficients ship. |
-| C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
+| Availability | n | What you do |
+|:---------|--:|:-------------------------------------------------------|
+| `bundled` | 46 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
+| `untraced` | 89 | Catalogued, but no primary source has been established, so no coefficients ship. |
+| `licensed` | 40 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
 
 <!-- END GENERATED: tiers -->
 
