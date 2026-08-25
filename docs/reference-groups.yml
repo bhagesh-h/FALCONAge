@@ -319,6 +319,8 @@ book:
         file: guide/clocks.qmd
       - title: Clock catalogue
         file: clocks.qmd
+      - title: Beyond the clock score
+        file: beyond-clocks.qmd
       - title: Figure gallery
         file: gallery.qmd
   - part: 3. The science
@@ -379,7 +381,13 @@ pages:
       interpretation the figure itself prints under its axes.
   - title: Clock catalogue
     file: clocks.qmd
-    desc: All 161 entries, generated from the registry that scores them.
+    desc: All 175 entries, generated from the registry that scores them.
+  - title: Beyond the clock score
+    file: beyond-clocks.qmd
+    desc: >-
+      Entropy, drift, the noise barometer, repertoire structure and coefficient
+      mass. What a methylation matrix answers when the question is about
+      variance rather than about level.
   - title: GPU support
     file: gpu.md
     desc: >-

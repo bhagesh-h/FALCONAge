@@ -39,6 +39,8 @@ navbar:
         href: https://bhagesh-h.github.io/FALCONAge/gallery.html
       - text: Clock catalogue
         href: https://bhagesh-h.github.io/FALCONAge/clocks.html
+      - text: Beyond the clock score
+        href: https://bhagesh-h.github.io/FALCONAge/beyond-clocks.html
       - text: GPU support
         href: https://bhagesh-h.github.io/FALCONAge/gpu.html
 reference:
