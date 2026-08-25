@@ -192,14 +192,14 @@ RUN falconage --version \
  && falconage clocks list --limit 5 \
  && falconage config \
  && python -c "import falconage; r = falconage.registry.load(); \
-assert len(r.list()) == 161, f'registry has {len(r.list())} clocks, expected 161'; \
+assert len(r.list()) == 175, f'registry has {len(r.list())} clocks, expected 175'; \
 print('falconage', falconage.__version__, '·', len(r.list()), 'clocks')" \
  && python -c "import falconage; from falconage.registry.registry import DATA_DIR; \
 r = falconage.registry.load(); \
-missing = [c.id for c in r.filter(availability='A') if c.coefficient_source.file \
+missing = [c.id for c in r.filter(availability='bundled') if c.coefficient_source.file \
            and not (DATA_DIR / c.coefficient_source.file).exists()]; \
 assert not missing, f'declared weights missing from the wheel: {missing}'; \
-print(len([c.id for c in r.filter(availability='A') if c.coefficient_source.file]), 'weight file(s) present')" \
+print(len([c.id for c in r.filter(availability='bundled') if c.coefficient_source.file]), 'weight file(s) present')" \
  && Rscript -e "library(FALCONAge); stopifnot(falconage_available()); print(falconage_config())"
 
 # A non-root user by default. Nothing here needs root, and a container that
@@ -224,7 +224,7 @@ CMD ["--help"]
 # not executed. `test/check_versions.py` reads it out of this file now, so it is
 # one of the six sources that have to agree before a tag can be cut.
 LABEL org.opencontainers.image.title="FALCONAge" \
-      org.opencontainers.image.description="Multiomic biological age and aging clock scoring: 161 catalogued clocks, identical results from Python and R" \
+      org.opencontainers.image.description="Multiomic biological age and aging clock scoring: 175 catalogued clocks, identical results from Python and R" \
       org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
       org.opencontainers.image.url="https://bhagesh-h.github.io/FALCONAge/" \
       org.opencontainers.image.documentation="https://bhagesh-h.github.io/FALCONAge/" \

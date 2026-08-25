@@ -180,14 +180,14 @@ assert torch.version.cuda is not None, 'torch has no CUDA build -- wrong wheel i
 print(f'torch {torch.__version__} · compiled against CUDA {torch.version.cuda} · ' \
       f'device visible at build: {torch.cuda.is_available()}')" \
  && python -c "import falconage; r = falconage.registry.load(); \
-assert len(r.list()) == 161, f'registry has {len(r.list())} clocks, expected 161'; \
+assert len(r.list()) == 175, f'registry has {len(r.list())} clocks, expected 175'; \
 print('falconage', falconage.__version__, '·', len(r.list()), 'clocks')" \
  && python -c "import falconage; from falconage.registry.registry import DATA_DIR; \
 r = falconage.registry.load(); \
-missing = [c.id for c in r.filter(availability='A') if c.coefficient_source.file \
+missing = [c.id for c in r.filter(availability='bundled') if c.coefficient_source.file \
            and not (DATA_DIR / c.coefficient_source.file).exists()]; \
 assert not missing, f'declared weights missing from the wheel: {missing}'; \
-print(len([c.id for c in r.filter(availability='A') if c.coefficient_source.file]), 'weight file(s) present')" \
+print(len([c.id for c in r.filter(availability='bundled') if c.coefficient_source.file]), 'weight file(s) present')" \
  && Rscript -e "library(FALCONAge); stopifnot(falconage_available()); print(falconage_config())"
 
 RUN useradd --create-home --uid 1000 falcon \
