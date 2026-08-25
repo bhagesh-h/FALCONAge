@@ -20,8 +20,7 @@ from falconage.immune import effective_clones, zipf_clone_sizes
 from falconage.uncertainty import VarianceError
 
 
-def _betas(values, n_features=200, n_samples=10, seed=0, obs=None):
-    rng = np.random.default_rng(seed)
+def _betas(values, n_features=200, n_samples=10, obs=None):
     if np.isscalar(values):
         X = np.full((n_samples, n_features), float(values))
     else:

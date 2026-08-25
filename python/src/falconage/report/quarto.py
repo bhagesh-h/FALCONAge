@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import base64
 import html
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -616,7 +615,7 @@ def write_quarto_report(
                 "their feature sets. A single significant clock among twenty is "
                 "the documented signature of a false positive rather than of a "
                 "narrow effect.\n\n")
-        if hero_ok := (conclusion_figure and Path(conclusion_figure).exists()):
+        if conclusion_figure and Path(conclusion_figure).exists():
             parts.append("```{=html}\n"
                          + _figure(Path(conclusion_figure), hero=True)
                          + "```\n\n")
