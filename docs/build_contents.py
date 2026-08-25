@@ -51,18 +51,23 @@ def slug(heading: str) -> str:
     return re.sub(r"^[^a-z]+", "", h)
 
 
+#: Fenced-div classes whose ``##`` heading is consumed as a label rather than
+#: emitted as a section anchor. ``panel-tabset`` turns it into a tab; every
+#: ``callout-*`` turns it into the callout's title. In both cases Quarto writes
+#: no id, so listing one in the contents produces a link that cannot resolve --
+#: which is exactly what happened to `#python` and `#r` on the architecture
+#: page, and later to two callout titles in section 21 and section 23 of the
+#: science page.
+LABEL_DIVS = ("panel-tabset", "callout-")
+
+
 def headings(body: str) -> list[str]:
     """The ``##`` headings that are actually sections of the document.
 
-    A heading inside ``::: {.panel-tabset}`` is a tab label, not a section:
-    Quarto turns it into a tab and emits no id for it, so listing one in the
-    contents produces a link to an anchor that cannot exist. Two of these were
-    in the architecture page's list, pointing at ``#python`` and ``#r``.
-
     Also skips fenced code, where a line beginning ``## `` is a shell comment.
     """
-    out, fence, divs = [], False, 0
-    tabset = None
+    out, fence = [], False
+    stack: list[bool] = []          # one entry per open div: does it eat headings
     for line in body.splitlines():
         s = line.strip()
         if s.startswith("```"):
@@ -72,16 +77,12 @@ def headings(body: str) -> list[str]:
             continue
         if s.startswith(":::"):
             if re.match(r":::+\s*\{", s):
-                divs += 1
-                if "panel-tabset" in s and tabset is None:
-                    tabset = divs
-            else:
-                if tabset is not None and divs == tabset:
-                    tabset = None
-                divs = max(0, divs - 1)
+                stack.append(any(c in s for c in LABEL_DIVS))
+            elif stack:
+                stack.pop()
             continue
         m = re.match(r"^## (.+)$", line)
-        if m and tabset is None:
+        if m and not any(stack):
             out.append(m.group(1).strip())
     return out
 

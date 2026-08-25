@@ -47,8 +47,6 @@ Contents
 21. [Genetic variation under the probe](#genetic-variation-under-the-probe)
 22. [Structure above the single probe](#structure-above-the-single-probe)
 23. [Building a clock of your own](#building-a-clock-of-your-own)
-- [What this changes about a score](#what-this-changes-about-a-score)
-- [The selected set is not the biology](#the-selected-set-is-not-the-biology)
 - [References](#references)
 
 Appendices
