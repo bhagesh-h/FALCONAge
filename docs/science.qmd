@@ -44,6 +44,11 @@ Contents
 18. [Datasets, registries, reference resources](#datasets-registries-reference-resources)
 19. [Uncertainty, specimen and platform](#uncertainty-specimen-and-platform)
 20. [From raw arrays to betas](#from-raw-arrays-to-betas)
+21. [Genetic variation under the probe](#genetic-variation-under-the-probe)
+22. [Structure above the single probe](#structure-above-the-single-probe)
+23. [Building a clock of your own](#building-a-clock-of-your-own)
+- [What this changes about a score](#what-this-changes-about-a-score)
+- [The selected set is not the biology](#the-selected-set-is-not-the-biology)
 - [References](#references)
 
 Appendices
@@ -2403,6 +2408,237 @@ column is the one to read, and it is why this is a report rather than a step.
 - **EPIC v1 and v2 cannot be told apart by address count.** They are five
   percent apart, so detection refuses as ambiguous rather than picking the
   closer one. Pass `platform=` for a chip near the boundary.
+
+## 21. Genetic variation under the probe
+
+Every section above treats a beta value as a measurement of methylation. It is
+also, in part, a measurement of genotype, and the two are not separable by
+looking at the number.
+
+### 21.1 A probe sits at a genomic coordinate
+
+Each probe has a chromosome and a base position, so the probe set can be
+intersected with any variant catalogue: ClinVar for clinically annotated
+variants, dbSNP for the general catalogue. The intersection is an ordinary
+range join, which `GenomicRanges` or `bedtools` will do, and it answers a
+question that matters before scoring: does this clock depend on probes whose
+signal a common variant can move.
+
+### 21.2 Three ways a variant reaches the beta value
+
+**A SNP at the interrogated base.** Single-base extension reads the variant
+rather than the methylation state, so the beta becomes a genotype readout. This
+is the population of probes the published masks remove, and it is why
+FALCONAge applies the Zhou masks rather than treating every probe as equally
+informative.
+
+**A SNP under the probe body.** Hybridisation is weakened, intensity falls, and
+the beta drifts toward the middle of the range without any obvious signature of
+failure.
+
+**Cross-reactivity.** A 50-mer against a three-base genome maps to more than one
+locus more often than the design intends. Chen and colleagues catalogued these
+for the 450K, and the affected probes carry a mixture of signals from several
+places in the genome.
+
+### 21.3 meQTL: the variant is somewhere else entirely
+
+A methylation quantitative trait locus is a variant associated with methylation
+at a CpG, usually nearby but sometimes far away. GoDMC and the EPIGEN meQTL
+resource map these genome-wide. The consequence for a clock is direct: if a
+clock CpG is under strong meQTL control, part of the between-person variance in
+that clock is genetic and fixed at conception rather than acquired, and no
+intervention will move it.
+
+::: {.callout-note}
+## What this changes about a score
+
+A clock's between-person variance splits into an acquired component, which is
+what the clock is meant to measure, and a genetic component, which is not. The
+split is not visible in the score. Two people with the same clock age can differ
+because one has lived differently and the other inherited a different genotype
+at a handful of high-weight probes.
+:::
+
+### 21.4 The arrays carry genotype probes on purpose
+
+450K and EPIC include rsID-labelled SNP probes, 65 on the 450K, for sample
+identity. They confirm that two arrays came from the same person, which is the
+check that catches a swapped sample. `MethylToSNP` goes further and infers
+genotypes from the methylation pattern itself, which is useful and is also a
+reminder that array data is identifiable.
+
+## 22. Structure above the single probe
+
+### 22.1 A clock is a combination score
+
+A clock sums hundreds of weighted features, which makes it the same kind of
+object as a polygenic risk score, and methylation risk scores for individual
+traits are built the same way. The TranslAGE panel is largely made of them:
+1,694 of its 1,803 biomarkers are proxies for proteins, metabolites and clinical
+values rather than clocks.
+
+The shared property matters more than the shared arithmetic. A combination score
+is robust where a single probe is noisy, and it is opaque in the same measure: a
+change in the total does not say which component moved. That is the argument for
+the subscore clocks in section 5.
+
+### 22.2 Co-methylation modules
+
+CpGs covary. Weighted correlation network analysis groups them into modules and
+summarises each by its first principal component, and the module can then be
+tested as one unit rather than as several thousand correlated tests. This is
+where the multiple-testing burden of an epigenome-wide scan becomes tractable,
+and it recovers structure that a per-probe analysis cannot see.
+
+### 22.3 Allele-specific methylation
+
+The two alleles at a locus can carry different methylation, and the pattern can
+follow a haplotype block. Array data cannot resolve this because a beta value
+averages both alleles into one number. Sequencing can, and tools such as
+MethHaplo combine allele-specific methylation with genotype to identify the
+regions involved. Imprinted loci are the familiar case and not the only one.
+
+### 22.4 Interactions between variants are real and small
+
+Genome-wide tests for SNP by SNP effects on methylation find them, and find that
+they explain little variance. The practical reading is that additive models are
+not leaving much on the table at this level, which is consistent with the
+observation in section 4 that elastic net remains competitive with deep networks
+on this problem.
+
+## 23. Building a clock of your own
+
+The catalogue is other people's clocks. This is the arithmetic of fitting one,
+with the numbers the published clocks actually used.
+
+### 23.1 The objective
+
+With $n$ samples and $p$ CpGs, $p \gg n$ always. Horvath had 8,000 samples
+against 21,369 candidate probes; a modern EPIC study has 850,000 columns and a
+few hundred rows. An unpenalised least-squares fit is not identifiable, because
+$X^\top X$ is singular whenever $p > n$. Penalisation is what makes the problem
+have an answer, not a refinement on one.
+
+$$
+\hat{\beta} = \arg\min_{\beta} \left\{ \frac{1}{2n}\sum_{i=1}^{n}\left(y_i - \beta_0 - x_i^{\top}\beta\right)^2 + \lambda\left[\frac{1-\alpha}{2}\lVert\beta\rVert_2^2 + \alpha\lVert\beta\rVert_1\right] \right\}
+$$
+
+The two penalties do different work. The $\ell_1$ term has a corner at zero, so
+its subgradient can hold a coefficient exactly at zero, which is what performs
+selection. The $\ell_2$ term is smooth and shrinks correlated predictors
+together rather than choosing between them, which matters because neighbouring
+CpGs are strongly correlated and pure LASSO picks among them close to
+arbitrarily.
+
+| $\alpha$ | Name | Behaviour on correlated CpGs | Used by |
+|---:|---|---|---|
+| 1 | LASSO | Selects one per correlated group, close to arbitrarily | eFRS, the McCartney EpiScores |
+| 0.5 | Elastic net | Keeps correlated groups together while still zeroing most coefficients | Horvath 2013 |
+| 0 | Ridge | Shrinks everything, selects nothing | Rarely used alone |
+
+Horvath fitted $\alpha = 0.5$ with $\lambda = 0.0226$ chosen by cross-validation,
+over the 21,369 probes shared by the 27K and 450K platforms that had fewer than
+ten missing values. That produced the 353 sites.
+
+::: {.callout-important}
+## The selected set is not the biology
+
+Rerun the same fit with a slightly different $\lambda$, a different fold split,
+or a different subset of samples, and a different CpG set comes out with almost
+identical accuracy. The correlated groups are interchangeable to the optimiser.
+This is the mechanism behind the eleven discrepancies in section 15, and it is
+why two faithful implementations of the same clock can disagree on membership.
+:::
+
+### 23.2 Choosing the penalty honestly
+
+$\lambda$ comes from $k$-fold cross-validation: fit on $k-1$ folds, measure on
+the held-out one, take the $\lambda$ minimising mean cross-validated error, or
+the largest $\lambda$ within one standard error of it for a sparser model.
+
+Any step that looked at the outcome must sit inside the loop. Selecting CpGs by
+their correlation with age on the full dataset and then cross-validating the fit
+on those CpGs leaks the held-out fold into the selection, and the reported error
+is optimistic by an amount that cannot be recovered afterwards.
+
+### 23.3 The age transform
+
+Methylation changes quickly in childhood and slowly afterwards, so a model
+linear in age fits adults and misses the first two decades. Horvath regresses a
+transformed age and inverts afterwards, with $A = 20$:
+
+$$
+F(\text{age}) = \begin{cases}
+\log(\text{age} + 1) - \log(A + 1) & \text{age} \le A \[4pt]
+\dfrac{\text{age} - A}{A + 1} & \text{age} > A
+\end{cases}
+$$
+
+Both branches give 0 at $\text{age} = A$ and both have derivative $1/(A+1)$
+there, so $F$ is continuous and differentiable at the join. The model predicts
+$F$; the reported age is $F^{-1}$ of the linear predictor. Applying the inverse
+twice, or omitting it, is invisible in an adult cohort because the branches
+nearly agree there, and badly wrong in a paediatric one.
+
+### 23.4 Feature selection is not settled
+
+Elastic net is the default rather than the optimum. Benchmarked on the Hannum
+blood data (GSE40279, 656 samples, 473,035 CpGs, 10-fold cross-validation,
+80/20 split):
+
+| Method | CpGs kept | R² | Median error |
+|---|---:|---:|---|
+| SelectKBest (2,000) then Boruta | 35 | 0.873 | 3.08 years |
+| Boruta alone, or KBest alone | varies | 0.861 to 0.862 | |
+| Recursive elimination, 1% per iteration | varies | ≥ 0.81 | |
+| Genetic algorithm, most threshold methods | varies | 0.77 to 0.81 | |
+| Neural network on 65 features | 65 | 0.76 | found 61 CpGs no other method did |
+| Elastic net, no prior selection | 276 | below five of the above | |
+| The five most-selected CpGs overall | 5 | 0.83 | 3.79 years |
+| cg16867657 (ELOVL2) alone | 1 | 0.73 | |
+
+Two rows there are worth sitting with. A single CpG in ELOVL2 reaches R² = 0.73,
+so most of what a 353-CpG clock knows about chronological age is available from
+a handful of sites. And an unfiltered elastic net over all 450,000 probes was
+beaten by five selection strategies, which is the opposite of the usual
+intuition: past a point the extra probes contribute noise rather than signal.
+
+### 23.5 Two metrics that disagree, and both are needed
+
+$$
+\text{MAE} = \operatorname{median}_i\left|\hat{y}_i - y_i\right|, \qquad r = \operatorname{corr}(\hat{y}, y)
+$$
+
+Correlation is inflated by a wide age range and says nothing about bias. Median
+absolute error is in years and says nothing about ordering. A clock at r = 0.95
+on a cohort spanning 20 to 90 may have an MAE of six years; the same clock on a
+cohort spanning 55 to 65 may have r near zero and the same MAE. Neither number
+is wrong and neither alone is informative.
+
+Expect the fitted slope of $\hat{y}$ on $y$ to fall below one. Penalisation
+shrinks coefficients toward zero, which compresses predictions toward the
+training mean, so the old read young and the young read old. That is regression
+to the mean, a property of the estimator rather than a defect of the cohort, and
+it leaves the residual correlated with age unless the slope is corrected. It is
+why section 19 residualises before comparing anything.
+
+### 23.6 The step that gets skipped
+
+A model fitted to chronological age will correlate with chronological age.
+Reporting that as validation is circular. The claim worth making is about the
+residual: whether age acceleration associates with disease, mortality or an
+intervention, on a cohort that was not used to fit the model. Everything in
+section 11 applies to a clock you fitted exactly as it applies to a published
+one.
+
+### 23.7 What to publish
+
+Feature list, weights, intercept, the preprocessing chain and the postprocess,
+together and in the order they apply. A clock published without its postprocess
+is the commonest source of the disagreements in section 15, because the next
+implementer has to guess whether an anti-log was already applied, and a
+plausible wrong guess produces plausible wrong ages.
 
 ## References
 

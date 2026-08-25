@@ -34,15 +34,15 @@ tolerance zero in CI rather than approximately.
 | **Tested** | 457 Python tests and 52 R tests passing, 5 skipped, including the R-to-Python conformance pass at tolerance zero |
 
 Every clock algorithm is implemented from its published description; no clock implementation is
-imported from another package. Coefficients are fitted data rather than a procedure, and 28 clocks
-have coefficients that are research-use-only or have no traceable public source. Those ship as
-tested scaffolds and take a file you supply.
+imported from another package. Coefficients are fitted data rather than a procedure, and 40 clocks
+have coefficients that are research-use-only. Those ship as tested scaffolds and take a file you
+supply.
 → [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) ·
 [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html)
 
 ## Installation
 
-**Docker is the supported path.** One image carries Python, R, the CLI and all 32 bundled clocks
+**Docker is the supported path.** One image carries Python, R, the CLI and all 43 bundled weight files
 at pinned versions, so the same input gives the same numbers on any machine. Nothing else to
 install.
 
@@ -194,6 +194,9 @@ the paper did not make, and it says so on every run.
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
 | 89 untraced coefficient sources | A per-clock literature hunt; some have no public supplement |
+| meQTL awareness | A clock CpG under strong genetic control carries variance that is fixed at conception and cannot move. The registry records no meQTL status, so a score cannot yet say which part of its spread is acquired |
+| Allele-specific methylation | A beta value averages both alleles, so an array cannot resolve it. Sequencing can; nothing here reads that |
+| Co-methylation modules | Probes are treated independently. Module-level testing is what makes an epigenome-wide scan tractable, and is not implemented |
 
 ## Figures
 
@@ -219,7 +222,7 @@ and floating-point precision, the imputation policy, and every warning raised.
 | [Getting started](https://bhagesh-h.github.io/FALCONAge/guide/FALCONAge.html) | Docker first, then Python and R; score, interpret, reproduce |
 | [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html) | All 175 routed by the question they answer |
 | [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) | Every clock with its scale, tissue, platform and paper |
-| [The science](https://bhagesh-h.github.io/FALCONAge/science.html) | The algorithms, the failure modes, the citations |
+| [The science](https://bhagesh-h.github.io/FALCONAge/science.html) | The algorithms, the failure modes, the citations, the genetics under the probe, and how to fit a clock of your own |
 | [Architecture](https://bhagesh-h.github.io/FALCONAge/architecture.html) | Which file computes what, and why |
 | [Figure gallery](https://bhagesh-h.github.io/FALCONAge/gallery.html) | Every figure type with its interpretation |
 | [Python](https://bhagesh-h.github.io/FALCONAge/reference/) · [R](https://bhagesh-h.github.io/FALCONAge/r/reference/) | Full API references |

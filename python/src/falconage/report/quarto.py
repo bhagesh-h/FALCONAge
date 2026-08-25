@@ -45,114 +45,83 @@ CATEGORIES: tuple[dict[str, Any], ...] = (
     {
         "key": "first",
         "title": "First generation: chronological age predictors",
-        "output": "An age in years, on the same scale as the birth certificate.",
+        "output": 'An age in years, on the same scale as chronological age.',
         "means": (
-            "These were fitted to calendar age, so they are at their best a very "
-            "good estimator of something already known. The useful part is the "
-            "**residual**: the difference between the prediction and the person's "
-            "actual age. A clock that predicted chronological age perfectly would "
-            "have no residual left and would detect nothing."),
+            'Fitted by penalised regression against calendar age. Reported accuracy is therefore accuracy against a known quantity, and correlation with age is guaranteed by construction rather than evidence of anything. The estimand of interest is the **residual** of predicted on chronological age within the cohort at hand.'),
         "implication": (
-            "Read the residual, not the prediction. In intervention studies these "
-            "respond least of any group, which is expected rather than a failure: "
-            "two years of anything moves a level slowly."),
+            'Analyse the residual. Test-retest error on split samples reaches nine years for prominent clocks in this group, and median absolute error against chronological age is 3.6 years or worse, so differences below that are not resolvable per individual. Across 51 interventional datasets this group showed the smallest responses, consistent with an accumulated level responding more slowly than a rate.'),
         "predicate": lambda c: c.generation == "first",
     },
     {
         "key": "second",
         "title": "Second generation: mortality and morbidity trained",
-        "output": "A hazard, rescaled into year-like units.",
+        "output": 'A mortality hazard, rescaled to year-like units.',
         "means": (
-            "Trained on a survival-weighted composite rather than on age. The "
-            "unit is years and the target never was: the number is a risk wearing "
-            "the clothes of an age."),
+            'Fitted to a survival-weighted composite of clinical measures rather than to age. The reported unit is years; the training target was not age, so the value is a risk expressed on an age-like scale and is not interchangeable with a first-generation prediction.'),
         "implication": (
-            "These respond most strongly to interventions and agree with one "
-            "another when they do, which is the main finding of the "
-            "responsiveness literature. If one group is going to move, it is "
-            "this one."),
+            "Highest responsiveness of any group across interventional datasets, and the members agree with one another when they move, which is the pattern expected of a shared underlying signal rather than of independent false positives. Note that only about 63 per cent of PhenoAge's accuracy is reproducible by a purely stochastic model of methylation change, against 66 to 75 per cent for Horvath: the non-stochastic remainder is larger in this group."),
         "predicate": lambda c: c.generation == "second",
     },
     {
         "key": "pace",
         "title": "Third generation: pace of aging",
-        "output": "A ratio: years of biological change per calendar year.",
+        "output": 'A dimensionless rate: biological change per unit calendar time.',
         "means": (
-            "Fitted to the *rate* of change in organ-system biomarkers tracked "
-            "longitudinally. A value of 1.0 is aging at one year per year."),
+            'Fitted to the slope of change in organ-system biomarkers measured longitudinally. A value of 1.0 denotes one year of biological change per chronological year.'),
         "implication": (
-            "A rate changes before an accumulated level does, which is why a "
-            "two-year trial can move a pace clock while every first-generation "
-            "clock stays flat. **Age acceleration is undefined here**: a pace is "
-            "already a rate and subtracting an age from it is a units error."),
+            'A rate responds before an accumulated level does, which is why a two-year randomised trial (CALERIE) moved DunedinPACE while first-generation clocks did not. **Age acceleration is undefined on this scale**: the quantity is already a rate, so subtracting chronological age is dimensionally invalid and is refused rather than computed.'),
         "predicate": lambda c: c.scale_type == "pace_ratio" or c.generation == "pace",
     },
     {
         "key": "causal",
         "title": "Causal: damage separated from adaptation",
-        "output": "Two scores with no shared origin.",
+        "output": 'Two scores in years, with no fixed origin.',
         "means": (
-            "Features restricted to CpGs with Mendelian-randomisation support, "
-            "split into changes that damage and changes that compensate."),
+            'Features restricted to CpGs with Mendelian-randomisation support and partitioned into damaging and adaptive components. Slope against chronological age is near unity (0.967 for DamAge pooled), but the intercept is cohort-dependent: measured across three healthy cohorts the median bias against chronological age moves by 162 years, against 15 for Horvath.'),
         "implication": (
-            "The origin does not travel between cohorts, so `predicted minus "
-            "chronological` is not a quantity here. Use the residual fitted "
-            "inside the dataset at hand, or a group difference."),
+            '`predicted - chronological` is not a quantity here because the origin does not transfer between cohorts. The within-dataset residual and between-group differences remain defined, and are what the source publications use.'),
         "predicate": lambda c: c.generation == "causal"
         or c.scale_type == "age_years_relative",
     },
     {
         "key": "mitotic",
         "title": "Mitotic: cumulative cell divisions",
-        "output": "A count of divisions, not elapsed time.",
+        "output": 'An estimated count of stem-cell divisions.',
         "means": (
-            "Estimates how many times a stem-cell pool has divided. Two tissues "
-            "from the same donor on the same day share a chronological age and "
-            "have very different division counts."),
+            'Derived from methylation at polycomb-target promoters or solo-WCGW sites that accumulate change per replication. epiTOC2 and epiTOC3 invert a per-site transmission model rather than summing weighted features.'),
         "implication": (
-            "Not an age and not comparable with one. Acceleration is refused "
-            "because the quantity was never elapsed time."),
+            'Not elapsed time and not comparable with an age. Tissue turnover rate dominates: two tissues sampled from one donor on one day share a chronological age and differ substantially in division count. Acceleration is refused on this scale.'),
         "predicate": lambda c: c.scale_type == "divisions" or c.generation == "mitotic",
     },
     {
         "key": "system",
         "title": "Explainable: system and organ subscores",
-        "output": "One score per physiological system, plus a composite.",
+        "output": 'One score per physiological system, plus a composite.',
         "means": (
-            "A clock with subscores says *which* component moved rather than "
-            "only that something did. SystemsAge splits into eleven system ages; "
-            "the GrimAge family into its plasma-protein surrogates."),
+            'Multi-output models whose subscores are reported alongside the composite. SystemsAge resolves eleven physiological systems; the GrimAge family reports DNAm surrogates of plasma proteins and smoking pack-years, concatenated in a fixed order before a Cox layer.'),
         "implication": (
-            "The most informative group for mechanism, and the one that needs "
-            "the most care in reading: with eleven subscores, one of them looking "
-            "extreme is the expected result in a healthy person, not a finding."),
+            'Subscores localise which component contributes to a change, which single-output clocks cannot do, and this is the property the responsiveness literature identifies as most informative for mechanism. Multiplicity applies: with eleven subscores, one extreme value is the expected result under the null and is not a finding on its own.'),
         "predicate": lambda c: c.generation == "system"
         or c.id.startswith(("systemsage", "grimage2", "pcgrimage", "dnamfitage")),
     },
     {
         "key": "composition",
         "title": "Cell composition",
-        "output": "Proportions, constrained to sum to one.",
+        "output": 'Cell-type proportions, constrained to the simplex.',
         "means": (
-            "Deconvolution estimates of which cells were in the tube, not an age "
-            "at all."),
+            'Reference-based deconvolution against a matrix of cell-type-specific methylation, solved as constrained least squares with non-negativity and a sum-to-one constraint. Not an age estimate.'),
         "implication": (
-            "Report these beside any bulk-blood clock. A treatment that shifts "
-            "leukocyte proportions shifts the clock, and an apparent "
-            "rejuvenation can be a change in cell mix."),
+            'Report alongside any bulk-tissue clock. Bulk methylation reflects cell composition as well as within-cell change, so an intervention that shifts leukocyte proportions shifts the clock; an apparent change in biological age can be a change in the cell mixture sampled.'),
         "predicate": lambda c: c.scale_type == "proportion",
     },
     {
         "key": "other",
         "title": "Other predictors",
-        "output": "Varies; read the unit on each row.",
+        "output": 'Varies by clock. The unit is given per row.',
         "means": (
-            "Exposure scores, protein surrogates, telomere length and the "
-            "clocks that fit no other group."),
+            'Exposure and lifestyle predictors, DNAm surrogates of individual proteins and clinical measures, telomere-length estimates, and clocks whose training target places them in none of the groups above.'),
         "implication": (
-            "Most are `relative_score`, which permits correlation and ranking "
-            "and nothing else: there is no external unit to difference or "
-            "average."),
+            'Most carry `scale_type: relative_score`, which admits correlation and ranking only: there is no external unit, so differences and means are not defined. Check the unit column before combining any of these.'),
         "predicate": lambda c: True,
     },
 )
@@ -264,6 +233,14 @@ FIGURE_NOTES: dict[str, dict[str, str]] = {
         "caption": "Every algorithm across every pooled study",
         "read": "The whole catalogue at once, for orientation.",
         "wrong": "Not a results figure. Do not read a single cell of it as a finding.",
+    },
+    "consensus_plot": {
+        "caption": "Consensus across every testable clock",
+        "read": "The shape, not any single bar. Effect size per clock, coloured by "
+                "generation, with both correction thresholds marked.",
+        "wrong": "One lit bar among twenty dark ones is the documented signature of "
+                 "a false positive. A real effect lights up across generations, "
+                 "because they share the biology and not the feature sets.",
     },
     "volcano": {
         "caption": "Association with age acceleration",
@@ -400,6 +377,51 @@ TABLE_JS = r"""
 })();
 """
 
+#: Click a figure to see it full size.
+#:
+#: WHY THUMBNAILS AT ALL. Fifty-one figures at full width is a document nobody
+#: scrolls to the end of, and the figures are different shapes, so at full width
+#: the page also lurches between a square heatmap and a wide forest plot. A
+#: uniform tile makes the section scannable; the zoom is there because a
+#: thumbnail of a forty-clock heatmap is unreadable by design.
+ZOOM_JS = r"""
+(function () {
+  function overlay() {
+    let o = document.getElementById('fa-zoom');
+    if (o) return o;
+    o = document.createElement('div');
+    o.id = 'fa-zoom';
+    o.innerHTML = '<img alt=""><button type="button" aria-label="Close">&times;</button>';
+    document.body.appendChild(o);
+    const close = () => { o.classList.remove('on'); };
+    o.addEventListener('click', close);
+    // Escape as well as the button: a full-screen overlay with only a small
+    // target to dismiss it is a trap on a laptop trackpad.
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') close();
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.fa-figure img').forEach(img => {
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.title = 'Click to enlarge';
+      const open = () => {
+        const o = overlay();
+        o.querySelector('img').src = img.src;
+        o.querySelector('img').alt = img.alt || '';
+        o.classList.add('on');
+      };
+      img.addEventListener('click', open);
+      img.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+    });
+  });
+})();
+"""
+
 TABLE_CSS = r"""
 .fa-tablebar { display:flex; gap:.5rem; align-items:center; margin:.4rem 0 .5rem; }
 .fa-tablebar input[type=search] { flex:1 1 14rem; padding:.3rem .5rem;
@@ -416,13 +438,39 @@ TABLE_CSS = r"""
 .fa-table table { width:100%; font-size:.84rem; border-collapse:collapse; }
 .fa-table th, .fa-table td { padding:.3rem .55rem; border-bottom:1px solid
   var(--bs-border-color,#eee); text-align:left; white-space:nowrap; }
-.fa-meaning { border-left:3px solid #e06000; padding:.5rem .9rem; margin:.8rem 0;
-  background:rgba(224,96,0,.05); font-size:.92rem; }
-.fa-figure { margin:1.4rem 0; }
-.fa-figure img { width:100%; height:auto; border:1px solid var(--bs-border-color,#eee);
-  border-radius:6px; background:#fbfbfa; }
+/* Green, not the brand orange. These blocks state what a quantity is; orange
+   is the colour this report uses for cautions, and a definition rendered in it
+   read as a warning about the clock rather than a description of its output. */
+.fa-meaning { border-left:3px solid #009E73; padding:.55rem .95rem; margin:.8rem 0;
+  background:rgba(0,158,115,.06); font-size:.92rem; }
+.fa-meaning b, .fa-meaning strong { color:#00674c; }
+
+/* Uniform tiles, three across, so the section is scannable and the page does
+   not lurch between a square heatmap and a wide forest plot. `contain` rather
+   than `cover`: cropping an axis off a figure to make it fit a grid is worse
+   than the letterboxing. */
+.fa-figgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));
+  gap:1.1rem; margin:1rem 0 1.6rem; }
+.fa-figure { margin:0; }
+.fa-figure img { width:100%; height:13rem; object-fit:contain; cursor:zoom-in;
+  border:1px solid var(--bs-border-color,#e3e3e3); border-radius:6px;
+  background:#fbfbfa; padding:.3rem; transition:border-color .12s; }
+.fa-figure img:hover, .fa-figure img:focus { border-color:#009E73; outline:none; }
+.fa-figure figcaption { font-size:.84rem; margin-top:.35rem; }
+.fa-figure .fa-readit { font-size:.8rem; }
+
+/* The conclusion figure is the one worth showing at full size. */
+.fa-figure.fa-hero img { height:auto; max-height:none; cursor:zoom-in; }
+
+#fa-zoom { display:none; position:fixed; inset:0; z-index:9999; cursor:zoom-out;
+  background:rgba(20,20,20,.88); align-items:center; justify-content:center; padding:2rem; }
+#fa-zoom.on { display:flex; }
+#fa-zoom img { max-width:96vw; max-height:92vh; width:auto; height:auto;
+  background:#fff; border-radius:6px; padding:.5rem; }
+#fa-zoom button { position:absolute; top:1rem; right:1.4rem; font-size:2rem;
+  line-height:1; color:#fff; background:none; border:none; cursor:pointer; }
 .fa-readit { font-size:.88rem; margin:.4rem 0 0; }
-.fa-readit b { color:#a84800; }
+.fa-readit b { color:#00674c; }
 """
 
 
@@ -446,12 +494,12 @@ def _table(df: pd.DataFrame, *, title: str, note: str = "",
         + f'<div class="fa-table">\n{body}\n</div>\n</details>\n')
 
 
-def _figure(path: Path) -> str:
+def _figure(path: Path, *, hero: bool = False) -> str:
     n = figure_note(path.stem)
     read = f'<p class="fa-readit"><b>What to look for.</b> {html.escape(n["read"])}</p>' if n["read"] else ""
     wrong = f'<p class="fa-readit"><b>What a bad one looks like.</b> {html.escape(n["wrong"])}</p>' if n["wrong"] else ""
     return (
-        f'<figure class="fa-figure">\n'
+        f'<figure class="fa-figure{" fa-hero" if hero else ""}">\n'
         f'<img src="data:image/png;base64,{_b64(path)}" alt="{html.escape(n["caption"])}">\n'
         f'<figcaption><strong>{html.escape(n["caption"])}</strong></figcaption>\n'
         f'{read}\n{wrong}\n</figure>\n')
@@ -466,6 +514,9 @@ def write_quarto_report(
     logo: str | Path | None = None,
     title: str = "FALCONAge results",
     registry: Any = None,
+    verdict: str | None = None,
+    consensus: pd.DataFrame | None = None,
+    conclusion_figure: str | Path | None = None,
 ) -> Path:
     """Write the report source. Render it with ``quarto render <file>``.
 
@@ -481,8 +532,10 @@ def write_quarto_report(
 
     logo_html = ""
     if logo and Path(logo).exists():
+        # 180px, matching the README. At 46 it read as a favicon beside the
+        # title rather than as the mark on the document.
         logo_html = (f'<img src="data:image/png;base64,{_b64(Path(logo))}" '
-                     f'alt="FALCONAge" style="height:46px;width:auto">')
+                     f'alt="FALCONAge" style="width:180px;height:auto">')
 
     parts: list[str] = []
     parts.append(
@@ -500,7 +553,8 @@ def write_quarto_report(
         "    code-tools: false\n"
         "---\n\n")
     parts.append(f"```{{=html}}\n<style>{TABLE_CSS}</style>\n"
-                 f"<script>{TABLE_JS}</script>\n```\n\n")
+                 f"<script>{TABLE_JS}</script>\n"
+                 f"<script>{ZOOM_JS}</script>\n```\n\n")
     parts.append(
         "```{=html}\n"
         '<div style="display:flex;align-items:center;gap:.9rem;margin:0 0 1.2rem">\n'
@@ -518,6 +572,61 @@ def write_quarto_report(
         "that mixes them has no defined meaning.\n\n"
         "Every table collapses, searches, and shows 10, 50, 100 or all rows. "
         "Every figure carries what to look for and what a bad one looks like.\n\n")
+
+    # ---- conclusion ---------------------------------------------------------
+    #
+    # First, not last. A reader who opens a fifty-figure report and has to scroll
+    # to the end to find out whether anything was detected will read the figures
+    # without knowing what they are looking for. The consensus test is the only
+    # statement in the document that is about the run as a whole rather than
+    # about one clock.
+    if verdict or (consensus is not None and len(consensus)):
+        parts.append("## Conclusion\n\n")
+        if verdict:
+            # `consensus_verdict.txt` is two lines of machine output: a one-word
+            # verdict, then the counts. Rendered verbatim it reads as a log line
+            # rather than a finding, so the word is capitalised, the counts are
+            # made a sentence, and the ASCII dash is not left in prose.
+            v = " ".join(str(verdict).split())
+            v = v.replace(" -- ", ": ").replace("--", ":")
+            for word in ("unsupported", "supported", "equivocal"):
+                if v.lower().startswith(word):
+                    rest = v[len(word):].lstrip(" .:")
+                    v = word.capitalize() + ". " + rest[:1].upper() + rest[1:]
+                    break
+            else:
+                v = v[:1].upper() + v[1:]
+            if not v.endswith("."):
+                v += "."
+            parts.append(
+                '```{=html}\n<div class="fa-meaning">\n'
+                f"<p><strong>Verdict.</strong> {html.escape(v)}</p>\n"
+                "</div>\n```\n\n")
+        if consensus is not None and len(consensus):
+            n = len(consensus)
+            sig_b = int(consensus.get("sig_bonferroni", pd.Series(dtype=bool)).sum())
+            sig_h = int(consensus.get("sig_bh", pd.Series(dtype=bool)).sum())
+            gens = ", ".join(sorted(set(consensus.get("generation", []))))
+            parts.append(
+                f"{n} clocks were testable on this contrast. **{sig_b} reached "
+                f"significance after Bonferroni correction and {sig_h} after "
+                f"Benjamini-Hochberg.** The clocks span {gens}, which matters "
+                "for reading the result: a real effect appears across "
+                "generations, because they share the underlying biology and not "
+                "their feature sets. A single significant clock among twenty is "
+                "the documented signature of a false positive rather than of a "
+                "narrow effect.\n\n")
+        if hero_ok := (conclusion_figure and Path(conclusion_figure).exists()):
+            parts.append("```{=html}\n"
+                         + _figure(Path(conclusion_figure), hero=True)
+                         + "```\n\n")
+        if consensus is not None and len(consensus):
+            parts.append("```{=html}\n" + _table(
+                consensus, title="Consensus test, every clock",
+                note="Effect size, uncorrected p, and both corrected thresholds "
+                     "per clock. Sorted as tested, not by p, so the table cannot "
+                     "be read as a ranking.",
+                open_by_default=True) + "```\n\n")
 
     # ---- the clock catalogue, by category ----------------------------------
     parts.append("## Clocks by category\n\n")
@@ -559,12 +668,22 @@ def write_quarto_report(
             parts.append("```{=html}\n" + _table(df, title=name) + "```\n\n")
 
     # ---- figures ------------------------------------------------------------
+    #
+    # A grid of uniform tiles rather than fifty-one full-width images stacked.
+    # Each tile zooms on click, because a thumbnail of a forty-clock heatmap is
+    # unreadable and cropping one to fit the grid would remove an axis.
     figs = [Path(f) for f in figures if Path(f).exists()]
+    hero = Path(conclusion_figure) if conclusion_figure else None
+    if hero and hero.exists():
+        figs = [f for f in figs if f.resolve() != hero.resolve()]
     if figs:
         parts.append("## Figures\n\n")
-        for f in sorted(figs, key=lambda p: p.stem):
-            parts.append(f"### {figure_note(f.stem)['caption']}\n\n")
-            parts.append("```{=html}\n" + _figure(f) + "```\n\n")
+        parts.append(
+            "Every figure is shown at the same size so the section can be "
+            "scanned. Click one to see it full size, or press Escape to close.\n\n")
+        tiles = "".join(_figure(f) for f in sorted(figs, key=lambda p: p.stem))
+        parts.append('```{=html}\n<div class="fa-figgrid">\n' + tiles
+                     + "</div>\n```\n\n")
 
     out.write_text("".join(parts), encoding="utf-8")
     return out
