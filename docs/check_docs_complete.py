@@ -70,11 +70,18 @@ def main() -> int:
     rows = re.findall(r"^\| `([a-z0-9]+)` \|", cat, re.M)
     linked = re.findall(
         r"^\| `([a-z0-9]+)` \|.*\[[^\]]+\]\(https://doi\.org/", cat, re.M)
-    if set(rows) != set(linked):
-        unlinked = sorted(set(rows) - set(linked))[:8]
+    # A clock catalogued from a third-party clock table has no paper to link,
+    # and the catalogue must say that in the cell rather than print a bare
+    # surname. The marker is accepted here so the absence is stated once and
+    # visibly, instead of the check being loosened to "a link or nothing",
+    # which would let a genuinely missing DOI through unnoticed.
+    declared = re.findall(
+        r"^\| `([a-z0-9]+)` \|.*no primary source traced", cat, re.M)
+    unlinked = set(rows) - set(linked) - set(declared)
+    if unlinked:
         problems.append(
-            f"{len(set(rows) - set(linked))} clock(s) in docs/clocks.qmd carry no "
-            f"paper link: {unlinked}")
+            f"{len(unlinked)} clock(s) in docs/clocks.qmd carry no paper link "
+            f"and do not declare the absence: {sorted(unlinked)[:8]}")
     if set(rows) != all_ids:
         problems.append(
             f"docs/clocks.qmd lists {len(rows)} clocks, the registry has {len(all_ids)}")

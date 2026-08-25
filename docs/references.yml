@@ -233,3 +233,26 @@ groups:
       - n: 69
         text: "Fahy GM et al. Reversal of epigenetic aging and immunosenescent trends in humans. *Aging Cell* 18(6):e13028 (2019). The TRIIM trial: nine men, no control arm."
         doi: "10.1111/acel.13028"
+  - title: "Beyond the clock score: disorder, repertoire and coefficient mass"
+    entries:
+      - n: 70
+        text: "Mei X, Blanchard J, Luellen C, Conboy MJ, Conboy IM. Fail-tests of DNA methylation clocks, and development of a noise barometer for measuring epigenetic pressure of aging and disease. *Aging* 15:8552-8575 (2023). The barometer implemented as `fa.noise_barometer`: a summed per-site standard deviation over cytosines whose variance rises with age."
+        doi: "10.18632/aging.205046"
+      - n: 71
+        text: "Nachun D, Lu AT, Bick AG, Natarajan P, Weinstock J, Szeto MD et al. Clonal hematopoiesis associated with epigenetic aging and clinical outcomes. *Aging Cell* 20:e13366 (2021). The myeloid clonality result: 1.31 years of acceleration on GrimAge to 3.08 on extrinsic EEAA, with DNMT3A and TET2 producing opposing genome-wide patterns."
+        doi: "10.1111/acel.13366"
+      - n: 72
+        text: "Salas LA, Zhang Z, Koestler DC, Butler RA, Hansen HM, Molinaro AM, Wiencke JK, Kelsey KT, Christensen BC. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. *Nature Communications* 13:761 (2022). The twelve-subset EPIC IDOL-Ext reference that resolves naive and memory CD4T and CD8T."
+        doi: "10.1038/s41467-021-27864-7"
+      - n: 73
+        text: "Tomusiak A, Floro A, Tiwari R, Riley R, Matsui H, Andrews N, Kasler H, Verdin E. Development of an epigenetic clock resistant to changes in immune cell composition. *Communications Biology* 7:934 (2024). IntrinClock. Composition-resistant is not clonality-resistant, and the two invariances are separate claims."
+        doi: "10.1038/s42003-024-06609-4"
+      - n: 74
+        text: "Zhang Z, Reynolds SR, Stolrow HG, Chen JQ, Christensen BC, Salas LA. Deciphering the role of immune cell composition in epigenetic age acceleration: insights from cell-type deconvolution applied to human blood epigenetic clocks. *Aging Cell* 23:e14071 (2024). Nine or more of twelve cell types associate significantly with age acceleration in most of six widely used clocks."
+        doi: "10.1111/acel.14071"
+      - n: 75
+        text: "Cruz-Gonzalez A, Okpala U, Gu C, Gomez A, Mews P, Vance JM et al. Methylation clocks fail to generalize across genetically admixed individuals. *eLife* (2026). The accuracy loss that motivates measuring each clock's meQTL exposure from its coefficients."
+        doi: "10.7554/eLife.105343"
+      - n: 76
+        text: "Patel S, Schwarz M, Riege K, Varshavsky M, Kestler HA et al. An improved epigenetic age estimation with TFMethyl Clock reveals DNA methylation changes during aging in transcription factor binding sites. bioRxiv 2025.10.07.680024. A preprint. Its central finding is that most CpGs used by established clocks do *not* overlap known transcription factor binding sites, which is the motivation for measuring coefficient mass against an annotation rather than assuming it."
+        doi: "10.1101/2025.10.07.680024"

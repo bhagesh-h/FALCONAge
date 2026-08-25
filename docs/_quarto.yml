@@ -34,6 +34,8 @@ website:
         file: guide/clocks.qmd
       - text: Clock catalogue
         file: clocks.qmd
+      - text: Beyond the clock score
+        file: beyond-clocks.qmd
       - text: Figure gallery
         file: gallery.qmd
       - text: 3. The science
@@ -87,6 +89,8 @@ website:
         file: guide/clocks.qmd
       - text: Clock catalogue
         file: clocks.qmd
+      - text: Beyond the clock score
+        file: beyond-clocks.qmd
       - text: Figure gallery
         file: gallery.qmd
     - section: 3. The science

@@ -70,6 +70,26 @@ When a refusal appears, report the reason. Working around it with `min_coverage=
 tissue column, or by computing the difference by hand produces a number that looks identical to a
 valid one and is not.
 
+## Outputs that are not scores
+
+Four readouts return no age and carry no `scale_type`, so none of the acceleration machinery
+applies to them and none is comparable across datasets processed differently.
+
+| Call | Unit | Per what | Read it as |
+|---|---|---|---|
+| `fa.entropy(d)` | 0 to 1 | sample | 0 = every site committed, 1 = every site at beta 0.5. Report `n_sites` alongside: it is a mean over sites, so a mean over *different* sites is not a comparison. |
+| `fa.drift(d)` | beta units | sample | Distance from the cohort centroid, leave-one-out. The one to regress against an outcome. |
+| `fa.noise_barometer(d)` | summed SD | **group** | Mei's statistic. Needs a cohort in the hundreds; on 27 samples nothing survives FDR and the function says so rather than returning a number. |
+| `fa.variable_sites(d)` | test result | site | `rising` is the conjunction of significance *and* an upward trend. A site whose variance falls is equally significant and must not be counted. |
+
+`fa.repertoire_diversity(clones)` returns clone-structure metrics to join onto `obs` and pass to
+`acceleration(adjust=[...])`. Prefer `clonality`, `simpson` and `effective_clones` over `richness`
+and `shannon`, which both rise with sequencing depth; pass `rarefy="min"` when depths differ.
+
+`fa.variance_components(res, subject_col=..., occasion_col=...)` returns `icc` and
+`icc_age_adjusted`. **Quote the adjusted one for anything about an individual.** A raw ICC on a
+cohort spanning decades mostly reports that the clock tracks age.
+
 ## What FALCONAge does not do
 
 | Not implemented | Why |

@@ -177,7 +177,16 @@ def _paper(c) -> str:
     if doi:
         url = doi if doi.startswith("http") else f"https://doi.org/{doi}"
         return f"[{label}]({url})"
-    return label
+    # A clock catalogued from a third-party clock table rather than from a paper.
+    # `fiage` is the case: it appears in the TranslAGE panel at 53 CpGs and no
+    # primary publication has been traced for it. `_short_cite` is deliberately
+    # not used here -- it extracts a surname, and run on a prose note it returns
+    # a fragment that reads like a citation which merely failed to link, which
+    # is worse than saying plainly that there is nothing to cite.
+    src = (getattr(c.coefficient_source, "url", None) or "").strip()
+    if src:
+        return f"no primary source traced, [catalogued at]({src})"
+    return "no primary source traced"
 
 
 def _short_cite(c) -> str:

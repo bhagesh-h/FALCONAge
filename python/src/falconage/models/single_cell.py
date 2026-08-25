@@ -42,10 +42,18 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from ..core.errors import AnalysisError, DataError
 
-__all__ = ["ScAgeReference", "fit_scage_reference", "scage"]
+__all__ = ["ScAgeReference", "fit_scage_reference", "mosaic", "scage"]
+
+#: A profile-likelihood interval taken at 2 log-likelihood units is the
+#: chi-square 1 df 95% region (the exact cut is 1.92), so its full width spans
+#: about 2 x 1.96 standard errors. Dividing by this recovers a per-cell SE from
+#: the width :func:`scage` already reports, which is what :func:`mosaic` needs
+#: to tell real heterogeneity from a noisy estimate.
+_WIDTH_TO_SE = 2 * 1.96
 
 #: Predicted probabilities are clamped inside this. A site whose fitted line
 #: leaves [0, 1] at some candidate age would otherwise contribute log(0), and
@@ -203,4 +211,120 @@ def scage(cells, reference: ScAgeReference, *, grid: np.ndarray | None = None,
     out = pd.DataFrame(rows).set_index("cell")
     out.attrs["grid"] = (float(ages.min()), float(ages.max()))
     out.attrs["n_reference_sites"] = len(shared)
+    return out
+
+
+def mosaic(cell_ages: pd.DataFrame, *, group: pd.Series | str | None = None,
+           obs: pd.DataFrame | None = None, min_cells: int = 20,
+           n_boot: int = 2000, seed: int = 0) -> pd.DataFrame:
+    """The *spread* of per-cell ages, tested against what noise alone would give.
+
+    A bulk clock already reports the mean age of a tissue. The quantity it
+    cannot report is the shape of the distribution underneath that mean: a
+    tissue whose cells are uniformly middle-aged and one holding a mixture of
+    young and very old cells have the same bulk methylation and, plausibly, very
+    different biology.
+
+    The obstacle is that single-cell methylation coverage is sparse, so each
+    per-cell age rests on a small and variable set of sites and carries a large
+    measurement error. Observed spread is therefore *always* positive, and
+    reporting it as heterogeneity is the mistake this function exists to avoid.
+
+    The null, stated plainly: **every cell in the group has the same true age,
+    and all observed spread is estimation error**. It is simulated by drawing
+    each cell from a normal centred on the group mean with that cell's own
+    standard error, taken from the profile-likelihood width :func:`scage`
+    already returns. ``p_excess`` is the fraction of simulated groups whose SD
+    reached the observed one. A small ``p_excess`` is evidence of genuine
+    mosaicism; a large one says the data cannot distinguish a mosaic tissue from
+    a uniform one measured badly, which for sparse coverage is the usual answer.
+
+    Parameters
+    ----------
+    cell_ages
+        The frame returned by :func:`scage`.
+    group
+        A column name in ``cell_ages`` or ``obs``, or a Series indexed by cell.
+        Omit to treat every cell as one group.
+    obs
+        Optional per-cell annotation to take ``group`` from, indexed by cell.
+
+    Returns
+    -------
+    One row per group. ``sd_observed`` is the raw spread; ``sd_noise`` is what
+    the per-cell standard errors alone imply; ``sd_biological`` is
+    :math:`\\sqrt{\\max(0, s^2_{\\text{obs}} - s^2_{\\text{noise}})}`, the
+    quantity to compare between groups, and it is zero rather than imaginary
+    when noise exceeds the observed spread. ``n_at_grid_edge`` counts cells
+    whose estimate landed on the boundary of the age grid, where the likelihood
+    was truncated rather than maximised -- those pile up and inflate the tails,
+    so a group with many of them should have its skew and kurtosis ignored.
+    """
+    required = {"age", "interval_width"}
+    missing = required - set(cell_ages.columns)
+    if missing:
+        raise DataError(
+            f"mosaic needs the output of scage(); missing column(s): {sorted(missing)}")
+
+    if group is None:
+        labels = pd.Series("all", index=cell_ages.index)
+    elif isinstance(group, str):
+        source = cell_ages if group in cell_ages.columns else obs
+        if source is None or group not in source.columns:
+            raise DataError(f"no {group!r} column in cell_ages or obs")
+        labels = source.loc[cell_ages.index, group].astype(str)
+    else:
+        labels = pd.Series(group).reindex(cell_ages.index).astype(str)
+
+    lo, hi = cell_ages.attrs.get("grid", (np.nan, np.nan))
+    rng = np.random.default_rng(seed)
+    rows = {}
+
+    for name, idx in labels.groupby(labels).groups.items():
+        sub = cell_ages.loc[idx]
+        ok = sub["age"].notna() & sub["interval_width"].notna()
+        a = sub.loc[ok, "age"].to_numpy(dtype=np.float64)
+        w = sub.loc[ok, "interval_width"].to_numpy(dtype=np.float64)
+        if a.size < min_cells:
+            continue
+
+        se = w / _WIDTH_TO_SE
+        sd_obs = float(a.std(ddof=1))
+        sd_noise = float(np.sqrt(np.mean(se ** 2)))
+        sd_bio = float(np.sqrt(max(0.0, sd_obs ** 2 - sd_noise ** 2)))
+
+        # Parametric bootstrap under "one true age for the whole group".
+        draws = rng.normal(loc=a.mean(), scale=np.maximum(se, 1e-9),
+                           size=(int(n_boot), a.size))
+        null_sd = draws.std(axis=1, ddof=1)
+        p_excess = float((null_sd >= sd_obs).mean())
+
+        edge = int(np.isclose(a, lo).sum() + np.isclose(a, hi).sum()) \
+            if np.isfinite(lo) else 0
+
+        rows[name] = {
+            "n_cells": int(a.size),
+            "mean_age": float(a.mean()),
+            "median_age": float(np.median(a)),
+            "sd_observed": sd_obs,
+            "sd_noise": sd_noise,
+            "sd_biological": sd_bio,
+            "iqr": float(np.subtract(*np.percentile(a, [75, 25]))),
+            # Shape is undefined for a group with no spread, and scipy computes
+            # it anyway from cancelling near-zero moments. NaN is the answer.
+            "skew": float(stats.skew(a)) if a.size > 2 and sd_obs > 1e-9 else np.nan,
+            "excess_kurtosis": (float(stats.kurtosis(a))
+                                if a.size > 3 and sd_obs > 1e-9 else np.nan),
+            "p_excess": p_excess,
+            "n_at_grid_edge": edge,
+        }
+
+    if not rows:
+        raise AnalysisError(
+            f"no group reached min_cells={min_cells} cells with a usable age")
+
+    out = pd.DataFrame.from_dict(rows, orient="index")
+    out.index.name = "group"
+    out.attrs["n_boot"] = int(n_boot)
+    out.attrs["null"] = "all cells share one true age; spread is estimation error"
     return out

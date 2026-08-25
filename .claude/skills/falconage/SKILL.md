@@ -75,6 +75,29 @@ fa.technical_se(res, d)   # how much of each score is the assay
 reason. Naming clocks explicitly is stricter: every one must work, because an explicit request
 should never be dropped quietly.
 
+### When a clock score is not the right answer
+
+Three readouts return no age and are gated by no `scale_type`. Reach for them when the question
+is about variance rather than about level:
+
+```python
+fa.entropy(d)             # per sample: how far the methylome is from committed
+fa.drift(d)               # per sample: distance from the cohort centroid, leave-one-out
+fa.variable_sites(d)      # per site: which cytosines widen with age
+fa.noise_barometer(d)     # per GROUP: the Mei barometer over those sites
+
+fa.repertoire_diversity(clones)   # clone structure, to pass to acceleration(adjust=[...])
+fa.coefficient_mass(annotation)   # where a clock's weight sits, given a list you supply
+fa.variance_components(res, subject_col="donor", occasion_col="visit")
+```
+
+`noise_barometer` is per group, not per sample, and asking it for a per-person number is the
+mistake to avoid: a standard deviation needs more than one observation. Use `drift` for that.
+
+`variance_components` returns both `icc` and `icc_age_adjusted`. Quote the adjusted one for any
+individual-level claim: a raw ICC on a cohort spanning decades mostly reports that the clock
+tracks age, which was never in question.
+
 R is the same verbs in the same image: `docker run --rm -it -v "$PWD:/work" -w /work
 bhagesh/falconage:1.0.0-cpu R`, then `prepare()`, `score()`, `interpretation()`. Both languages call one
 numerical core, so the results are bit-identical rather than approximately equal.
@@ -93,6 +116,9 @@ numerical core, so the results are bit-identical rather than approximately equal
   rather than working around it with `min_coverage=0` or by dropping the tissue column.
 - **Coverage is not validity.** High feature coverage says the probes are present. It says
   nothing about whether coefficients fitted in one tissue, species or population transfer.
+- **Entropy, drift and the barometer do not travel between datasets.** They move with
+  normalisation, probe panel and detection-p filtering, so the only defensible comparison is
+  within one processed matrix. Never quote an entropy from one paper against one you computed.
 
 ## Reference
 

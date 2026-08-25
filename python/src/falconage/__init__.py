@@ -13,12 +13,29 @@ Quick start
 
 What ships
 ----------
-161 catalogued clocks. 22 of them carry coefficients inside the wheel and run
-offline; 28 are scaffolds whose coefficients are research-use-only and are not
-ours to distribute (:mod:`falconage.registry` explains each one and names an
-open alternative); the rest are catalogued with metadata and await a traced
-extractor. ``fa.registry.load().filter(availability="bundled")`` is the list that
-works today.
+175 catalogued clocks. 46 are ``bundled``: their coefficients live inside the
+wheel and they run offline. 40 are ``licensed`` scaffolds whose coefficients are
+research-use-only and are not ours to distribute (:mod:`falconage.registry`
+explains each one and names an open alternative). The remaining 89 are
+``untraced`` -- catalogued with real metadata, awaiting a traced extractor for
+the numbers. ``fa.registry.load().filter(availability="bundled")`` is the list
+that works today.
+
+Beyond the clocks
+-----------------
+Three modules read an aging methylome without predicting an age, because a clock
+is not the only way to and on the evidence may not be the most informative one:
+
+:mod:`falconage.disorder`
+    Entropy, drift and the noise barometer. Tong et al. (Nature Aging 2024)
+    showed most of a clock's accuracy against chronological age is reproducible
+    by a purely stochastic model; these are the readouts of that stochastic part
+    directly.
+:mod:`falconage.immune`
+    Repertoire structure -- the covariate blood clocks do not carry -- and a
+    simulator for what clone structure alone does to a clock score.
+:mod:`falconage.registry.coefficient_mass`
+    Where a clock's weight sits, against any annotation you supply.
 """
 
 from __future__ import annotations
@@ -26,7 +43,8 @@ from __future__ import annotations
 # `download` and `score` name both a module and a function. The verb wins at
 # the top level -- fa.score(data) is the API -- so the modules are bound to
 # private aliases, which also keeps fa.download.cache_info reachable.
-from . import analysis, core, io, models, plot, preprocess, registry, report, uncertainty
+from . import (analysis, core, disorder, immune, io, models, plot, preprocess,
+               registry, report, uncertainty)
 from . import download as _download_mod  # noqa: F401  (module, not the verb)
 from . import score as _score_mod  # noqa: F401  (module, not the verb)
 from ._version import REGISTRY_VERSION, __version__
@@ -47,9 +65,13 @@ from .io import (list_computage_bench, read, read_bedmethyl, read_bedmethyl_dir,
                  read_rrbs_dir, read_series_matrix, write_results)
 from .preprocess import (apply_batch_reference, fit_batch_reference, idat_to_betas,
                          prepare, prepare_clinical, probe_loss, qc, read_idat_dir)
+from .disorder import drift, entropy, noise_barometer, variable_sites
+from .immune import repertoire_diversity, simulate_clonality
+from .models.single_cell import mosaic
+from .registry import coefficient_mass
 from .score import FalconResult, combine, score
 from .uncertainty import (conformal_interval, icc_from_replicates, interval,
-                          technical_se)
+                          technical_se, variance_components)
 
 __all__ = [
     "FalconConfig", "FalconData", "FalconError", "FalconResult", "REGISTRY_VERSION",
@@ -58,10 +80,13 @@ __all__ = [
     "idat_to_betas", "read_idat_dir",
     "agreement", "analysis", "associate", "combine", "configure",
     "conformal_interval", "consensus",
-    "core", "cox_hazard", "detectable_effect",
-    "describe", "download", "download_intervention", "how_to_get", "icc",
-    "icc_from_replicates", "interval", "interventions", "io",
-    "list_computage_bench", "read_computage_bench",
+    "coefficient_mass", "core", "cox_hazard", "detectable_effect",
+    "describe", "disorder", "download", "download_intervention", "drift",
+    "entropy", "how_to_get", "icc",
+    "icc_from_replicates", "immune", "interval", "interventions", "io",
+    "list_computage_bench", "mosaic", "noise_barometer", "read_computage_bench",
+    "repertoire_diversity", "simulate_clonality", "variable_sites",
+    "variance_components",
     "models", "plot", "power", "prepare",
     "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_bedmethyl",
     "read_bedmethyl_dir", "read_betas",

@@ -12,6 +12,74 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **`falconage.disorder`: reading an aging methylome without predicting an age.**
+  Tong et al. (Nat Aging 2024) found 66 to 75 per cent of Horvath2013's accuracy
+  against chronological age is reproducible by a purely stochastic model, about
+  90 per cent for Zhang and about 63 per cent for PhenoAge. That makes the
+  stochastic part worth reading directly rather than through a clock.
+  `entropy()` is normalised Shannon entropy per sample; `drift()` is the
+  per-sample distance from a leave-one-out cohort centroid; `variable_sites()`
+  is a Brown-Forsythe test for which cytosines widen with age, and
+  `noise_barometer()` is Mei et al.'s summed per-site SD over those sites.
+  Brown-Forsythe rather than the more common Bartlett because Bartlett assumes
+  within-group normality and beta near 0 or 1 is visibly not normal.
+  On the test corpus, zero sites survive Benjamini-Hochberg at n=27 against
+  820,000 tests. That is reported as the headline rather than worked around: a
+  barometer needs a cohort in the hundreds.
+
+- **`falconage.immune`: repertoire structure, the covariate no blood clock
+  carries.** Deconvolution gives cell *fractions*; it says nothing about how
+  many clones those cells represent, and the difference is derivable. For a
+  compartment of fraction `f` split into clones of size `w_k` with per-clone
+  somatic offsets of variance `sigma^2`, the bulk contribution has variance
+  `sigma^2 * sum(w_k^2)`, and `sum(w_k^2)` is the Simpson index, so the effect
+  scales as `1/N_eff` and enters through no other quantity.
+  `repertoire_diversity()` computes the structure metrics from a clone table,
+  with multivariate hypergeometric rarefaction because richness and Shannon
+  both rise with sequencing depth. `simulate_clonality()` generates bulk
+  methylomes at **fixed** cell fractions and varying clone structure, so it
+  needs no paired cohort. Across 42 clocks on 48 simulated samples the measured
+  log-log slope of spread against effective clone count is **-0.494** (IQR
+  -0.559 to -0.415) against a derived -0.5, and `dnamphenoage` moves **4.35
+  years** between an effectively-two-clone compartment and a diverse one.
+  Composition adjustment cannot remove any of it.
+
+- **`variance_components()`: trait, state and technical variance separated.**
+  Nested random effects by Henderson's method of moments, returning `icc` and
+  `icc_age_adjusted`. The gap between them is how much of a published ICC was
+  the cohort's age range rather than the instrument. `replicates_needed()`
+  returns `inf` where no number of replicates reaches the target, which is the
+  informative case: replicates average away the technical term only.
+
+- **`coefficient_mass()`: where a clock's weight sits.** The share of
+  `sum |w_j|` on any annotation list supplied by the caller, for meQTL exposure
+  or regulatory context. Mass rather than count, because a 353-CpG clock with
+  two enormous weights behaves like a two-CpG clock, and the divergence between
+  `frac_mass` and `frac_sites` is the finding. Run with each clock's own CpG set
+  as the annotation, `horvath2013` shares 11.6 per cent of its sites with
+  `dnamphenoage` but 19.6 per cent of its mass.
+
+- **`mosaic()`: the spread of per-cell ages, tested against noise.** Sparse
+  single-cell coverage makes observed spread always positive, so the null
+  simulated here is that every cell shares one true age and all spread is
+  estimation error, using the profile-likelihood widths `scage()` already
+  returns.
+
+- `docs/beyond-clocks.qmd` documents all of the above, and `test/build_report.py`
+  makes the single-file HTML report reproducible rather than ad hoc.
+
+### Fixed
+
+- `run_registry` in `test/run_all.py` filtered on the retired `A`/`B`/`C` tier
+  letters after the availability groups were renamed, so it wrote three empty
+  tables instead of failing. It now filters on `bundled`/`untraced`/`licensed`.
+- The package docstring advertised 161 clocks and 22 bundled; the registry
+  carries 175 and 46.
+- `docs/build_catalogue.py` ran `_short_cite` on `fiage`, whose citation field
+  is a prose note rather than a citation, producing a mangled fragment that read
+  like a citation which had failed to link. Clocks with no traceable primary
+  source now say so and link the catalogue they came from.
+
 - **Meer's whole-lifespan mouse clock**, from its own supplement rather than
   from anyone's copy of it: eLife publishes the 435 sites and their weights
   under CC-BY, with a row that reads `intercept 234.64`, and the paper prints

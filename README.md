@@ -110,6 +110,8 @@ res = fa.score(d, clocks="compatible")
 
 res.interpretation()          # scale, unit, legal operations, reliability, caveats
 fa.technical_se(res, d)       # how much of each score is the assay
+
+fa.entropy(d)                 # disorder, without predicting an age
 ```
 
 ```r
@@ -180,10 +182,20 @@ the paper did not make, and it says so on every run.
   2.20 years when a plate is added; this makes earlier plates bit-identical.
 - **Probe loss priced in years** per clock per platform. `hrsinchphenoage` shifts +16.7 years on
   EPIC v2; two clocks that lose nothing shift exactly 0.00.
+- **Readouts that are not clocks.** Methylome entropy, per-sample drift, the Mei noise barometer
+  and the Brown-Forsythe selection behind it. Tong et al. showed 66 to 75% of Horvath's accuracy
+  is reproducible by drift alone, so the stochastic part is worth reading directly.
+- **Repertoire structure**, the covariate no blood clock carries. Clone-size diversity metrics, and
+  a simulator that holds cell fractions fixed while clone structure varies. Across 42 clocks the
+  measured spread falls as `N_eff^-0.494` against a derived `-0.5`, and `dnamphenoage` moves
+  **4.35 years** on clone structure alone.
+- **Trait, state and technical variance separated.** `variance_components()` returns an ICC and an
+  age-adjusted ICC; the gap between them is how much of a published ICC was the cohort's age range.
 - Conformal prediction intervals, `power()`, `consensus()`, probe masks, BMIQ, `AggregationClock`,
   `NeuralClock`, `scAge`, proteomic and transcriptomic chains.
 
 → [CHANGELOG](CHANGELOG.md) · [Architecture §15](https://bhagesh-h.github.io/FALCONAge/architecture.html)
+· [Beyond the clock score](https://bhagesh-h.github.io/FALCONAge/beyond-clocks.html)
 
 ## Known limitations
 
@@ -194,7 +206,7 @@ the paper did not make, and it says so on every run.
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
 | 89 untraced coefficient sources | A per-clock literature hunt; some have no public supplement |
-| meQTL awareness | A clock CpG under strong genetic control carries variance that is fixed at conception and cannot move. The registry records no meQTL status, so a score cannot yet say which part of its spread is acquired |
+| meQTL awareness at score time | A clock CpG under strong genetic control carries variance fixed at conception. `coefficient_mass()` now measures each clock's exposure against a meQTL list you supply, but the registry stores no meQTL status and no score is adjusted for it, so a number still cannot say which part of its spread is acquired |
 | Allele-specific methylation | A beta value averages both alleles, so an array cannot resolve it. Sequencing can; nothing here reads that |
 | Co-methylation modules | Probes are treated independently. Module-level testing is what makes an epigenome-wide scan tractable, and is not implemented |
 

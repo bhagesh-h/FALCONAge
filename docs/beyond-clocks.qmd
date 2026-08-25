@@ -1,0 +1,313 @@
+---
+title: "Beyond the clock score"
+subtitle: "Reading an aging methylome without predicting an age"
+toc: true
+toc-depth: 3
+---
+
+Every clock in the catalogue models the *mean* beta at a set of sites and returns one number.
+That is not the only thing a methylation matrix can be asked, and on the field's own evidence it
+may not be the most informative thing.
+
+Tong et al. [[65]](references.qmd#ref-65) quantified how much of a clock is entropy rather than
+biology: roughly 66 to 75 per cent of Horvath2013's accuracy against chronological age is
+reproducible by a purely stochastic model of methylation change, about 90 per cent for Zhang, and
+about 63 per cent for PhenoAge. The gradient is the interesting part. The more accurately a clock
+predicts chronological age, the more of it is drift.
+
+This page covers the three things FALCONAge computes that are not clocks: the disorder readouts,
+repertoire structure, and where a clock's coefficient mass sits. None of them returns an age, none
+is gated by `scale_type`, and none is comparable between datasets processed differently.
+
+## Disorder: entropy, drift and the barometer
+
+`falconage.disorder` holds four functions, and the division between them is about *what carries
+the number*, which is the distinction most easily lost.
+
+| Function | Returns | Per what |
+|---|---|---|
+| `fa.entropy` | how far the methylome sits from fully committed | sample |
+| `fa.drift` | how far a sample sits from the cohort centroid | sample |
+| `fa.noise_barometer` | summed per-site SD over age-variable sites | **group** |
+| `fa.variable_sites` | which cytosines widen with age | site |
+
+### Entropy
+
+Normalised Shannon entropy over the beta matrix:
+
+$$
+S = \frac{1}{N \log \tfrac{1}{2}} \sum_{i=1}^{N}
+    \Big[ \beta_i \log \beta_i + (1-\beta_i) \log (1-\beta_i) \Big]
+$$
+
+Bounded 0 to 1. A site at beta 0 or 1 is decided and contributes nothing; a site at 0.5 is
+maximally uncertain and contributes its full share. So $S = 0$ is a methylome where every site is
+committed and $S = 1$ is one where none of them is.
+
+```python
+import falconage as fa
+
+data = fa.read("betas.csv")
+ent = fa.entropy(data)        # entropy, n_sites
+```
+
+`n_sites` is not decoration. Entropy is a *mean over sites*, so a mean over different sites is not
+a comparison. The default restricts to sites covered in every sample for exactly that reason; set
+`complete_sites=False` to use each sample's own coverage and then read `n_sites` before comparing
+any two rows.
+
+On the test corpus this lands at 0.695 with an SD of 0.007 across 825,177 complete sites, which is
+what a clean bimodal EPIC distribution looks like once it is summarised to one number.
+
+### Drift
+
+The barometer is a property of a group, which leaves nothing to regress against an outcome.
+`fa.drift` is the per-sample analogue: the distance from the cohort centroid, computed
+**leave-one-out** so that a sample is never scored against a mean it helped compute.
+
+```python
+dri = fa.drift(data)                          # drift from this cohort
+dri = fa.drift(data, reference=young_mean)    # drift from a young reference
+```
+
+The leave-one-out default matters more than it looks. Scoring a sample against a centroid that
+includes it shrinks its own distance, and in a small cohort that shrinkage is large enough to
+invert a group difference.
+
+### Which sites actually widen
+
+The barometer of Mei et al. [[70]](references.qmd#ref-70) is defined over "cytosines whose variance
+rises with age", and that clause is the whole statistic. Summed over every site instead, the sum
+is dominated by sites that are merely variable, most of which have nothing to do with age.
+
+`fa.variable_sites` is that selection step, split out so it can be inspected rather than assumed.
+The test is Brown-Forsythe, which is Levene's test using the median, across age bins. Bartlett's
+test is the more common choice in this literature and is the wrong one here: it assumes normality
+within each group, and beta values near 0 or 1 are visibly not normal, so Bartlett reports
+variance differences that are distributional artefacts.
+
+A significant result says the variances *differ* between bins. It does not say variance *rises*,
+and a site whose variance falls is just as significant, so `direction` carries the sign of the
+trend and `rising` is the conjunction the barometer wants.
+
+::: {.callout-important}
+## What this looks like on a cohort that is too small
+
+Run on the test corpus, `sites_rising` under Benjamini-Hochberg is **zero**. Twenty-seven samples
+in three bins of nine, against roughly 820,000 tests, has almost no power once the correction is
+applied.
+
+That is the correct answer, not a gap in the implementation. A barometer that means anything needs
+a cohort in the hundreds. `fa.noise_barometer` accepts an explicit `sites=` list so a selection
+made elsewhere can be reused, which is also the only way the statistic transfers between cohorts.
+:::
+
+## Repertoire structure
+
+`falconage.immune` addresses a covariate no published blood clock carries.
+
+Deconvolution answers *how many cells of each type*. It says nothing about *how many distinct
+clones those cells represent*, and the two are different measurements: two donors with an
+identical CD8 memory fraction can differ by orders of magnitude in clone count.
+
+### Why clone count should move a clock at all
+
+Take one cell type holding fraction $f$ of the sample, split into clones of relative size $w_k$
+with $\sum_k w_k = 1$. Give clone $k$ a somatic offset $\delta_k$ from its lineage mean at some
+site, with mean zero and variance $\sigma^2$. The compartment's bulk beta is the size-weighted
+mean, so
+
+$$
+\mathrm{Var}\Big[\sum_k w_k \delta_k\Big] = \sigma^2 \sum_k w_k^2
+   = \frac{\sigma^2}{N_{\text{eff}}},
+\qquad N_{\text{eff}} = \Big(\sum_k w_k^2\Big)^{-1}
+$$
+
+and $\sum_k w_k^2$ is exactly the Simpson index. The variance a clonal compartment contributes to
+bulk methylation is inversely proportional to its **effective number of clones**, and clone count
+enters through that quantity and no other. Three equal clones carry one cell's somatic state at
+full weight; ten thousand clones average it to nothing.
+
+This is why the effect is invisible to composition adjustment: $f$ can be identical between two
+donors while $N_{\text{eff}}$ differs thousand-fold, and every published blood clock sees only $f$.
+
+The myeloid version of the question is settled. Nachun et al. [[71]](references.qmd#ref-71)
+measured clonal hematopoiesis against six clocks and found 1.31 years of acceleration on GrimAge
+to 3.08 on extrinsic EEAA. The lymphoid analogue has not been asked.
+
+### Measuring it
+
+```python
+div = fa.repertoire_diversity(clones, sample_col="sample_id", count_col="count")
+data.obs = data.obs.join(div)
+
+res = fa.score(data, clocks="compatible")
+acc = fa.acceleration(res, adjust=["clonality", "cd8mem_fraction"])
+```
+
+`fa.acceleration` already accepts arbitrary `obs` columns as covariates, so the incremental test
+is one call. The question is entirely whether clonality adds variance beyond cell fraction.
+
+Depth is the trap. Richness and Shannon both rise with sequencing depth, so an unrarefied
+comparison between a deeply and a shallowly sequenced donor measures the library rather than the
+donor. Pass `rarefy="min"` to subsample every donor to a common depth by multivariate
+hypergeometric draw, which is what a shallower run would actually have produced; sampling with
+replacement inflates richness at low depth, in the same direction as the bias being corrected.
+`clonality`, `simpson` and `effective_clones` are far more stable and are the ones to trust when
+rarefaction is not possible.
+
+### Simulating it
+
+The mechanism arm needs no paired cohort. `fa.simulate_clonality` generates bulk methylomes at
+**fixed** cell fractions and varying clone structure, so anything a clock does in response is
+clone structure alone.
+
+```python
+sim = fa.simulate_clonality(
+    reference, {"CD8mem": 0.3, "Neu": 0.7},
+    clonal_types=["CD8mem"],
+    clone_sizes=[fa.immune.zipf_clone_sizes(n, alpha=1.0)
+                 for n in (2, 20, 200, 2000)],
+    n_replicates=20)
+res = fa.score(sim, clocks="compatible")
+```
+
+`reference` is sorted-cell mean beta, features by cell type. It is **not bundled**: every
+deconvolution model in the registry is catalogued as `untraced`, carrying real metadata but no
+coefficients, so the reference has to be supplied. `FlowSorted.Blood.EPIC` on Bioconductor is the
+usual source.
+
+::: {.callout-note}
+## What the simulation returns on the test corpus
+
+Across 42 clocks scored on 48 simulated samples at identical cell fractions, the median log-log
+slope of score spread against effective clone count is **-0.494**, interquartile range -0.559 to
+-0.415. The derivation predicts -0.5 and was not fitted to the simulation.
+
+Among the clocks reporting years, `dnamphenoage` moves **4.35 years** between an
+effectively-two-clone compartment and a diverse one, and `horvath2013` moves 1.54 years. Both fall
+below a year once the compartment holds a few hundred effective clones.
+
+Cell-type fractions were identical for every one of those samples, so composition adjustment
+cannot remove any of it.
+:::
+
+## Where a clock's weight sits
+
+A clock is a weight vector over CpGs, and two questions about that vector need no samples at all.
+
+**Is this clock exposed to genotype?** If a clock CpG is under strong meQTL control and the allele
+frequency at that variant differs between ancestral populations, a systematic difference in clock
+output between ancestry groups follows from genotype frequency alone, with no difference in aging.
+Cruz-Gonzalez et al. [[75]](references.qmd#ref-75) established that the major clocks lose accuracy in
+admixed individuals; whether the size of that loss tracks each clock's meQTL exposure is open, and
+half of that measurement is a property of the coefficients.
+
+**Is this clock regulatory?** Patel et al. [[76]](references.qmd#ref-76) report that most CpGs used
+by established clocks do *not* overlap known transcription factor binding sites. Reproducing that
+against any annotation class is the same computation with a different list.
+
+```python
+mass = fa.coefficient_mass({"meqtl": godmc_cpgs, "enhancer": enhancer_cpgs})
+```
+
+### Why mass and not count
+
+Counting annotated sites answers the wrong question. A clock's behaviour is driven by its heavy
+features: a 353-CpG clock with two enormous weights and 351 small ones behaves like a two-CpG
+clock. The statistic is therefore the share of $\sum_j |w_j|$ on annotated sites, with the plain
+count returned beside it. **When the two diverge, the annotated sites are the heavy ones, and that
+divergence is the finding.**
+
+Run on the registry with each clock's own CpG set as the annotation, which needs no external file,
+`horvath2013` shares 11.6 per cent of its *sites* with `dnamphenoage` but 19.6 per cent of its
+*mass*. `weidner` shares two of its three sites with `dnamphenoage` and 89 per cent of its mass.
+Two clocks that share their heaviest features will agree with each other for reasons that have
+nothing to do with either being right.
+
+FALCONAge bundles no annotation list. meQTL catalogues and regulatory builds are large, versioned
+and separately licensed, and freezing one into a wheel would make it silently stale. GoDMC and the
+EPIGEN meQTL database are the usual sources for the first question, the Ensembl Regulatory Build
+or a Roadmap chromatin-state track for the second. `.attrs["unmatched"]` reports how many supplied
+ids matched nothing, which is the check that catches an EPIC v2 list with `_TC21` suffixes meeting
+bare `cg` probe ids.
+
+## Reliability: trait, state and technical
+
+A published ICC answers "how reproducible is this clock across a cohort". Someone asking "has my
+number moved" needs a different quantity, and the gap between the two is why clock ICCs in the
+literature read as reassuring while replicate disagreement of up to nine years is also true
+[[68]](references.qmd#ref-68).
+
+`fa.variance_components` separates them, given repeated measurement:
+
+$$
+y_{ijk} = \mu + a_i + s_{ij} + \varepsilon_{ijk}
+$$
+
+for person $i$, occasion $j$, replicate $k$, fitted by Henderson's method of moments. Two ICCs come
+back and the gap between them is the point:
+
+`icc`
+: On raw scores. Comparable to what the literature publishes.
+
+`icc_age_adjusted`
+: The same after chronological age is regressed out. A cohort spanning decades holds most of its
+  between-person variance in the age term, so a raw ICC largely reports that the clock tracks age,
+  which was never in question. The adjusted figure is between-person reliability among people of
+  the same age, which is what any individual-level claim rests on.
+
+A clock whose raw ICC is 0.98 and whose adjusted ICC is 0.4 is not a precise instrument. It is a
+cohort with a wide age range.
+
+```python
+vc = fa.variance_components(res, subject_col="donor", occasion_col="visit")
+vc.table                      # var_trait, var_state, var_tech, icc, icc_age_adjusted
+vc.replicates_needed(0.9)     # per occasion, to reach ICC 0.9
+```
+
+`replicates_needed` returns `inf` where no number of replicates gets there, and that is the
+informative case rather than an error. Replicates average away the *technical* term only, so a
+clock whose day-to-day within-person variance already exceeds the budget cannot be rescued by
+running the array again. The honest answer is then a second draw, not a second scan.
+
+Components are not clipped at zero. A negative one means the within-level spread exceeded the
+between-level spread, which is real for a small design or a clock measuring nothing in this cohort,
+and rounding it to zero disguises both.
+
+## Mosaic ages within a tissue
+
+`fa.models.single_cell.scage` gives an age per cell [[28]](references.qmd#ref-28). A bulk clock already reports the
+mean, so the quantity worth having is the *shape* of the distribution underneath it: a tissue whose
+cells are uniformly middle-aged and one holding a mixture of young and very old cells have the same
+bulk methylation and, plausibly, very different biology.
+
+The obstacle is that single-cell methylation coverage is sparse, so each per-cell age rests on few
+sites and carries large error. Observed spread is therefore always positive, and reporting it as
+heterogeneity is the mistake `fa.mosaic` exists to avoid.
+
+The null is stated plainly: **every cell in the group has the same true age, and all observed
+spread is estimation error**. It is simulated by drawing each cell from a normal centred on the
+group mean with that cell's own standard error, taken from the profile-likelihood width `scage`
+already returns.
+
+```python
+ages = fa.models.single_cell.scage(cells, reference)
+mos  = fa.mosaic(ages, group="tissue")
+```
+
+A small `p_excess` is evidence of genuine mosaicism. A large one says the data cannot distinguish a
+mosaic tissue from a uniform one measured badly, which at typical single-cell coverage is the usual
+answer and is worth reporting as such. `n_at_grid_edge` counts cells whose estimate landed on the
+boundary of the age grid, where the likelihood was truncated rather than maximised; those pile up
+and inflate the tails, so a group with many of them should have its skew and kurtosis ignored.
+
+## What none of this is
+
+None of these functions is a clock, and none returns an age. They carry no coefficients, no
+`scale_type` gate applies, and their outputs move with normalisation, probe panel and detection-p
+filtering. The only defensible comparison is within one processed matrix.
+
+That is a real constraint rather than a disclaimer. Entropy computed on noob-normalised betas and
+entropy computed on raw betas are different numbers for the same DNA, and neither is more correct
+than the other.

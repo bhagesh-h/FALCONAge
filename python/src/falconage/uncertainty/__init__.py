@@ -70,9 +70,13 @@ from ..core.errors import FalconError
 from ..models import ops
 from ..registry.registry import DATA_DIR
 
+from .variance import (VarianceComponents, VarianceError,  # noqa: E402
+                       variance_components)
+
 __all__ = [
-    "SEResult", "conformal_interval", "icc_from_replicates", "interval",
-    "load_conformal", "load_probe_icc", "probe_icc_source", "technical_se",
+    "SEResult", "VarianceComponents", "VarianceError", "conformal_interval",
+    "icc_from_replicates", "interval", "load_conformal", "load_probe_icc",
+    "probe_icc_source", "technical_se", "variance_components",
 ]
 
 ICC_FILE = DATA_DIR / "probe_icc.csv.gz"

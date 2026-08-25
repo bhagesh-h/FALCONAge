@@ -122,7 +122,7 @@ Catalogued, but no primary source for the coefficients has been established, so 
 | `ensembleagestatic` | 2025 | intervention-responsive epigenetic age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40, Horvath MammalMethylChip320 | [Haghani 2025](https://doi.org/10.1007/s11357-025-01808-1) |
 | `ensembleagestatictop` | 2025 | intervention-responsive epigenetic age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40, Horvath MammalMethylChip320 | [Haghani 2025](https://doi.org/10.1007/s11357-025-01808-1) |
 | `epicga` | 2021 | gestational age | `gestational_weeks` | — | cord blood | EPICv1 | [Haftorn 2021](https://doi.org/10.1186/s13148-021-01055-z) |
-| `fiage` | 2025 | frailty index | `relative_score` | 53 | whole blood | EPICv1 | Listed in the TranslAGE clock table (translage 2025 |
+| `fiage` | 2025 | frailty index | `relative_score` | 53 | whole blood | EPICv1 | no primary source traced, [catalogued at](https://www.translage.io) |
 | `garagnani` | 2012 | ELOVL2 methylation | `relative_score` | — | whole blood | 450K | [Garagnani 2012](https://doi.org/10.1111/acel.12005) |
 | `gliasin` | 2024 | chronological age | `age_years` | — | brain cortex | 450K | [Tong 2024](https://doi.org/10.18632/aging.206184) |
 | `han` | 2020 | chronological age | `age_years` | — | whole blood | 450K | [Han 2020](https://doi.org/10.1186/s12915-020-00807-2) |

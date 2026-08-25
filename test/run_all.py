@@ -468,18 +468,152 @@ def run_registry(records: dict) -> None:
     s = reg.summary()
     dd = outdir("registry", "catalogue")
     write_table(dd, "clocks", s)
-    write_table(dd, "tier_a", s[s["availability"] == "A"])
-    write_table(dd, "tier_c", s[s["availability"] == "C"])
+    # These filters name the availability groups, not the old A/B/C letters.
+    # Matching on the letters silently produced three empty tables, because the
+    # summary column carries the names the registry now uses.
+    for group in ("bundled", "untraced", "licensed"):
+        write_table(dd, group, s[s["availability"] == group])
 
     records["registry"] = pd.DataFrame([{
         "clocks": len(reg),
-        "tier_A": len(reg.filter(availability="A")),
-        "tier_B": len(reg.filter(availability="B")),
-        "tier_C": len(reg.filter(availability="C")),
-        "untraced": len(reg.untraced()),
+        "bundled": len(reg.filter(availability="bundled")),
+        "untraced": len(reg.filter(availability="untraced")),
+        "licensed": len(reg.filter(availability="licensed")),
         "coefficients_bundled": sum(1 for c in reg if c.ships_coefficients),
         "registry_version": reg.version,
     }])
+
+
+def run_disorder(records: dict) -> None:
+    """The readouts that are not clocks: entropy, drift, repertoire, mass.
+
+    Run on GSE182991 because it is the widest age range in the corpus (0 to 41)
+    on EPIC, and every statistic here is either about age-related variance or is
+    reported per sample, so a cohort that is all one age would show nothing.
+    """
+    gse = "GSE182991"
+    path = DATA / "bench" / f"{gse}.parquet"
+    if not path.exists():
+        log(f"  disorder: {gse} absent, skipped")
+        return
+    meta = pd.read_csv(DATA / "bench" / "computage_bench_meta.tsv", sep="\t", index_col=0)
+    d = load_bench(gse, meta)
+    dd = outdir("disorder", gse)
+
+    # -- entropy and drift, per sample --------------------------------------
+    ent = fa.entropy(d)
+    dri = fa.drift(d)
+    per_sample = ent.join(dri, rsuffix="_d")[["entropy", "drift", "n_sites"]]
+    if "age" in d.obs.columns:
+        per_sample["age"] = d.obs["age"]
+    write_table(dd, "entropy_drift", per_sample)
+
+    # -- which sites actually widen with age --------------------------------
+    row = {"dataset": gse, "n_samples": d.n_samples, "n_sites": d.n_features,
+           "entropy_mean": float(ent["entropy"].mean()),
+           "entropy_sd": float(ent["entropy"].std()),
+           "drift_mean": float(dri["drift"].mean())}
+    try:
+        var = fa.variable_sites(d)
+        tested = int(var["p"].notna().sum())
+        rising = int(var["rising"].sum())
+        row["sites_tested"] = tested
+        row["sites_rising_fdr"] = rising
+
+        # Zero is the expected answer here and is reported as the headline
+        # rather than worked around: 48 samples split into three bins of 16,
+        # against ~820,000 Brown-Forsythe tests, has almost no power once
+        # Benjamini-Hochberg is applied. A barometer needs a cohort in the
+        # hundreds, and saying so is more use than a number that survived only
+        # because the correction was skipped.
+        nominal = var.index[(var["p"] < 0.01) & (var["direction"] > 0)]
+        row["sites_rising_nominal_p01"] = int(len(nominal))
+        write_table(dd, "variable_sites_nominal", var.loc[nominal].head(2000))
+
+        chosen = list(var.index[var["rising"]]) or list(nominal)
+        if chosen:
+            bar = fa.noise_barometer(d, sites=chosen)
+            bar["selection"] = "fdr" if rising else "nominal p<0.01, uncorrected"
+            write_table(dd, "noise_barometer", bar)
+            row["barometer"] = float(bar["barometer"].iloc[0])
+            row["mean_sd"] = float(bar["mean_sd"].iloc[0])
+            row["barometer_selection"] = bar["selection"].iloc[0]
+    except Exception as exc:
+        log(f"    variable_sites skipped: {exc}")
+
+    records["disorder"] = pd.DataFrame([row])
+
+    # -- where each clock's weight sits, against the other clocks ------------
+    # No external annotation is needed for a real question: how much of one
+    # clock's coefficient mass sits on CpGs another clock also uses. Shared
+    # features are why two clocks agree, and mass is the honest way to measure
+    # the sharing, because a handful of heavy probes in common matters more
+    # than a long tail of light ones.
+    reg = fa.registry.load()
+    anchors = [c for c in ("horvath2013", "hannum2013", "dnamphenoage")
+               if c in reg and reg.has_coefficient_vector(c)]
+    if anchors:
+        classes = {a: set(reg.coefficients(a)[0]) for a in anchors}
+        mass = fa.coefficient_mass(classes, registry=reg)
+        write_table(outdir("disorder", "coefficient_mass"), "shared_mass", mass)
+        records["coefficient_mass"] = mass.head(12).reset_index()
+
+    # -- the clonality mechanism, simulated ---------------------------------
+    # Cell fractions are identical across every simulated sample by
+    # construction, so anything the clocks do here is clone structure alone.
+    # The two lineage profiles are built from this dataset's own per-site means
+    # with a fixed perturbation, which keeps the simulation on a real CpG panel
+    # and a real beta distribution rather than on uniform noise.
+    base = d.X.mean(axis=0).dropna()
+    rng = np.random.default_rng(0)
+    ref = pd.DataFrame({
+        "lineageA": base.to_numpy(),
+        "lineageB": np.clip(base.to_numpy() + rng.normal(0, 0.05, base.size), 0, 1),
+    }, index=base.index)
+
+    sizes = [fa.immune.zipf_clone_sizes(n, alpha=1.0)
+             for n in (2, 5, 20, 100, 500, 2000)]
+    sim = fa.simulate_clonality(ref, {"lineageA": 0.4, "lineageB": 0.6},
+                                clonal_types=["lineageA"], clone_sizes=sizes,
+                                n_replicates=8, sigma=0.05, seed=0,
+                                age=float(d.obs["age"].median())
+                                if "age" in d.obs.columns else 50.0)
+    sim.platform = d.platform
+    sim_res = fa.score(sim, clocks="compatible", min_coverage=0.5)
+    sd = outdir("disorder", "clonality_simulation")
+    write_table(sd, "scores", sim_res.wide().join(
+        sim.obs[["n_clones", "effective_clones", "simpson"]]))
+
+    # The prediction from the derivation: spread falls as 1/sqrt(N_eff), so the
+    # slope of log(spread) on log(N_eff) should be about -0.5 for a clock that
+    # reads the clonal compartment at all.
+    slopes = []
+    for cid in sim_res.scores.columns:
+        g = sim_res.scores[cid].groupby(sim.obs["effective_clones"]).std()
+        g = g[np.isfinite(g) & (g > 0)]
+        if len(g) >= 4:
+            b = np.polyfit(np.log(g.index.to_numpy(dtype=float)),
+                           np.log(g.to_numpy()), 1)[0]
+            slopes.append({"clock": cid, "log_log_slope": round(float(b), 3),
+                           "spread_at_2_clones": round(float(g.iloc[0]), 4),
+                           "spread_at_most_clones": round(float(g.iloc[-1]), 4)})
+    if slopes:
+        tab = pd.DataFrame(slopes).sort_values("log_log_slope")
+        write_table(sd, "clonality_slopes", tab, index=False)
+        records["clonality"] = tab.head(12)
+        records["disorder"]["clonality_clocks"] = len(tab)
+        records["disorder"]["clonality_median_slope"] = round(
+            float(tab["log_log_slope"].median()), 3)
+        # Only the clocks whose output is in years get a spread quoted in years.
+        # epiTOC2 tops the raw table at 66, and that number is cell divisions:
+        # reporting it as a worst case in years would be a units error of the
+        # exact kind scale_type exists to prevent.
+        in_years = [r for r in slopes
+                    if reg.get(r["clock"]).scale_type.startswith("age_years")]
+        if in_years:
+            worst = max(in_years, key=lambda r: r["spread_at_2_clones"])
+            records["disorder"]["clonality_worst_clock_in_years"] = worst["clock"]
+            records["disorder"]["clonality_worst_spread_years"] = worst["spread_at_2_clones"]
 
 
 
@@ -630,7 +764,7 @@ def update_readme(records: dict) -> None:
 
     for key in ("registry", "bench_inputs", "benchmark", "benchmark_significant",
                 "epicv2", "gestational", "mammalian", "mouse", "idat", "clinical",
-                "gallery"):
+                "disorder", "coefficient_mass", "clonality", "gallery"):
         if key in records:
             v = records[key]
             text = splice(text, key, md_table(v) if isinstance(v, pd.DataFrame)
@@ -652,7 +786,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--groups", default="all",
                     help="comma-separated: bench, epicv2, gestational, mammalian, "
-                         "mouse, idat, clinical, registry")
+                         "mouse, idat, clinical, registry, disorder")
     ap.add_argument("--no-readme", action="store_true")
     args = ap.parse_args(argv)
 
@@ -665,6 +799,7 @@ def main(argv=None) -> int:
         "registry": run_registry, "bench": run_bench, "epicv2": run_epicv2,
         "gestational": run_gestational, "mammalian": run_mammalian,
         "mouse": run_mouse, "idat": run_idat, "clinical": run_clinical,
+        "disorder": run_disorder,
     }
     wanted = list(runners) if args.groups == "all" else \
         [g.strip() for g in args.groups.split(",")]
