@@ -70,6 +70,23 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Fixed
 
+- **`consensus()` skipped its most important corroboration check in silence.**
+  The rule from *When to Trust Epigenetic Clocks* turns on whether a clock's
+  principal-component version agrees, and the partner id was derived as `pc` +
+  the clock id. That is correct for pchorvath2013, pchannum, pcskinandblood,
+  pcdnamtl and pcgrimage, and wrong for the one clock the paper singles out:
+  DNAmPhenoAge's PC version is published as `pcphenoage`, not
+  `pcdnamphenoage`, so PhenoAge was never checked and nothing said so.
+  The pairing is now an explicit map, exported as `pc_counterpart()` and tested
+  against the registry so a missing counterpart fails rather than disappears.
+
+  Separately, and more consequential in practice: every PC clock in the
+  registry is untraced or licensed, so on a default install this check cannot
+  run at all. `consensus()` now names each partner in
+  `high_reliability_partner`, reports agreement in `partner_corroborates`, and
+  states in the verdict when the check did not run. A verdict that quietly
+  omits its strongest test reads exactly like one that passed it.
+
 - `run_registry` in `test/run_all.py` filtered on the retired `A`/`B`/`C` tier
   letters after the availability groups were renamed, so it wrote three empty
   tables instead of failing. It now filters on `bundled`/`untraced`/`licensed`.

@@ -2189,13 +2189,25 @@ original clocks need 3–16 replicates per condition where their PC versions nee
 1–2.
 
 **`consensus()`** implements the decision rule from *When to Trust Epigenetic
-Clocks* ([PMC11526921](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11526921/)).
+Clocks* [[77]](references.qmd#ref-77).
 Re-analysing six intervention datasets, the authors found that in **five of
 six** exactly one clock reached significance, a first-generation clock every
 time, and **four of those five lost it** under multiple-testing correction. In
 no case did the PC version of the same clock corroborate. Their conclusion, in
 their words: *a single significant clock after an intervention is likely a false
-positive.*
+positive.* The same group later widened this to 16 clocks and 94 further
+biomarkers across the 51 longitudinal studies of TranslAGE
+[[78]](references.qmd#ref-78), which is where the clock grouping the FALCONAge
+report uses comes from.
+
+**That PC clause is the sharpest test in the paper, and by default FALCONAge
+cannot run it.** Every principal-component clock in the registry is catalogued
+as untraced or licensed, so their weights are not ours to distribute, and a
+corroboration check with nothing to check against would be inert. `consensus()`
+therefore names each clock's counterpart in `high_reliability_partner`, reports
+agreement in `partner_corroborates`, and where the counterpart was not scored it
+says so in the verdict string rather than dropping the clause. Registering the
+weights with `fa.registry.register_local_weights()` turns the check on.
 
 So `consensus()` tests every scored clock, corrects across the whole set
 actually run, and returns a verdict rather than a table to pick from:

@@ -23,8 +23,37 @@ from ..core.errors import AnalysisError, IllegalOperationError
 __all__ = [
     "BenchmarkResult", "ConsensusReport", "PowerResult", "acceleration",
     "agreement", "associate", "consensus", "cox_hazard", "detectable_effect",
-    "icc", "power", "run_benchmark",
+    "icc", "pc_counterpart", "power", "run_benchmark",
 ]
+
+
+#: Base clock to its high-reliability principal-component counterpart, where the
+#: id does not follow the ``pc`` + id convention.
+#:
+#: This map exists because deriving the partner by string concatenation is
+#: almost right. It gives pchorvath2013, pchannum, pcskinandblood, pcdnamtl and
+#: pcgrimage correctly, and then silently misses the one that matters most:
+#: DNAmPhenoAge's PC version is published as ``pcphenoage``, not
+#: ``pcdnamphenoage``, and PhenoAge is the clock *When to Trust Epigenetic
+#: Clocks* singles out as the case where the PC version changes the answer. A
+#: check that skips its most important case reads exactly like a check that
+#: passed.
+PC_COUNTERPART = {
+    "dnamphenoage": "pcphenoage",
+}
+
+
+def pc_counterpart(clock_id: str) -> str | None:
+    """The high-reliability version of a clock, by id, or None if there is none.
+
+    Naming only. It does not promise the counterpart is in the registry or that
+    it can be scored, because on a default install none of them can be: every
+    PC clock is catalogued as untraced or licensed, so the weights have to be
+    supplied with :func:`falconage.registry.register_local_weights`.
+    """
+    if clock_id.startswith("pc"):
+        return None
+    return PC_COUNTERPART.get(clock_id, f"pc{clock_id}")
 
 
 def _check_legal(registry, clock_id: str, op: str) -> None:
@@ -872,6 +901,17 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     operation for its scale, and on the raw score where it is not. A pace of
     aging has no residual to take, and taking one anyway is the units error
     ``LEGAL_OPS`` exists to prevent.
+
+    **The corroboration column, and when it is empty.** ``high_reliability_partner``
+    names each clock's principal-component version and ``partner_corroborates``
+    says whether that version agreed, which is the paper's sharpest single
+    diagnostic. It is ``None`` when the partner was not scored, and on a default
+    install that is every one of them: every PC clock in the registry is
+    catalogued as untraced or licensed, so their weights are not ours to ship.
+    ``why`` says so explicitly rather than omitting the clause, because a
+    verdict that silently drops its strongest check reads like one that passed
+    it. Supply the weights with
+    :func:`falconage.registry.register_local_weights` to turn it on.
     """
     reg = result.registry
     if group_col not in result.obs.columns:
@@ -932,18 +972,37 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     # PC corroboration. The discriminating signal in the paper: for every
     # sporadic first-generation hit, the PC version of the same clock was
     # silent.
-    pc_checks = []
+    scored = set(tab["clock"])
+    tab["high_reliability_partner"] = [pc_counterpart(c) or "" for c in tab["clock"]]
+    tab["partner_corroborates"] = [
+        bool(tab.loc[tab["clock"] == pc, "sig_bonferroni"].iloc[0])
+        if pc and pc in scored else None
+        for pc in tab["high_reliability_partner"]]
+
+    pc_checks, unpaired = [], []
     for cid in strict["clock"]:
-        pc = f"pc{cid}"
-        if pc in set(tab["clock"]):
+        pc = pc_counterpart(cid)
+        if not pc:
+            continue
+        if pc in scored:
             agreed = bool(tab.loc[tab["clock"] == pc, "sig_bonferroni"].iloc[0])
             pc_checks.append(f"{pc} {'agrees' if agreed else 'does NOT corroborate'}")
+        else:
+            unpaired.append(f"{cid} (would need {pc})")
 
     counts = (f"{len(strict)} of {n} clock(s) significant at Bonferroni "
               f"(alpha {alpha}), {int(tab['sig_bh'].sum())} at BH; "
               f"generations {sorted(gens) or 'none'}")
     if pc_checks:
         counts += "; " + "; ".join(pc_checks)
+    if unpaired:
+        # Not a footnote. Every PC clock in the registry is untraced or
+        # licensed, so on a default install this check cannot run at all, and a
+        # verdict that quietly omitted it would read as though it had passed.
+        counts += ("; high-reliability corroboration NOT checked for "
+                   + ", ".join(unpaired)
+                   + " -- supply the weights with "
+                     "fa.registry.register_local_weights() to enable it")
 
     if len(strict) == 0:
         verdict, why = "unsupported", f"nothing survives correction -- {counts}"

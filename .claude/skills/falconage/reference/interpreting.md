@@ -90,6 +90,18 @@ and `shannon`, which both rise with sequencing depth; pass `rarefy="min"` when d
 `icc_age_adjusted`. **Quote the adjusted one for anything about an individual.** A raw ICC on a
 cohort spanning decades mostly reports that the clock tracks age.
 
+## Judging an intervention
+
+`fa.consensus(res, group_col)` returns a verdict, not a table of p-values to pick from, because
+picking is the failure it exists to prevent. Report the verdict and the `why` string together.
+
+Its strongest check is usually off. The rule it implements requires that a clock's
+high-reliability principal-component version corroborates the finding, and **every PC clock in
+the registry is untraced or licensed, so none can be scored on a default install.** `why` says so
+in that case. Do not read a `supported` verdict as though the corroboration check had passed when
+the string says it was not run; the weights have to be supplied with
+`fa.registry.register_local_weights()` first.
+
 ## What FALCONAge does not do
 
 | Not implemented | Why |

@@ -256,3 +256,9 @@ groups:
       - n: 76
         text: "Patel S, Schwarz M, Riege K, Varshavsky M, Kestler HA et al. An improved epigenetic age estimation with TFMethyl Clock reveals DNA methylation changes during aging in transcription factor binding sites. bioRxiv 2025.10.07.680024. A preprint. Its central finding is that most CpGs used by established clocks do *not* overlap known transcription factor binding sites, which is the motivation for measuring coefficient mass against an annotation rather than assuming it."
         doi: "10.1101/2025.10.07.680024"
+      - n: 77
+        text: "Borrus DS, Sehgal R, Armstrong JF, Kasamoto J, Gonzalez J, Higgins-Chen A. When to Trust Epigenetic Clocks: Avoiding False Positives in Aging Interventions. bioRxiv 2024.10.22.619720 (2024). PMC11526921. The decision rule `consensus()` implements: across six intervention datasets, five had exactly one significant clock, a first-generation clock every time, four of those five lost it under multiple-testing correction, and in no case did the principal-component version of the same clock corroborate."
+        doi: "10.1101/2024.10.22.619720"
+      - n: 78
+        text: "Sehgal R, Borrus DS, Armstrong JF, Gonzalez J, Kasamoto J, Markov Y et al. Responsiveness of epigenetic aging biomarkers to longevity interventions in humans. *Nature Medicine* (2026). The published successor to [77] by the same group, widened to 16 clocks and 94 further biomarkers across the 51 longitudinal studies of the TranslAGE database. The source of the clock grouping the FALCONAge report uses."
+        doi: "10.1038/s41591-026-04562-9"

@@ -236,3 +236,49 @@ def test_consensus_needs_exactly_two_groups(scored_arms):
     res.obs["arm"] = ["a", "b", "c"] * (res.scores.shape[0] // 3)
     with pytest.raises(AnalysisError, match="compares exactly two"):
         fa.consensus(res, "arm")
+
+
+# ---------------------------------------------------------------------------
+# high-reliability corroboration
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("base,expect", [
+    ("horvath2013", "pchorvath2013"),
+    ("hannum", "pchannum"),
+    ("skinandblood", "pcskinandblood"),
+    ("dnamtl", "pcdnamtl"),
+    ("grimage", "pcgrimage"),
+    # The exception, and the one the paper singles out. Deriving this by
+    # concatenation gives pcdnamphenoage, which is not a clock, so the check
+    # skipped PhenoAge entirely and said nothing about having skipped it.
+    ("dnamphenoage", "pcphenoage"),
+])
+def test_every_pc_counterpart_is_a_real_clock(base, expect):
+    reg = fa.registry.load()
+    assert fa.analysis.pc_counterpart(base) == expect
+    assert expect in reg, f"{expect} is not in the registry"
+
+
+def test_a_pc_clock_has_no_counterpart_of_its_own():
+    """Otherwise the pairing recurses into pcpchorvath2013."""
+    assert fa.analysis.pc_counterpart("pchorvath2013") is None
+
+
+def test_consensus_says_when_corroboration_could_not_be_checked(scored_arms):
+    """Every PC clock ships untraced or licensed, so on a default install the
+    paper's sharpest check cannot run. A verdict that dropped the clause in
+    silence would read exactly like one that had passed it."""
+    rep = fa.consensus(_shift(scored_arms, ["horvath2013"], 12.0), "arm",
+                       reference="ctrl")
+    assert "high-reliability corroboration NOT checked" in rep.why
+    assert "pchorvath2013" in rep.why
+    assert "register_local_weights" in rep.why
+
+
+def test_the_partner_columns_are_present_and_empty_without_the_weights(scored_arms):
+    rep = fa.consensus(scored_arms, "arm", reference="ctrl")
+    assert "high_reliability_partner" in rep.table.columns
+    assert "partner_corroborates" in rep.table.columns
+    # Named for every base clock, corroborated by none, because none was scored.
+    assert rep.table.loc["horvath2013", "high_reliability_partner"] == "pchorvath2013"
+    assert rep.table["partner_corroborates"].isna().all()
