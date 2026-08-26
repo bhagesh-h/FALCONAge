@@ -30,7 +30,7 @@ caution: on the clocks that ship today the GPU is slower than the CPU
 (0.58 s against 3.74 s at 16,384 samples on an RTX 4060), because a linear
 clock over a few thousand features is too small a matrix multiplication to
 pay for the transfer. It earns its place on the PC clocks and on neural
-architectures, none of which are tier A yet.}
+architectures, none of which are bundled yet.}
 
 \item{cuda}{CUDA version for the torch wheel index, e.g. \code{"cu124"}. The
 \code{gpu} extra alone is not enough: pip's default index serves a CUDA build on

@@ -5,14 +5,14 @@ Authors@R:
     person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5957-8005"))
 Description: Scores DNA methylation and clinical chemistry data against a
-    catalogue of 161 published aging clocks, and provides the downstream
+    catalogue of 175 published aging clocks, and provides the downstream
     statistics the field expects: age acceleration in its three conventions,
     survival and association models, technical reliability, and the AA1/AA2
     benchmark. Numerical work is delegated to the 'falconage' Python package
     through 'reticulate', so results from R and from Python are the same bits
-    rather than two implementations that agree approximately. Twenty-three
-    clocks carry coefficients inside the package and run offline; twenty-eight
-    are implemented as scaffolds whose research-use-only coefficients the user
+    rather than two implementations that agree approximately. Forty-six
+    clocks carry coefficients inside the package and run offline; forty are
+    implemented as scaffolds whose research-use-only coefficients the user
     supplies.
 License: GPL (>= 3)
 URL: https://github.com/bhagesh-h/FALCONAge,
@@ -41,4 +41,4 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-GB
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+Config/roxygen2/version: 8.1.0

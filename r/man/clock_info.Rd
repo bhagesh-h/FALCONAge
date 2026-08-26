@@ -13,7 +13,7 @@ clock_info(clock_id)
 A named list, invisibly. Printed for reading.
 }
 \description{
-For a tier C clock this also prints why its coefficients are not distributed,
+For a licensed clock this also prints why its coefficients are not distributed,
 where to obtain them, and which open clocks answer the same question.
 }
 \examples{

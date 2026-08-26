@@ -6,7 +6,7 @@
 \alias{FALCONAge-package}
 \title{FALCONAge: Multiomic Biological Age and Aging Clock Scoring}
 \description{
-Scores DNA methylation and clinical chemistry data against a catalogue of 161 published aging clocks, and provides the downstream statistics the field expects: age acceleration in its three conventions, survival and association models, technical reliability, and the AA1/AA2 benchmark. Numerical work is delegated to the 'falconage' Python package through 'reticulate', so results from R and from Python are the same bits rather than two implementations that agree approximately. Twenty-three clocks carry coefficients inside the package and run offline; twenty-eight are implemented as scaffolds whose research-use-only coefficients the user supplies.
+Scores DNA methylation and clinical chemistry data against a catalogue of 175 published aging clocks, and provides the downstream statistics the field expects: age acceleration in its three conventions, survival and association models, technical reliability, and the AA1/AA2 benchmark. Numerical work is delegated to the 'falconage' Python package through 'reticulate', so results from R and from Python are the same bits rather than two implementations that agree approximately. Forty-six clocks carry coefficients inside the package and run offline; forty are implemented as scaffolds whose research-use-only coefficients the user supplies.
 }
 \section{Why this package is a wrapper}{
 
@@ -41,11 +41,11 @@ acceleration(res)
 
 \section{What ships}{
 
-161 catalogued clocks. 35 carry coefficients inside the package and run
-offline; 28 are scaffolds whose coefficients are research-use-only and are
-not ours to distribute -- \code{list_clocks(tier = "C")} names each one, why,
-and where to obtain a file. The rest are catalogued with metadata and await a
-traced extractor.
+175 catalogued clocks. 46 carry coefficients inside the package and run
+offline; 40 are scaffolds whose coefficients are research-use-only and are
+not ours to distribute -- \code{list_clocks(tier = "licensed")} names each one, why,
+and where to obtain a file. The remaining 89 are catalogued with metadata and
+await a traced extractor.
 }
 
 \section{Scales, and what may be done with them}{
@@ -70,6 +70,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Bhagesh Hunakunti \email{bhunakun@uni-bonn.de} (\href{https://orcid.org/0000-0002-5957-8005}{ORCID})
+
+Authors:
+\itemize{
+  \item Bhagesh Hunakunti \email{bhunakun@uni-bonn.de} (\href{https://orcid.org/0000-0002-5957-8005}{ORCID})
+}
 
 }
 \keyword{internal}

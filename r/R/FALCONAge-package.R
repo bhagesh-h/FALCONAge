@@ -28,11 +28,11 @@
 #' }
 #'
 #' @section What ships:
-#' 161 catalogued clocks. 35 carry coefficients inside the package and run
-#' offline; 28 are scaffolds whose coefficients are research-use-only and are
+#' 175 catalogued clocks. 46 carry coefficients inside the package and run
+#' offline; 40 are scaffolds whose coefficients are research-use-only and are
 #' not ours to distribute -- \code{list_clocks(tier = "licensed")} names each one, why,
-#' and where to obtain a file. The rest are catalogued with metadata and await a
-#' traced extractor.
+#' and where to obtain a file. The remaining 89 are catalogued with metadata and
+#' await a traced extractor.
 #'
 #' @section Scales, and what may be done with them:
 #' Every clock carries a \code{scale_type}, and it governs which downstream

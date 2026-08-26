@@ -17,10 +17,10 @@ test_that("the module imports and reports a coherent configuration", {
   skip_if_no_python()
   cfg <- falconage_config()
   expect_s3_class(cfg, "falcon_config")
-  expect_equal(cfg$n_clocks, 173L)
+  expect_equal(cfg$n_clocks, 175L)
   expect_equal(cfg$falconage, as.character(utils::packageVersion("FALCONAge")))
   tiers <- cfg$clocks_by_availability
-  expect_equal(tiers$bundled + tiers$untraced + tiers$licensed, 173L)
+  expect_equal(tiers$bundled + tiers$untraced + tiers$licensed, 175L)
 })
 
 test_that("the registry browses from R", {
@@ -31,7 +31,7 @@ test_that("the registry browses from R", {
   expect_true("horvath2013" %in% rownames(a))
 
   scaffolds <- list_clocks(tier = "licensed")
-  expect_equal(nrow(scaffolds), 28L)
+  expect_equal(nrow(scaffolds), 40L)
 })
 
 test_that("a scaffold clock says why and names an alternative", {

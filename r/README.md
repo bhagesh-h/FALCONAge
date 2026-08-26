@@ -7,7 +7,7 @@
 <!-- badges: end -->
 
 Biological age and aging-clock scoring from DNA methylation and clinical chemistry, against a
-catalogue of 161 published clocks.
+catalogue of 175 published clocks.
 
 This is the R half. It is a native R package: S3 classes, `data.frame` in and out, roxygen2
 documentation, ggplot2 figures, but it does not reimplement anything. Every number comes from one
@@ -219,7 +219,7 @@ A clock is an architecture plus a coefficient set, and the two have very differe
 
 Every **architecture** here is written from its published description, no clock implementation is
 imported from another package. **Coefficients** are fitted data and cannot be written, only
-obtained, so the 161 clocks fall into three tiers:
+obtained, so the 175 clocks fall into three groups:
 
 | Tier | n | What you do |
 |---|---:|---|
@@ -228,8 +228,8 @@ obtained, so the 161 clocks fall into three tiers:
 | C | 28 | Obtain a coefficient file and register it with `register_local_weights()`. The architecture is implemented and tested. |
 
 ```r
-list_clocks(tier = "A")       # what runs offline, right now
-list_clocks(tier = "C")       # what needs a licence, and where to get it
+list_clocks(tier = "bundled")    # what runs offline, right now
+list_clocks(tier = "licensed")   # what needs a licence, and where to get it
 clock_info("grimage2")        # why, and which open clock answers the same question
 ```
 
@@ -237,7 +237,7 @@ clock_info("grimage2")        # why, and which open clock answers the same quest
 
 - [Getting started](../guide/FALCONAge.html), the full walkthrough, both languages side by side
 - [Choosing a clock](../guide/clocks.html), by the question you asked, and by what the scale permits
-- [Clock catalogue](../clocks.html), all 161, generated from the registry that scores them
+- [Clock catalogue](../clocks.html), all 175, generated from the registry that scores them
 - [The science of aging clocks](../science.html), the biology, the equations and the published constants
 - [Architecture](../architecture.html), which file computes what, and how much of it exists
 - [Python reference](../reference/index.html), the other half of the table above

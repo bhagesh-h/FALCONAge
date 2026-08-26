@@ -13,9 +13,11 @@ list_clocks(
 )
 }
 \arguments{
-\item{tier}{\code{"A"}, \code{"B"} or \code{"C"}, or \code{NULL} for all. A ships with
-coefficients and runs offline; B is catalogued but has no traced primary
-source yet; C is a scaffold whose coefficients are research-use-only.}
+\item{tier}{\code{"bundled"}, \code{"untraced"} or \code{"licensed"}, or \code{NULL} for all.
+The retired \code{"A"}, \code{"B"}, \code{"C"} are still accepted. Bundled ships with
+coefficients and runs offline; untraced is catalogued but has no traced
+primary source yet; licensed is implemented but its coefficients are
+research-use-only.}
 
 \item{data_type}{\code{"dna_methylation"} or \code{"clinical_chemistry"}.}
 
@@ -34,8 +36,8 @@ List the clock catalogue
 }
 \examples{
 \dontrun{
-list_clocks(tier = "A")
+list_clocks(tier = "bundled")
 list_clocks(search = "mortality")
-list_clocks(tier = "C")   # the ones needing author permission
+list_clocks(tier = "licensed")   # the ones needing author permission
 }
 }

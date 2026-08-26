@@ -90,7 +90,7 @@ clock_info <- function(clock_id) {
   cat("  availability ", out$availability, "\n", sep = "")
   cat("  provenance   ", out$provenance, "\n")
   cat("  traced       ", out$primary_source_traced, "\n")
-  if (identical(out$availability, "C")) {
+  if (identical(out$availability, "licensed")) {
     cat("\n", reticulate::py_to_r(reg$unavailable_message(clock_id)), "\n", sep = "")
   }
   if (nzchar(out$notes)) cat("\n  ", out$notes, "\n", sep = "")
