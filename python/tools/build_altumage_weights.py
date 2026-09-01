@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import io
 import pickle
 import sys
 import urllib.request

@@ -235,7 +235,7 @@ jobs:
       # maintainer argues with weekly gets disabled, and the rules that catch
       # real bugs go with it.
       - name: Lint
-        run: uvx ruff check --config python/pyproject.toml python/src python/tests test docs
+        run: uvx ruff check --config python/pyproject.toml python/src python/tests python/tools test docs
 
   # WHY A SECOND JOB WHEN THE WHOLE POINT ABOVE WAS TO HAVE ONE. Because the two
   # answer different questions, and the first one does not answer this one.

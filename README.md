@@ -217,6 +217,50 @@ the paper did not make, and it says so on every run.
 
 ![Every clock, every pooled study, one figure](test/output_figures/gallery/clock_atlas.png)
 
+## Choosing clocks by what they were trained on
+
+[`overlap.csv`](overlap.csv) is one row per clock, 39 columns, built to answer the question the
+catalogue answers backwards: *which clocks were fitted on the kind of data I have?*
+
+```python
+import pandas as pd
+
+d = pd.read_csv("overlap.csv")
+d[(d.tissue_class == "whole_blood")
+  & (d.species == "Homo sapiens")
+  & (d.population_class.isin(["adults", "older_adults"]))
+  & (d.target_class == "chronological_age")
+  & (d.ships_coefficients == "yes")][["clock_id", "n_features", "verify_url"]]
+```
+
+Read it with a CSV parser rather than `awk -F,` or `cut`: citations and several
+metadata fields contain commas, so a naive split silently shifts the columns.
+
+`tissue_class`, `population_class` and `target_class` are coarsenings of the registry's own
+vocabulary, with the raw value kept beside each one. `profile_key` groups clocks fitted on the same
+kind of data, and `peers_same_profile` names them.
+
+Two senses of overlap are in the file. **Training overlap** is registry metadata and exact.
+**Feature overlap** is the literal shared CpGs between two clocks as a Jaccard index, computable
+for the 42 clocks that ship coefficients; the rest are blank rather than zero, because *shares no
+CpGs* and *we cannot see this clock's CpGs* are different facts. Nearby clocks come out where they
+should: `leerobust` and `leerefinedrobust` share 395 probes at J = 0.71.
+
+Every row carries a `verify_url` and every one is checked. 131 resolve directly; the other 44 are
+DOIs whose publisher blocks automated requests, confirmed registered against Crossref rather than
+reported as broken. 66 clocks are cross-referenced against
+[TranslAGE](https://www.translage.io), [biolearn](https://github.com/bio-learn/biolearn) and
+[methylCIPHER](https://github.com/HigginsChenLab/methylCIPHER), so the training target can be
+checked against someone who is not us.
+
+**One column is deliberately absent.** Health status of the training cohort is not a registry
+field and is not recoverable from one: 5 of 175 entries mention it in free text. There is no
+"trained on healthy individuals" column, because the honest value for nearly every row would be
+*unstated*. `target_class == disease` identifies the five clocks fitted on a disease endpoint,
+which is the part that is knowable; for the rest, read the paper behind `verify_url`.
+
+Regenerate with `python python/tools/build_overlap.py --check-urls`.
+
 ## Reproducibility
 
 Every run writes a manifest: package and registry versions, the SHA-256 of every coefficient file,
