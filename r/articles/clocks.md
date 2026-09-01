@@ -1,0 +1,84 @@
+# Choosing a clock
+
+There is no best clock. There is a clock that answers the question you
+asked, and a much larger number that answer a different one in the same
+units.
+
+## By the question
+
+| Question | Clocks | Scale |
+|----|----|----|
+| How old does this sample look? | `horvath2013`, `hannum`, `skinandblood`, `lin`, `zhangen`, `zhangblup`, `vidalbralo` | years |
+| Who is at risk of dying sooner? | `dnamphenoage`, `hrsinchphenoage`, `zhangmortality` | years, or a log-hazard |
+| How fast is this person aging? | `dunedinpoam38` | years per year |
+| How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerobust`, `leerefinedrobust` | weeks |
+| Is causal or damage-driven aging separable? | `yingcausage`, `yingdamage`, `yingadaptage` | years |
+| How dysregulated is this person’s physiology? | `phenoage`, `kdm`, `hd` | years, years, distance |
+
+``` r
+
+list_clocks(generation = "second", tier = "A")
+compatible_clocks(d)
+```
+
+## Scale governs what you may do
+
+Every clock carries a `scale_type`, and it decides which downstream
+operations are defined.
+
+| Scale | Legal | Not legal |
+|----|----|----|
+| `age_years` | acceleration, residual, difference, correlation | \- |
+| `gestational_weeks` | the same, in weeks | mixing with years |
+| `mortality_log_hazard` | correlation, rank, hazard ratio | acceleration: a log-hazard has no zero on the age scale |
+| `pace_ratio` | correlation, rank, difference | acceleration: it is already a rate |
+| `telomere_kb` | acceleration, correlation, difference | comparison with an age in years |
+| `proportion` | compositional operations | anything ignoring the sum-to-one constraint |
+
+[`acceleration()`](https://bhagesh-h.github.io/FALCONAge/r/reference/acceleration.md)
+enforces this. Naming a clock whose scale does not support it is an
+error; leaving the clock list empty quietly excludes them.
+
+## Coverage is not validity
+
+A clock trained on 450K runs perfectly well on EPIC data that carries
+its probes, and fails on 450K data filtered to 20,000 probes. Only the
+feature list can answer whether a clock is usable, which is what
+[`compatible_clocks()`](https://bhagesh-h.github.io/FALCONAge/r/reference/compatible_clocks.md)
+checks.
+
+But high coverage does not make a result meaningful. The mammalian
+methylation array was designed around CpGs conserved across mammals, and
+carries 96% of Horvath2013’s 353 probes - so a zebra scores at *higher*
+coverage than many human 450K datasets and returns a confident number
+from a clock fitted on people. Nothing in the arithmetic can notice. Set
+`species` and FALCONAge warns:
+
+``` r
+
+d <- falcon_data(betas, modality = "dna_methylation", species = "Equus grevyi")
+res <- score(d, clocks = "horvath2013")
+manifest(res)$warnings
+#> trained on Homo sapiens, scored on Equus grevyi. Feature coverage says nothing
+#> about whether the coefficients transfer across species.
+```
+
+## Availability
+
+| Tier | n | What you do |
+|----|---:|----|
+| A | 35 | Nothing. Coefficients ship inside the package. |
+| B | 98 | Catalogued, but no primary source has been established, so no coefficients ship. Eleven now record where the material is and what blocks it. |
+| C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
+
+``` r
+
+list_clocks(tier = "C")     # the ones needing author permission
+list_clocks(untraced = TRUE)
+```
+
+The distinction between B and C matters. C is a licensing decision by
+the authors. B is an honesty one by us: copying a coefficient set out of
+another package without knowing where that package got it is how the
+known paper-versus-implementation discrepancies spread in the first
+place, and a traced extractor is a welcome contribution.
