@@ -236,6 +236,15 @@ d[(d.tissue_class == "whole_blood")
 Read it with a CSV parser rather than `awk -F,` or `cut`: citations and several
 metadata fields contain commas, so a naive split silently shifts the columns.
 
+[`overlap_col_desc.csv`](overlap_col_desc.csv) is the data dictionary: one row per column with its
+description, where the value came from, its closed vocabulary where it has one, how many cells are
+blank, and **what a blank means**. That last field is load-bearing rather than decoration. Five
+columns use an empty cell to carry information and in each case the wrong reading is the plausible
+one: a blank `feature_overlap_jaccard` means the features are not distributed, not that the overlap
+is zero, and a blank `training_cohort_note` means nothing was written down, not that the cohort was
+healthy. Both files are generated together, and a test asserts the dictionary describes exactly the
+columns the table has.
+
 `tissue_class`, `population_class` and `target_class` are coarsenings of the registry's own
 vocabulary, with the raw value kept beside each one. `profile_key` groups clocks fitted on the same
 kind of data, and `peers_same_profile` names them.

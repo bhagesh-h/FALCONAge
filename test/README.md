@@ -102,7 +102,7 @@ docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python -m p
 docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu Rscript -e 'testthat::test_local("r")'
 ```
 
-**560 Python tests** and **52 R tests**, all passing, with 5 skipped where torch is absent. The R suite contains the conformance test that asserts R and Python scores are
+**565 Python tests** and **52 R tests**, all passing, with 5 skipped where torch is absent. The R suite contains the conformance test that asserts R and Python scores are
 bit-identical at tolerance exactly zero, not approximately equal, which is what a second
 implementation would give and is the reason there is only one.
 

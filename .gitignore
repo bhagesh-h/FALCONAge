@@ -43,6 +43,7 @@
 # opens. The generator is the source of truth; this is its output, checked in
 # the same way docs/clocks.qmd is.
 !/overlap.csv
+!/overlap_col_desc.csv
 # Concept diagrams and the prompts that generate them. The prompts are the
 # source: an image here is regenerable from images/prompt.md, which is why the
 # folder is tracked rather than treated as build output.

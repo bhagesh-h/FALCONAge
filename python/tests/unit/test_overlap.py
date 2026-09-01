@@ -173,6 +173,49 @@ def test_feature_overlap_is_blank_where_features_are_not_distributed(table):
             assert r["feature_overlap_note"]
 
 
+@pytest.fixture(scope="module")
+def dictionary():
+    path = ROOT / "overlap_col_desc.csv"
+    if not path.exists():
+        pytest.skip("overlap_col_desc.csv absent; run python/tools/build_overlap.py")
+    with path.open(newline="", encoding="utf-8") as fh:
+        return list(csv.DictReader(fh))
+
+
+def test_the_dictionary_describes_exactly_the_columns_that_exist(table, dictionary):
+    """A data dictionary that documents a column which is gone, or misses one
+    that is new, is worse than none: it is read as authoritative."""
+    assert [r["column"] for r in dictionary] == list(table[0].keys())
+
+
+def test_every_column_has_a_description_a_source_and_a_blank_rule(dictionary):
+    for r in dictionary:
+        assert r["description"].strip(), r["column"]
+        assert r["source"].strip(), r["column"]
+        assert r["blank_means"].strip(), r["column"]
+
+
+def test_the_blank_counts_are_the_real_ones(table, dictionary):
+    """Counted off the emitted rows, not typed in, so they cannot go stale."""
+    for r in dictionary:
+        actual = sum(1 for row in table if row[r["column"]] == "")
+        assert int(r["n_blank"]) == actual, r["column"]
+
+
+def test_the_jaccard_blank_rule_says_it_is_not_zero(dictionary):
+    """The one misreading that would quietly corrupt an analysis: treating a
+    blank Jaccard as no overlap, when it means the features are not visible."""
+    row = next(r for r in dictionary if r["column"] == "feature_overlap_jaccard")
+    assert "NOT zero" in row["blank_means"]
+
+
+def test_the_cohort_note_is_not_advertised_as_a_health_filter(dictionary):
+    """It is empty for 172 of 175 clocks. A reader who filters on it as though
+    empty meant healthy gets a confident, wrong answer."""
+    row = next(r for r in dictionary if r["column"] == "training_cohort_note")
+    assert "NOT A HEALTH-STATUS COLUMN" in row["description"]
+
+
 def test_profile_peers_are_symmetric(table):
     """If A lists B as sharing its training profile, B must list A."""
     peers = {r["clock_id"]: {p for p in r["peers_same_profile"].split("; ") if p}
