@@ -97,7 +97,9 @@ marker sits where the reference had no data: a median outside its 1st to 99th pe
 the unit) or values below its reporting floor. NHANES III read no CRP below 0.21 mg/dL, so a
 high-sensitivity CRP cohort needs `fa.models.clinical.censor_to_reference(df, ref)` before KDM
 means the same thing. HbA1c in mmol/mol is declared as such and converted by the NGSP master
-equation.
+equation. To compare with published NHANES KDM, use
+`fa.models.clinical.kdm_bioage(df)` (BioAge's `kdm0` scale and units). BioAge's PhenoAge uses
+ln(1 + CRP), not the paper's ln(CRP), and sits 1.52 years higher; say which one a number is.
 
 ## Judging an intervention
 

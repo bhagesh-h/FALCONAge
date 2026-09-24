@@ -514,7 +514,12 @@ r = 0.94. The shipped `kdm0` is complete-case (every row with a value carries al
 `max_missing=2` is the rule in today's code. FALCONAge 1.0.0 took the square root of the
 correlation in `r_char`, where the formula takes the square root of R², and was 1.77 years out on
 the same rows. The regression test runs on a fixture of those NHANES III rows
-(`python/tests/data/`).
+(`python/tests/data/`). `fa.models.clinical.kdm_bioage(df)` scores a cohort on the `kdm0` scale
+from a packaged fit of those rows (`registry/data/kdm_bioage_nhanes3.json`, built by
+`python/tools/build_kdm_bioage.py`), which is what most NHANES papers mean by KDM biological age.
+It takes BioAge's column names and units: FEV1 in mL, SBP in mmHg, total cholesterol in mg/dL,
+HbA1c in %, albumin in g/dL, creatinine in mg/dL, `lncrp` = ln(1 + CRP in mg/dL), ALP in U/L,
+BUN in mg/dL.
 
 ComputAge also ships a *de novo* KDM estimator
 ([ComputAge deage/kdm.py](https://github.com/ComputationalAgingLab/ComputAge)) with forward feature selection,
@@ -531,6 +536,10 @@ HD_i = sqrt( (x_i − μ_ref)' Σ_ref⁻¹ (x_i − μ_ref) )
 ```
 
 Reported both raw (`hd`, scaled by its own SD) and logged (`hd_log = log(HD)/sd(log HD)`).
+Both divisors are the scored cohort's own spread, so BioAge's values are not comparable between
+cohorts. FALCONAge's `hd()` returns the unscaled distance, which is comparable between cohorts
+scored against one reference, and `fa.models.clinical.bioage_hd_scale()` gives BioAge's two forms
+for comparison.
 The reference must be young (typically 20–30), non-pregnant, and within clinically normal
 biomarker windows; train separately by sex.
 [BioAge hd_calc.R](https://github.com/dayoonkwon/BioAge). Unlike KDM and PhenoAge, HD has no age units,
@@ -899,7 +908,7 @@ xb = −19.90667
      − 0.03359355 · albumin      (g/L)
      + 0.009506491 · creatinine  (µmol/L)
      + 0.1953192  · glucose      (mmol/L)
-     + 0.09536762 · ln(CRP)      (CRP in mg/dL)
+     + 0.09536762 · lncrp        (BioAge: lncrp = ln(1 + CRP), CRP in mg/dL)
      − 0.01199984 · lymphocyte%  (%)
      + 0.02676401 · MCV          (fL)
      + 0.3306156  · RDW          (%)
@@ -936,6 +945,15 @@ Both reduce to the same Gompertz inversion. The `0.090165` constant is the one B
 its April 2026 commit ("Update PhenoAge constant to 0.090165 and recompute data"), earlier code
 in the wild uses 0.09165, which shifts results by several years. Guard `m` away from 0 and 1
 (mcp clamps to [1e-6, 1 − 1e-6]) or `ln(1 − m)` blows up.
+
+**The CRP term is where BioAge departs from the paper.** Levine 2018 enters ln(CRP). BioAge's
+`lncrp`, the variable its NHANES PhenoAge (`phenoage0`) is computed from, is ln(1 + CRP)
+([`data-raw/nhanes_all.R`](https://github.com/dayoonkwon/BioAge/blob/master/data-raw/nhanes_all.R),
+`lncrp = log(1 + crp)`). The difference is not small. On NHANES III (n = 8,924) FALCONAge with
+ln(CRP) sits a near constant 1.52 years below `phenoage0`; with ln(1 + CRP) it reproduces
+`phenoage0` to 0.055 years, the remainder being coefficient rounding. FALCONAge follows the paper,
+records BioAge's choice as a known discrepancy, and offers `phenoage(df, crp_transform="log1p")`
+for comparison with BioAge output. Every PhenoAge computed through BioAge carries the shift.
 
 **DNAm PhenoAge** is the methylation surrogate of this quantity: 513 CpGs, elastic net trained
 to predict the clinical PhenoAge. pyaging exposes both, `phenoage` (clinical, blood chemistry)

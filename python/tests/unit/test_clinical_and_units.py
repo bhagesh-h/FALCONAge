@@ -349,3 +349,53 @@ def test_score_reports_reference_range_problems(synthetic_clinical):
     d = fa.FalconData(X=X, obs=synthetic_clinical.obs, modality="clinical_chemistry")
     res = fa.score(d, clocks=["kdm"], reference=ref)
     assert any(r["category"] == "reference_range" for r in res.manifest.warnings)
+
+
+# ---------------------------------------------------------------------------
+# BioAge compatibility
+# ---------------------------------------------------------------------------
+
+def test_kdm_bioage_reproduces_kdm0_from_the_packaged_fit():
+    d = pd.read_csv(KDM0_FIXTURE)
+    k = clinical.kdm_bioage(d, sex_col="gender", max_missing=0)
+    assert (k.isna() == d["kdm0"].isna()).all()
+    both = pd.DataFrame({"k": k, "k0": d["kdm0"]}).dropna()
+    assert len(both) == 9583
+    assert (both["k"] - both["k0"]).abs().mean() < 0.005
+
+
+def test_kdm_bioage_reads_sex_as_text_or_nhanes_code():
+    d = pd.read_csv(KDM0_FIXTURE).head(300)
+    by_code = clinical.kdm_bioage(d, sex_col="gender")
+    by_text = clinical.kdm_bioage(d.assign(gender=d["gender"].map({1: "M", 2: "female"})),
+                                  sex_col="gender")
+    assert by_code.equals(by_text)
+    with pytest.raises(DataError, match="cannot map"):
+        clinical.kdm_bioage(d.assign(gender="x"), sex_col="gender")
+
+
+def test_the_packaged_kdm_bioage_file_is_current():
+    """The JSON is a derived artefact; refitting the fixture must give it back."""
+    import importlib.util
+
+    tool = Path(__file__).resolve().parents[2] / "tools" / "build_kdm_bioage.py"
+    spec = importlib.util.spec_from_file_location("build_kdm_bioage", tool)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.TARGET.read_text() == mod.render(mod.build())
+
+
+def test_phenoage_log1p_crp_is_bioage_s_transform(synthetic_clinical):
+    df = synthetic_clinical.X
+    assert clinical.phenoage(df, crp_transform="log1p").to_numpy() == pytest.approx(
+        clinical.phenoage(df.assign(crp=1.0 + df["crp"])).to_numpy())
+    assert (clinical.phenoage(df, crp_transform="log1p") > clinical.phenoage(df)).all()
+    with pytest.raises(DataError, match="crp_transform"):
+        clinical.phenoage(df, crp_transform="ln")
+
+
+def test_bioage_hd_scale_divides_by_the_cohort_spread(synthetic_clinical):
+    ref = clinical.fit_hd(synthetic_clinical.X, MARKERS)
+    out = clinical.bioage_hd_scale(clinical.hd(synthetic_clinical.X, ref))
+    assert out["hd"].std(ddof=1) == pytest.approx(1.0)
+    assert out["hd_log"].std(ddof=1) == pytest.approx(1.0)

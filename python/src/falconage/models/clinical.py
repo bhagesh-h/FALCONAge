@@ -93,7 +93,7 @@ PHENOAGE_UNITS: dict[str, str] = {
 }
 
 
-def phenoage(df: pd.DataFrame) -> pd.Series:
+def phenoage(df: pd.DataFrame, crp_transform: str = "log") -> pd.Series:
     """Clinical Phenotypic Age in years.
 
     Parameters
@@ -110,6 +110,11 @@ def phenoage(df: pd.DataFrame) -> pd.Series:
     reimplementations -- a factor of ten in CRP moves PhenoAge by about 0.22
     years per log unit, small enough to look plausible and large enough to
     matter across a cohort.
+
+    ``crp_transform="log1p"`` uses ``log(1 + crp)``, BioAge's ``lncrp``. It is
+    not the paper's transform: on NHANES III it raises PhenoAge by a near
+    constant 1.52 years (n = 8,924) and reproduces BioAge's ``phenoage0`` to
+    0.055 years. Use it only to compare with BioAge output.
     """
     missing = [m for m in PHENOAGE_UNITS if m not in df.columns]
     if missing:
@@ -120,15 +125,21 @@ def phenoage(df: pd.DataFrame) -> pd.Series:
               "mean invents one."
         )
 
+    if crp_transform not in ("log", "log1p"):
+        raise DataError(f"crp_transform must be 'log' (Levine 2018) or 'log1p' (BioAge), "
+                        f"not {crp_transform!r}")
     x = df.copy()
     crp = np.asarray(x["crp"], dtype=np.float64)
-    if np.nanmin(crp) <= 0:
-        raise DataError(
-            "CRP must be strictly positive: PhenoAge takes its logarithm. "
-            "Values reported as 0 are usually below the assay's detection limit; "
-            "substitute the limit itself rather than zero."
-        )
-    x["log_crp"] = np.log(crp)
+    if crp_transform == "log1p":
+        x["log_crp"] = np.log1p(crp)
+    else:
+        if np.nanmin(crp) <= 0:
+            raise DataError(
+                "CRP must be strictly positive: PhenoAge takes its logarithm. "
+                "Values reported as 0 are usually below the assay's detection limit; "
+                "substitute the limit itself rather than zero."
+            )
+        x["log_crp"] = np.log(crp)
 
     xb = np.full(len(x), PHENOAGE_INTERCEPT, dtype=np.float64)
     for marker, beta in PHENOAGE_COEF.items():
@@ -368,6 +379,87 @@ def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age",
     else:
         out = (num + age / s_ba2) / (den + 1.0 / s_ba2)
     return pd.Series(np.where(drop, np.nan, out), index=df.index, name="kdm")
+
+
+# ---------------------------------------------------------------------------
+# BioAge's kdm0, packaged
+# ---------------------------------------------------------------------------
+#: Where a sex label may come from. NHANES codes 1 = male and 2 = female.
+_SEX = {"1": "male", "m": "male", "male": "male",
+        "2": "female", "f": "female", "female": "female"}
+
+
+def load_kdm_bioage() -> dict[str, KDMReference]:
+    """BioAge's ``kdm0`` references, one per sex, as fitted on NHANES III.
+
+    Built by ``python/tools/build_kdm_bioage.py`` from the NHANES III rows
+    BioAge trains ``kdm0`` on (30 to 75, non-pregnant), and recorded with the
+    agreement the refit reaches against BioAge's own column.
+    """
+    import json
+
+    from ..registry.registry import DATA_DIR
+
+    raw = json.loads((DATA_DIR / "kdm_bioage_nhanes3.json").read_text())
+    refs = {}
+    for sex, f in raw["fits"].items():
+        refs[sex] = KDMReference(
+            markers=list(f["markers"]), k=np.asarray(f["k"]), q=np.asarray(f["q"]),
+            s=np.asarray(f["s"]), r=np.asarray(f["r"]), r_char=float(f["r_char"]),
+            s_r=float(f["s_r"]), n_reference=int(f["n_reference"]),
+            age_range=tuple(f["age_range"]), s_ba2=float(f["s_ba2"]),
+            n_per_marker=np.asarray(f["n_per_marker"]),
+            ranges=pd.DataFrame.from_dict(f["ranges"], orient="index"))
+    return refs
+
+
+def kdm_bioage(df: pd.DataFrame, sex_col: str = "sex", age_col: str = "age",
+               max_missing: int | None = 2) -> pd.Series:
+    """KDM biological age on the scale of BioAge's ``kdm0``.
+
+    What "KDM biological age" means in most NHANES papers: nine biomarkers,
+    fitted by sex on NHANES III aged 30 to 75, non-pregnant, and projected with
+    the training ``s_BA^2`` (Kwon and Belsky 2021). The packaged fit reproduces
+    BioAge's ``kdm0`` to under 0.001 years mean absolute difference.
+
+    The columns and units are BioAge's, and must be supplied as such:
+    ``fev`` (FEV1, mL), ``sbp`` (mmHg), ``totchol`` (mg/dL), ``hba1c`` (% NGSP),
+    ``albumin`` (g/dL), ``creat`` (mg/dL), ``lncrp`` (``log(1 + CRP)`` with CRP
+    in mg/dL, BioAge's transform), ``alp`` (U/L) and ``bun`` (mg/dL).
+
+    ``sex_col`` takes ``male``/``female``, ``M``/``F`` or NHANES's 1/2.
+    ``max_missing=0`` reproduces BioAge's shipped column exactly, missing rows
+    included; the default 2 is the rule in BioAge's current ``kdm_calc``.
+    """
+    if sex_col not in df.columns:
+        raise DataError(f"no {sex_col!r} column; kdm0 is fitted separately by sex")
+    labels = df[sex_col].map(lambda v: _SEX.get(str(v).strip().lower().removesuffix(".0")))
+    unknown = sorted({str(v) for v, s in zip(df[sex_col], labels) if s is None})
+    if unknown:
+        raise DataError(f"sex values FALCONAge cannot map to male/female: {unknown[:6]}. "
+                        "Use male/female, M/F or NHANES's 1/2.")
+    refs = load_kdm_bioage()
+    out = pd.Series(np.nan, index=df.index, name="kdm")
+    for sex, ref in refs.items():
+        rows = labels == sex
+        if rows.any():
+            out[rows] = kdm(df[rows], ref, age_col=age_col, max_missing=max_missing)
+    return out
+
+
+def bioage_hd_scale(hd_values: pd.Series) -> pd.DataFrame:
+    """BioAge's two cohort-relative forms of homeostatic dysregulation.
+
+    BioAge's ``hd_calc`` divides the Mahalanobis distance by its standard
+    deviation in the scored cohort and reports ``log(hd) / sd(log(hd))`` beside
+    it. :func:`hd` returns the raw distance, which is comparable between
+    cohorts scored against the same reference; these two are not, because the
+    divisor is the cohort's own spread. Use them to compare with BioAge output.
+    """
+    v = pd.to_numeric(hd_values, errors="coerce")
+    logv = np.log(v)
+    return pd.DataFrame({"hd": v / v.std(ddof=1), "hd_log": logv / logv.std(ddof=1)},
+                        index=v.index)
 
 
 # ---------------------------------------------------------------------------

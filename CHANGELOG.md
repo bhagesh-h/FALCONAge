@@ -12,6 +12,19 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **BioAge compatibility, stated and reproducible.** `kdm_bioage()` scores on the
+  scale of BioAge's `kdm0` (nine biomarkers, fitted by sex on NHANES III aged 30
+  to 75) from a packaged fit that reproduces BioAge's own column to under 0.001
+  years; the parameters are derived by `python/tools/build_kdm_bioage.py` from
+  the NHANES fixture and a test keeps them current. BioAge enters CRP into
+  PhenoAge as ln(1 + CRP) where Levine 2018 uses ln(CRP); on NHANES III that
+  puts BioAge's `phenoage0` 1.52 years above the paper's formula. FALCONAge
+  follows the paper, records the difference as a known discrepancy, and
+  `phenoage(df, crp_transform="log1p")` reproduces BioAge to 0.055 years.
+  `bioage_hd_scale()` gives BioAge's cohort-relative forms of homeostatic
+  dysregulation; `hd()` keeps returning the unscaled distance. The science page
+  said BioAge used ln(CRP); corrected.
+
 - **HbA1c in IFCC units, and a warning when a cohort is measured unlike its
   reference.** `"hba1c": "mmol/mol"` is converted to NGSP percent by the
   published master equation, NGSP = 0.09148 × IFCC + 2.152 (NGSP; Hoelzel et

@@ -1277,7 +1277,7 @@ two weighted sums, `s_r` from the age range and biomarker count, `s_BA²` estima
 reference and kept with the fit, and the rule that a sample with more than two missing
 biomarkers returns NA rather than a partial score. Fitting by sex is the caller's choice: fit one
 reference per sex, as BioAge does. The result reproduces BioAge's shipped `kdm0` to 0.0007 years
-(§4.4); a packaged NHANES III fit is not yet shipped.
+(§4.4), and `kdm_bioage()` scores on that scale from a packaged NHANES III fit.
 
 **Homeostatic dysregulation.** Mahalanobis distance from a young reference cohort:
 

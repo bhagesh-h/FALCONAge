@@ -3267,6 +3267,10 @@ clocks:
       - "Two constants circulate in the divisor of the Gompertz inversion: 0.090165 and 0.09165.
         FALCONAge uses 0.090165, the value BioAge corrected to in April 2026. Code still using
         0.09165 differs by several years on the same input."
+      - "BioAge enters CRP as log(1 + CRP), its lncrp, where the paper uses log(CRP). On NHANES
+        III that puts BioAge's phenoage0 a near constant 1.52 years above the paper's formula
+        (n = 8,924). FALCONAge follows the paper; phenoage(df, crp_transform='log1p') reproduces
+        BioAge to 0.055 years."
     coefficient_source:
       file: null
       url: null
