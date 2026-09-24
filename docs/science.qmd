@@ -523,7 +523,7 @@ the same rows. The regression test runs on a fixture of those NHANES III rows
 (`python/tests/data/`). `fa.models.clinical.validate_panel(reference, full, reduced)` asks
 whether a reduced panel is still the same clock: both are fitted on the same reference rows, and
 their agreement and mortality hazard ratios are reported, the latter in BioAge's `table_surv`
-form (advance standardised within sex, Cox with age and sex, HR per SD). On NHANES III, 300OB's
+form (advance standardised within sex, Cox with age and sex, HR per SD). On NHANES III, a
 nine-marker panel against the twelve-marker one gives r = 0.978 for biological age, r = 0.895 for
 advance, and HR per SD of 1.353 against 1.349. `fa.models.clinical.kdm_bioage(df)` scores a cohort on the `kdm0` scale
 from a packaged fit of those rows (`registry/data/kdm_bioage_nhanes3.json`, built by
@@ -2207,7 +2207,7 @@ scoring. With the platform's manifest in the cache, `probe_loss()` counts the
 second kind in `n_removed_by_qc` and `qc_removed_mass`, and `score()` warns
 (category `probe_qc`) once the removed CpGs carry 1% of a clock's
 |coefficient|. The manifest is never downloaded during scoring;
-`fetch_manifest(platform)` caches it once. On 300BCG's QC-filtered EPIC v1 betas
+`fetch_manifest(platform)` caches it once. On one cohort's QC-filtered EPIC v1 betas
 this separates the two cleanly: all 30 of DNAmTL's absent CpGs were removed by
 QC (11.1% of its weight), while Horvath's 27 absent CpGs split into 8 removed by
 QC (2.7%) and 19 the array never carried. The remedy is to score clocks on

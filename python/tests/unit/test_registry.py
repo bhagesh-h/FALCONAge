@@ -493,7 +493,7 @@ def test_an_implausible_telomere_length_is_flagged():
 
 def test_registry_version_agrees_with_the_package_constant():
     """The manifest stamps _version.REGISTRY_VERSION; the registry file carries
-    its own. A coefficient correction bumps both, and they must not drift."""
+    its own, and the two must not drift."""
     assert fa.registry.load().version == fa.REGISTRY_VERSION
 
 

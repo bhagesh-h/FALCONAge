@@ -14,7 +14,7 @@ the scoring code reads.
 downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
-**175 clocks**, registry schema `1.1.1`.
+**175 clocks**, registry schema `1.1.0`.
 
 ![What separates the three availability groups, and what a traced coefficient source means](images/tiers-and-provenance.png)
 

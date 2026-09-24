@@ -9,7 +9,7 @@
   full and reduced panels on the same reference rows, by sex, and reports their
   agreement and each panel's mortality hazard ratio in BioAge's `table_surv`
   form: KDM advance standardised within sex, Cox with age and sex, HR per SD.
-  On NHANES III, 300OB's nine-marker panel against the full twelve gives
+  On NHANES III, a nine-marker panel against the full twelve gives
   r = 0.978 for biological age and 0.895 for advance, with HR per SD of 1.353
   against 1.349.
 
@@ -37,8 +37,8 @@
   or when many values fall beyond its range. A reference minimum shared by at
   least 1% of rows is a reporting floor: NHANES III puts 63.9% of CRP values at
   0.21 mg/dL. `censor_to_reference()` sets a more sensitive cohort's values to
-  that floor, which is how the reference recorded them. 300OB had to do both
-  steps by hand.
+  that floor, which is how the reference recorded them. Both steps were
+  previously done by hand.
 
 - **Probes removed by QC are told apart from probes the array never had.** A
   clock CpG that the declared platform carries but the data lacks was removed
@@ -48,7 +48,7 @@
   `score()` warns (category `probe_qc`) once the removed CpGs carry 1% of a
   clock's |coefficient|. Nothing is downloaded during scoring;
   `fetch_manifest(platform)` caches the manifest once, and without it the check
-  stays silent. On 300BCG's filtered EPIC v1 betas, all 30 of DNAmTL's absent
+  stays silent. On one cohort's filtered EPIC v1 betas, all 30 of DNAmTL's absent
   CpGs were QC removals (11.1% of its weight), Hannum's 11 split 5 and 6, and
   Horvath's 27 split 8 and 19.
 
@@ -172,7 +172,7 @@
   changes class.
 
 - **DNAmTL returned negative telomere lengths.** Its intercept was carried as
-  −7.924780053; the estimator is `Σ wβ + 7.924780053` kilobases. On 300BCG's
+  −7.924780053; the estimator is `Σ wβ + 7.924780053` kilobases. On one cohort's
   858 EPIC samples FALCONAge returned a mean of −8.45 kb where dnaMethyAge
   returned 7.50; it now returns 7.40, and the remaining 0.10 kb is how the 30
   CpGs absent from that dataset are filled. The coefficients are identical to
@@ -180,8 +180,7 @@
   paper itself: Lu et al. 2019 (Aging 11:5895, Table 2) fit DNAmTL = 8.05 −
   0.018 × age kb in their test cohorts. The paper's supplementary coefficient
   table sits behind PMC's download challenge and was not re-read, and the
-  registry says so. The registry version moves to 1.1.1, because a coefficient
-  correction must be visible even when the code does not change.
+  registry says so.
 
 - **Klemera-Doubal biological age was 1.77 years away from the reference
   implementation, and every KDM value computed with an earlier 1.0.0 build is

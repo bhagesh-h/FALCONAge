@@ -10,4 +10,4 @@ __version__ = "1.0.0"
 #: the package: a bug fix in the scoring loop must not silently change which
 #: coefficients a result was computed from, and a coefficient correction must
 #: be visible even when the code is untouched.
-REGISTRY_VERSION = "1.1.1"
+REGISTRY_VERSION = "1.1.0"
