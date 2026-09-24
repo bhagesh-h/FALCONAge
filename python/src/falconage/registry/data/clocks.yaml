@@ -13,7 +13,7 @@
 # column that printed one had to re-explain it or leave the reader guessing.
 ---
 schema_version: 1
-registry_version: "1.1.0"
+registry_version: "1.1.1"
 clocks:
   abec:
     name: "abec"
@@ -931,16 +931,16 @@ clocks:
     availability: "bundled"
     citation: "Lu, A. T., et al. \"DNA methylation-based estimator of telomere length.\" Aging 11.16 (2019): 5895-5923."
     doi: "https://doi.org/10.18632/aging.102173"
-    notes: "Elastic-net blood DNA-methylation estimator of measured leukocyte telomere length, using 140 CpGs shared by the Illumina 450K and EPIC arrays and returning kilobases."
+    notes: "Elastic-net blood DNA-methylation estimator of measured leukocyte telomere length, using 140 CpGs shared by the Illumina 450K and EPIC arrays and returning kilobases. Implementations disagree on the intercept's sign: biolearn and dnaMethyAge add 7.924780053, methylCIPHER's calcDNAmTL subtracts it (read in its source, not run). Only the positive intercept gives the 6 to 8 kb the paper reports."
     coefficient_source:
       file: "coefficients/dnamtl.csv"
       sha256: "8c3f097cfc2f070905f6e311f18dae375e566b432c2f6ff6a5c5ba4ec3ba1096"
-      provenance: "third-party package copy; primary source not re-traced"
+      provenance: "Coefficients: third-party package copy, identical to biolearn's DNAmTL.csv; the paper's Supplementary Data 1 sits behind PMC's download challenge and could not be re-read. Intercept sign: set from the paper itself. Lu 2019 Table 2 reports DNAmTL = 8.046 - 0.018 x age kb in the test cohorts, and sorted-cell medians of 7.6 to 8.3 kb in men aged 27 to 32, so the intercept is +7.924780053 (biolearn), not the -7.924780053 FALCONAge 1.0.0 carried, which returned about -8.5 kb."
       primary_source_traced: false
       redistributable: true
     preprocess: []
     postprocess:
-      - {op: "add", value: -7.924780053}
+      - {op: "add", value: 7.924780053}
 
   downsyndrome:
     name: "downsyndrome"

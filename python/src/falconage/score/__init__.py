@@ -23,6 +23,19 @@ from ..preprocess import BIAS_WARN
 from ..preprocess import _load_platform_bias as _platform_bias
 from ..registry import load as load_registry
 
+
+#: Where a scale's values can fall, with the published result that says so.
+#: A cohort median outside the interval is a miscomputed clock, not a
+#: biologically extreme cohort: a sign error or a unit error lands far outside,
+#: while real biology moves the median by a fraction of the interval.
+PLAUSIBLE_MEDIAN: dict[str, tuple[float, float, str]] = {
+    "telomere_kb": (
+        4.0, 12.0,
+        "Lu et al. 2019 (Aging 11:5895-5923, Table 2) fit DNAmTL = 8.05 - 0.018 x age "
+        "kilobases in their test cohorts, which is 6.2 to 8.0 kb from birth to 100 "
+        "years"),
+}
+
 __all__ = ["FalconResult", "combine", "score"]
 
 log = get_logger("score")
@@ -419,6 +432,18 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
 
         scores[cid] = values
         manifest.record_compute(cid, spec)
+
+        bounds = PLAUSIBLE_MEDIAN.get(c.scale_type)
+        if bounds is not None:
+            med = float(pd.Series(values, dtype="float64").median())
+            lo, hi, why = bounds
+            if not lo <= med <= hi:
+                warns.warn(
+                    f"cohort median {med:.3g} {', '.join(c.unit) or c.scale_type} is "
+                    f"outside {lo:g} to {hi:g}, the range a correctly computed "
+                    f"{c.scale_type} clock occupies: {why}. A value this far out is "
+                    "almost always a sign, unit or preprocessing error.",
+                    clock=cid, category="implausible")
         manifest.weights[cid] = reg.weight_record(cid)
 
         # Coverage is not validity. The mammalian array carries 96% of

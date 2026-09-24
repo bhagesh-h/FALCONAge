@@ -572,7 +572,7 @@ dtype: float64
 batch_size: 1024
 verbose: inform
 cache_dir: ~/.cache/falconage
-registry_version: "1.1.0"        # pin to make a project reproducible
+registry_version: "1.1.1"        # pin to make a project reproducible
 hf_token: null
 max_download_gb: 50
 ```
@@ -2046,7 +2046,7 @@ FALCONAge 1.0.0 (R)
   torch         2.6.0  CUDA 12.4
   device        cuda:0  NVIDIA RTX A4000, 16 GB
   dtype         float64
-  registry      1.1.0  (161 clocks)
+  registry      1.1.1  (175 clocks)
   cache         /home/x/.cache/falconage  (2.1 GB)
 ```
 

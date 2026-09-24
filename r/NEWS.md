@@ -63,6 +63,23 @@
 
 ## Fixed
 
+- **DNAmTL returned negative telomere lengths.** Its intercept was carried as
+  −7.924780053; the estimator is `Σ wβ + 7.924780053` kilobases. On 300BCG's
+  858 EPIC samples FALCONAge returned a mean of −8.45 kb where dnaMethyAge
+  returned 7.50; it now returns 7.40, and the remaining 0.10 kb is how the 30
+  CpGs absent from that dataset are filled. The coefficients are identical to
+  biolearn's `DNAmTL.csv`, which carries +7.924780053. The sign is set from the
+  paper itself: Lu et al. 2019 (Aging 11:5895, Table 2) fit DNAmTL = 8.05 −
+  0.018 × age kb in their test cohorts. The paper's supplementary coefficient
+  table sits behind PMC's download challenge and was not re-read, and the
+  registry says so. The registry version moves to 1.1.1, because a coefficient
+  correction must be visible even when the code does not change.
+
+- **A clock in physical units now warns when its cohort median is impossible.**
+  `score()` raises an `implausible` warning when a `telomere_kb` clock's median
+  falls outside 4 to 12 kb, the range Lu et al. 2019 report. The DNAmTL sign
+  error above would have been caught by it.
+
 - **Klemera-Doubal biological age was 1.77 years away from the reference
   implementation, and every KDM value computed with an earlier 1.0.0 build is
   superseded.** `fit_kdm` stored each biomarker's absolute correlation with age

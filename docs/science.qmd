@@ -1206,6 +1206,14 @@ That is close to the right shape; add explicit units and the two acceleration fl
 | Unitless score | ZhangMortality, DNAmFILi, DNAmIC, DNAmStress, ReedBMI, DownSyndrome | rank or z-score within cohort |
 | Relative age | EnsembleAgeHumanMouse, tAge normalized age | fraction of maximum lifespan |
 
+A clock in physical units can be checked against the range its source paper reports, and a
+median far outside that range is a computation error rather than an unusual cohort. FALCONAge
+warns (category `implausible`) when a cohort's median leaves the interval. For DNAmTL the
+interval is 4 to 12 kb: Lu et al. 2019 (Table 2) fit DNAmTL = 8.05 − 0.018 × age kb in their test
+cohorts, 6.2 to 8.0 kb from birth to 100 years. The guard exists because FALCONAge 1.0.0 shipped
+DNAmTL with its intercept's sign reversed and returned about −8.5 kb on adult blood; nothing
+flagged it.
+
 ### 8.3 Aggregate outputs a tool should offer
 
 - Per-sample × per-clock long table (tidy) and wide matrix.

@@ -412,3 +412,48 @@ def test_a_conformal_interval_is_not_offered_for_them(synthetic_betas):
     if cal.empty:
         pytest.skip("conformal.csv absent")
     assert not (set(cal["clock"]) & RELATIVE_ORIGIN)
+
+
+# ---------------------------------------------------------------------------
+# DNAmTL: the intercept's sign, and the guard that would have caught it
+# ---------------------------------------------------------------------------
+
+def _dnamtl_data(betas_for):
+    """One sample per row of `betas_for`, carrying only DNAmTL's CpGs."""
+    import pandas as pd
+
+    feats, w = fa.registry.load().coefficients("dnamtl")
+    w = np.asarray(w, dtype=float)
+    X = pd.DataFrame([betas_for(w) for _ in range(3)], columns=list(feats),
+                     index=[f"s{i}" for i in range(3)])
+    obs = pd.DataFrame({"age": [40.0] * 3, "tissue": "whole blood"}, index=X.index)
+    return fa.FalconData(X=X, obs=obs, modality="dna_methylation", platform="EPICv1"), w
+
+
+def test_dnamtl_adds_its_intercept():
+    """DNAmTL = sum(w * beta) + 7.924780053, in kilobases.
+
+    Lu et al. 2019 (Aging 11:5895, Table 2) fit DNAmTL = 8.05 - 0.018 x age kb
+    in their test cohorts; only the positive intercept lands there. FALCONAge
+    1.0.0 subtracted it and returned about -8.5 kb on real blood.
+    """
+    d, w = _dnamtl_data(lambda w: np.full(w.size, 0.5))
+    res = fa.score(d, clocks=["dnamtl"])
+    expected = 0.5 * w.sum() + 7.924780053
+    assert res.scores["dnamtl"].to_numpy() == pytest.approx(expected)
+    assert 6.0 < expected < 9.0
+
+
+def test_an_implausible_telomere_length_is_flagged():
+    """A median outside 4 to 12 kb is a computation error, and says so."""
+    d, _ = _dnamtl_data(lambda w: np.where(w < 0, 1.0, 0.0))
+    res = fa.score(d, clocks=["dnamtl"])
+    assert res.scores["dnamtl"].median() < 0
+    cats = {w["category"] for w in res.manifest.warnings if w.get("clock") == "dnamtl"}
+    assert "implausible" in cats
+
+
+def test_registry_version_agrees_with_the_package_constant():
+    """The manifest stamps _version.REGISTRY_VERSION; the registry file carries
+    its own. A coefficient correction bumps both, and they must not drift."""
+    assert fa.registry.load().version == fa.REGISTRY_VERSION
