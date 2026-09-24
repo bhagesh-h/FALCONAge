@@ -19,7 +19,7 @@ that agree approximately.
 ## Setup, once
 
 Docker is the supported path. One image carries R, this package, the Python core, the CLI and all
-32 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
+46 bundled clocks at pinned versions, so the same input gives the same numbers on your machine and
 on a reviewer's. A plain `sh` fence, since this runs in a terminal rather than in R:
 
 ```sh
@@ -121,15 +121,15 @@ That refusal is the point. A wrong number in a column of numbers is invisible.
 ## The clock catalogue
 
 ```{r}
-list_clocks(tier = "A")             # ship with coefficients, run offline
+list_clocks(tier = "bundled")  # ship with coefficients, run offline
 list_clocks(search = "mortality")
 clock_info("horvath2013")
 cite_clock("dnamphenoage", "bibtex")
 ```
 
-Twenty-eight clocks are scaffolds: the model, the feature list, the transform chain and the
-expected shapes all ship, but the coefficients are research-use-only and are not ours to
-distribute. `clock_info()` on one says why, where to obtain a file, and which open clocks answer
+Forty clocks are `licensed` scaffolds: the model, the feature list, the transform chain and the
+expected shapes all ship, but the coefficients are research-use-only or have no public source
+FALCONAge may redistribute. `clock_info()` on one says why, where to obtain a file, and which open clocks answer
 the same question.
 
 ```{r}

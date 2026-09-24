@@ -115,6 +115,43 @@
 
 ## Fixed
 
+- **The clock-routing table said no clock was ready to score.** The generator
+  for `guide/clocks.qmd` compared availability with the retired letter "A", so
+  every question had an empty "Ready to score" cell and the 46 bundled clocks
+  were listed under "Needs a coefficient file". The table now has three columns,
+  ready to score, needs a licensed file, and no coefficients traced, and the
+  documentation check fails if the first does not account for every bundled
+  clock.
+
+- **`falconage clocks list --tier A` listed nothing.** The parser accepted the
+  retired letters and compared them unchanged with the new names. They are now
+  translated, as `filter()` and `list_clocks()` already did. The listing ends
+  with how many of the clocks shown score offline, need a licensed file, or
+  have no traced coefficients, and the registry's printed form leads with the
+  runnable count: 46 of 175.
+
+- **A licensed clock's error offered chronological-age clocks as
+  alternatives.** Twenty-seven entries, GrimAge, GrimAge2 and its sub-scores,
+  PCGrimAge, the CpGPT GrimAge3 pair and SystemsAge, listed Horvath 2013 and
+  Hannum under "Open alternatives predicting the same thing". The bundled
+  clocks offered are now derived: those routed to the same question by
+  `falconage.registry.questions`, the routing the clock guide uses. Where none
+  exists, as for SystemsAge and the protein sub-scores, the message says so.
+  The hand-kept list follows as related entries with their availability, and
+  each GrimAge2 sub-score now points to its PCGrimAge counterpart.
+
+- **Weidner 2014 was routed to the mortality question.** It declared
+  `predicts: biological age`, although the three-CpG model is fitted to
+  chronological age (Weidner et al., Genome Biol 2014;15:R24) and the entry's
+  own `training_target` said so. It now answers "How old does this sample
+  look?".
+
+- **Clock counts in the guides were out of date.** "32 bundled clocks",
+  "twenty-eight scaffolds" and "161 entries" now read 46 bundled, 40 licensed,
+  89 untraced and 175, and the examples filter by name instead of the retired
+  letters. The architecture document records that fetching untraced
+  coefficients on first use was specified and not built.
+
 - **Cox hazard ratios were slightly wrong whenever event times were tied.** The
   risk set at each event time was read from a cumulative sum over time-sorted
   subjects, which left out tied subjects sorted before the event, so the fit

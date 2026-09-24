@@ -69,7 +69,9 @@ def sources() -> list[Path]:
     return sorted(set(files))
 
 
-CELL = re.compile(r"\|\s*—\s*\|")          # "not applicable" in a table
+# The closing pipe is a lookahead so that adjacent empty cells, "| — | — |",
+# share it; consumed, it left the second cell to be read as prose.
+CELL = re.compile(r"\|\s*—\s*(?=\|)")       # "not applicable" in a table
 EM = re.compile(r"—")
 INLINE_TRIPLE = re.compile(r"(?<!-) --- (?!-)")
 RULE = re.compile(r"^-{3,}$")
@@ -102,7 +104,7 @@ def check(path: Path) -> list[str]:
                 break
 
     for n, line in prose_lines(text):
-        bare = CELL.sub("| |", line)
+        bare = CELL.sub("| ", line)
         if EM.search(bare):
             problems.append(f"{rel}:{n}: em dash in prose. Use the mark it is "
                             f"standing in for: a colon, a comma, a full stop, "

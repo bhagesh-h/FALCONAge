@@ -40,7 +40,7 @@ test_that("a scaffold clock says why and names an alternative", {
   txt <- paste(out, collapse = "\n")
   expect_match(txt, "scaffold-only")
   expect_match(txt, "Obtain them from")
-  expect_match(txt, "Open alternatives")
+  expect_match(txt, "Bundled clocks that answer it too")
 })
 
 test_that("scores from R are bit-identical to scores from Python", {

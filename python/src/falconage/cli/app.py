@@ -40,15 +40,29 @@ def cmd_config(args) -> int:
     return 0
 
 
+def _availability_line(clocks) -> str:
+    """How many of these clocks run, stated before how many are catalogued."""
+    n = {a: sum(c.availability == a for c in clocks)
+         for a in ("bundled", "licensed", "untraced")}
+    return (f"{n['bundled']} score offline (bundled), "
+            f"{n['licensed']} need a licensed coefficient file, "
+            f"{n['untraced']} have no traced coefficients")
+
+
 def cmd_clocks(args) -> int:
     import falconage as fa
 
     reg = fa.registry.load()
 
     if args.action == "list":
+        from ..registry.registry import normalise_availability
+
         clocks = list(reg)
         if args.tier:
-            clocks = [c for c in clocks if c.availability == args.tier]
+            # The parser accepts the retired letters; compared as typed, "A"
+            # matched no clock and the listing came back empty.
+            tier = normalise_availability(args.tier)
+            clocks = [c for c in clocks if c.availability == tier]
         if args.data_type:
             clocks = [c for c in clocks if c.data_type == args.data_type]
         if args.generation:
@@ -60,11 +74,11 @@ def cmd_clocks(args) -> int:
             clocks = [c for c in clocks if c.id in ids]
         clocks = sorted(clocks, key=lambda c: c.id)[: args.limit or None]
 
-        _p(f"{'id':<26}{'tier':<6}{'gen':<12}{'scale':<22}{'n':>7}  name")
+        _p(f"{'id':<26}{'availability':<14}{'gen':<12}{'scale':<22}{'n':>7}  name")
         for c in clocks:
-            _p(f"{c.id:<26}{c.availability:<6}{c.generation:<12}{c.scale_type:<22}"
+            _p(f"{c.id:<26}{c.availability:<14}{c.generation:<12}{c.scale_type:<22}"
                f"{c.n_features or '?':>7}  {c.name[:40]}")
-        _p(f"\n{len(clocks)} clock(s)")
+        _p(f"\n{len(clocks)} clock(s): {_availability_line(clocks)}")
         return 0
 
     if args.action == "info":

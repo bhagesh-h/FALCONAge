@@ -320,7 +320,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -352,7 +352,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -1487,7 +1487,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -1524,7 +1524,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -1556,7 +1556,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimageadm"]
     preprocess: []
     postprocess: []
 
@@ -1588,7 +1588,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimageb2m"]
     preprocess: []
     postprocess: []
 
@@ -1620,7 +1620,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimagecystatinc"]
     preprocess: []
     postprocess: []
 
@@ -1652,7 +1652,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimagegdf15"]
     preprocess: []
     postprocess: []
 
@@ -1684,7 +1684,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimageleptin"]
     preprocess: []
     postprocess: []
 
@@ -1716,7 +1716,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -1748,7 +1748,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -1780,7 +1780,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimagepackyrs"]
     preprocess: []
     postprocess: []
 
@@ -1812,7 +1812,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimagepai1"]
     preprocess: []
     postprocess: []
 
@@ -1844,7 +1844,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["pcgrimagetimp1"]
     preprocess: []
     postprocess: []
 
@@ -3035,7 +3035,7 @@ clocks:
       redistributable: false
       why: "Research use only; coefficients were never published in the paper and the copies circulating in other packages have no traceable primary source."
       obtain: "https://dnamage.clockfoundation.org (Horvath laboratory); commercial licensing via UCLA TDG"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -3876,7 +3876,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -3908,7 +3908,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -3940,7 +3940,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -3972,7 +3972,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4004,7 +4004,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4036,7 +4036,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4068,7 +4068,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4100,7 +4100,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4132,7 +4132,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4164,7 +4164,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4196,7 +4196,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4228,7 +4228,7 @@ clocks:
       redistributable: false
       why: "Flagged research-use-only by the authors; coefficients are on a laboratory file share without a redistribution licence."
       obtain: "Higgins-Chen laboratory (Nature Aging 2025 corresponding author)"
-      alternatives: ["horvath2013", "hannum", "dnamphenoage"]
+      alternatives: ["dnamphenoage"]
     preprocess: []
     postprocess: []
 
@@ -4647,7 +4647,7 @@ clocks:
     generation: "first"
     tissue: ["whole blood"]
     platform: ["27K", "bisulfite sequencing"]
-    predicts: ["biological age"]
+    predicts: ["chronological age"]
     training_target: ["chronological age"]
     unit: ["years"]
     scale_type: "age_years"

@@ -15,8 +15,8 @@ Whatever \code{expr} returns.
 \description{
 A Python exception becomes an R error whose message is the Python message,
 verbatim, with the class name attached. Those messages are written to be read
--- \code{WeightsUnavailableError} names an open alternative clock, and
-\code{UnitsNotDeclaredError} prints the exact \verb{units=} list to supply -- so
+-- \code{WeightsUnavailableError} names the bundled clocks that answer the same
+question, and \code{UnitsNotDeclaredError} prints the exact \verb{units=} list to supply -- so
 replacing them with an R-flavoured summary would throw away the useful part.
 }
 \keyword{internal}

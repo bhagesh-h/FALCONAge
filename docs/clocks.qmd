@@ -73,7 +73,7 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `stemtoc` | 2024 | mitotic age | `divisions` | 371 | multi-tissue, cultured human cells, whole blood | 450K, EPICv1 | [Zhu 2024](https://doi.org/10.1038/s41467-024-48649-8) |
 | `stemtocvitro` | 2024 | mitotic age | `divisions` | 629 | multi-tissue, cultured human cells | 450K, EPICv1 | [Zhu 2024](https://doi.org/10.1038/s41467-024-48649-8) |
 | `vidalbralo` | 2016 | chronological age | `age_years` | 8 | whole blood | 27K | [Vidal-Bralo 2016](https://doi.org/10.3389/fgene.2016.00126) |
-| `weidner` | 2014 | biological age | `age_years` | 3 | whole blood | 27K, bisulfite sequencing | [Weidner 2014](https://doi.org/10.1186/gb-2014-15-2-r24) |
+| `weidner` | 2014 | chronological age | `age_years` | 3 | whole blood | 27K, bisulfite sequencing | [Weidner 2014](https://doi.org/10.1186/gb-2014-15-2-r24) |
 | `yingadaptage` | 2024 | adaptive epigenetic age | `age_years_relative` | 999 | whole blood | 450K | [Ying 2024](https://doi.org/10.1038/s43587-023-00557-0) |
 | `yingcausage` | 2024 | chronological age | `age_years` | 585 | whole blood | 450K | [Ying 2024](https://doi.org/10.1038/s43587-023-00557-0) |
 | `yingdamage` | 2024 | damaging epigenetic age | `age_years_relative` | 1089 | whole blood | 450K | [Ying 2024](https://doi.org/10.1038/s43587-023-00557-0) |

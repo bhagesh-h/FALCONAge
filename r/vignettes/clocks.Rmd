@@ -26,7 +26,7 @@ number that answer a different one in the same units.
 | How dysregulated is this person's physiology? | `phenoage`, `kdm`, `hd` | years, years, distance |
 
 ```{r}
-list_clocks(generation = "second", tier = "A")
+list_clocks(generation = "second", tier = "bundled")
 compatible_clocks(d)
 ```
 

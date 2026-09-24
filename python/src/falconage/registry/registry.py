@@ -40,6 +40,7 @@ import yaml
 
 from .._version import REGISTRY_VERSION
 from ..core.errors import ClockNotFoundError, RegistryError, WeightsUnavailableError
+from .questions import question_for
 
 DATA_DIR = Path(__file__).with_name("data")
 
@@ -340,6 +341,14 @@ class ClockRegistry:
     def __len__(self) -> int:
         return len(self._clocks)
 
+    def __repr__(self) -> str:
+        # Runnable first: "175 clocks" alone reads as 175 that run.
+        n = {a: sum(c.availability == a for c in self._clocks.values())
+             for a in AVAILABILITY}
+        return (f"ClockRegistry {self.version}: {n[BUNDLED]} of {len(self)} clocks score "
+                f"offline; {n[LICENSED]} need a licensed coefficient file, "
+                f"{n[UNTRACED]} have no traced coefficients")
+
     def __contains__(self, cid: object) -> bool:
         return cid in self._clocks
 
@@ -496,17 +505,53 @@ class ClockRegistry:
 
         raise WeightsUnavailableError(clock_id, self.unavailable_message(clock_id))
 
+    def _instead(self, c: Clock) -> str:
+        """What a user can run instead of a licensed clock, stated honestly.
+
+        The bundled clocks offered are the ones routed to the same question
+        (:mod:`.questions`), so the list cannot name a chronological-age clock
+        for a mortality question. The registry's hand-kept `alternatives` are
+        shown after them as related entries, with their availability, because
+        a sibling that is itself licensed is not something to run instead.
+        """
+        q = question_for(c.predicts)
+        same = [] if q is None else sorted(
+            (x for x in self._clocks.values()
+             if x.availability == BUNDLED and question_for(x.predicts) == q),
+            key=lambda x: (x.data_type != c.data_type, x.id))
+        shown = {x.id for x in same}
+        related = [self.get(a) for a in c.coefficient_source.alternatives
+                   if a in self and a not in shown]
+        width = max((len(x.id) for x in same + related), default=0) + 2
+
+        def line(x: Clock) -> str:
+            if x.n_features:
+                n = f"{x.n_features} features"
+            elif x.formula:          # KDM and HD take whichever markers are supplied
+                n = "markers chosen by the user"
+            else:
+                n = "feature count not recorded"
+            return (f"    {x.id:<{width}}{x.data_type.replace('_', ' '):<20}"
+                    f"{n}, {x.availability}")
+
+        out = ""
+        if q is not None:
+            out = f"  The question it answers: {q}\n"
+            if same:
+                out += ("  Bundled clocks that answer it too:\n"
+                        + "\n".join(line(x) for x in same) + "\n")
+            else:
+                out += "  No bundled clock answers it.\n"
+        if related:
+            out += "  Related entries:\n" + "\n".join(line(x) for x in related) + "\n"
+        return out
+
     def unavailable_message(self, clock_id: str) -> str:
         """The text a user sees when a clock cannot be scored. Worth care."""
         c = self.get(clock_id)
         cs = c.coefficient_source
 
         if c.availability == LICENSED:
-            alts = [self.get(a) for a in cs.alternatives if a in self]
-            alt_lines = "\n".join(
-                f"    {a.id:<16}{a.data_type.replace('_', ' '):<20}"
-                f"{a.n_features or '?'} features, {a.availability}"
-                for a in alts)
             return (
                 f"{clock_id} is a scaffold-only clock.\n\n"
                 "  Its architecture is implemented and tested, but its coefficients "
@@ -515,8 +560,7 @@ class ClockRegistry:
                 f"  Obtain them from: {cs.obtain}\n"
                 f"  Then: falconage.registry.load().register_local_weights"
                 f"({clock_id!r}, <path>)\n\n"
-                + (f"  Open alternatives predicting the same thing:\n{alt_lines}\n"
-                   if alt_lines else "")
+                + self._instead(c)
             )
 
         # An untraced entry that has been looked into says so. The default text

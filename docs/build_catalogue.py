@@ -276,77 +276,23 @@ QUESTION_END = "<!-- END GENERATED: by-question -->"
 TIERS_BEGIN = "<!-- BEGIN GENERATED: tiers -->"
 TIERS_END = "<!-- END GENERATED: tiers -->"
 
-#: The question a reader arrives with, and a pattern over the `predicts` field
-#: that answers it. **Ordered: first match wins**, so the specific rules come
-#: before the general ones -- "physical-fitness biological age" has to be caught
-#: by the organ-system rule before the plain "biological age" one takes it.
-#:
-#: Patterns rather than exact strings. The registry holds 83 distinct `predicts`
-#: values across 161 clocks, of which the hand-written version of this table
-#: named nine; matching literally would mean editing this list every time a
-#: clock is catalogued, and the page would drift again the first time somebody
-#: forgot. A value that matches nothing is reported by
-#: :func:`unrouted_predicts` and fails the build rather than vanishing from the
-#: page that exists to help people find clocks.
-QUESTIONS: list[tuple[str, str]] = [
-    ("How old does this sample look?",
-     r"^(chronological|relative) age$|retroelement methylation age"),
-    ("How old is this newborn, gestationally?",
-     r"gestational age"),
-    ("How fast is this person aging?",
-     r"pace of aging|intervention-responsive"),
-    ("Which organ system is aging fastest?",
-     r"[- ]system biological age|multisystem|physical-fitness biological age"),
-    ("Who is at risk of dying sooner, or is frailer?",
-     r"mortality|phenotypic age|^biological age$|frailty|healthspan|lifespan"
-     r"|frailty index|electronic medical record age"
-     r"|physiological dysregulation|intrinsic capacity|time to death"),
-    ("Is damage separable from adaptation?",
-     r"(damaging|adaptive|causal) epigenetic age"),
-    ("How much has this tissue divided?",
-     r"mitotic|replicative|divisions|proliferation|passage age|senescence"),
-    ("What is the blood's cell composition?",
-     r"proportion|cell composition"),
-    ("How long are the telomeres?",
-     r"telomere"),
-    ("What is this person exposed to, or how do they live?",
-     r"smoking|alcohol|body mass|BMI|body fat|cholesterol|waist|hip|VO2max"
-     r"|grip strength|gait speed|educational attainment|stress|physical activity"
-     r"|diet|exposure"),
-    ("What is a specific protein or lab value likely to be?",
-     r"C-reactive protein|GDF-15|PAI-1|TIMP-1|adrenomedullin|beta-2-microglobulin"
-     r"|beta-2 microglobulin|cystatin C|interleukin|leptin|hemoglobin A1c"
-     r"|growth differentiation factor|plasminogen activator|TIMP metallopeptidase"
-     r"|smoking pack-years|methylation$|methylation score"),
-    ("Is a named disease more likely?",
-     r"disease|cancer|carcinoma|Alzheimer|depressive|syndrome"),
-    ("What is the sample's chromosomal sex, or its species?",
-     r"chromosome|^sex$|species"),
-]
-
-
-def _bucket(pred: tuple[str, ...]) -> str | None:
-    import re
-
-    for p in pred:
-        s = str(p).strip()
-        for question, pattern in QUESTIONS:
-            if re.search(pattern, s, flags=re.IGNORECASE):
-                return question
-    return None
+# The question routing lives in the package (falconage.registry.questions),
+# because the message for a licensed clock names the bundled clocks that
+# answer the same question, and the two must not disagree.
 
 
 def unrouted_predicts() -> dict[str, list[str]]:
-    """`predicts` values that no question above claims, and who has them.
+    """`predicts` values that no question claims, and who has them.
 
     Reported rather than swallowed. A clock nobody can find on the page that
     exists to help people find clocks is worse than an ugly extra row.
     """
     import falconage as fa
+    from falconage.registry.questions import question_for
 
     out: dict[str, list[str]] = {}
     for c in fa.registry.load():
-        if _bucket(c.predicts) is None:
+        if question_for(c.predicts) is None:
             key = ", ".join(c.predicts) or "(nothing declared)"
             out.setdefault(key, []).append(c.id)
     return out
@@ -360,11 +306,12 @@ def question_table() -> str:
     choosing a clock needs the whole catalogue or none of it.
     """
     import falconage as fa
+    from falconage.registry.questions import QUESTIONS, question_for
 
     reg = fa.registry.load()
     buckets: dict[str, list] = {q: [] for q, _ in QUESTIONS}
     for c in sorted(reg, key=lambda c: (c.availability, c.id)):
-        q = _bucket(c.predicts)
+        q = question_for(c.predicts)
         if q is not None:
             buckets[q].append(c)
 
@@ -372,14 +319,20 @@ def question_table() -> str:
     # tables, and without the hint the one-character tier column is given the
     # same share as the clock list beside it.
     out = [QUESTION_BEGIN, "",
-           "| Question | Ready to score | Needs a coefficient file | Scale |",
-           "|:-----------------|:----------------------------|:-------------|:------|"]
+           "| Question | Ready to score | Needs a licensed file | No coefficients traced | Scale |",
+           "|:-----------------|:----------------------------|:-------------|:-------------|:------|"]
     for q, _ in QUESTIONS:
         cs = buckets[q]
         if not cs:
             continue
-        ready = [c for c in cs if c.availability == "A"]
-        other = [c for c in cs if c.availability != "A"]
+        # Three columns because they ask three different things of the reader:
+        # nothing, a licence, or a coefficient source nobody has traced yet.
+        # This compared against the retired letter "A" after the availability
+        # groups were renamed, and reported for months that no clock at all
+        # was ready to score.
+        ready = [c for c in cs if c.availability == "bundled"]
+        licensed = [c for c in cs if c.availability == "licensed"]
+        untraced = [c for c in cs if c.availability == "untraced"]
         scales = sorted({c.scale_type for c in cs})
 
         def names(items, limit=8):
@@ -387,7 +340,7 @@ def question_table() -> str:
             more = len(items) - limit
             return (shown + (f", and {more} more" if more > 0 else "")) or "—"
 
-        out.append(f"| {q} | {names(ready)} | {names(other)} | "
+        out.append(f"| {q} | {names(ready)} | {names(licensed)} | {names(untraced)} | "
                    + ", ".join(f"`{s}`" for s in scales) + " |")
     out += ["",
             f"Every one of the {len(list(reg))} catalogued clocks appears above, routed by "
@@ -517,7 +470,7 @@ def main(argv=None) -> int:
         print("predicts values not routed to any question on guide/clocks.qmd:")
         for k, ids in sorted(stray.items()):
             print(f"  {k!r}: {len(ids)} clock(s), e.g. {ids[:3]}")
-        print("  add them to QUESTIONS in docs/build_catalogue.py")
+        print("  add them to QUESTIONS in python/src/falconage/registry/questions.py")
         return 1
 
     pairs = [(TARGET, text), (INDEX, index), (GUIDE, guide)]

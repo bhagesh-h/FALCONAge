@@ -29,7 +29,7 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 
 | Area | Shipped in v1.0.0 | Specified, not built |
 |---|---|---|
-| Clock catalogue | 161 entries. **35 tier A score offline**: 32 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 28 tier C are tested scaffolds | The 98 tier B entries carry metadata but no traced coefficients |
+| Clock catalogue | 175 entries. **46 `bundled` score offline**: 43 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 40 `licensed` are tested scaffolds | The 89 `untraced` entries carry metadata but no traced coefficients |
 | Modalities | DNA methylation, clinical chemistry, RRBS, **nanopore**, **transcriptomics**, **proteomics** | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
 | Inputs | Beta matrix, GEO series matrix, **raw IDATs**, RRBS, **bedMethyl**, **targeted panels**, **Olink NPX**, **SomaScan RFU**, **bulk counts**, clinical tables, ComputAgeBench | — |
 | Normalisation | **pOOBAH, noob, BMIQ, probe masks** (§20 of the science page) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
@@ -92,9 +92,9 @@ produced.
 
 | Capability | Ships in 1.0.0 | Later |
 |---|---|---|
-| DNA methylation clocks | 158 catalogued: linear, PC, GrimAge family, mitotic, deconvolution, SystemsAge, AltumAge | — |
+| DNA methylation clocks | 172 catalogued: linear, PC, GrimAge family, mitotic, deconvolution, SystemsAge, AltumAge | — |
 | Clinical chemistry | PhenoAge (both unit variants), KDM, homeostatic dysregulation | — |
-| Clock coefficients | 32 bundled, 28 scaffold-only, 98 untraced (§3.7, §4.7) | tier B narrows as sources are traced |
+| Clock coefficients | 46 bundled, 40 scaffold-only, 89 untraced (§3.7, §4.7) | the untraced count narrows as sources are traced |
 | Raw arrays | full chain: manifest fetch, pOOBAH, noob, BMIQ, probe masks | control-probe dye correction |
 | Uncertainty | technical SE, conformal intervals, power, consensus | conformalised quantile regression |
 | Batch | frozen-reference ComBat | — |
@@ -120,9 +120,9 @@ from another package.
 
 **Coefficients** are a different matter, because they are fitted data rather than a procedure and
 cannot be written at all. §3.6 surveys where each set actually comes from and §3.7 sorts them into
-three tiers by what FALCONAge may distribute. Twenty-eight clocks, the GrimAge and SystemsAge
-families and DunedinPACE - ship as a complete, tested scaffold with no numbers, because their
-coefficients are research-use-only or have no traceable public source. §4.7 covers what that means
+three tiers by what FALCONAge may distribute. Forty clocks (the GrimAge, PC GrimAge and
+SystemsAge families, DunedinPACE and a few others) ship as a complete, tested scaffold with no
+numbers, because their coefficients are research-use-only or have no traceable public source. §4.7 covers what that means
 in practice.
 
 ### 1.2 The four architectural decisions
@@ -864,6 +864,12 @@ is fetched, and what the user has to do.
 | **B - fetch on first use** | 95 | ships | fetched from the author's URL at first use, cached, licence printed once | none, but needs network once |
 | **C - permission required** | 28 | ships | never fetched; the user obtains them and points FALCONAge at a local file | obtain a licence or file |
 
+**As shipped in v1.0.0.** The registry names the tiers by what they mean: `bundled` (A),
+`untraced` (B) and `licensed` (C). The letters are still accepted by `filter`, `list_clocks` and
+`falconage clocks list --tier`. The counts are 46 bundled, 89 untraced and 40 licensed.
+Fetching on first use was not built: an untraced clock carries its metadata and no
+coefficients, and scoring it raises with the reason.
+
 Tier A is where the coefficient set came from a publisher supplement or a permissively licensed
 author repository and may be redistributed. Includes PhenoAge, KDM and homeostatic dysregulation,
 which need no network at all.
@@ -1136,7 +1142,7 @@ where the middle option runs `XChrom`/`YChrom` first and the last must be chosen
 |---|---|---|---|
 | `LinearClock` | `xW + b` | ~120 | **shipped** |
 | `ClinicalClock` | PhenoAge / KDM / HD on tabular biomarkers | 3 | **shipped** |
-| `ScaffoldClock` | refuses, and says where the coefficients come from | the 28 tier C clocks | **shipped** |
+| `ScaffoldClock` | refuses, and says where the coefficients come from | the 40 `licensed` clocks | **shipped** |
 | `PCLinearClock` | `((x − μ)R)W + b` | PCHorvath2013, PCHannum, PCPhenoAge, PCSkinAndBlood, PCDNAmTL, PCGrimAge | specified |
 | `MultiStageCoxClock` | sub-linear-models → ordered concat with covariates → Cox layer | GrimAge, GrimAge2, CpGPTGrimAge3, CpGPTPCGrimAge3 | specified |
 | `NeuralClock` | arbitrary network from a registry-declared spec | AltumAge | specified |
@@ -1307,7 +1313,7 @@ entry fails before it produces a number.
 
 ### 4.7 Scaffold-only clocks
 
-Twenty-eight clocks are tier C: their architecture is described in a published paper and is
+Forty clocks are `licensed` (tier C): their architecture is described in a published paper and is
 implemented here in full, but their coefficients are not ours to distribute. For these FALCONAge
 ships **the scaffold and nothing else** - the model class, the feature list, the preprocess and
 postprocess chain, the shape and dtype of every expected tensor, and a loader that accepts a
@@ -1388,19 +1394,33 @@ Scoring a tier C clock with nothing registered raises rather than silently skipp
 WeightsUnavailableError: grimage2 is a scaffold-only clock.
 
   Its architecture is implemented and tested, but its coefficients are
-  research-use-only and are not distributed with FALCONAge.
+  not distributed with FALCONAge.
 
-  Obtain them from the Horvath laboratory (dnamage.clockfoundation.org),
-  then: falconage.registry.register_local_weights("grimage2", <path>)
+  Why: Research use only; coefficients were never published in the paper and the copies
+  circulating in other packages have no traceable primary source.
 
-  Open alternatives predicting mortality risk:
-    phenoage        clinical chemistry, 10 markers, tier A
-    dnamphenoage    DNA methylation, 513 CpGs, tier A
-    zhangmortality  DNA methylation, 10 CpGs, tier A
+  Obtain them from: https://dnamage.clockfoundation.org (Horvath laboratory); commercial
+  licensing via UCLA TDG
+  Then: falconage.registry.load().register_local_weights('grimage2', <path>)
+
+  The question it answers: Who is at risk of dying sooner, or is frailer?
+  Bundled clocks that answer it too:
+    dnamphenoage     dna methylation     513 features, bundled
+    hrsinchphenoage  dna methylation     959 features, bundled
+    zhangmortality   dna methylation     10 features, bundled
+    hd               clinical chemistry  markers chosen by the user, bundled
+    kdm              clinical chemistry  markers chosen by the user, bundled
+    phenoage         clinical chemistry  10 features, bundled
 ```
 
 Naming the open alternatives matters. A user who wanted a mortality clock and hit a wall should
-leave with one that works, not with an error.
+leave with one that works, not with an error. The list is derived, not kept by hand: it is every
+bundled clock that `falconage.registry.questions` routes to the same question as the licensed
+one, the same routing the [choosing a clock](guide/clocks.qmd) page uses. A hand-kept list
+offered Horvath and Hannum, both fitted to chronological age, in place of GrimAge. Where no
+bundled clock answers the question, as for SystemsAge, the message says so. The registry's
+`coefficient_source.alternatives` follow as "Related entries", each with its availability, so a
+sibling that is itself licensed is never presented as something to run instead.
 
 `clocks="compatible"` excludes unregistered tier C clocks by default and reports the exclusion.
 `clocks="all"` includes them and fails loudly. `falconage clocks list --tier C` shows the whole

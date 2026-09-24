@@ -112,12 +112,50 @@ def test_scaffold_clocks_refuse_and_say_why(registry):
 
 def test_scaffold_error_names_an_open_alternative(registry):
     msg = registry.unavailable_message("grimage2")
-    assert "Open alternatives" in msg
+    assert "Bundled clocks that answer it too" in msg
     named = [a for a in ("dnamphenoage", "zhangmortality", "hrsinchphenoage")
              if a in msg]
     assert named, "a user who wanted a mortality clock should leave with one"
     for a in named:
         assert registry.has_coefficients(a), f"{a} is offered but does not work"
+
+
+def test_a_mortality_clock_is_never_replaced_by_a_chronological_one(registry):
+    """GrimAge once offered Horvath and Hannum as alternatives "predicting the
+    same thing". They predict chronological age; the offer is now derived from
+    the question each clock answers, so that cannot recur."""
+    from falconage.registry.questions import question_for
+
+    for cid in ("grimage", "grimage2", "pcgrimage"):
+        msg = registry.unavailable_message(cid)
+        assert "horvath2013" not in msg and "hannum" not in msg
+    for c in registry:
+        if c.availability != "licensed":
+            continue
+        msg = registry.unavailable_message(c.id)
+        if "answer it too:" not in msg:
+            continue
+        block = msg.split("answer it too:\n", 1)[1].split("  Related entries:", 1)[0]
+        for row in block.strip().splitlines():
+            other = registry.get(row.split()[0])
+            assert other.availability == "bundled"
+            assert question_for(other.predicts) == question_for(c.predicts), (c.id, other.id)
+
+
+def test_no_bundled_alternative_is_said_plainly(registry):
+    msg = registry.unavailable_message("systemsage")
+    assert "The question it answers: Which organ system is aging fastest?" in msg
+    assert "No bundled clock answers it." in msg
+
+
+def test_weidner_answers_the_question_it_was_trained_for(registry):
+    """Weidner et al. 2014 fitted three CpGs to chronological age (Genome Biol
+    15:R24); declaring it 'biological age' routed it to the mortality question."""
+    from falconage.registry.questions import question_for
+
+    w = registry.get("weidner")
+    assert w.training_target == ("chronological age",)
+    assert question_for(w.predicts) == "How old does this sample look?"
 
 
 def test_unknown_clock_suggests_near_matches(registry):
@@ -457,3 +495,24 @@ def test_registry_version_agrees_with_the_package_constant():
     """The manifest stamps _version.REGISTRY_VERSION; the registry file carries
     its own. A coefficient correction bumps both, and they must not drift."""
     assert fa.registry.load().version == fa.REGISTRY_VERSION
+
+
+def test_the_registry_states_how_many_clocks_run(registry):
+    """"175 clocks" read alone is taken as 175 that score; the runnable count leads."""
+    text = repr(registry)
+    assert text.startswith(f"ClockRegistry {registry.version}: 46 of 175 clocks score offline")
+    assert "40 need a licensed coefficient file" in text
+    assert "89 have no traced coefficients" in text
+
+
+@pytest.mark.parametrize("tier", ["A", "bundled"])
+def test_cli_lists_clocks_by_availability_under_either_name(tier, capsys):
+    """`--tier A` is accepted by the parser, so it must translate, not match nothing."""
+    from falconage.cli.app import main
+
+    assert main(["clocks", "list", "--tier", tier]) == 0
+    out = capsys.readouterr().out
+    assert "horvath2013" in out and "grimage2" not in out
+    assert out.rstrip().endswith(
+        "46 clock(s): 46 score offline (bundled), 0 need a licensed coefficient file, "
+        "0 have no traced coefficients")

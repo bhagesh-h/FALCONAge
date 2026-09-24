@@ -146,7 +146,7 @@ whether the algorithm works: every architecture is implemented and tested whatev
 | `licensed` | 40 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are research-use-only. |
 
 ```python
-fa.registry.load().filter(availability="A")
+fa.registry.load().filter(availability="bundled")
 ```
 
 ## Training targets, and what a score means

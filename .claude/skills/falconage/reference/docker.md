@@ -144,8 +144,8 @@ a naive "just refit on the reference" gets wrong.
 
 ## Licensed clocks
 
-Twenty-eight clocks are tested scaffolds whose coefficients are research-use-only and not
-FALCONAge's to distribute. Obtain the file from the authors, then:
+Forty clocks are tested scaffolds whose coefficients are research-use-only, or have no public
+source FALCONAge may redistribute. Obtain the file from the authors, then:
 
 ```python
 fa.registry.register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")

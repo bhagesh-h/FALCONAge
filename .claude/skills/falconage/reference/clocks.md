@@ -9,11 +9,11 @@ different targets, all commonly reported as "biological age":
 | Family | Trained on | Examples | What the number is |
 |---|---|---|---|
 | **First-generation** | calendar age | Horvath 2013, Hannum, SkinAndBlood | an estimate of age, with prediction error against a known truth |
-| **Second-generation** | a survival-weighted composite, then rescaled to years | PhenoAge, GrimAge | years as a unit; age was never the target |
-| **Pace-of-aging** | the *rate of change* in organ-system biomarkers, tracked longitudinally | DunedinPACE, DunedinPoAm | a rate: biological ageing per calendar year |
+| **Second-generation** | a survival-weighted composite, then rescaled to years | PhenoAge, GrimAge (`licensed`) | years as a unit; age was never the target |
+| **Pace-of-aging** | the *rate of change* in organ-system biomarkers, tracked longitudinally | DunedinPACE (`licensed`), DunedinPoAm | a rate: biological ageing per calendar year |
 | **Mitotic** | cumulative stem-cell divisions | epiTOC2, StemTOC, HypoClock | a count, not elapsed time |
 | **Causality-enriched** | CpGs with Mendelian-randomisation support | CausAge, DamAge, AdaptAge | damaging vs adaptive change, separated |
-| **Deconvolution** | cell-type reference profiles | the Salas 12-cell panel | proportions, constrained to sum to one |
+| **Deconvolution** | cell-type reference profiles | the Salas 12-cell panel (`untraced`) | proportions, constrained to sum to one |
 
 Reporting all six as "biological age" throws away the information needed to interpret any of them.
 
@@ -27,7 +27,7 @@ has no acceleration left with which to detect anything.
 
 | The question | Clocks that ship and score offline | Scale |
 |---|---|---|
-| How old does this sample look? | `horvath2013`, `hannum`, `skinandblood`, `lin`, `pedbe`, `vidalbralo`, `yingcausage`, `zhangblup`, `zhangen`, `altumage` (20,318-CpG network), `weidner` (three CpGs) | `age_years` |
+| How old does this sample look? | `horvath2013`, `hannum`, `skinandblood`, `lin`, `pedbe`, `vidalbralo`, `yingcausage`, `zhangblup`, `zhangen`, `altumage` (20,318-CpG network), `weidner` (three CpGs), `corticalclock` (brain cortex only) | `age_years` |
 | How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerobust`, `leerefinedrobust` | `gestational_weeks` |
 | How fast is this person aging? | `dunedinpoam38` | `pace_ratio` |
 | Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `phenoage`, `hrsinchphenoage`, `kdm`, `hd`, `zhangmortality` | mixed |
@@ -36,7 +36,7 @@ has no acceleration left with which to detect anything.
 | How many times has this tissue divided, relative to another sample? | `epitoc1` (mean over 385 polycomb-target CpGs), `hypoclock` (1 minus the mean over 678 solo-WCGWs), `stemtoc` (95th percentile over 371), `stemtocvitro` (over 629), `epicmithyper` (mean over 184), `epicmithypo` (1 minus the mean over 1,164), `replitali` (87 CpGs, linear) | `divisions` |
 | How many times has it divided, in divisions per stem cell? | `epitoc2` (163 sites), `epitoc3` (170 sites) | `divisions` |
 | Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
-| What is the blood's cell composition? | none ship; the Salas panels are `licensed` | `proportion` |
+| What is the blood's cell composition? | none ship; the Salas panels are `untraced`, with no coefficient source traced yet | `proportion` |
 | How old is this **mouse**? | `meer` (435 RRBS sites, whole-lifespan multi-tissue) | `age_years`, reported in months |
 
 **The two questions in that pair are different questions.** The seven relative

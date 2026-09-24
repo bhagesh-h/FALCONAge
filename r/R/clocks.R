@@ -116,9 +116,10 @@ cite_clock <- function(clock_id, style = c("plain", "bibtex")) {
 
 #' Supply a coefficient file for a clock FALCONAge does not distribute
 #'
-#' Twenty-eight clocks ship as scaffolds: the model, the feature list, the
+#' Forty clocks ship as scaffolds: the model, the feature list, the
 #' preprocess and postprocess chain, the expected shapes -- everything except
-#' the numbers, which are research-use-only. Once you hold a licensed file, this
+#' the numbers, which are research-use-only or have no public source FALCONAge
+#' may redistribute. Once you hold a licensed file, this
 #' registers it.
 #'
 #' Registration validates the file against the scaffold and rejects a mismatch
