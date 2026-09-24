@@ -70,6 +70,13 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Fixed
 
+- **`overlap.csv` filed DNAmStress under `sex_or_chromosome`.** To match
+  "GDF-15" against "gdf15", `target_class` compared the training target with all
+  separators removed, which fused "stress exposure" into "…ssexposure" and let
+  the `sex` rule match. Rules now match at the start of a word after only the
+  hyphens inside words are dropped. DNAmStress moves to `exposure`; no other row
+  changes class.
+
 - **DNAmTL returned negative telomere lengths.** Its intercept was carried as
   −7.924780053; the estimator is `Σ wβ + 7.924780053` kilobases. On 300BCG's
   858 EPIC samples FALCONAge returned a mean of −8.45 kb where dnaMethyAge

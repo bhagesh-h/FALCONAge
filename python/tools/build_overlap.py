@@ -174,15 +174,21 @@ def target_class(targets: list[str]) -> str:
     joined = " ; ".join(targets).lower()
     if not joined or joined == "not applicable":
         return "unstated"
-    # Matched with and without separators, because the same analyte is written
-    # "GDF-15" in one entry and "gdf15" in another and neither spelling is more
-    # correct than the other.
-    flat = re.sub(r"[^a-z0-9]", "", joined)
+    # A rule matches at the start of a word, after hyphens inside words are
+    # dropped from both sides, because the same analyte is written "GDF-15" in
+    # one entry and "gdf15" in another. Only hyphens go: removing spaces as well
+    # fused "stress exposure" into "...ssexposure", which the "sex" rule then
+    # matched, and filed DNAmStress under sex_or_chromosome.
+    text = _dehyphenate(joined)
     for label, needles in _TARGET_RULES:
-        if any(nd in joined or re.sub(r"[^a-z0-9]", "", nd) in flat
-               for nd in needles):
+        if any(re.search(r"\b" + re.escape(_dehyphenate(nd)), text) for nd in needles):
             return label
     return "other"
+
+
+def _dehyphenate(s: str) -> str:
+    """Drop hyphens between word characters: ``gdf-15`` -> ``gdf15``."""
+    return re.sub(r"(?<=\w)-(?=\w)", "", s.lower())
 
 
 def _norm(name: str) -> str:

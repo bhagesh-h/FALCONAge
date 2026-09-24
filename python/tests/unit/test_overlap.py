@@ -100,6 +100,11 @@ def test_population_class(pop, expect):
     (["Horvath clock output"], "clock_output"),
     (["DNAm GrimAge output"], "clock_output"),
     (["Y-chromosome presence"], "sex_or_chromosome"),
+    # Fusing words to catch "GDF-15" once turned "stress exposure" into
+    # "...ssexposure", which the "sex" rule matched.
+    (["stress exposure"], "exposure"),
+    (["interleukin-6"], "protein_or_analyte"),
+    (["waist-to-hip ratio"], "exposure"),
     (["not applicable"], "unstated"),
     ([], "unstated"),
 ])
