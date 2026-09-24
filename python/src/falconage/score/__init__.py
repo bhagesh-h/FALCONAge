@@ -19,7 +19,8 @@ from ..core import preanalytical
 from ..core.logging import WarningCollector, get_logger
 from ..core.manifest import RunManifest
 from ..models import build, effective_spec
-from ..preprocess import BIAS_WARN
+from ..preprocess import BIAS_WARN, QC_REMOVED_WARN, observed_features, qc_removed
+from ..preprocess.manifest import cached_manifest_probes
 from ..preprocess import _load_platform_bias as _platform_bias
 from ..registry import load as load_registry
 
@@ -323,6 +324,8 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
     """
     reg = registry if registry is not None else load_registry()
     warns = WarningCollector()
+    qc_probes: frozenset[str] | None = None   # platform manifest, resolved once
+    qc_observed: frozenset[str] = frozenset()
 
     explicit = not isinstance(clocks, str)
     wanted, skipped = _resolve_clocks(reg, data, clocks, min_coverage)
@@ -491,6 +494,30 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             coverage[cid] = {"coverage": 1.0, "mass_coverage": None,
                              "n_present": c.n_features or 0,
                              "n_imputed": 0, "imputation": "n/a"}
+
+        # Probes the array carries that the data lacks were removed after
+        # measurement, usually by an EWAS's probe QC, and scoring on the
+        # unfiltered matrix gets them back. Needs the platform manifest in the
+        # cache; without it the coverage warning above is all there is.
+        if alignment is not None and reg.has_coefficient_vector(cid):
+            if qc_probes is None and data.modality == "dna_methylation":
+                qc_probes = cached_manifest_probes(data.platform) or frozenset()
+                qc_observed = observed_features(data) if qc_probes else frozenset()
+            if qc_probes:
+                feats, coefs = reg.coefficients(cid)
+                n_qc, share, worst = qc_removed(feats, coefs, qc_observed, qc_probes)
+                coverage[cid]["n_removed_by_qc"] = n_qc
+                coverage[cid]["qc_removed_mass"] = round(share, 6)
+                if share >= QC_REMOVED_WARN:
+                    names = ", ".join(f"{f} ({s:.1%})" for f, s in worst)
+                    warns.warn(
+                        f"{n_qc} CpG(s) carrying {share:.1%} of this clock's "
+                        f"|coefficient| are on {data.platform} but not in this data, "
+                        "so they were removed after measurement, usually by probe "
+                        f"QC. Heaviest: {names}. Score clocks on normalised but "
+                        "unfiltered betas; SNP and cross-reactive filters belong to "
+                        "the EWAS.",
+                        clock=cid, category="probe_qc")
 
         # Probe loss, priced. Coverage says how much of the model is absent;
         # this says what that costs in the clock's own unit, measured by masking

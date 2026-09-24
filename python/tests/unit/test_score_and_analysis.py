@@ -369,3 +369,86 @@ def test_an_unknown_method_names_the_ones_that_work(synthetic_betas):
     res = fa.score(synthetic_betas, clocks=["horvath2013"])
     with pytest.raises(AnalysisError, match="both"):
         fa.acceleration(res, method="typo")
+
+
+# ---------------------------------------------------------------------------
+# Probe QC: CpGs the array carries but the data lacks
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def isolated_manifests(tmp_path, monkeypatch):
+    """An empty download cache, and no parsed manifest leaking between tests."""
+    from falconage.preprocess.manifest import load_manifest
+
+    monkeypatch.setenv("FALCONAGE_CACHE", str(tmp_path))
+    load_manifest.cache_clear()
+    yield tmp_path
+    load_manifest.cache_clear()
+
+
+def _fake_manifest(cache, probes):
+    """A minimal EPICv1 manifest in the download cache, so nothing downloads."""
+    import gzip
+
+    from falconage.core.config import default_cache_dir
+    from falconage.download import _cache_path
+    from falconage.preprocess.manifest import BUCKET, MANIFESTS, load_manifest
+
+    assert default_cache_dir() == cache
+    path = _cache_path(f"{BUCKET}/{MANIFESTS['EPICv1'][0]}", cache)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = ["IlmnID,AddressA_ID,AddressB_ID,Infinium_Design_Type,Color_Channel"]
+    rows += [f"{p},{1000 + i},,II," for i, p in enumerate(probes)]
+    with gzip.open(path, "wt") as fh:
+        fh.write("\n".join(rows) + "\n")
+    load_manifest.cache_clear()
+
+
+def test_qc_removed_is_share_of_absolute_weight():
+    from falconage.preprocess import qc_removed
+
+    n, share, worst = qc_removed(["a", "b", "c", "d"], [4.0, -3.0, 2.0, 1.0],
+                                 observed=frozenset({"a", "d"}),
+                                 platform_probes=frozenset({"a", "b", "d"}))
+    # b is on the array and missing: removed. c is not on the array: platform loss.
+    assert n == 1
+    assert share == pytest.approx(3.0 / 10.0)
+    assert worst == [("b", pytest.approx(0.3))]
+
+
+def test_probes_removed_by_qc_are_named_when_the_manifest_is_cached(
+        synthetic_betas, isolated_manifests):
+    tmp_path = isolated_manifests
+    reg = fa.registry.load()
+    feats, w = reg.coefficients("horvath2013")
+    heavy = [str(f) for f in np.asarray(feats)[np.argsort(-np.abs(np.asarray(w)))[:5]]]
+    # The array carries every Horvath CpG except one light one, which is
+    # platform loss and must not be blamed on QC.
+    light = str(np.asarray(feats)[np.argmin(np.abs(np.asarray(w)))])
+    _fake_manifest(tmp_path, [str(f) for f in feats if str(f) != light])
+
+    X = synthetic_betas.X.drop(columns=heavy + [light])
+    d = fa.FalconData(X=X, obs=synthetic_betas.obs.assign(tissue="whole blood"),
+                      modality="dna_methylation", platform="EPICv1")
+    res = fa.score(d, clocks=["horvath2013"], min_coverage=0.5)
+
+    cov = res.coverage["horvath2013"]
+    assert cov["n_removed_by_qc"] == 5
+    expected = np.sort(np.abs(np.asarray(w)))[::-1][:5].sum() / np.abs(np.asarray(w)).sum()
+    assert cov["qc_removed_mass"] == pytest.approx(expected, abs=1e-6)
+    msgs = [r["message"] for r in res.manifest.warnings if r["category"] == "probe_qc"]
+    assert len(msgs) == 1 and "unfiltered betas" in msgs[0]
+
+    table = fa.preprocess.probe_loss(d, clocks=["horvath2013"])
+    assert table.loc["horvath2013", "n_removed_by_qc"] == 5
+
+
+def test_no_manifest_in_the_cache_means_no_attribution(synthetic_betas, isolated_manifests):
+    """Offline and uncached: the check stays silent rather than guessing."""
+    feats, _ = fa.registry.load().coefficients("horvath2013")
+    X = synthetic_betas.X.drop(columns=[str(f) for f in feats[:5]])
+    d = fa.FalconData(X=X, obs=synthetic_betas.obs.assign(tissue="whole blood"),
+                      modality="dna_methylation", platform="EPICv1")
+    res = fa.score(d, clocks=["horvath2013"], min_coverage=0.5)
+    assert "n_removed_by_qc" not in res.coverage["horvath2013"]
+    assert not [r for r in res.manifest.warnings if r["category"] == "probe_qc"]

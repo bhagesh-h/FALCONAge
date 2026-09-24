@@ -5,6 +5,20 @@
 
 ## Added
 
+- **Probes removed by QC are told apart from probes the array never had.** A
+  clock CpG that the declared platform carries but the data lacks was removed
+  after measurement, usually by an EWAS's SNP or cross-reactive filters, and
+  scoring on unfiltered betas recovers it. With the platform manifest in the
+  cache, `probe_loss()` reports `n_removed_by_qc` and `qc_removed_mass`, and
+  `score()` warns (category `probe_qc`) once the removed CpGs carry 1% of a
+  clock's |coefficient|. Nothing is downloaded during scoring;
+  `fetch_manifest(platform)` caches the manifest once, and without it the check
+  stays silent. On 300BCG's filtered EPIC v1 betas, all 30 of DNAmTL's absent
+  CpGs were QC removals (11.1% of its weight), Hannum's 11 split 5 and 6, and
+  Horvath's 27 split 8 and 19.
+
+## Fixed
+
 - **`falconage.disorder`: reading an aging methylome without predicting an age.**
   Tong et al. (Nat Aging 2024) found 66 to 75 per cent of Horvath2013's accuracy
   against chronological age is reproducible by a purely stochastic model, about
@@ -60,8 +74,6 @@
 
 - `docs/beyond-clocks.qmd` documents all of the above, and `test/build_report.py`
   makes the single-file HTML report reproducible rather than ad hoc.
-
-## Fixed
 
 - **`overlap.csv` filed DNAmStress under `sex_or_chromosome`.** To match
   "GDF-15" against "gdf15", `target_class` compared the training target with all

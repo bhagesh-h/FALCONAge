@@ -2169,6 +2169,21 @@ The shift is **reported and never applied**. An automatic offset would be a
 second number nobody can trace, which is the failure the coefficient digests
 exist to prevent.
 
+**Platform loss or probe QC.** A clock CpG can be absent for two reasons, and
+only one of them is permanent. If the array does not carry it, nothing recovers
+it. If the array carries it and the data lacks it, it was measured and then
+removed, almost always by probe filters (SNP-affected, cross-reactive, failed
+detection) that belong to an epigenome-wide association study and not to clock
+scoring. With the platform's manifest in the cache, `probe_loss()` counts the
+second kind in `n_removed_by_qc` and `qc_removed_mass`, and `score()` warns
+(category `probe_qc`) once the removed CpGs carry 1% of a clock's
+|coefficient|. The manifest is never downloaded during scoring;
+`fetch_manifest(platform)` caches it once. On 300BCG's QC-filtered EPIC v1 betas
+this separates the two cleanly: all 30 of DNAmTL's absent CpGs were removed by
+QC (11.1% of its weight), while Horvath's 27 absent CpGs split into 8 removed by
+QC (2.7%) and 19 the array never carried. The remedy is to score clocks on
+normalised but unfiltered betas.
+
 ### 20.6 A reported score must not move when the next plate arrives
 
 ComBat estimates its location and scale from every sample at once. Add a batch,

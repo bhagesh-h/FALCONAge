@@ -10,7 +10,7 @@ from ..core.units import MARKERS, canonical_name, check_plausible, convert, requ
 from .batch import BatchError, BatchReference, apply_batch_reference, fit_batch_reference
 from .bmiq import BetaMixture, bmiq, fit_beta_mixture
 from .idat import RawSignal, dye_bias, idat_to_betas, noob, poobah, read_idat_dir
-from .manifest import fetch_manifest, load_manifest, manifest_record
+from .manifest import cached_manifest_probes, fetch_manifest, load_manifest, manifest_record
 from .masks import apply_mask, load_mask, mask_report, masked_probes
 from .methylation import (
     QCReport,
@@ -34,7 +34,7 @@ __all__ = [
     "fetch_manifest", "fit_batch_reference",
     "harmonise_probe_ids", "idat_to_betas", "impute", "load_manifest",
     "manifest_record", "noob", "poobah",
-    "prepare", "prepare_clinical", "probe_loss",
+    "cached_manifest_probes", "prepare", "prepare_clinical", "probe_loss", "qc_removed",
     "median_centre", "prepare_proteomic", "prepare_transcriptomic",
     "qc", "read_counts", "read_idat_dir", "read_olink", "read_somascan",
     "rle_normalise", "yugene",
@@ -158,6 +158,37 @@ _PLATFORM_BIAS: dict[tuple[str, str], dict] | None = None
 #: for. One year on an age clock is the smallest difference anybody reports.
 BIAS_WARN = 1.0
 
+#: Report probe-QC removal once the removed CpGs carry this share of a clock's
+#: total |coefficient|. A reporting threshold, not a statistic: below it the
+#: removed probes are a rounding error in the score and the warning is noise.
+QC_REMOVED_WARN = 0.01
+
+
+def observed_features(data: FalconData) -> frozenset[str]:
+    """Columns with at least one measured value. An all-NaN column is absent."""
+    X = data.X
+    return frozenset(X.columns[X.notna().any(axis=0).to_numpy()])
+
+
+def qc_removed(features, coefficients, observed: frozenset[str],
+               platform_probes: frozenset[str]) -> tuple[int, float, list[tuple[str, float]]]:
+    """Clock CpGs the array carries but the data lacks.
+
+    Returns the count, their share of the clock's total |coefficient|, and the
+    heaviest few with their shares. These were measured and then removed,
+    almost always by probe QC (SNP, cross-reactive or detection filters) that
+    belongs to an EWAS, not to clock scoring: the clock's weights were fitted on
+    those probes and the imputation that replaces them is a guess.
+    """
+    w = np.abs(np.asarray(coefficients, dtype=np.float64)).ravel()
+    total = float(w.sum())
+    hits = [(str(f), float(x)) for f, x in zip(features, w)
+            if str(f) in platform_probes and str(f) not in observed]
+    if not hits or total <= 0:
+        return len(hits), 0.0, []
+    hits.sort(key=lambda h: -h[1])
+    return len(hits), sum(x for _, x in hits) / total, [(f, x / total) for f, x in hits[:3]]
+
 
 def probe_loss(data: FalconData, clocks: str | list[str] = "all",
                *, registry=None, top: int = 3) -> pd.DataFrame:
@@ -193,11 +224,18 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
     One row per clock, worst mass coverage first. ``mass_coverage`` is ``NaN``
     for a clock whose coefficients are not available -- the weights are what
     the column is computed from, so there is no honest value without them.
+    ``n_removed_by_qc`` and ``qc_removed_mass`` count the clock CpGs the array
+    carries but this data lacks, which were removed after measurement; they
+    need the platform's manifest in the cache (``fetch_manifest(platform)``)
+    and are empty without it.
     """
     from ..models.linear import align
     from ..registry import load as _load
 
     reg = registry if registry is not None else _load()
+    # Only with the platform's manifest already cached: probe_loss is offline.
+    probes = cached_manifest_probes(data.platform) if data.modality == "dna_methylation" else None
+    observed = observed_features(data) if probes is not None else frozenset()
 
     if clocks == "all":
         chosen = [c.id for c in reg if c.data_type == data.modality]
@@ -226,6 +264,10 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
 
         al = align(data, list(feats), imputation="none", coefficients=coefs)
         bias = _load_platform_bias().get((cid, data.platform or ""), {})
+        if probes is not None:
+            n_qc, qc_mass, _ = qc_removed(feats, coefs, observed, probes)
+        else:
+            n_qc, qc_mass = None, np.nan
         rows.append({
             "clock": cid,
             "tier": c.availability,
@@ -239,6 +281,8 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
                         if bias else ""),
             "heaviest_absent": ", ".join(
                 f"{f} ({s:.1%})" for f, s in al.missing_mass[:top]) or "",
+            "n_removed_by_qc": n_qc,
+            "qc_removed_mass": (np.nan if np.isnan(qc_mass) else round(qc_mass, 4)),
         })
 
     df = pd.DataFrame(rows)

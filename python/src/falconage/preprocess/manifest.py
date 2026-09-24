@@ -30,8 +30,8 @@ import pandas as pd
 
 from ..core.errors import DataError
 
-__all__ = ["MANIFESTS", "detect_manifest_platform", "fetch_manifest",
-           "load_manifest", "manifest_record"]
+__all__ = ["MANIFESTS", "cached_manifest_probes", "detect_manifest_platform",
+           "fetch_manifest", "load_manifest", "manifest_record"]
 
 BUCKET = "https://s3.amazonaws.com/array-manifest-files"
 
@@ -133,6 +133,28 @@ def load_manifest(platform: str) -> pd.DataFrame:
         out = out[~bad]
     out = out[~out.index.duplicated(keep="first")]
     return out
+
+
+def cached_manifest_probes(platform: str | None) -> frozenset[str] | None:
+    """The probes a platform carries, if its manifest is already cached.
+
+    Never downloads. Scoring runs offline, and a check that silently reached
+    for the network would break that. Returns ``None`` for an unknown platform
+    or an uncached manifest; ``fetch_manifest(platform)`` caches it once.
+
+    Used to tell two kinds of absent probe apart. A clock CpG the array does not
+    carry is platform loss, which nothing can recover. A clock CpG the array
+    does carry but the data lacks was removed after measurement, usually by
+    probe QC, and scoring on the unfiltered matrix recovers it.
+    """
+    if platform not in MANIFESTS:
+        return None
+    from ..core.config import default_cache_dir
+    from ..download import _cache_path
+
+    if not _cache_path(f"{BUCKET}/{MANIFESTS[platform][0]}", default_cache_dir()).exists():
+        return None
+    return frozenset(load_manifest(platform).index)
 
 
 def manifest_record(platform: str) -> dict[str, str]:

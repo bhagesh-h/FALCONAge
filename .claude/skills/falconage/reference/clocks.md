@@ -112,6 +112,10 @@ from a clock fitted on people. Nothing in the arithmetic notices. Set `species`.
 96% of probes present can be 61% of the model. `probe_loss()` reports both count coverage and
 coefficient-mass coverage; the scoring floor applies to each.
 
+**Score clocks on unfiltered betas.** Probe filters for SNPs and cross-reactivity belong to an
+EWAS. Run on clocks, they remove CpGs the weights were fitted on. A `probe_qc` warning means the
+array measured a clock CpG and the data no longer has it; re-score on normalised, unfiltered betas.
+
 **EPIC v2 renamed the probes.** `cg00000029` became `cg00000029_TC21`. A clock matching on exact
 identifiers finds *zero* features and then returns a plausible number computed entirely from
 imputed values. Suffix aggregation is mandatory and `prepare()` does it. Even done correctly,
