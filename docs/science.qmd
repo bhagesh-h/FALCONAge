@@ -501,6 +501,21 @@ with m the number of biomarkers. Verbatim in
 aged 30–75, non-pregnant, and projects into NHANES IV. Samples with more than 2 missing
 biomarkers are set to NA. Output columns: `kdm`, `kdm_advance = kdm − age`.
 
+**How FALCONAge follows it.** `fa.models.fit_kdm` and `fa.models.clinical.kdm` reproduce the
+`kdm0` column BioAge ships with its NHANES data: on NHANES III to 0.0007 years mean absolute
+difference (maximum 0.007 years, n = 9,583), and projected into NHANES IV to 0.0007 years (maximum
+0.005 years, n = 8,243). Three details carry that agreement. Each biomarker is regressed on the
+rows where that biomarker is present; `s_j` is the residual SD with divisor n − 1, as BioAge's
+`get_effs` takes it; and `s_BA²` is estimated on the reference rows that carry every biomarker, then
+reused when projecting into another cohort. That last choice follows the shipped `kdm0` rather than
+today's `kdm_calc.R`, which also averages over partially observed rows and reproduces `kdm0` only to
+r = 0.94. The shipped `kdm0` is complete-case (every row with a value carries all nine markers);
+`kdm(..., max_missing=0)` reproduces it exactly, including which rows are NA, and the default
+`max_missing=2` is the rule in today's code. FALCONAge 1.0.0 took the square root of the
+correlation in `r_char`, where the formula takes the square root of R², and was 1.77 years out on
+the same rows. The regression test runs on a fixture of those NHANES III rows
+(`python/tests/data/`).
+
 ComputAge also ships a *de novo* KDM estimator
 ([ComputAge deage/kdm.py](https://github.com/ComputationalAgingLab/ComputAge)) with forward feature selection,
 LASSO preselection, 10-fold CV, RSE weighting, and stability testing, useful as a template for

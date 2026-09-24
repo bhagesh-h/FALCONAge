@@ -63,6 +63,24 @@
 
 ## Fixed
 
+- **Klemera-Doubal biological age was 1.77 years away from the reference
+  implementation, and every KDM value computed with an earlier 1.0.0 build is
+  superseded.** `fit_kdm` stored each biomarker's absolute correlation with age
+  and then took its square root again when forming `r_char`; BioAge stores R²
+  and takes the square root once. The extra root inflated `r_char`, shrank
+  `s_R`, and loosened the pull toward chronological age, so KDM correlated too
+  weakly with age and spread too widely. Three further details now follow
+  BioAge (Kwon and Belsky 2021): each biomarker is regressed on the rows where
+  it is present, the residual SD uses divisor n − 1, and `s_BA²` is estimated on
+  the reference and kept with the fit, so projecting into another cohort uses
+  the reference's value as BioAge does. `kdm()` gains `max_missing=2`, BioAge's
+  rule for when a sample is too incomplete to score. Against the `kdm0` column
+  BioAge ships with NHANES III, mean absolute difference 1.77 → 0.0007 years
+  (maximum 17.1 → 0.007, n = 9,583); `max_missing=0` reproduces its missing
+  pattern exactly as well. The check runs on every test run from a 227 KB
+  fixture of those NHANES rows (`python/tests/data/`, provenance in its
+  `SOURCE.md`).
+
 - **`consensus()` skipped its most important corroboration check in silence.**
   The rule from *When to Trust Epigenetic Clocks* turns on whether a clock's
   principal-component version agrees, and the partner id was derived as `pc` +

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -130,6 +132,86 @@ def test_kdm_recovers_age_on_its_own_reference(synthetic_clinical):
     assert r > best_single + 0.2, (
         f"KDM ({r:.3f}) barely beat the best single marker ({best_single:.3f}); "
         "combining the panel is supposed to be worth something")
+
+
+KDM0_FIXTURE = Path(__file__).resolve().parents[1] / "data" / "nhanes3_kdm0_fixture.csv.gz"
+KDM0_MARKERS = ["fev", "sbp", "totchol", "hba1c", "albumin", "creat", "lncrp", "alp", "bun"]
+
+
+def test_kdm_reproduces_bioage_kdm0():
+    """The reference implementation, reproduced to its own rounding.
+
+    BioAge trains ``kdm0`` by sex on NHANES III aged 30 to 75, non-pregnant, and
+    its shipped column is complete-case (every row with a value carries all nine
+    markers), which ``max_missing=0`` reproduces. FALCONAge 1.0.0 was 1.77 years
+    out on these rows, most of it from taking the square root of a correlation
+    in ``r_char``; see python/tests/data/SOURCE.md for the fixture.
+    """
+    d = pd.read_csv(KDM0_FIXTURE)
+    parts = []
+    for sex in (1, 2):
+        rows = d[d["gender"] == sex]
+        ref = clinical.fit_kdm(rows, KDM0_MARKERS)
+        parts.append(pd.DataFrame({"kdm": clinical.kdm(rows, ref, max_missing=0),
+                                   "kdm0": rows["kdm0"]}))
+    out = pd.concat(parts)
+
+    assert (out["kdm"].isna() == out["kdm0"].isna()).all(), "missing pattern differs"
+    both = out.dropna()
+    diff = (both["kdm"] - both["kdm0"]).abs()
+    assert len(both) == 9583
+    assert diff.mean() < 0.005, f"mean |difference| {diff.mean():.4f} years"
+    assert diff.max() < 0.02, f"max |difference| {diff.max():.4f} years"
+
+
+def test_r_char_weights_the_correlation_not_its_square_root():
+    """BioAge: r1 = |k/s| * sqrt(R^2), and sqrt(R^2) is |correlation|.
+
+    Two markers built so that their correlations with age are known; r_char
+    must be the |k/s|-weighted mean of those correlations.
+    """
+    rng = np.random.default_rng(3)
+    age = rng.uniform(30, 75, 400)
+    df = pd.DataFrame({"age": age,
+                       "a": 2.0 * age + rng.normal(0, 20, 400),
+                       "b": -0.5 * age + rng.normal(0, 30, 400)})
+    ref = clinical.fit_kdm(df, ["a", "b"])
+
+    corr = np.array([abs(np.corrcoef(age, df[m])[0, 1]) for m in ("a", "b")])
+    w = np.abs(ref.k / ref.s)
+    assert ref.r == pytest.approx(corr)
+    assert ref.r_char == pytest.approx(float(np.sum(w * corr) / np.sum(w)))
+    assert ref.r_char != pytest.approx(float(np.sum(w * np.sqrt(corr)) / np.sum(w)))
+
+
+def test_kdm_follows_bioage_on_missing_markers(synthetic_clinical):
+    """More than two markers missing is NaN, BioAge's rule; None lifts it."""
+    df = synthetic_clinical.X
+    ref = clinical.fit_kdm(df, MARKERS)
+    one = df.head(1).copy()
+    one.loc[:, MARKERS[:3]] = np.nan
+
+    assert np.isnan(clinical.kdm(one, ref).iloc[0])
+    assert np.isfinite(clinical.kdm(one, ref, max_missing=3).iloc[0])
+    assert np.isfinite(clinical.kdm(one, ref, max_missing=None).iloc[0])
+
+
+def test_kdm_projects_with_the_reference_s_ba2(synthetic_clinical):
+    """s_BA^2 is fitted on the reference and reused, as BioAge projects.
+
+    Scoring a different cohort must use the reference's value, not one
+    re-estimated on the cohort being scored.
+    """
+    df = synthetic_clinical.X
+    ref = clinical.fit_kdm(df.iloc[:300], MARKERS)
+    other = df.iloc[300:]
+    x = other[MARKERS].to_numpy(dtype=float)
+    num = np.sum((x - ref.q) * ref.k / ref.s**2, axis=1)
+    den = float(np.sum((ref.k / ref.s) ** 2))
+    expected = (num + other["age"].to_numpy() / ref.s_ba2) / (den + 1.0 / ref.s_ba2)
+
+    assert ref.s_ba2 > 0
+    assert clinical.kdm(other, ref).to_numpy() == pytest.approx(expected)
 
 
 def test_kdm_refuses_a_marker_that_does_not_vary(synthetic_clinical):

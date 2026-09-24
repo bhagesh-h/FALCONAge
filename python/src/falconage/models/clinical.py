@@ -152,21 +152,31 @@ def phenoage(df: pd.DataFrame) -> pd.Series:
 class KDMReference:
     """Per-biomarker regressions on chronological age, fitted on a reference.
 
-    Follows Klemera and Doubal 2006 as implemented in the BioAge R package,
-    including the ``s_R`` correction. Every symbol below is theirs:
+    Follows Klemera and Doubal 2006 as implemented in the BioAge R package
+    (Kwon and Belsky 2021, ``R/kdm_calc.R``), including the ``s_R``
+    correction. Every symbol below is theirs:
 
     ``k``, ``q``, ``s``
         slope, intercept and residual standard deviation of each biomarker
         regressed on chronological age.
+    ``r``
+        the absolute correlation of each biomarker with age, which for a
+        one-predictor regression is exactly the square root of its R-squared.
+        BioAge stores R-squared and takes ``sqrt(r)``; this stores the root, so
+        ``r_char`` uses it directly. Taking the root a second time was the
+        FALCONAge 1.0.0 bug recorded in the CHANGELOG.
     ``r_char``
-        the characteristic correlation, a ``|k/s|``-weighted mean of the
-        per-marker correlations with age.
+        the characteristic correlation, a ``|k/s|``-weighted mean of ``r``.
     ``s_r``
         the variance the estimator would have if biological and chronological
         age were the same thing. Subtracting it from the observed variance is
         what stops KDM collapsing onto chronological age when the biomarkers
         carry little information -- omit it and every KDM paper's headline
         finding becomes an artefact of the age range.
+    ``s_ba2``
+        the variance of biological age around chronological age, estimated on
+        the **reference** at fit time and reused when scoring another cohort,
+        which is how BioAge projects a fit into new data.
     """
 
     markers: list[str]
@@ -178,7 +188,13 @@ class KDMReference:
     s_r: float
     n_reference: int
     age_range: tuple[float, float]
-    s_ba2: float | None = None   # None: estimated from the scored cohort
+    #: Estimated on the reference by :func:`fit_kdm`. ``None`` only on a
+    #: hand-built reference, in which case :func:`kdm` estimates it from the
+    #: scored cohort instead and says so in its docstring.
+    s_ba2: float | None = None
+    #: Rows each marker's regression was fitted on. Markers are regressed one
+    #: at a time on the rows where that marker is present, so these differ.
+    n_per_marker: np.ndarray | None = None
 
     def describe(self) -> pd.DataFrame:
         return pd.DataFrame({"slope": self.k, "intercept": self.q,
@@ -188,27 +204,42 @@ class KDMReference:
 
 def fit_kdm(reference: pd.DataFrame, markers: list[str], age_col: str = "age",
             s_ba2: float | None = None) -> KDMReference:
-    """Fit the KDM reference regressions.
+    """Fit the KDM reference regressions, as BioAge's ``kdm_calc`` does.
 
-    ``s_ba2`` is normally left ``None`` and estimated from the cohort being
-    scored, as the reference implementation does. Pass a value to hold it fixed
-    when scoring several cohorts that must be comparable -- otherwise each gets
-    its own and the numbers are not on the same scale.
+    Each step follows BioAge (Kwon and Belsky, GeroScience 2021;43:2795-2808),
+    and together they reproduce the ``kdm0`` column BioAge ships with its NHANES
+    III extract to 0.0007 years mean absolute difference (maximum 0.007 years,
+    n = 9,583), where FALCONAge 1.0.0 was 1.77 years out:
+
+    1. Each biomarker is regressed on age on the rows where **that biomarker**
+       is present (``svyglm`` per marker, missing rows dropped per model), not
+       on the rows where every biomarker is present.
+    2. The residual SD is ``sd(residuals)``, divisor n - 1, as BioAge's
+       ``get_effs`` takes it for a ``glm`` fit.
+    3. ``r_char`` weights the absolute correlation, the square root of R-squared.
+    4. ``s_R`` uses the age range of the whole reference.
+    5. ``s_BA^2`` is the variance of ``BA_E - CA`` on the reference rows with
+       every biomarker present, minus ``s_R``, and is kept with the fit.
+
+    ``s_ba2`` overrides step 5. Pass a value to put several fits on one scale.
     """
-    ref = reference.dropna(subset=[age_col, *markers])
-    if len(ref) < 30:
-        raise AnalysisError(
-            f"KDM reference has {len(ref)} complete rows; fewer than 30 makes the "
-            "per-marker regressions meaningless. Supply a larger reference cohort."
-        )
-    age = ref[age_col].to_numpy(dtype=np.float64)
-    k, q, s, r = [], [], [], []
+    ref_all = reference[reference[age_col].notna()]
+    age_all = ref_all[age_col].to_numpy(dtype=np.float64)
+    k, q, s, r, n_used = [], [], [], [], []
     degenerate = []
     for m in markers:
-        y = ref[m].to_numpy(dtype=np.float64)
+        present = ref_all[m].notna().to_numpy()
+        if int(present.sum()) < 30:
+            raise AnalysisError(
+                f"KDM reference has {int(present.sum())} rows with {m!r} and an age; "
+                "fewer than 30 makes the per-marker regression meaningless. Supply a "
+                "larger reference cohort or leave the marker out."
+            )
+        age = age_all[present]
+        y = ref_all[m].to_numpy(dtype=np.float64)[present]
         slope, intercept = np.polyfit(age, y, 1)
         resid = y - (slope * age + intercept)
-        sd = float(np.std(resid, ddof=2))
+        sd = float(np.std(resid, ddof=1))
         # A marker with no residual spread is not a perfect predictor, it is a
         # column that does not vary -- a unit conversion that collapsed it, a
         # single value carried down a spreadsheet, a lab that reported one
@@ -231,14 +262,17 @@ def fit_kdm(reference: pd.DataFrame, markers: list[str], age_col: str = "age",
         k.append(slope)
         q.append(intercept)
         s.append(sd)
+        # |correlation| is the square root of this regression's R-squared, which
+        # is the quantity BioAge's r1 = |k/s| * sqrt(r.squared) weights.
         r.append(abs(float(np.corrcoef(age, y)[0, 1])))
+        n_used.append(int(present.sum()))
 
     if degenerate:
         raise AnalysisError(
             "KDM cannot use a marker that does not vary: "
             + ", ".join(f"{m!r}" for m in degenerate)
-            + f"\n  Each has zero residual spread across the {len(ref)} reference "
-            "rows, so its contribution to the estimate is a division by zero.\n"
+            + "\n  Each has zero residual spread across the reference rows that "
+            "carry it, so its contribution to the estimate is a division by zero.\n"
             "  This is nearly always a data problem rather than a biological one "
             "-- a unit conversion that\n  collapsed the column, or one value "
             "filled down. Check the column, then either fix it or\n  leave it out "
@@ -248,16 +282,62 @@ def fit_kdm(reference: pd.DataFrame, markers: list[str], age_col: str = "age",
     k, q, s, r = (np.asarray(v, dtype=np.float64) for v in (k, q, s, r))
 
     ks = np.abs(k / s)
-    r_char = float(np.sum(ks * np.sqrt(r)) / np.sum(ks))
-    lo, hi = float(age.min()), float(age.max())
+    r_char = float(np.sum(ks * r) / np.sum(ks))
+    lo, hi = float(age_all.min()), float(age_all.max())
     s_r = float(((1 - r_char**2) / r_char**2) * ((hi - lo) ** 2 / (12 * len(markers)))) \
         if r_char > 0 else np.inf
 
-    return KDMReference(list(markers), k, q, s, r, r_char, s_r, len(ref), (lo, hi), s_ba2)
+    complete = ref_all.dropna(subset=list(markers))
+    if s_ba2 is None:
+        if len(complete) < 30:
+            raise AnalysisError(
+                f"KDM reference has {len(complete)} rows with every marker present; "
+                "fewer than 30 cannot estimate s_BA^2, the variance that anchors "
+                "biological age to chronological age. Supply a larger reference, "
+                "fewer markers, or a fixed s_ba2= from another fit."
+            )
+        s_ba2 = _s_ba2(complete[list(markers)].to_numpy(dtype=np.float64),
+                       complete[age_col].to_numpy(dtype=np.float64), q, k, s, s_r)
+
+    return KDMReference(list(markers), k, q, s, r, r_char, s_r, len(complete), (lo, hi),
+                        float(s_ba2), np.asarray(n_used))
 
 
-def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age") -> pd.Series:
-    """Klemera-Doubal biological age in years."""
+def _s_ba2(x: np.ndarray, age: np.ndarray, q, k, s, s_r: float) -> float:
+    """``s_BA^2 = var(BA_E - CA) - s_R`` on complete rows.
+
+    The variance is the population form, ``mean((d - mean(d))^2)``, which is
+    BioAge's ``s2 = mean(t1)``.
+    """
+    ba_e = np.sum((x - q) * k / s**2, axis=1) / float(np.sum((k / s) ** 2))
+    d = ba_e - age
+    return float(np.mean((d - d.mean()) ** 2) - s_r)
+
+
+def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age",
+        max_missing: int | None = 2) -> pd.Series:
+    """Klemera-Doubal biological age in years.
+
+    Parameters
+    ----------
+    max_missing
+        A sample missing more than this many of the reference's markers scores
+        NaN. Two is BioAge's rule (``kdm = ifelse(BA_nmiss > 2, NA, kdm)``).
+        ``None`` scores any sample with at least one marker, which is not a
+        published behaviour and should be justified wherever it is used.
+
+    Notes
+    -----
+    For a sample missing some markers, the numerator sums over the markers it
+    has while the denominator sums over all of them. That is BioAge's formula
+    and it pulls such a sample toward chronological age; ``max_missing`` is
+    what keeps the pull small.
+
+    ``s_BA^2`` comes from the reference. A hand-built reference without one
+    falls back to estimating it on this cohort's complete rows, which is the
+    right answer only when the reference and the scored cohort are the same
+    people.
+    """
     missing = [m for m in ref.markers if m not in df.columns]
     if missing:
         raise DataError("KDM needs the reference's markers; missing: " + ", ".join(missing))
@@ -265,27 +345,27 @@ def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age") -> pd.Series:
     age = df[age_col].to_numpy(dtype=np.float64)
 
     num = np.nansum((x - ref.q) * ref.k / ref.s**2, axis=1)
-    den = float(np.nansum((ref.k / ref.s) ** 2))
-
-    # BA_E, the estimate before the chronological-age term, rescaled for any
-    # marker this sample is missing so a partial panel is not silently shrunk
-    # toward zero.
+    den = float(np.sum((ref.k / ref.s) ** 2))
     n_obs = np.isfinite(x).sum(axis=1)
-    ba_e = (num / den) * (len(ref.markers) / np.maximum(n_obs, 1))
+    n_miss = len(ref.markers) - n_obs
+    drop = n_obs == 0 if max_missing is None else n_miss > max_missing
 
     s_ba2 = ref.s_ba2
     if s_ba2 is None:
-        d = ba_e - age
-        s_ba2 = float(np.nanmean((d - np.nanmean(d)) ** 2) - ref.s_r)
+        full = n_miss == 0
+        s_ba2 = _s_ba2(x[full], age[full], ref.q, ref.k, ref.s, ref.s_r) \
+            if full.sum() >= 2 else np.nan
+
     if not np.isfinite(s_ba2) or s_ba2 <= 0:
         # The biomarkers carry no information beyond age. Klemera and Doubal's
         # correction is larger than the observed spread, and the honest answer
         # is the biomarker estimate itself rather than a division by a negative
-        # variance that silently flips the sign of the age term.
-        return pd.Series(ba_e, index=df.index, name="kdm")
-
-    return pd.Series((num + age / s_ba2) / (den + 1.0 / s_ba2),
-                     index=df.index, name="kdm")
+        # variance that silently flips the sign of the age term. BA_E is
+        # rescaled for absent markers exactly as BioAge's BA_e is.
+        out = (num / den) * (len(ref.markers) / np.maximum(n_obs, 1))
+    else:
+        out = (num + age / s_ba2) / (den + 1.0 / s_ba2)
+    return pd.Series(np.where(drop, np.nan, out), index=df.index, name="kdm")
 
 
 # ---------------------------------------------------------------------------

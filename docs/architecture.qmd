@@ -1264,18 +1264,20 @@ The `0.090165` constant is the corrected one; BioAge's April 2026 commit fixed a
 **KDM.** Fit-then-project, with the fit reusable:
 
 ```python
-def kdm_fit(train: pd.DataFrame, biomarkers: list[str], age_col: str = "age",
-            weights: str | None = None) -> KDMFit
-def kdm_project(data: pd.DataFrame, fit: KDMFit, s_ba2: float | None = None) -> pd.DataFrame
-def kdm(data, biomarkers, fit=None, by_sex=True) -> pd.DataFrame
+def fit_kdm(reference: pd.DataFrame, markers: list[str], age_col: str = "age",
+            s_ba2: float | None = None) -> KDMReference
+def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age",
+        max_missing: int | None = 2) -> pd.Series
 ```
 
 The math is [the science notes §4.4](science.qmd), transcribed from
 [`BioAge/R/kdm_calc.R`](https://github.com/dayoonkwon/BioAge) including the details
-that matter: `r_char` from the ratio of two weighted sums, `s_r` from the age range and biomarker
-count, the `s_BA²` correction, and the rule that a sample with more than two missing biomarkers
-returns NA rather than a partial score. Packaged NHANES III/IV fits ship as a `KDMFit` so the
-common case needs no training data.
+that matter: per-marker regressions on the rows carrying each marker, `r_char` from the ratio of
+two weighted sums, `s_r` from the age range and biomarker count, `s_BA²` estimated on the
+reference and kept with the fit, and the rule that a sample with more than two missing
+biomarkers returns NA rather than a partial score. Fitting by sex is the caller's choice: fit one
+reference per sex, as BioAge does. The result reproduces BioAge's shipped `kdm0` to 0.0007 years
+(§4.4); a packaged NHANES III fit is not yet shipped.
 
 **Homeostatic dysregulation.** Mahalanobis distance from a young reference cohort:
 
