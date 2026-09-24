@@ -382,6 +382,83 @@ def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age",
 
 
 # ---------------------------------------------------------------------------
+# Is a reduced panel still the same clock?
+# ---------------------------------------------------------------------------
+def validate_panel(reference: pd.DataFrame, full: list[str], reduced: list[str], *,
+                   age_col: str = "age", sex_col: str | None = None,
+                   time_col: str | None = None, event_col: str | None = None) -> pd.DataFrame:
+    """Compare a reduced KDM panel with the full one on a reference cohort.
+
+    A cohort that measured only some of a clock's biomarkers can still use KDM,
+    because KDM is defined for any panel, but the reduced clock is a different
+    clock until shown otherwise. This fits both panels on the same reference
+    rows (every biomarker of the full panel present, fitted by sex when
+    ``sex_col`` is given, as BioAge fits), scores those rows, and reports how
+    closely the two agree.
+
+    With ``time_col`` and ``event_col`` it also reports each panel's mortality
+    hazard ratio in BioAge's ``table_surv`` specification: KDM advance
+    (``kdm - age``) standardised within sex, in a Cox model with age and sex as
+    covariates (age alone without ``sex_col``), Breslow ties, as a hazard ratio
+    per standard deviation with a 95% interval.
+
+    Returns one row per panel. ``attrs["agreement"]`` holds the correlation of
+    the two biological ages, of the two advances, and their mean absolute
+    difference in years.
+    """
+    missing = [m for m in reduced if m not in full]
+    if missing:
+        raise AnalysisError(f"the reduced panel names markers the full one does not: {missing}")
+    need = [age_col, *full] + ([sex_col] if sex_col else [])
+    rows = reference.dropna(subset=need)
+    groups = [rows] if sex_col is None else [g for _, g in rows.groupby(sex_col)]
+
+    scored = {}
+    for name, markers in (("full", list(full)), ("reduced", list(reduced))):
+        parts = []
+        for g in groups:
+            ref = fit_kdm(g, markers, age_col=age_col)
+            k = kdm(g, ref, age_col=age_col, max_missing=0)
+            adv = k - g[age_col]
+            parts.append(pd.DataFrame({"kdm": k, "advance": adv,
+                                       "advance_z": (adv - adv.mean()) / adv.std(ddof=1)}))
+        scored[name] = pd.concat(parts).loc[rows.index]
+
+    out = []
+    for name, markers in (("full", list(full)), ("reduced", list(reduced))):
+        s = scored[name]
+        row = {"panel": name, "n_markers": len(markers), "n": int(len(s)),
+               "r_with_age": float(np.corrcoef(s["kdm"], rows[age_col])[0, 1])}
+        if time_col and event_col:
+            from ..analysis import _cox_breslow
+
+            cov = [s["advance_z"].to_numpy(), rows[age_col].to_numpy(dtype=np.float64)]
+            if sex_col:
+                codes = pd.factorize(rows[sex_col])[0].astype(np.float64)
+                cov.append(codes)
+            ok = rows[time_col].notna() & rows[event_col].notna()
+            X = np.column_stack(cov)[ok.to_numpy()]
+            b, v = _cox_breslow(X, rows.loc[ok, time_col].to_numpy(dtype=np.float64),
+                                rows.loc[ok, event_col].to_numpy(dtype=np.float64))
+            se = float(np.sqrt(v[0, 0]))
+            row.update({"n_survival": int(ok.sum()),
+                        "events": int(rows.loc[ok, event_col].sum()),
+                        "hr_per_sd": float(np.exp(b[0])),
+                        "hr_lo": float(np.exp(b[0] - 1.96 * se)),
+                        "hr_hi": float(np.exp(b[0] + 1.96 * se))})
+        out.append(row)
+
+    table = pd.DataFrame(out).set_index("panel")
+    f, r = scored["full"], scored["reduced"]
+    table.attrs["agreement"] = {
+        "r_kdm": float(np.corrcoef(f["kdm"], r["kdm"])[0, 1]),
+        "r_advance": float(np.corrcoef(f["advance"], r["advance"])[0, 1]),
+        "mean_abs_diff_years": float((f["kdm"] - r["kdm"]).abs().mean()),
+    }
+    return table
+
+
+# ---------------------------------------------------------------------------
 # BioAge's kdm0, packaged
 # ---------------------------------------------------------------------------
 #: Where a sex label may come from. NHANES codes 1 = male and 2 = female.

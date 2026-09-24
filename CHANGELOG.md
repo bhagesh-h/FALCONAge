@@ -12,6 +12,14 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **`validate_panel()`: is a reduced KDM panel still the same clock?** Fits the
+  full and reduced panels on the same reference rows, by sex, and reports their
+  agreement and each panel's mortality hazard ratio in BioAge's `table_surv`
+  form: KDM advance standardised within sex, Cox with age and sex, HR per SD.
+  On NHANES III, 300OB's nine-marker panel against the full twelve gives
+  r = 0.978 for biological age and 0.895 for advance, with HR per SD of 1.353
+  against 1.349.
+
 - **BioAge compatibility, stated and reproducible.** `kdm_bioage()` scores on the
   scale of BioAge's `kdm0` (nine biomarkers, fitted by sex on NHANES III aged 30
   to 75) from a packaged fit that reproduces BioAge's own column to under 0.001
@@ -51,7 +59,10 @@ own `registry_version` so a coefficient correction can be pinned independently o
   CpGs were QC removals (11.1% of its weight), Hannum's 11 split 5 and 6, and
   Horvath's 27 split 8 and 19.
 
-### Fixed
+- **A clock in physical units now warns when its cohort median is impossible.**
+  `score()` raises an `implausible` warning when a `telomere_kb` clock's median
+  falls outside 4 to 12 kb, the range Lu et al. 2019 report. The DNAmTL sign
+  error above would have been caught by it.
 
 - **`falconage.disorder`: reading an aging methylome without predicting an age.**
   Tong et al. (Nat Aging 2024) found 66 to 75 per cent of Horvath2013's accuracy
@@ -109,6 +120,20 @@ own `registry_version` so a coefficient correction can be pinned independently o
 - `docs/beyond-clocks.qmd` documents all of the above, and `test/build_report.py`
   makes the single-file HTML report reproducible rather than ad hoc.
 
+### Fixed
+
+- **Cox hazard ratios were slightly wrong whenever event times were tied.** The
+  risk set at each event time was read from a cumulative sum over time-sorted
+  subjects, which left out tied subjects sorted before the event, so the fit
+  was not Breslow's even though the docstring said it was. On 400 subjects with
+  295 tied times the coefficient was 0.4296 against R's 0.4248 (1.1% off). The
+  fit is now Newton-Raphson on Breslow's partial likelihood, handles several
+  covariates, and matches R's `survival::coxph(ties = "breslow")` to six
+  decimals, coefficients and standard errors, in a test with R's values
+  recorded beside the fixture. Follow-up in whole months, as NHANES records
+  it, makes ties the normal case. The guide also described `cox_hazard()` as
+  reporting a ratio per SD; it reports one per unit of the score.
+
 - **`overlap.csv` filed DNAmStress under `sex_or_chromosome`.** To match
   "GDF-15" against "gdf15", `target_class` compared the training target with all
   separators removed, which fused "stress exposure" into "…ssexposure" and let
@@ -127,11 +152,6 @@ own `registry_version` so a coefficient correction can be pinned independently o
   table sits behind PMC's download challenge and was not re-read, and the
   registry says so. The registry version moves to 1.1.1, because a coefficient
   correction must be visible even when the code does not change.
-
-- **A clock in physical units now warns when its cohort median is impossible.**
-  `score()` raises an `implausible` warning when a `telomere_kb` clock's median
-  falls outside 4 to 12 kb, the range Lu et al. 2019 report. The DNAmTL sign
-  error above would have been caught by it.
 
 - **Klemera-Doubal biological age was 1.77 years away from the reference
   implementation, and every KDM value computed with an earlier 1.0.0 build is
@@ -171,12 +191,16 @@ own `registry_version` so a coefficient correction can be pinned independently o
 - `run_registry` in `test/run_all.py` filtered on the retired `A`/`B`/`C` tier
   letters after the availability groups were renamed, so it wrote three empty
   tables instead of failing. It now filters on `bundled`/`untraced`/`licensed`.
+
 - The package docstring advertised 161 clocks and 22 bundled; the registry
   carries 175 and 46.
+
 - `docs/build_catalogue.py` ran `_short_cite` on `fiage`, whose citation field
   is a prose note rather than a citation, producing a mangled fragment that read
   like a citation which had failed to link. Clocks with no traceable primary
   source now say so and link the catalogue they came from.
+
+### Added
 
 - **Meer's whole-lifespan mouse clock**, from its own supplement rather than
   from anyone's copy of it: eLife publishes the 435 sites and their weights

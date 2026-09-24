@@ -671,7 +671,7 @@ Two figures that most aging-clock papers carry, and that need the analysis funct
 #### Python
 
 ```python
-fa.cox_hazard(res, time_col="time", event_col="status")      # hazard ratio per SD
+fa.cox_hazard(res, time_col="time", event_col="status")      # HR per unit (per year for an age clock)
 fa.plot.kaplan_meier(res, "horvath2013",
                      time_col="time", event_col="status")    # the figure
 ```

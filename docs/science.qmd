@@ -441,7 +441,13 @@ members of any registry.
 ### 4.3 Survival models
 
 **Cox proportional hazards.** `h(t|x) = h₀(t) exp(x'β)`. The linear predictor `x'β` is a
-log-hazard, unbounded, not in years. GrimAge, GrimAge2, CpGPTGrimAge3, SenMortalityAge and the
+log-hazard, unbounded, not in years. FALCONAge fits it by Newton–Raphson on the partial likelihood with
+Breslow's handling of tied event times, where the risk set at a time includes every subject still
+followed at that time, tied subjects included, and matches R's `survival::coxph(ties = "breslow")`
+to six decimals in its tests. Follow-up recorded in whole months, as NHANES is, makes ties the
+usual case rather than the exception; FALCONAge 1.0.0 left tied subjects out of each other's risk
+sets and was 1.1% off R on such data. `cox_hazard()` reports the hazard ratio per unit of the
+score, per year for an age clock. GrimAge, GrimAge2, CpGPTGrimAge3, SenMortalityAge and the
 organAging mortality models all output this.
 
 **Cox → years.** GrimAge standardises the Cox score against training-set moments then rescales
@@ -514,7 +520,12 @@ r = 0.94. The shipped `kdm0` is complete-case (every row with a value carries al
 `max_missing=2` is the rule in today's code. FALCONAge 1.0.0 took the square root of the
 correlation in `r_char`, where the formula takes the square root of R², and was 1.77 years out on
 the same rows. The regression test runs on a fixture of those NHANES III rows
-(`python/tests/data/`). `fa.models.clinical.kdm_bioage(df)` scores a cohort on the `kdm0` scale
+(`python/tests/data/`). `fa.models.clinical.validate_panel(reference, full, reduced)` asks
+whether a reduced panel is still the same clock: both are fitted on the same reference rows, and
+their agreement and mortality hazard ratios are reported, the latter in BioAge's `table_surv`
+form (advance standardised within sex, Cox with age and sex, HR per SD). On NHANES III, 300OB's
+nine-marker panel against the twelve-marker one gives r = 0.978 for biological age, r = 0.895 for
+advance, and HR per SD of 1.353 against 1.349. `fa.models.clinical.kdm_bioage(df)` scores a cohort on the `kdm0` scale
 from a packaged fit of those rows (`registry/data/kdm_bioage_nhanes3.json`, built by
 `python/tools/build_kdm_bioage.py`), which is what most NHANES papers mean by KDM biological age.
 It takes BioAge's column names and units: FEV1 in mL, SBP in mmHg, total cholesterol in mg/dL,

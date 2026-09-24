@@ -27,3 +27,19 @@ rows missing.
 harmonisation and variable naming are the BioAge authors' work, distributed under GPL-3, which
 FALCONAge's GPL-3.0-or-later covers. Cite: Kwon D, Belsky DW. A toolkit for quantifying aging in
 humans. GeroScience 2021;43:2795-2808. https://doi.org/10.1007/s11357-021-00480-5
+
+## `cox_ties.csv`
+
+400 synthetic subjects with heavily tied event times (295 of 400 times shared), for checking the
+Cox fit against R's `survival::coxph(..., ties = "breslow")`, the reference implementation of
+Breslow's handling of ties. Generated once with NumPy `default_rng(7)`: `x`, `age`, `sex`,
+exponential event times with hazard `exp(0.5 x + 0.04 (age - 55) + 0.3 sex)` rounded up to whole
+months, uniform censoring. Stored rather than regenerated because NumPy does not promise
+identical random streams across versions.
+
+Reference values, R 4.5.3 with `survival` 3.8.6, `ties = "breslow"`:
+
+| Model | Coefficients | Standard errors |
+|---|---|---|
+| `~ x` | 0.424830 | 0.069674 |
+| `~ x + age + sex` | 0.512266, 0.039324, 0.419025 | 0.071065, 0.004888, 0.127651 |

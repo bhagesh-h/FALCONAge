@@ -399,3 +399,32 @@ def test_bioage_hd_scale_divides_by_the_cohort_spread(synthetic_clinical):
     out = clinical.bioage_hd_scale(clinical.hd(synthetic_clinical.X, ref))
     assert out["hd"].std(ddof=1) == pytest.approx(1.0)
     assert out["hd_log"].std(ddof=1) == pytest.approx(1.0)
+
+
+def test_validate_panel_compares_a_reduced_panel_with_the_full_one(synthetic_clinical):
+    """A reduced panel close to the full one agrees; the planted mortality
+    signal on KDM advance shows as a hazard ratio above one for both."""
+    df = synthetic_clinical.X.copy()
+    ref = clinical.fit_kdm(df, MARKERS)
+    adv = clinical.kdm(df, ref) - df["age"]
+    rng = np.random.default_rng(11)
+    hazard = np.exp(0.15 * (adv - adv.mean()) + 0.05 * (df["age"] - 55))
+    df["time"] = np.ceil(rng.exponential(120 / hazard))
+    df["dead"] = (df["time"] < 150).astype(int)
+    df["time"] = df["time"].clip(upper=150)
+    df["sex"] = np.where(np.arange(len(df)) % 2, "M", "F")
+
+    out = clinical.validate_panel(df, MARKERS, MARKERS[:-2], sex_col="sex",
+                                  time_col="time", event_col="dead")
+    assert list(out.index) == ["full", "reduced"]
+    assert out.loc["reduced", "n_markers"] == len(MARKERS) - 2
+    assert out.attrs["agreement"]["r_kdm"] > 0.9
+    assert (out["hr_per_sd"] > 1).all()
+    assert (out["hr_lo"] < out["hr_per_sd"]).all() and (out["hr_per_sd"] < out["hr_hi"]).all()
+
+
+def test_validate_panel_refuses_markers_outside_the_full_panel(synthetic_clinical):
+    from falconage.core.errors import AnalysisError
+
+    with pytest.raises(AnalysisError, match="does not"):
+        clinical.validate_panel(synthetic_clinical.X, MARKERS[:3], ["albumin", "not_a_marker"])

@@ -452,3 +452,28 @@ def test_no_manifest_in_the_cache_means_no_attribution(synthetic_betas, isolated
     res = fa.score(d, clocks=["horvath2013"], min_coverage=0.5)
     assert "n_removed_by_qc" not in res.coverage["horvath2013"]
     assert not [r for r in res.manifest.warnings if r["category"] == "probe_qc"]
+
+
+# ---------------------------------------------------------------------------
+# Cox: Breslow ties, checked against R's survival::coxph
+# ---------------------------------------------------------------------------
+
+def test_cox_matches_r_coxph_breslow_on_tied_times():
+    """Reference values from R 4.5.3, survival 3.8.6, ties = "breslow"; see
+    python/tests/data/SOURCE.md. 295 of the 400 event times are tied, which is
+    the case the previous implementation got wrong (its risk sets dropped the
+    tied subjects sorted before each event, 1.1% off on this data)."""
+    from pathlib import Path
+
+    from falconage.analysis import _cox_breslow, _cox_newton
+
+    d = pd.read_csv(Path(__file__).resolve().parents[1] / "data" / "cox_ties.csv")
+    t, e = d["time"].to_numpy(), d["status"].to_numpy()
+
+    b, se = _cox_newton(d["x"].to_numpy(), t, e)
+    assert b == pytest.approx(0.424830, abs=1e-5)
+    assert se == pytest.approx(0.069674, abs=1e-5)
+
+    B, C = _cox_breslow(d[["x", "age", "sex"]].to_numpy(), t, e)
+    assert B == pytest.approx([0.512266, 0.039324, 0.419025], abs=1e-5)
+    assert np.sqrt(np.diag(C)) == pytest.approx([0.071065, 0.004888, 0.127651], abs=1e-5)

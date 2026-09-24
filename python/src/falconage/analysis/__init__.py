@@ -380,35 +380,64 @@ def cox_hazard(result, *, time_col: str, event_col: str,
     return df
 
 
-def _cox_newton(x: np.ndarray, t: np.ndarray, e: np.ndarray,
-                iters: int = 40) -> tuple[float, float]:
-    # Standardise first: raw clock scores span 20-90 for an age clock and
-    # -2 to 2 for a log-hazard, and Newton on the raw scale converges for one
-    # and oscillates for the other.
-    mu, sd = float(x.mean()), float(x.std()) or 1.0
-    z = (x - mu) / sd
-    order = np.argsort(t)
-    z, t, e = z[order], t[order], e[order]
+def _cox_breslow(X: np.ndarray, t: np.ndarray, e: np.ndarray,
+                 iters: int = 50) -> tuple[np.ndarray, np.ndarray]:
+    """Cox proportional hazards by Newton-Raphson on Breslow's partial likelihood.
 
-    beta = 0.0
+    Cox 1972 with Breslow's 1974 treatment of tied event times: the risk set at
+    an event time is everyone whose time is at least that time, tied subjects
+    included. Returns coefficients and their covariance (the inverse observed
+    information), on the scale of the columns of ``X``. Agrees with R's
+    ``survival::coxph(..., ties = "breslow")`` to the sixth decimal, which the
+    tests check.
+    """
+    X = np.asarray(X, dtype=np.float64)
+    if X.ndim == 1:
+        X = X[:, None]
+    # Standardise for the Newton steps: clock scores span 20 to 90 and
+    # log-hazards -2 to 2, and Newton on the raw scale converges for one and
+    # oscillates for the other. Transformed back below.
+    mu = X.mean(axis=0)
+    sd = X.std(axis=0)
+    sd[sd == 0] = 1.0
+    Z = (X - mu) / sd
+    order = np.argsort(t, kind="mergesort")
+    Z, t, e = Z[order], np.asarray(t, float)[order], np.asarray(e, float)[order]
+    # First row of each tied block: a reverse cumulative sum read from there
+    # covers every subject with time >= this time, ties included.
+    first = np.searchsorted(t, t, side="left")
+    n, p = Z.shape
+    beta = np.zeros(p)
+    info = np.eye(p)
     for _ in range(iters):
-        r = np.exp(beta * z)
-        # risk set = everyone with time >= this event time (Breslow ties)
-        cum_r = np.cumsum(r[::-1])[::-1]
-        cum_rz = np.cumsum((r * z)[::-1])[::-1]
-        cum_rz2 = np.cumsum((r * z * z)[::-1])[::-1]
-        m1 = cum_rz / cum_r
-        m2 = cum_rz2 / cum_r - m1**2
-        grad = float(np.sum(e * (z - m1)))
-        hess = float(np.sum(e * m2))
-        if hess <= 1e-12:
+        r = np.exp(Z @ beta)
+        s0 = np.cumsum(r[::-1])[::-1][first]
+        s1 = np.cumsum((r[:, None] * Z)[::-1], axis=0)[::-1][first]
+        s2 = np.cumsum((r[:, None, None] * Z[:, :, None] * Z[:, None, :])[::-1],
+                       axis=0)[::-1][first]
+        m1 = s1 / s0[:, None]
+        grad = (e[:, None] * (Z - m1)).sum(axis=0)
+        info = (e[:, None, None] * (s2 / s0[:, None, None]
+                                    - m1[:, :, None] * m1[:, None, :])).sum(axis=0)
+        try:
+            step = np.linalg.solve(info, grad)
+        except np.linalg.LinAlgError:
             break
-        step = grad / hess
-        beta += step
-        if abs(step) < 1e-9:
+        beta = beta + step
+        if np.max(np.abs(step)) < 1e-10:
             break
-    se = 1.0 / np.sqrt(hess) if hess > 0 else np.nan
-    return beta / sd, se / sd
+    try:
+        cov = np.linalg.inv(info)
+    except np.linalg.LinAlgError:
+        cov = np.full((p, p), np.nan)
+    return beta / sd, cov / np.outer(sd, sd)
+
+
+def _cox_newton(x: np.ndarray, t: np.ndarray, e: np.ndarray,
+                iters: int = 50) -> tuple[float, float]:
+    """One covariate: coefficient and standard error from :func:`_cox_breslow`."""
+    b, cov = _cox_breslow(np.asarray(x, dtype=np.float64)[:, None], t, e, iters=iters)
+    return float(b[0]), float(np.sqrt(cov[0, 0])) if cov[0, 0] > 0 else np.nan
 
 
 def _bh(p: np.ndarray) -> np.ndarray:
