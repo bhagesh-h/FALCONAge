@@ -5,6 +5,16 @@
 
 ## Added
 
+- **Why FALCONAge, methylclock and dnaMethyAge disagree on the same betas,
+  measured.** On 858 EPIC v1 blood samples the three packages differed by
+  constants of up to 11.6 years (Hannum against methylclock 1.16.0). Filling
+  the absent CpGs as each package does, 0 for methylclock and the `golden_ref`
+  means for dnaMethyAge 0.2.0, reproduces their DNAm PhenoAge, Horvath 2013,
+  Hannum and Skin & Blood scores to four decimal places, so coefficients and
+  intercepts agree and the offset is the fill. The science page (§6.3) gives
+  the formula and the table, and §20.4 notes that methylclock scores the
+  buccal PedBE clock on blood where FALCONAge refuses it.
+
 - **`validate_panel()`: is a reduced KDM panel still the same clock?** Fits the
   full and reduced panels on the same reference rows, by sex, and reports their
   agreement and each panel's mortality hazard ratio in BioAge's `table_surv`
@@ -49,7 +59,7 @@
   clock's |coefficient|. Nothing is downloaded during scoring;
   `fetch_manifest(platform)` caches the manifest once, and without it the check
   stays silent. On one cohort's filtered EPIC v1 betas, all 30 of DNAmTL's absent
-  CpGs were QC removals (11.1% of its weight), Hannum's 11 split 5 and 6, and
+  CpGs were QC removals (11.1% of its weight), Hannum's 9 split 3 and 6, and
   Horvath's 27 split 8 and 19.
 
 - **A clock in physical units now warns when its cohort median is impossible.**
