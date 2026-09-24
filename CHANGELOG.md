@@ -12,6 +12,16 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **Impossible ages and paces are flagged, as telomere lengths already were.**
+  A human clock in years now warns (category `implausible`) when its cohort
+  median leaves −1 to 122.45 years, the span from conception to Jeanne
+  Calment's verified 122 years and 164 days (Robine et al. 2019), and a pace
+  clock when its median leaves 0.40 to 2.44, the slowest and fastest members
+  of the Dunedin Study (Belsky et al. 2022). On its first real run the pace
+  interval caught DunedinPoAm38 forced below its coverage floor with 23% of
+  its weight filled by a dataset mean (median 0.38; the authors' fill gives
+  0.85).
+
 - **Why FALCONAge, methylclock and dnaMethyAge disagree on the same betas,
   measured.** On 858 EPIC v1 blood samples the three packages differed by
   constants of up to 11.6 years (Hannum against methylclock 1.16.0). Filling

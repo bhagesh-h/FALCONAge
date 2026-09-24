@@ -26,16 +26,28 @@ from ..preprocess import _load_platform_bias as _platform_bias
 from ..registry import load as load_registry
 
 
-#: Where a scale's values can fall, with the published result that says so.
-#: A cohort median outside the interval is a miscomputed clock, not a
-#: biologically extreme cohort: a sign error or a unit error lands far outside,
-#: while real biology moves the median by a fraction of the interval.
-PLAUSIBLE_MEDIAN: dict[str, tuple[float, float, str]] = {
-    "telomere_kb": (
+#: Where a human clock's values can fall, by (scale type, unit), with the
+#: published result that says so. A cohort median outside the interval is a
+#: miscomputed clock, not a biologically extreme cohort: a sign error or a unit
+#: error lands far outside, while real biology moves the median by a fraction
+#: of the interval. Only Homo sapiens clocks are checked; the bounds are facts
+#: about people.
+PLAUSIBLE_MEDIAN: dict[tuple[str, str], tuple[float, float, str]] = {
+    ("telomere_kb", "kilobases"): (
         4.0, 12.0,
         "Lu et al. 2019 (Aging 11:5895-5923, Table 2) fit DNAmTL = 8.05 - 0.018 x age "
         "kilobases in their test cohorts, which is 6.2 to 8.0 kb from birth to 100 "
         "years"),
+    ("age_years", "years"): (
+        -1.0, 122.45,
+        "no verified human age exceeds Jeanne Calment's 122 years and 164 days "
+        "(Robine et al. 2019, J Gerontol A 74:S13-S20), and an age below -1 year "
+        "precedes conception"),
+    ("pace_ratio", "biological years per chronological year"): (
+        0.40, 2.44,
+        "the slowest and fastest members of the Dunedin Study aged 0.40 and 2.44 "
+        "biological years per chronological year over two decades (Belsky et al. "
+        "2022, eLife 11:e73420), so no cohort's median lies outside them"),
 }
 
 __all__ = ["FalconResult", "combine", "score"]
@@ -447,7 +459,8 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             for msg in reference_range_check(data.X, reference):
                 warns.warn(msg, clock=cid, category="reference_range")
 
-        bounds = PLAUSIBLE_MEDIAN.get(c.scale_type)
+        bounds = (PLAUSIBLE_MEDIAN.get((c.scale_type, c.unit[0] if c.unit else ""))
+                  if c.species == "Homo sapiens" else None)
         if bounds is not None:
             med = float(pd.Series(values, dtype="float64").median())
             lo, hi, why = bounds

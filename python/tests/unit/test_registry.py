@@ -456,11 +456,11 @@ def test_a_conformal_interval_is_not_offered_for_them(synthetic_betas):
 # DNAmTL: the intercept's sign, and the guard that would have caught it
 # ---------------------------------------------------------------------------
 
-def _dnamtl_data(betas_for):
-    """One sample per row of `betas_for`, carrying only DNAmTL's CpGs."""
+def _dnamtl_data(betas_for, clock="dnamtl"):
+    """Three identical samples carrying only one clock's CpGs (DNAmTL's by default)."""
     import pandas as pd
 
-    feats, w = fa.registry.load().coefficients("dnamtl")
+    feats, w = fa.registry.load().coefficients(clock)
     w = np.asarray(w, dtype=float)
     X = pd.DataFrame([betas_for(w) for _ in range(3)], columns=list(feats),
                      index=[f"s{i}" for i in range(3)])
@@ -489,6 +489,29 @@ def test_an_implausible_telomere_length_is_flagged():
     assert res.scores["dnamtl"].median() < 0
     cats = {w["category"] for w in res.manifest.warnings if w.get("clock") == "dnamtl"}
     assert "implausible" in cats
+
+
+@pytest.mark.parametrize("clock", ["hannum", "dunedinpoam38"])
+def test_an_impossible_age_or_pace_is_flagged(clock):
+    """Every positive-weight CpG at 1 and every negative one at 0 drives the
+    linear predictor far past 122.45 years (Calment) or a pace of 2.44 (the
+    fastest Dunedin Study member), which is what a sign or unit error does."""
+    from falconage.score import PLAUSIBLE_MEDIAN
+
+    d, _ = _dnamtl_data(lambda w: np.where(w > 0, 1.0, 0.0), clock=clock)
+    res = fa.score(d, clocks=[clock])
+    c = fa.registry.load().get(clock)
+    _, hi, _ = PLAUSIBLE_MEDIAN[(c.scale_type, c.unit[0])]
+    assert res.scores[clock].median() > hi
+    cats = {x["category"] for x in res.manifest.warnings if x.get("clock") == clock}
+    assert "implausible" in cats
+
+
+def test_a_plausible_cohort_is_not_flagged():
+    d, _ = _dnamtl_data(lambda w: np.full(w.size, 0.5), clock="hannum")
+    res = fa.score(d, clocks=["hannum"])
+    assert -1.0 <= res.scores["hannum"].median() <= 122.45
+    assert not [x for x in res.manifest.warnings if x.get("category") == "implausible"]
 
 
 def test_registry_version_agrees_with_the_package_constant():
