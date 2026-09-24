@@ -275,3 +275,77 @@ def test_scoring_clinical_end_to_end(synthetic_clinical):
     res = fa.score(synthetic_clinical, clocks=["phenoage", "kdm"], reference=ref)
     assert list(res.scores.columns) == ["phenoage", "kdm"]
     assert res.scores.notna().all().all()
+
+
+# ---------------------------------------------------------------------------
+# Harmonisation: HbA1c units, and a cohort measured unlike its reference
+# ---------------------------------------------------------------------------
+
+def test_hba1c_converts_by_the_ngsp_master_equation():
+    """NGSP = 0.09148 x IFCC + 2.152 (ngsp.org; Hoelzel et al. 2004)."""
+    assert units.convert(48.0, "mmol/mol", "%", marker="hba1c") == pytest.approx(
+        0.09148 * 48.0 + 2.152)
+    back = units.convert(6.5, "%", "mmol/mol", marker="hba1c")
+    assert back == pytest.approx(10.93 * 6.5 - 23.50)
+    # The two published directions are not exact inverses; the round trip is close.
+    assert units.convert(back, "mmol/mol", "%", marker="hba1c") == pytest.approx(6.5, abs=0.01)
+
+
+def test_the_hba1c_equation_is_not_a_general_unit_rule():
+    with pytest.raises(UnitConversionError):
+        units.convert(48.0, "mmol/mol", "%")
+
+
+def test_prepare_clinical_converts_ifcc_hba1c(synthetic_clinical):
+    X = synthetic_clinical.X[["age"]].assign(hba1c=[48.0] * len(synthetic_clinical.X))
+    d = fa.FalconData(X=X, obs=synthetic_clinical.obs, modality="clinical_chemistry")
+    out = fa.prepare_clinical(d, units={"hba1c": "mmol/mol", "age": "years"},
+                              target={"hba1c": "%"})
+    assert out.X["hba1c"].iloc[0] == pytest.approx(0.09148 * 48.0 + 2.152)
+    assert "hba1c: mmol/mol -> %" in out.uns["unit_conversions"]
+
+
+def _nhanes_crp_reference():
+    d = pd.read_csv(KDM0_FIXTURE)
+    return d[d["gender"] == 1], clinical.fit_kdm(d[d["gender"] == 1], KDM0_MARKERS)
+
+
+def test_the_nhanes_crp_floor_is_found_in_the_data():
+    """63.9% of NHANES III CRP values sit at the 0.21 mg/dL detection floor."""
+    _, ref = _nhanes_crp_reference()
+    assert ref.ranges.at["lncrp", "share_at_min"] > 0.5
+    assert np.expm1(ref.ranges.at["lncrp", "min"]) == pytest.approx(0.21, abs=1e-3)
+    assert ref.ranges.at["sbp", "share_at_min"] < clinical.FLOOR_SHARE
+
+
+def test_a_more_sensitive_assay_is_flagged_and_censored():
+    rows, ref = _nhanes_crp_reference()
+    cohort = rows.head(200).copy()
+    floor = ref.ranges.at["lncrp", "min"]
+    cohort["lncrp"] = np.log1p(np.linspace(0.02, 0.20, 200))    # hs-CRP, all below 0.21
+
+    msgs = clinical.reference_range_check(cohort, ref)
+    assert any(m.startswith("lncrp:") and "censor_to_reference" in m for m in msgs)
+
+    fixed, moved = clinical.censor_to_reference(cohort, ref)
+    assert moved["lncrp"] == 200 and (fixed["lncrp"] == floor).all()
+    assert not any(m.startswith("lncrp:") for m in clinical.reference_range_check(fixed, ref))
+    # A marker without a floor is not touched by default.
+    assert "sbp" not in moved
+
+
+def test_a_unit_mismatch_is_flagged_by_its_median(synthetic_clinical):
+    df = synthetic_clinical.X
+    ref = clinical.fit_kdm(df, MARKERS)
+    wrong = df.assign(albumin=df["albumin"] / 10.0)          # g/dL against a g/L reference
+    msgs = clinical.reference_range_check(wrong, ref)
+    assert any(m.startswith("albumin:") and "unit" in m for m in msgs)
+    assert clinical.reference_range_check(df, ref) == []
+
+
+def test_score_reports_reference_range_problems(synthetic_clinical):
+    ref = clinical.fit_kdm(synthetic_clinical.X, MARKERS)
+    X = synthetic_clinical.X.assign(albumin=synthetic_clinical.X["albumin"] / 10.0)
+    d = fa.FalconData(X=X, obs=synthetic_clinical.obs, modality="clinical_chemistry")
+    res = fa.score(d, clocks=["kdm"], reference=ref)
+    assert any(r["category"] == "reference_range" for r in res.manifest.warnings)

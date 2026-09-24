@@ -64,7 +64,7 @@ def prepare_clinical(data: FalconData, units: dict[str, str] | None = None,
             continue                       # not a recognised marker; pass through below
         want = tgt.get(name, MARKERS[name].canonical)
         have = declared.get(name, want)
-        v = convert(data.X[col].to_numpy(dtype=np.float64), have, want)
+        v = convert(data.X[col].to_numpy(dtype=np.float64), have, want, marker=name)
         cols[name] = v
         if have != want:
             notes.append(f"{name}: {have} -> {want}")

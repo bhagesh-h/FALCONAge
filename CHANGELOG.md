@@ -12,6 +12,20 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **HbA1c in IFCC units, and a warning when a cohort is measured unlike its
+  reference.** `"hba1c": "mmol/mol"` is converted to NGSP percent by the
+  published master equation, NGSP = 0.09148 × IFCC + 2.152 (NGSP; Hoelzel et
+  al., Clin Chem 2004;50:166-174); the two directions are the published pair,
+  keyed to HbA1c only because the equation is not a ratio. `fit_kdm` and
+  `fit_hd` now record each marker's reference distribution, and `score()` warns
+  (category `reference_range`) when a scored cohort's median leaves the
+  reference's 1st to 99th percentile, which is what a unit mismatch looks like,
+  or when many values fall beyond its range. A reference minimum shared by at
+  least 1% of rows is a reporting floor: NHANES III puts 63.9% of CRP values at
+  0.21 mg/dL. `censor_to_reference()` sets a more sensitive cohort's values to
+  that floor, which is how the reference recorded them. 300OB had to do both
+  steps by hand.
+
 - **Probes removed by QC are told apart from probes the array never had.** A
   clock CpG that the declared platform carries but the data lacks was removed
   after measurement, usually by an EWAS's SNP or cross-reactive filters, and

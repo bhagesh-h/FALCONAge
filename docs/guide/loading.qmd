@@ -229,6 +229,25 @@ name to pass; `units="SI"` is refused with the mapping it wants. PhenoAge exists
 and a conventional variant that disagree by years, and `units=` has no default for that
 reason.
 
+**HbA1c in mmol/mol.** Laboratories outside the US report HbA1c in IFCC units. Declare
+`"hba1c": "mmol/mol"` and it is converted to the NGSP percentage the reference models were
+fitted in, by the published master equation NGSP = 0.09148 × IFCC + 2.152
+([NGSP](https://ngsp.org/ifccngsp.asp); Hoelzel et al., *Clin Chem* 2004;50:166-174,
+[doi:10.1373/clinchem.2003.024802](https://doi.org/10.1373/clinchem.2003.024802)). It is
+not a ratio, so it applies to HbA1c only.
+
+**A cohort measured unlike its reference.** KDM and homeostatic dysregulation are fitted on a
+reference cohort, and `fit_kdm`/`fit_hd` record each marker's distribution there. When a scored
+cohort leaves it, `score()` says so (category `reference_range`): a median outside the
+reference's 1st to 99th percentile, which is what a unit mismatch looks like, or many values
+beyond the reference's range. The case that matters most is CRP. NHANES III's assay read
+nothing below 0.21 mg/dL, and 63.9% of its adults sit at that floor, so a high-sensitivity CRP
+cohort scored against it has most of its values where the reference has none.
+`fa.models.clinical.censor_to_reference(df, ref)` sets values below a reference's reporting
+floor to the floor, which is how the reference itself recorded them, and returns how many
+moved. It only touches markers whose minimum is a floor (at least 1% of reference rows sitting
+exactly at it); values above the reference's range are real measurements and are left alone.
+
 ## Olink NPX
 
 Olink exports long: one row per sample per assay. That is detected and pivoted.

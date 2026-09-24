@@ -90,6 +90,15 @@ and `shannon`, which both rise with sequencing depth; pass `rarefy="min"` when d
 `icc_age_adjusted`. **Quote the adjusted one for anything about an individual.** A raw ICC on a
 cohort spanning decades mostly reports that the clock tracks age.
 
+## Clinical clocks against a reference
+
+KDM and HD are fitted on a reference cohort. A `reference_range` warning means this cohort's
+marker sits where the reference had no data: a median outside its 1st to 99th percentile (check
+the unit) or values below its reporting floor. NHANES III read no CRP below 0.21 mg/dL, so a
+high-sensitivity CRP cohort needs `fa.models.clinical.censor_to_reference(df, ref)` before KDM
+means the same thing. HbA1c in mmol/mol is declared as such and converted by the NGSP master
+equation.
+
 ## Judging an intervention
 
 `fa.consensus(res, group_col)` returns a verdict, not a table of p-values to pick from, because

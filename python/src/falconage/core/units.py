@@ -11,7 +11,9 @@ them. The only correct behaviour is to require the caller to say.
 ``convert`` handles the conversions that are exact ratios. Anything else --
 notably anything needing a molar mass -- is listed explicitly rather than
 computed, so a wrong factor is a visible line in a table instead of a hidden
-constant.
+constant. The one conversion that is not a ratio, HbA1c between IFCC mmol/mol
+and NGSP percent, is a published regression and is keyed by marker as well as
+unit, because it means nothing for any other measurement.
 """
 
 from __future__ import annotations
@@ -64,6 +66,20 @@ _FACTORS: dict[tuple[str, str], float] = {
     ("weeks", "days"): 7.0,
     ("months", "years"): 1.0 / 12.0,
     ("years", "months"): 12.0,
+}
+
+
+#: Conversions that are not a ratio: ``(marker, from, to) -> (slope, intercept)``,
+#: applied as ``slope * value + intercept``. Each is a published equation, and the
+#: two directions are the published pair rather than algebraic inverses of each
+#: other, so a round trip is close but not exact.
+_AFFINE: dict[tuple[str, str, str], tuple[float, float]] = {
+    # HbA1c. The NGSP publishes NGSP = 0.09148 x IFCC + 2.152 and
+    # IFCC = 10.93 x NGSP - 23.50 (https://ngsp.org/ifccngsp.asp), the
+    # mmol/mol form of the IFCC-NGSP master equation from the method comparison
+    # of Hoelzel et al., Clin Chem 2004;50:166-174, doi:10.1373/clinchem.2003.024802.
+    ("hba1c", "mmol/mol", "%"): (0.09148, 2.152),
+    ("hba1c", "%", "mmol/mol"): (10.93, -23.50),
 }
 
 
@@ -125,13 +141,18 @@ def canonical_name(name: str) -> str:
     return _ALIAS[key]
 
 
-def convert(value, frm: str, to: str):
+def convert(value, frm: str, to: str, marker: str | None = None):
     """Convert ``value`` from one unit to another, or say why it cannot.
 
-    Works elementwise on scalars and numpy arrays alike.
+    Works elementwise on scalars and numpy arrays alike. ``marker`` (a canonical
+    marker name) unlocks the marker-specific conversions in ``_AFFINE``; without
+    it only exact ratios are available.
     """
     if frm == to:
         return value
+    if marker is not None and (marker, frm, to) in _AFFINE:
+        slope, intercept = _AFFINE[(marker, frm, to)]
+        return value * slope + intercept
     try:
         return value * _FACTORS[(frm, to)]
     except KeyError:

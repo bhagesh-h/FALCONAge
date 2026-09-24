@@ -195,6 +195,8 @@ class KDMReference:
     #: Rows each marker's regression was fitted on. Markers are regressed one
     #: at a time on the rows where that marker is present, so these differ.
     n_per_marker: np.ndarray | None = None
+    #: Each marker's reference distribution; see :func:`marker_ranges`.
+    ranges: pd.DataFrame | None = None
 
     def describe(self) -> pd.DataFrame:
         return pd.DataFrame({"slope": self.k, "intercept": self.q,
@@ -300,7 +302,7 @@ def fit_kdm(reference: pd.DataFrame, markers: list[str], age_col: str = "age",
                        complete[age_col].to_numpy(dtype=np.float64), q, k, s, s_r)
 
     return KDMReference(list(markers), k, q, s, r, r_char, s_r, len(complete), (lo, hi),
-                        float(s_ba2), np.asarray(n_used))
+                        float(s_ba2), np.asarray(n_used), marker_ranges(ref_all, markers))
 
 
 def _s_ba2(x: np.ndarray, age: np.ndarray, q, k, s, s_r: float) -> float:
@@ -369,6 +371,120 @@ def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age",
 
 
 # ---------------------------------------------------------------------------
+# Does the scored cohort live where the reference did?
+# ---------------------------------------------------------------------------
+#: A value shared by at least this share of reference rows at the reference's
+#: minimum is a reporting floor, not a continuous measurement. A continuous
+#: marker puts about one row in n at its minimum; NHANES III puts 63.9% of CRP
+#: values at 0.21 mg/dL, the assay's detection floor.
+FLOOR_SHARE = 0.01
+
+#: Report a marker when at least this share of the scored cohort lies outside
+#: the reference's range. A reporting threshold, not a statistic.
+OUT_OF_RANGE_WARN = 0.05
+
+
+def marker_ranges(reference: pd.DataFrame, markers: list[str]) -> pd.DataFrame:
+    """Each marker's reference distribution: min, 1st, 50th, 99th percentile, max.
+
+    ``share_at_min`` is the share of rows sitting exactly at the minimum, which
+    is how a detection floor shows itself in the data.
+    """
+    rows = {}
+    for m in markers:
+        v = pd.to_numeric(reference[m], errors="coerce").dropna().to_numpy(dtype=np.float64)
+        if v.size == 0:
+            continue
+        lo = float(v.min())
+        rows[m] = {"min": lo, "p01": float(np.percentile(v, 1)),
+                   "p50": float(np.median(v)), "p99": float(np.percentile(v, 99)),
+                   "max": float(v.max()),
+                   "share_at_min": float(np.isclose(v, lo, rtol=0, atol=1e-9 * max(1.0, abs(lo))).mean())}
+    return pd.DataFrame.from_dict(rows, orient="index")
+
+
+def reference_range_check(df: pd.DataFrame, ref) -> list[str]:
+    """Where this cohort's markers leave the reference, stated as facts.
+
+    Read off the reference's own recorded distribution, per marker:
+
+    * **Values below the reference's reporting floor.** Either the cohort was
+      measured on a more sensitive assay than the reference (hs-CRP against
+      NHANES III, whose CRP assay read nothing below 0.21 mg/dL), in which case
+      :func:`censor_to_reference` reads both the same way, or the unit differs.
+      The data cannot tell those apart, so the message names both.
+    * **A median outside the reference's 1st to 99th percentile.** Nearly always
+      a unit mismatch: albumin in g/dL against a g/L reference sits there, and
+      both are clinically normal in their own unit.
+    * **Many values outside the reference's range**, where there is no floor to
+      explain them: the model is extrapolating.
+    """
+    ranges = getattr(ref, "ranges", None)
+    if ranges is None or ranges.empty:
+        return []
+    out = []
+    for m in ref.markers:
+        if m not in df.columns or m not in ranges.index:
+            continue
+        v = pd.to_numeric(df[m], errors="coerce").dropna().to_numpy(dtype=np.float64)
+        if v.size == 0:
+            continue
+        r = ranges.loc[m]
+        med = float(np.median(v))
+        below, above = float((v < r["min"]).mean()), float((v > r["max"]).mean())
+        floored = r["share_at_min"] >= FLOOR_SHARE
+        said_floor = False
+        if floored and below >= OUT_OF_RANGE_WARN:
+            said_floor = True
+            out.append(
+                f"{m}: {below:.0%} of values fall below {r['min']:.4g}, the reference's "
+                f"reporting floor ({r['share_at_min']:.0%} of the reference sits at it). "
+                "Check the unit first; if it matches, this cohort was measured more "
+                "sensitively than the reference and censor_to_reference() reads both "
+                "the same way.")
+        elif below + above >= OUT_OF_RANGE_WARN:
+            out.append(
+                f"{m}: {below + above:.0%} of values lie outside the reference's range "
+                f"({r['min']:.4g} to {r['max']:.4g}); the model is extrapolating there.")
+        if not r["p01"] <= med <= r["p99"] and not (said_floor and med < r["min"]):
+            out.append(
+                f"{m}: cohort median {med:.4g} lies outside the reference's 1st to 99th "
+                f"percentile ({r['p01']:.4g} to {r['p99']:.4g}); check the unit first.")
+    return out
+
+
+def censor_to_reference(df: pd.DataFrame, ref, markers: list[str] | None = None
+                        ) -> tuple[pd.DataFrame, dict[str, int]]:
+    """Set values below a reference's reporting floor to the floor.
+
+    A reference whose assay could not read below a limit records every lower
+    value as the limit, and a model fitted on it has seen nothing below. Values
+    under that limit from a more sensitive assay are therefore read on the
+    reference's scale only after being set to it. Only markers whose reference
+    minimum is a floor (``share_at_min >= FLOOR_SHARE``) are touched unless
+    ``markers`` names others; values above the reference range are real
+    measurements and are left alone.
+
+    Returns the censored copy and, per marker, how many values moved.
+    """
+    ranges = getattr(ref, "ranges", None)
+    if ranges is None or ranges.empty:
+        raise AnalysisError("this reference has no recorded ranges; refit it with fit_kdm or fit_hd")
+    chosen = markers if markers is not None else [
+        m for m in ranges.index if ranges.at[m, "share_at_min"] >= FLOOR_SHARE]
+    out, moved = df.copy(), {}
+    for m in chosen:
+        if m not in out.columns:
+            continue
+        floor = float(ranges.at[m, "min"])
+        v = pd.to_numeric(out[m], errors="coerce")
+        hit = v < floor
+        moved[m] = int(hit.sum())
+        out[m] = v.where(~hit, floor)
+    return out, moved
+
+
+# ---------------------------------------------------------------------------
 # Homeostatic dysregulation
 # ---------------------------------------------------------------------------
 @dataclass
@@ -378,6 +494,8 @@ class HDReference:
     inv_cov: np.ndarray
     n_reference: int
     description: str = ""
+    #: Each marker's reference distribution; see :func:`marker_ranges`.
+    ranges: pd.DataFrame | None = None
 
 
 def fit_hd(reference: pd.DataFrame, markers: list[str]) -> HDReference:
@@ -401,7 +519,7 @@ def fit_hd(reference: pd.DataFrame, markers: list[str]) -> HDReference:
     # cholesterol, urea and creatinine) and a plain inverse turns that into an
     # enormous distance for one sample and a silent NaN for the next.
     return HDReference(list(markers), centre, np.linalg.pinv(cov), len(ref),
-                       "pseudo-inverse covariance")
+                       "pseudo-inverse covariance", marker_ranges(reference, markers))
 
 
 def hd(df: pd.DataFrame, ref: HDReference) -> pd.Series:

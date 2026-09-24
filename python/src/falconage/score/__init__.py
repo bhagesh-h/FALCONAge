@@ -436,6 +436,14 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
         scores[cid] = values
         manifest.record_compute(cid, spec)
 
+        # KDM and HD are only as good as the reference they were fitted on, and
+        # a cohort measured in another unit or on a more sensitive assay makes
+        # them extrapolate without any error being raised.
+        if c.formula in ("kdm", "hd") and reference is not None:
+            from ..models.clinical import reference_range_check
+            for msg in reference_range_check(data.X, reference):
+                warns.warn(msg, clock=cid, category="reference_range")
+
         bounds = PLAUSIBLE_MEDIAN.get(c.scale_type)
         if bounds is not None:
             med = float(pd.Series(values, dtype="float64").median())
