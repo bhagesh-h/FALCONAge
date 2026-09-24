@@ -46,7 +46,11 @@ from ..core.errors import AnalysisError, DataError
 #
 # Coefficients as published, in the paper's own units. FALCONAge converts the
 # input to these before applying them; it does not restate them in some other
-# unit, so the numbers below can be checked line by line against Table 1.
+# unit, so the numbers below can be checked line by line against Table 1 (and
+# Supplementary Table S1, which adds the constant). Alkaline phosphatase is
+# printed there as 0.0019. The 0.00188 that circulates comes from the equation
+# in Liu et al. 2018 (PLoS Med 15:e1002718), which also prints glucose as 0.0195,
+# RDW as 0.3356 and the final divisor as 0.09165, all three typos.
 #
 #   albumin              g/L
 #   creatinine           umol/L
@@ -66,16 +70,40 @@ PHENOAGE_COEF: dict[str, float] = {
     "lymphocyte_percent": -0.0120,
     "mean_cell_volume": 0.0268,
     "red_cell_distribution_width": 0.3306,
-    "alkaline_phosphatase": 0.00188,
+    "alkaline_phosphatase": 0.0019,
     "white_blood_cell_count": 0.0554,
     "age": 0.0804,
 }
 PHENOAGE_INTERCEPT = -19.9067
 
 #: Gompertz calibration. gamma is the shape; t=120 months is the horizon the
-#: mortality score is expressed at; the rest fall out of the published inversion.
+#: mortality score is expressed at; the rest fall out of the published inversion
+#: (Supplement 1: gamma = 0.0076927, age = 141.50225 + ln(-0.00553 ln(1 - m)) / 0.090165).
 PHENOAGE_GAMMA = 0.0076927
 PHENOAGE_T = 120.0
+PHENOAGE_INVERSION = 0.00553
+
+#: The same model at the precision BioAge carries for ``phenoage0`` (Kwon and
+#: Belsky, GeroScience 2021; ``R/phenoage_calc.R``). Every weight rounds to the
+#: Table 1 value, so these are the fit the table was printed from. On NHANES III
+#: they give PhenoAge a mean 0.074 years below the table values (n = 8,924).
+PHENOAGE_BIOAGE: dict[str, object] = {
+    "coef": {
+        "albumin": -0.03359355,
+        "creatinine": 0.009506491,
+        "glucose": 0.1953192,
+        "log_crp": 0.09536762,
+        "lymphocyte_percent": -0.01199984,
+        "mean_cell_volume": 0.02676401,
+        "red_cell_distribution_width": 0.3306156,
+        "alkaline_phosphatase": 0.001868778,
+        "white_blood_cell_count": 0.05542406,
+        "age": 0.08035356,
+    },
+    "intercept": -19.90667,
+    "gamma": 0.007692696,
+    "inversion": 0.0055305,
+}
 
 #: The units PhenoAge's coefficients expect, marker by marker. Anything else is
 #: converted on the way in; anything unconvertible is an error, never a guess.
@@ -93,7 +121,8 @@ PHENOAGE_UNITS: dict[str, str] = {
 }
 
 
-def phenoage(df: pd.DataFrame, crp_transform: str = "log") -> pd.Series:
+def phenoage(df: pd.DataFrame, crp_transform: str = "log",
+             coefficients: str = "levine2018") -> pd.Series:
     """Clinical Phenotypic Age in years.
 
     Parameters
@@ -112,9 +141,15 @@ def phenoage(df: pd.DataFrame, crp_transform: str = "log") -> pd.Series:
     matter across a cohort.
 
     ``crp_transform="log1p"`` uses ``log(1 + crp)``, BioAge's ``lncrp``. It is
-    not the paper's transform: on NHANES III it raises PhenoAge by a near
-    constant 1.52 years (n = 8,924) and reproduces BioAge's ``phenoage0`` to
-    0.055 years. Use it only to compare with BioAge output.
+    not the paper's transform: on NHANES III it raises PhenoAge by a mean 1.57
+    years (SD 0.45, n = 8,924), more at low CRP, because
+    ln(1 + CRP) - ln(CRP) = ln(1 + 1/CRP). Use it only to compare with BioAge
+    output.
+
+    ``coefficients="levine2018"`` applies Table 1 of the paper as printed.
+    ``"bioage"`` applies :data:`PHENOAGE_BIOAGE`, the same fit at full
+    precision. With both BioAge options the result is BioAge's ``phenoage0``:
+    on its 8,924 NHANES III rows the largest difference is below 0.00001 years.
     """
     missing = [m for m in PHENOAGE_UNITS if m not in df.columns]
     if missing:
@@ -128,6 +163,15 @@ def phenoage(df: pd.DataFrame, crp_transform: str = "log") -> pd.Series:
     if crp_transform not in ("log", "log1p"):
         raise DataError(f"crp_transform must be 'log' (Levine 2018) or 'log1p' (BioAge), "
                         f"not {crp_transform!r}")
+    if coefficients == "levine2018":
+        coef, b0 = PHENOAGE_COEF, PHENOAGE_INTERCEPT
+        gamma, inversion = PHENOAGE_GAMMA, PHENOAGE_INVERSION
+    elif coefficients == "bioage":
+        coef, b0 = PHENOAGE_BIOAGE["coef"], PHENOAGE_BIOAGE["intercept"]
+        gamma, inversion = PHENOAGE_BIOAGE["gamma"], PHENOAGE_BIOAGE["inversion"]
+    else:
+        raise DataError(f"coefficients must be 'levine2018' (Table 1 as printed) or "
+                        f"'bioage' (full precision), not {coefficients!r}")
     x = df.copy()
     crp = np.asarray(x["crp"], dtype=np.float64)
     if crp_transform == "log1p":
@@ -141,17 +185,16 @@ def phenoage(df: pd.DataFrame, crp_transform: str = "log") -> pd.Series:
             )
         x["log_crp"] = np.log(crp)
 
-    xb = np.full(len(x), PHENOAGE_INTERCEPT, dtype=np.float64)
-    for marker, beta in PHENOAGE_COEF.items():
+    xb = np.full(len(x), b0, dtype=np.float64)
+    for marker, beta in coef.items():
         xb += beta * np.asarray(x[marker], dtype=np.float64)
 
     # Mortality score at 120 months under the Gompertz hazard, then inverted
     # back onto the age scale.
-    mortality = 1.0 - np.exp(-np.exp(xb) * (np.exp(PHENOAGE_GAMMA * PHENOAGE_T) - 1.0)
-                             / PHENOAGE_GAMMA)
+    mortality = 1.0 - np.exp(-np.exp(xb) * (np.exp(gamma * PHENOAGE_T) - 1.0) / gamma)
     mortality = np.clip(mortality, 1e-12, 1.0 - 1e-12)
     return pd.Series(
-        141.50225 + np.log(-0.00553 * np.log(1.0 - mortality)) / 0.090165,
+        141.50225 + np.log(-inversion * np.log(1.0 - mortality)) / 0.090165,
         index=df.index, name="phenoage",
     )
 

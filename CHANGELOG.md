@@ -36,9 +36,10 @@ own `registry_version` so a coefficient correction can be pinned independently o
   years; the parameters are derived by `python/tools/build_kdm_bioage.py` from
   the NHANES fixture and a test keeps them current. BioAge enters CRP into
   PhenoAge as ln(1 + CRP) where Levine 2018 uses ln(CRP); on NHANES III that
-  puts BioAge's `phenoage0` 1.52 years above the paper's formula. FALCONAge
-  follows the paper, records the difference as a known discrepancy, and
-  `phenoage(df, crp_transform="log1p")` reproduces BioAge to 0.055 years.
+  puts BioAge's `phenoage0` a mean 1.50 years above the paper's formula (SD
+  0.45, more at low CRP). FALCONAge follows the paper, records the difference
+  as a known discrepancy, and `phenoage(df, crp_transform="log1p",
+  coefficients="bioage")` reproduces BioAge to below 0.00001 years.
   `bioage_hd_scale()` gives BioAge's cohort-relative forms of homeostatic
   dysregulation; `hd()` keeps returning the unscaled distance. The science page
   said BioAge used ln(CRP); corrected.
@@ -132,6 +133,20 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Fixed
 
+- **Clinical PhenoAge used an alkaline phosphatase weight the paper does not
+  print.** FALCONAge carried 0.00188, which appears in the equation of Liu et
+  al. 2018 (PLoS Med) beside three other misprints; Levine 2018 Table 1 and
+  Supplementary Table S1 print 0.0019. The default is now Table 1 exactly as
+  printed. `phenoage(df, coefficients="bioage")` applies the same fit at the
+  full precision BioAge carries, every weight rounding to Table 1, and with
+  `crp_transform="log1p"` it reproduces BioAge's `phenoage0` on 8,924 NHANES
+  III rows to below 0.00001 years, tested against a fixture of those rows. The
+  science page's §5.1 no longer presents the Table 1 weights applied to US
+  units as a second parameterisation (it is a unit error that sends the
+  mortality score to 1), and its worked example converts to the paper's units
+  first. BioAge's CRP transform moves PhenoAge by a mean 1.50 years with SD
+  0.45, not the near constant 1.52 stated before.
+
 - **The mitotic clocks averaged over sites the data does not carry.** epiTOC1,
   epiTOC2, epiTOC3, HypoClock, EPICmitHyper, EPICmitHypo, stemTOC and
   stemTOCvitro filled an absent site with the dataset's mean methylation and
@@ -181,7 +196,9 @@ own `registry_version` so a coefficient correction can be pinned independently o
   "twenty-eight scaffolds" and "161 entries" now read 46 bundled, 40 licensed,
   89 untraced and 175, and the examples filter by name instead of the retired
   letters. The architecture document records that fetching untraced
-  coefficients on first use was specified and not built.
+  coefficients on first use was specified and not built. The science page's
+  table of known discrepancies listed 11 of the 22 clocks that carry one; it
+  is now generated from the registry.
 
 - **Cox hazard ratios were slightly wrong whenever event times were tied.** The
   risk set at each event time was read from a cumulative sum over time-sorted

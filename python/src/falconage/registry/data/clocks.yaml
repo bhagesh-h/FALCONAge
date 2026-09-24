@@ -3264,13 +3264,18 @@ clocks:
     formula: "phenoage"
     requires_covariates: ["age"]
     known_discrepancies:
-      - "Two constants circulate in the divisor of the Gompertz inversion: 0.090165 and 0.09165.
-        FALCONAge uses 0.090165, the value BioAge corrected to in April 2026. Code still using
-        0.09165 differs by several years on the same input."
+      - "Two constants circulate in the divisor of the Gompertz inversion: 0.090165, printed in
+        Levine 2018 Supplement 1, and 0.09165, printed in Liu et al. 2018 (PLoS Med). FALCONAge
+        uses 0.090165, the value BioAge corrected to in April 2026. Code still using 0.09165
+        differs by several years on the same input."
+      - "Levine 2018 Table 1 prints alkaline phosphatase as 0.0019; Liu et al. 2018 print 0.00188,
+        and BioAge carries the fit at full precision (0.001868778, every weight rounding to Table
+        1). FALCONAge uses Table 1 as printed, a mean 0.074 years above the full-precision fit on
+        NHANES III; phenoage(df, coefficients='bioage') uses BioAge's."
       - "BioAge enters CRP as log(1 + CRP), its lncrp, where the paper uses log(CRP). On NHANES
-        III that puts BioAge's phenoage0 a near constant 1.52 years above the paper's formula
-        (n = 8,924). FALCONAge follows the paper; phenoage(df, crp_transform='log1p') reproduces
-        BioAge to 0.055 years."
+        III that puts BioAge's phenoage0 a mean 1.50 years above the paper's formula (SD 0.45,
+        more at low CRP; n = 8,924). FALCONAge follows the paper; phenoage(df,
+        crp_transform='log1p', coefficients='bioage') reproduces phenoage0 exactly."
     coefficient_source:
       file: null
       url: null

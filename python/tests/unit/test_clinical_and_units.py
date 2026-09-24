@@ -63,6 +63,21 @@ def test_phenoage_coefficients_are_the_published_ten():
     assert clinical.PHENOAGE_INTERCEPT == pytest.approx(-19.9067)
 
 
+def test_phenoage_uses_table_1_as_printed():
+    """Levine 2018 Table 1 and Table S1 print alkaline phosphatase as 0.0019.
+    The 0.00188 FALCONAge once carried is from Liu et al. 2018's equation."""
+    assert clinical.PHENOAGE_COEF["alkaline_phosphatase"] == 0.0019
+    table1 = {"albumin": -0.0336, "creatinine": 0.0095, "glucose": 0.1953,
+              "log_crp": 0.0954, "lymphocyte_percent": -0.0120,
+              "mean_cell_volume": 0.0268, "red_cell_distribution_width": 0.3306,
+              "alkaline_phosphatase": 0.0019, "white_blood_cell_count": 0.0554,
+              "age": 0.0804}
+    assert clinical.PHENOAGE_COEF == table1
+    # BioAge's full-precision weights are the fit Table 1 was rounded from.
+    for k, v in clinical.PHENOAGE_BIOAGE["coef"].items():
+        assert round(v, 4) == table1[k], k
+
+
 def test_phenoage_tracks_age_and_responds_to_biomarkers(synthetic_clinical):
     v = clinical.phenoage(synthetic_clinical.X)
     age = synthetic_clinical.X["age"]
@@ -392,6 +407,22 @@ def test_phenoage_log1p_crp_is_bioage_s_transform(synthetic_clinical):
     assert (clinical.phenoage(df, crp_transform="log1p") > clinical.phenoage(df)).all()
     with pytest.raises(DataError, match="crp_transform"):
         clinical.phenoage(df, crp_transform="ln")
+
+
+PHENOAGE0_FIXTURE = Path(__file__).resolve().parents[1] / "data" / "nhanes3_phenoage0_fixture.csv.gz"
+
+
+def test_phenoage_reproduces_bioage_phenoage0_with_both_bioage_options():
+    """BioAge's 8,924 NHANES III rows, provenance in tests/data/SOURCE.md."""
+    d = pd.read_csv(PHENOAGE0_FIXTURE)
+    got = clinical.phenoage(d, crp_transform="log1p", coefficients="bioage")
+    assert np.abs(got - d["phenoage0"]).max() < 1e-5
+    # The paper's table, on the same rows, is a small constant-like offset above.
+    table = clinical.phenoage(d, crp_transform="log1p")
+    diff = table - d["phenoage0"]
+    assert 0.05 < diff.mean() < 0.10 and diff.abs().max() < 0.2
+    with pytest.raises(DataError, match="coefficients"):
+        clinical.phenoage(d, coefficients="table")
 
 
 def test_bioage_hd_scale_divides_by_the_cohort_spread(synthetic_clinical):

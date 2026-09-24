@@ -448,16 +448,54 @@ def render_index() -> str:
     return text[:start] + scale_table() + text[end + len(SCALE_END):]
 
 
+# The known-discrepancy table in science.qmd §15.2. Hand-written, it listed
+# eleven clocks when the registry carried notes for twenty-two, while the page
+# said the list was generated from the registry. Now it is.
+SCIENCE = HERE / "science.qmd"
+DISC_BEGIN = "<!-- BEGIN GENERATED: discrepancies -->"
+DISC_END = "<!-- END GENERATED: discrepancies -->"
+
+
+def discrepancy_table() -> str:
+    """Every `known_discrepancies` note, clocks with the same note on one row."""
+    import falconage as fa
+
+    rows: dict[str, list[str]] = {}
+    for c in sorted(fa.registry.load(), key=lambda c: c.id):
+        for note in c.known_discrepancies:
+            rows.setdefault(" ".join(note.split()), []).append(c.id)
+    n = len({cid for ids in rows.values() for cid in ids})
+    out = [DISC_BEGIN, "",
+           f"{n} catalogued clocks carry a `known_discrepancies` note: a place where the "
+           "paper, its coefficients and the implementations in circulation disagree. "
+           "Each is raised as a warning at score time.", "",
+           "| Clock | The disagreement |", "|:---------|:----------------------------|"]
+    for note, ids in rows.items():
+        out.append(f"| {', '.join(f'`{i}`' for i in ids)} | {note} |")
+    out += ["", DISC_END]
+    return "\n".join(out)
+
+
+def render_science() -> str:
+    """docs/science.qmd with the discrepancy block replaced."""
+    text = SCIENCE.read_text(encoding="utf-8")
+    start, end = text.find(DISC_BEGIN), text.find(DISC_END)
+    if start == -1 or end == -1:
+        raise SystemExit(f"docs/science.qmd has no {DISC_BEGIN} block")
+    return text[:start] + discrepancy_table() + text[end + len(DISC_END):]
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--check", action="store_true",
-                    help="exit non-zero if either generated file is out of date")
+                    help="exit non-zero if any generated file is out of date")
     args = ap.parse_args(argv)
 
     try:
         text = render()
         index = render_index()
         guide = render_guide()
+        science = render_science()
     except ImportError:
         print("falconage is not importable; install it before generating the "
               "catalogue (pip install ./python)")
@@ -473,7 +511,7 @@ def main(argv=None) -> int:
         print("  add them to QUESTIONS in python/src/falconage/registry/questions.py")
         return 1
 
-    pairs = [(TARGET, text), (INDEX, index), (GUIDE, guide)]
+    pairs = [(TARGET, text), (INDEX, index), (GUIDE, guide), (SCIENCE, science)]
     if args.check:
         stale = [p for p, want in pairs
                  if (p.read_text(encoding="utf-8") if p.exists() else None) != want]
@@ -481,7 +519,8 @@ def main(argv=None) -> int:
             print(", ".join(str(p.relative_to(ROOT)) for p in stale)
                   + " is stale; run docs/build_catalogue.py")
             return 1
-        print("docs/clocks.qmd, docs/index.qmd and docs/guide/clocks.qmd are current")
+        print("docs/clocks.qmd, docs/index.qmd, docs/guide/clocks.qmd and "
+              "docs/science.qmd are current")
         return 0
 
     for p, want in pairs:

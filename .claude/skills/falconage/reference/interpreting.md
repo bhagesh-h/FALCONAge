@@ -99,7 +99,9 @@ high-sensitivity CRP cohort needs `fa.models.clinical.censor_to_reference(df, re
 means the same thing. HbA1c in mmol/mol is declared as such and converted by the NGSP master
 equation. To compare with published NHANES KDM, use
 `fa.models.clinical.kdm_bioage(df)` (BioAge's `kdm0` scale and units). BioAge's PhenoAge uses
-ln(1 + CRP), not the paper's ln(CRP), and sits 1.52 years higher; say which one a number is.
+ln(1 + CRP), not the paper's ln(CRP), and sits a mean 1.50 years higher (more at low CRP); say
+which one a number is. `phenoage(df, crp_transform="log1p", coefficients="bioage")` reproduces
+BioAge's `phenoage0` exactly.
 
 ## Judging an intervention
 

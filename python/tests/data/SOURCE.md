@@ -75,3 +75,21 @@ his code returns a number, and with dnaMethyAge everywhere, to a relative 1e-9.
 |---|---|
 | `epitoc_betas.csv` | `94a7c3f4f9684bd9982e4ccc2ecd7558e9b78177bf1f1890d3b6ec8c21ac5617` |
 | `epitoc_reference.csv` | `ced4aae7d542c71fb56099e2a331515b40d03c126f0ee4f3bbf4258eb4439935` |
+
+## `nhanes3_phenoage0_fixture.csv.gz`
+
+The 8,924 NHANES III rows for which BioAge ships `phenoage0`, with the ten PhenoAge inputs in the
+paper's units and BioAge's value, so that `phenoage(df, crp_transform="log1p",
+coefficients="bioage")` is checked against the reference implementation on every run.
+
+| | |
+|---|---|
+| Source file | `NHANES3.rda` from the BioAge R package (as for the `kdm0` fixture above), SHA-256 `c1b940fc9614add6effaa3ea6d189677c5cd8532f46be79284dce695ae3e0b92` |
+| Rows kept | every row with a non-missing `phenoage0` |
+| Columns kept | `sampleID`, `age`, and BioAge's `albumin_gL`, `creat_umol`, `glucose_mmol`, `crp` (mg/dL), `lymph`, `mcv`, `rdw`, `alp`, `wbc` renamed to FALCONAge's marker names, and `phenoage0` |
+| Precision | ten significant figures, so the reproduction is exact rather than approximate |
+| Fixture SHA-256 | `343738820be2978bd8a0e3daa61c4880a7ff6003b965834b28becafccb01f0eb` |
+
+BioAge computes `phenoage0` in `R/phenoage_calc.R` from the full-precision weights and `lncrp =
+log(1 + crp)`. FALCONAge reproduces it to below 0.00001 years on every row. With Table 1's printed
+weights instead, it is a mean 0.074 years higher. Licence and citation as for the `kdm0` fixture.

@@ -917,10 +917,32 @@ and normalise on import.
 
 ### 5.1 PhenoAge (Levine 2018), clinical-biomarker version
 
-Two published parameterisations circulate. **They are not the same and give different answers.**
+The paper prints the model to four decimals in Table 1 and Supplementary Table S1, with γ and the
+inversion to years in Supplement 1. BioAge carries the same fit at full precision. **Both are in
+the paper's units: SI, except CRP, which enters as ln(CRP) with CRP in mg/dL.**
 
-**Variant A - SI-ish units (used by BioAge `orig=TRUE`,
-[BioAge phenoage_calc.R](https://github.com/dayoonkwon/BioAge)):**
+**As printed (Levine 2018 Table 1 and Supplement 1), FALCONAge's default:**
+
+```
+xb = −19.9067
+     − 0.0336 · albumin          (g/L)
+     + 0.0095 · creatinine       (µmol/L)
+     + 0.1953 · glucose          (mmol/L)
+     + 0.0954 · ln(CRP)          (CRP in mg/dL)
+     − 0.0120 · lymphocyte%      (%)
+     + 0.0268 · MCV              (fL)
+     + 0.3306 · RDW              (%)
+     + 0.0019 · ALP              (U/L)
+     + 0.0554 · WBC              (10³/µL)
+     + 0.0804 · age              (years)
+
+γ        = 0.0076927
+m        = 1 − exp( −exp(xb) · (exp(120γ) − 1) / γ )
+PhenoAge = 141.50225 + ln( −0.00553 · ln(1 − m) ) / 0.090165
+```
+
+**Full precision (BioAge `phenoage0`,
+[BioAge phenoage_calc.R](https://github.com/dayoonkwon/BioAge)), `coefficients="bioage"`:**
 
 ```
 xb = −19.90667
@@ -935,44 +957,39 @@ xb = −19.90667
      + 0.05542406 · WBC          (10³/µL)
      + 0.08035356 · age          (years)
 
-m        = 1 − exp( (−1.51714 · exp(xb)) / 0.0076926904 )
+m        = 1 − exp( (−1.51714 · exp(xb)) / 0.007692696 )
 PhenoAge = 141.50225 + ln( −0.0055305 · ln(1 − m) ) / 0.090165
 ```
 
-**Variant B - conventional US units (used by mcp-phenoage-clock,
-[mcp-phenoage-clock phenoage.ts](https://github.com/199-mcp/mcp-phenoage-clock)):**
+Every full-precision weight rounds to its Table 1 value, so these are the fit the table was printed
+from. On BioAge's 8,924 NHANES III rows the printed table puts PhenoAge a mean 0.074 years above
+the full-precision fit (at most 0.14 years). With `coefficients="bioage"` and
+`crp_transform="log1p"` FALCONAge reproduces `phenoage0` on those rows to below 0.00001 years.
 
-```
-xb = −19.907
-     − 0.0336  · albumin      (g/dL)
-     + 0.0095  · creatinine   (mg/dL)
-     + 0.1953  · glucose      (mg/dL)
-     + 0.0954  · ln(CRP)      (CRP in mg/L)
-     − 0.0120  · lymphocyte%
-     + 0.0268  · MCV
-     + 0.3306  · RDW
-     + 0.00188 · ALP
-     + 0.0554  · WBC
-     + 0.0804  · age
+**Four transcription errors circulate**, and all four appear in the equation printed in Liu et
+al. 2018 ([PLoS Med 15:e1002718](https://doi.org/10.1371/journal.pmed.1002718)): alkaline phosphatase
+0.00188 (Table 1: 0.0019), glucose 0.0195 (0.1953), RDW 0.3356 (0.3306), and the divisor 0.09165
+(Supplement 1: 0.090165). FALCONAge carried 0.00188 until this was checked. The divisor is the
+costly one: BioAge corrected it in its April 2026 commit ("Update PhenoAge constant to 0.090165 and
+recompute data"), and code still using 0.09165 shifts results by several years. Guard `m` away
+from 0 and 1 or `ln(1 − m)` blows up.
 
-γ        = 0.0076927
-m        = 1 − exp( −exp(xb) · (exp(120γ) − 1) / γ )
-PhenoAge = 141.50225 + ln( −0.00553 · ln(1 − m) ) / 0.090165
-```
-
-Both reduce to the same Gompertz inversion. The `0.090165` constant is the one BioAge corrected in
-its April 2026 commit ("Update PhenoAge constant to 0.090165 and recompute data"), earlier code
-in the wild uses 0.09165, which shifts results by several years. Guard `m` away from 0 and 1
-(mcp clamps to [1e-6, 1 − 1e-6]) or `ln(1 − m)` blows up.
+**The units are part of the formula.** The weights are per SI unit. An implementation that
+applies them to albumin in g/dL, creatinine and glucose in mg/dL and CRP in mg/L without
+converting, as mcp-phenoage-clock does
+([phenoage.ts](https://github.com/199-mcp/mcp-phenoage-clock)), returns nonsense: for the healthy
+50-year-old of Appendix F it gives xb = 8.36 and a ten-year mortality of 1, where the converted
+inputs give xb = −9.07 and a PhenoAge of 41.85 years.
 
 **The CRP term is where BioAge departs from the paper.** Levine 2018 enters ln(CRP). BioAge's
 `lncrp`, the variable its NHANES PhenoAge (`phenoage0`) is computed from, is ln(1 + CRP)
 ([`data-raw/nhanes_all.R`](https://github.com/dayoonkwon/BioAge/blob/master/data-raw/nhanes_all.R),
 `lncrp = log(1 + crp)`). The difference is not small. On NHANES III (n = 8,924) FALCONAge with
-ln(CRP) sits a near constant 1.52 years below `phenoage0`; with ln(1 + CRP) it reproduces
-`phenoage0` to 0.055 years, the remainder being coefficient rounding. FALCONAge follows the paper,
-records BioAge's choice as a known discrepancy, and offers `phenoage(df, crp_transform="log1p")`
-for comparison with BioAge output. Every PhenoAge computed through BioAge carries the shift.
+ln(CRP) sits a mean 1.50 years below `phenoage0` (SD 0.45), and not by a constant: ln(1 + CRP) −
+ln(CRP) = ln(1 + 1/CRP), which is largest at low CRP. With ln(1 + CRP) the gap falls to the 0.074
+years of coefficient rounding, and with `coefficients="bioage"` as well it closes. FALCONAge follows
+the paper, records BioAge's choice as a known discrepancy, and offers
+`phenoage(df, crp_transform="log1p", coefficients="bioage")` for comparison with BioAge output. Every PhenoAge computed through BioAge carries the shift.
 
 **DNAm PhenoAge** is the methylation surrogate of this quantity: 513 CpGs, elastic net trained
 to predict the clinical PhenoAge. pyaging exposes both, `phenoage` (clinical, blood chemistry)
@@ -1773,21 +1790,30 @@ next subsection exists at all.
 
 ### 15.2 Where the paper and the coefficients disagree
 
-Eleven catalogued clocks are scored from coefficient sets that do not match what their paper
-describes. Each carries a `known_discrepancies` note in the registry and raises it as a warning at
-score time:
+<!-- BEGIN GENERATED: discrepancies -->
+
+22 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coefficients and the implementations in circulation disagree. Each is raised as a warning at score time.
 
 | Clock | The disagreement |
-|---|---|
-| `bocklandt` | Paper describes 2 CpGs; the circulating coefficient set carries 1 |
-| `bohlin` | Paper reports 96 CpGs; the circulating set carries 251 |
-| `cvdwesterman` | Paper reports 1,305 CpGs; the circulating set carries 235 |
-| `zhangmortality` | Paper defines an integer count of markers past quartile thresholds; the implementations compute a continuous weighted sum |
-| `yingcausage`, `yingdamage`, `yingadaptage` | Paper reports 586 / 1,090 / 1,000 CpGs; the sets carry 585 / 1,089 / 999, the same off-by-one in all three |
-| `senchronoage`, `sencultureage`, `senmortalityage` | The upstream README's feature counts disagree with the coefficient objects it ships |
-| `phenoage` | Two constants circulate in the divisor of the Gompertz inversion, 0.090165 and 0.09165 |
+|:---------|:----------------------------|
+| `bocklandt` | The paper describes a 2-CpG model; the coefficient set in circulation carries 1. Which probe was dropped is not documented upstream, so this is not the published model. |
+| `bohlin` | The paper reports 96 CpGs; the coefficient set in circulation carries 251. Scores here will match other packages and not the figures printed in the paper. |
+| `cvdwesterman` | The paper reports 1,305 CpGs; the coefficient set in circulation carries 235. Expect disagreement with any value quoted from the paper. |
+| `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, `mccartneytotalcholesterol`, `mccartneytotalhdlratio`, `mccartneywhr` | The paper defines this predictor as a weighted sum of beta values and applies no link function; the ROC analysis it reports dichotomises the phenotype, not the score. Packages that pass the sum through a sigmoid report a different number. The scale is relative_score, whose legal operations are correlate and rank, and a sigmoid is monotone, so no permitted result changes either way. |
+| `phenoage` | Two constants circulate in the divisor of the Gompertz inversion: 0.090165, printed in Levine 2018 Supplement 1, and 0.09165, printed in Liu et al. 2018 (PLoS Med). FALCONAge uses 0.090165, the value BioAge corrected to in April 2026. Code still using 0.09165 differs by several years on the same input. |
+| `phenoage` | Levine 2018 Table 1 prints alkaline phosphatase as 0.0019; Liu et al. 2018 print 0.00188, and BioAge carries the fit at full precision (0.001868778, every weight rounding to Table 1). FALCONAge uses Table 1 as printed, a mean 0.074 years above the full-precision fit on NHANES III; phenoage(df, coefficients='bioage') uses BioAge's. |
+| `phenoage` | BioAge enters CRP as log(1 + CRP), its lncrp, where the paper uses log(CRP). On NHANES III that puts BioAge's phenoage0 a mean 1.50 years above the paper's formula (SD 0.45, more at low CRP; n = 8,924). FALCONAge follows the paper; phenoage(df, crp_transform='log1p', coefficients='bioage') reproduces phenoage0 exactly. |
+| `senchronoage`, `sencultureage`, `senmortalityage` | The upstream README's feature count disagrees with the coefficient object it ships. The registry follows the coefficient file, because that is what scores. |
+| `weidner` | The third site is a substitution. The paper's gamma is not cg17861230 but an unnamed CpG upstream of it, measured by pyrosequencing and better correlated with age; no array id was ever published for it. Every array implementation of this clock, including this one, puts cg17861230 in its place, and gamma carries 164.7 of the model against 26.4 and 23.7 for the two genuine probes. Treat the result as the published model evaluated on a near neighbour. |
+| `yingadaptage`, `yingdamage` | Scored across three healthy cohorts in the FALCONAge corpus, this clock's median offset against chronological age swings 162 years between datasets while Horvath2013's swings 15; DamAge and AdaptAge move as near mirror images (r = -0.975) and the swing in their sum is only 33, so the cause is one dataset-level shift amplified by their opposing intercepts of +543.43 and -511.97 rather than a fault in either. The slope against age is sound (0.967 pooled for DamAge). The scale is therefore age_years_relative: the residual and group differences are defined, predicted-minus-chronological is not. |
+| `yingadaptage` | The paper reports 1,000 CpGs; the coefficient set carries 999. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
+| `yingcausage` | The paper reports 586 CpGs; the coefficient set carries 585. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
+| `yingdamage` | The paper reports 1,090 CpGs; the coefficient set carries 1,089. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
+| `zhangmortality` | The paper defines this as an integer count of markers past quartile thresholds; the implementations in circulation compute a continuous weighted sum. They are different statistics, and the continuous form has no published cut-points, which is why its scale_type is relative_score rather than a count. |
 
-The list is generated from the registry, not maintained by hand: `reg.get(id).known_discrepancies`
+<!-- END GENERATED: discrepancies -->
+
+The table is generated from the registry by `docs/build_catalogue.py`: `reg.get(id).known_discrepancies`
 returns the full text, and `res.manifest["warnings"]` carries whichever of them fired on your run.
 The Ying clocks additionally carry a measured cohort-offset note, which is why they sit on
 `age_years_relative` rather than `age_years`, §19.3.1.
@@ -3241,15 +3267,20 @@ produce code with no real answer to test against, see the tier table in
 
 Small worked checks to use as smoke tests while building.
 
-**PhenoAge, conventional units.** Inputs: age 50, albumin 4.5 g/dL, creatinine 0.9 mg/dL,
+**PhenoAge, from conventional units.** Inputs: age 50, albumin 4.5 g/dL, creatinine 0.9 mg/dL,
 glucose 90 mg/dL, CRP 1.0 mg/L, lymphocyte 30%, MCV 90 fL, RDW 13%, ALP 70 U/L, WBC 6.0 ×10³/µL.
+Convert first, to the units of Table 1: albumin 45 g/L, creatinine 79.5615 µmol/L, glucose
+4.9950 mmol/L, CRP 0.1 mg/dL. Then
 
 ```
-xb = −19.907 − 0.0336(4.5) + 0.0095(0.9) + 0.1953(90) + 0.0954·ln(1.0)
-     − 0.0120(30) + 0.0268(90) + 0.3306(13) + 0.00188(70) + 0.0554(6.0) + 0.0804(50)
+xb = −19.9067 − 0.0336(45) + 0.0095(79.5615) + 0.1953(4.9950) + 0.0954·ln(0.1)
+     − 0.0120(30) + 0.0268(90) + 0.3306(13) + 0.0019(70) + 0.0554(6.0) + 0.0804(50)
+   = −9.0718
 m        = 1 − exp( −exp(xb) · (exp(120·0.0076927) − 1) / 0.0076927 )
-PhenoAge = 141.50225 + ln(−0.00553·ln(1 − m)) / 0.090165
+PhenoAge = 141.50225 + ln(−0.00553·ln(1 − m)) / 0.090165  =  41.85 years
 ```
+
+Put the unconverted numbers into the same weights and xb is 8.36, m is 1, and there is no age.
 
 **Horvath output transform.** A raw linear score of −0.5 becomes
 `21·exp(−0.5) − 1 = 11.74` years; a score of 1.2 becomes `21·1.2 + 20 = 45.2` years.
