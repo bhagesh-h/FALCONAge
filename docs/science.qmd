@@ -570,6 +570,14 @@ it is a dimensionless distance, and it does *not* need to be residualised agains
 
   k CpGs (163 for epiTOC2, 170 for epiTOC3). Units: estimated cell divisions per stem cell.
   [pyaging _models.py:2008](https://github.com/lucascamillomd/pyaging).
+  The sum and k run over the sites the data carries, as in the authors' own code
+  ([EpiMitClocks](https://github.com/aet21/EpiMitClocks), `colMeans` over the matched rows) and in
+  dnaMethyAge. FALCONAge matches both to a relative 1e-9 on a test matrix with sites absent and
+  values missing (`python/tests/data/SOURCE.md`). The authors also return a simplified estimate
+  with every β₀ set to 0 (`tnsc2`), which dnaMethyAge reports under `simple_mode = TRUE`. It is
+  not a rescaling of the full one: on 858 EPIC v1 blood samples it was a median 1.22 times
+  larger. FALCONAge returns the full estimate, so a comparison has to state which one the other
+  package reported.
 - **stemTOC** - 0.95 quantile of β over 371 (or 629 in-vitro) CpGs rather than the mean, which
   makes it robust to cell-type dilution.
 - **HypoClock** - mean β over 678 solo-WCGW hypomethylating sites, returned as `1 − mean`.
@@ -1048,7 +1056,10 @@ statistic travels with the model.
 **What FALCONAge does, and what the R packages do.** For a linear clock FALCONAge fills an absent
 feature with the mean of the clock's observed features over the whole dataset: one constant, the
 same for every absent feature and every sample (`models/linear.py`). `imputation="reference"`
-replaces it with a per-feature value wherever a reference is supplied. methylclock 1.16.0 leaves
+replaces it with a per-feature value wherever a reference is supplied. The mitotic mean,
+percentile and transmission clocks (epiTOC1/2/3, HypoClock, EPICmitHyper/Hypo, stemTOC,
+stemTOCvitro) are the exception: their published statistic is taken over the sites present, so
+FALCONAge leaves absent sites out and records `imputation: "excluded"`. methylclock 1.16.0 leaves
 absent CpGs out of the sum (`predAge` in `R/internals.R`), which is a fill of 0. dnaMethyAge 0.2.0
 fills each one with its per-probe mean from the package's `golden_ref` table (`meanImputation`,
 called from `methyAge`). Each policy adds the same amount to every sample, so on one dataset the

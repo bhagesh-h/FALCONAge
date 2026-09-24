@@ -48,7 +48,9 @@ what each clock actually used.}
 exists; \code{"mean"} uses the column mean; \code{"none"} refuses, so the coverage
 check fails loudly instead of being papered over. Zero is never used --
 in beta space it means completely unmethylated, which is a real and extreme
-measurement.}
+measurement. The mitotic mean, percentile and transmission clocks ignore
+it: their published statistic is taken over the features present, so absent
+ones are left out and the coverage record reads \code{"excluded"}.}
 
 \item{min_coverage}{Fraction of a clock's features that must be present.}
 

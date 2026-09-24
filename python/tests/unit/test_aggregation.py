@@ -265,3 +265,65 @@ def test_registering_a_probe_list_makes_one_scoreable(fresh_registry, rng, tmp_p
     # And the scale it was declared on still governs what may be done with it.
     assert reg.get("epitoc1").scale_type == "divisions"
     assert "acceleration" not in reg.get("epitoc1").legal_operations
+
+
+# ---------------------------------------------------------------------------
+# absent probes are left out, as the reference implementations do
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("statistic,q", [("mean", None), ("quantile", 0.95)])
+def test_an_absent_probe_is_left_out_not_filled(registry, rng, statistic, q):
+    """Teschendorff's code takes colMeans or the quantile over the matched rows
+    with na.rm = TRUE. Filling the absent probes with the dataset's mean first
+    pulled each sample toward the others and made its score depend on them."""
+    from falconage.core.backend import resolve
+    from falconage.models.linear import EXCLUDED
+
+    feats = [f"cg{i:08d}" for i in range(100)]
+    d = _data(rng, feats[:90])                          # ten probes absent
+    X = d.X.copy()
+    X.iat[0, 5] = np.nan                                # and one missing value
+    d = fa.FalconData(X=X, obs=d.obs, modality=d.modality, platform=d.platform)
+    m = AggregationClock(clock=_clock(registry, "stemtoc" if q else "epitoc1"),
+                         features=feats, coefficients=np.ones(len(feats)),
+                         statistic=statistic, q=q)
+    spec = resolve("cpu", None, requires_fp64=False)
+    got, al = m.predict(d, spec, min_coverage=0.8)
+    obs = X[feats[:90]].to_numpy()
+    want = np.nanmean(obs, axis=1) if q is None else np.nanquantile(obs, q, axis=1)
+    assert np.allclose(got.to_numpy(), want)
+    assert al.imputation == EXCLUDED and al.n_imputed == 0
+    # One sample scored alone gets the number it gets in the batch.
+    one = fa.FalconData(X=X.iloc[[3]], obs=d.obs.iloc[[3]], modality=d.modality,
+                        platform=d.platform)
+    alone, _ = m.predict(one, spec, min_coverage=0.8)
+    assert alone.iloc[0] == pytest.approx(got.iloc[3], rel=1e-12)
+
+
+def _epitoc_fixture():
+    from pathlib import Path
+
+    here = Path(__file__).resolve().parents[1] / "data"
+    X = pd.read_csv(here / "epitoc_betas.csv", index_col=0)
+    ref = pd.read_csv(here / "epitoc_reference.csv", index_col=0)
+    obs = pd.DataFrame({"tissue": "whole blood"}, index=X.index)
+    d = fa.FalconData(X=X, obs=obs, modality="dna_methylation", platform="450K")
+    return d, ref
+
+
+def test_epitoc2_and_epitoc3_match_the_authors_code():
+    """Recorded from Teschendorff's own epiTOC2/epiTOC3 (EpiMitClocks) and
+    dnaMethyAge's epiTOC2 on a synthetic matrix with 21 and 20 sites absent
+    and four values missing; provenance in tests/data/SOURCE.md."""
+    d, ref = _epitoc_fixture()
+    res = fa.score(d, clocks=["epitoc2", "epitoc3"], min_coverage=0.8)
+    for cid, col in (("epitoc2", "epitoc2_tnsc"), ("epitoc3", "epitoc3_tnsc")):
+        got = res.scores[cid].reindex(ref.index)
+        both = ref[col].notna()
+        assert both.sum() >= 6
+        assert np.allclose(got[both], ref.loc[both, col], rtol=1e-9, atol=0)
+    # Where a present site has a missing value, the authors' diag(w) %*% M
+    # turns 0 * NaN into NaN for the whole sample despite na.rm = TRUE. The
+    # element-wise form dnaMethyAge adopted skips the value, as intended.
+    got = res.scores["epitoc2"].reindex(ref.index)
+    assert np.allclose(got, ref["dnamethyage_epitoc2"], rtol=1e-9, atol=0)

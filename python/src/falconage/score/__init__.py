@@ -19,6 +19,7 @@ from ..core import preanalytical
 from ..core.logging import WarningCollector, get_logger
 from ..core.manifest import RunManifest
 from ..models import build, effective_spec
+from ..models.linear import EXCLUDED
 from ..preprocess import BIAS_WARN, QC_REMOVED_WARN, observed_features, qc_removed
 from ..preprocess.manifest import cached_manifest_probes
 from ..preprocess import _load_platform_bias as _platform_bias
@@ -307,7 +308,9 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
     imputation
         Passed to the per-clock feature alignment. See
         :func:`falconage.models.linear.align`; the short version is that zero is
-        never a fill value.
+        never a fill value. The mitotic mean, percentile and transmission clocks
+        ignore it: their published statistic is taken over the features present,
+        so absent ones are left out and the coverage record reads ``"excluded"``.
     min_coverage
         The fraction of a clock's features that must be present. Below it, the
         clock is skipped (``clocks="compatible"``) or raises (explicit list).
@@ -480,10 +483,14 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
                 "imputation": alignment.imputation,
             }
             if alignment.coverage < 0.95:
-                warns.warn(
-                    f"{alignment.coverage:.1%} feature coverage; "
-                    f"{alignment.n_imputed} value(s) imputed",
-                    clock=cid, category="coverage")
+                if alignment.imputation == EXCLUDED:
+                    how = (f"the statistic is taken over the "
+                           f"{int(alignment.present.sum())} present, as the "
+                           "published implementation does")
+                else:
+                    how = f"{alignment.n_imputed} value(s) imputed"
+                warns.warn(f"{alignment.coverage:.1%} feature coverage; {how}",
+                           clock=cid, category="coverage")
             # Worth its own warning, separate from the count. The count can look
             # fine while the weights do not, and that combination is the one a
             # user is least likely to check for. Fires only when the two

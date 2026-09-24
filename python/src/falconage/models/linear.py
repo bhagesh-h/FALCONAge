@@ -8,7 +8,7 @@ implementations of the same clock stop agreeing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,12 @@ from ..core.backend import DeviceSpec
 from ..core.errors import FeatureCoverageError
 from ..registry.registry import Clock
 from . import ops
+
+
+#: ``Alignment.imputation`` for a clock whose published statistic is taken over
+#: the features the data carries (the mitotic mean, percentile and transmission
+#: models): absent features are left out rather than filled.
+EXCLUDED = "excluded"
 
 
 @dataclass
@@ -152,6 +158,18 @@ def align(data, features: list[str], *, imputation: str = "reference",
                      per_sample_missing=per_sample, notes=notes,
                      mass_coverage=mass_coverage, missing_mass=missing_mass)
 
+
+
+def align_present(data, features: list[str], *,
+                  coefficients: np.ndarray | None = None) -> Alignment:
+    """:func:`align` for a statistic taken over the features present.
+
+    Absent features, and missing values of present ones, stay NaN for a
+    NaN-skipping reduction to leave out. Nothing is filled, so ``n_imputed`` is
+    0 and ``imputation`` reads :data:`EXCLUDED`.
+    """
+    al = align(data, features, imputation="none", coefficients=coefficients)
+    return replace(al, imputation=EXCLUDED, n_imputed=0)
 
 @dataclass
 class LinearClock:

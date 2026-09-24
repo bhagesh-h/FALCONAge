@@ -43,3 +43,35 @@ Reference values, R 4.5.3 with `survival` 3.8.6, `ties = "breslow"`:
 |---|---|---|
 | `~ x` | 0.424830 | 0.069674 |
 | `~ x + age + sex` | 0.512266, 0.039324, 0.419025 | 0.071065, 0.004888, 0.127651 |
+
+## `epitoc_betas.csv` and `epitoc_reference.csv`
+
+Eight synthetic samples over the epiTOC2 (163) and epiTOC3 (170) sites, for checking FALCONAge's
+transmission model against the authors' own code. Each beta is the site's ground state plus a
+per-sample drift, with Gaussian noise (NumPy `default_rng(11)`), rounded to six decimals. Forty
+sites are dropped from the file, leaving 142 of epiTOC2's and 150 of epiTOC3's, and four values
+inside present sites are set missing.
+
+`epitoc_reference.csv` holds, per sample, the full (`tnsc`) and simplified (`tnsc2`, all ground
+states zero) estimates from Teschendorff's `epiTOC2()` and `epiTOC3()`, and the two estimates from
+dnaMethyAge's `epiTOC2()`, all run unmodified in R 4.5.3:
+
+| Source | Files | SHA-256 |
+|---|---|---|
+| EpiMitClocks 0.1.0 (GPL-2), `aet21/EpiMitClocks` at `2c236cd` | `R/epiTOC2.R` | `a3df6cc838cb9f75ebcc9b84fd6cf045c99bff93e38266bc01738f4de9ac1bac` |
+| | `R/epiTOC3.R` | `6149d9875a3a8c470c05946c5a578c4109bec610e7887efe2f156783745acaed` |
+| | `data/dataETOC3.rda` | `2720cf457277e4c6831ae365c700aed304d502d6338b3e9c5c1f9b1eb05b9e88` |
+| dnaMethyAge 0.2.0 (GPL-3), `yiluyucheng/dnaMethyAge` at `0d40c9b` | `R/epiTOC2.R` | `27f8d0aac95bf944cba24743baf9c195708fb3ae31eda95a2c85ef6aae281f0f` |
+| | `data/epiTOC2.rda` | `6d209ee449fc01ae170b082244970945ebcff3b7a11d9bebef463a0e5e05fe09` |
+
+Both packages carry the same per-site `delta` and `beta0` as FALCONAge's `epitoc2.csv` and
+`epitoc3.csv`, to the last digit. Both average over the sites present. They differ in one case:
+Teschendorff's `colMeans(diag(w) %*% M, na.rm = TRUE)` returns NA for a sample with any missing
+value at a present site, because the matrix product turns `0 * NA` into NA before `na.rm` can drop
+it; dnaMethyAge's element-wise rewrite skips the value. FALCONAge agrees with Teschendorff wherever
+his code returns a number, and with dnaMethyAge everywhere, to a relative 1e-9.
+
+| File | SHA-256 |
+|---|---|
+| `epitoc_betas.csv` | `94a7c3f4f9684bd9982e4ccc2ecd7558e9b78177bf1f1890d3b6ec8c21ac5617` |
+| `epitoc_reference.csv` | `ced4aae7d542c71fb56099e2a331515b40d03c126f0ee4f3bbf4258eb4439935` |

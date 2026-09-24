@@ -132,6 +132,20 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Fixed
 
+- **The mitotic clocks averaged over sites the data does not carry.** epiTOC1,
+  epiTOC2, epiTOC3, HypoClock, EPICmitHyper, EPICmitHypo, stemTOC and
+  stemTOCvitro filled an absent site with the dataset's mean methylation and
+  kept it in the statistic, so one sample's score depended on the others in the
+  run. The authors' code (EpiMitClocks) and dnaMethyAge take the mean or the
+  95th percentile over the sites present, which the epiTOC2 docstring already
+  described. These clocks now leave absent sites out and record
+  `imputation: "excluded"`. epiTOC2 and epiTOC3 match Teschendorff's
+  `epiTOC2()`/`epiTOC3()` and dnaMethyAge's `epiTOC2()` to a relative 1e-9 on a
+  test matrix with 21 and 20 sites absent, with the reference values recorded
+  beside it. The 13% gap to dnaMethyAge seen on one cohort was this plus a
+  different estimate: that run reported the simplified `tnsc2`, which assumes
+  every ground state is zero.
+
 - **The clock-routing table said no clock was ready to score.** The generator
   for `guide/clocks.qmd` compared availability with the retired letter "A", so
   every question had an empty "Ready to score" cell and the 46 bundled clocks

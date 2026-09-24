@@ -59,7 +59,7 @@ from ..core.errors import FeatureCoverageError, RegistryError
 from ..core.logging import get_logger
 from ..registry.registry import Clock
 from . import ops
-from .linear import Alignment, align
+from .linear import Alignment, align_present
 
 __all__ = ["DivisionClock", "is_division_model", "read_division_parameters"]
 
@@ -108,8 +108,11 @@ class DivisionClock:
 
     def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
-        al = align(data, self.features, imputation=imputation,
-                   coefficients=self.coefficients)
+        # The mean runs over the sites present, as the docstring says and as
+        # Teschendorff's epiTOC2/epiTOC3 code does (colMeans over the matched
+        # rows, na.rm = TRUE). Until this was fixed the absent sites were first
+        # filled with the dataset's pooled mean, which kept them in the divisor.
+        al = align_present(data, self.features, coefficients=self.coefficients)
         if al.coverage < min_coverage:
             raise FeatureCoverageError(
                 f"{self.clock.id}: {al.coverage:.1%} of its {len(self.features)} "
@@ -130,7 +133,7 @@ class DivisionClock:
         # data rather than about the tissue.
         below = int(np.asarray(spec.tonumpy(x < g[None, :])).sum())
         if below:
-            total = al.matrix.size
+            total = int(np.isfinite(al.matrix).sum())
             get_logger(__name__).warning(
                  f"[{self.clock.id}] {below} of {total} site-by-sample values "
                  f"({below / total:.1%}) are below the fitted fetal ground "

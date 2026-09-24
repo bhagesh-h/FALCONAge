@@ -42,7 +42,7 @@ from ..core.backend import DeviceSpec
 from ..core.errors import FeatureCoverageError, ScoringError
 from ..registry.registry import Clock
 from . import ops
-from .linear import Alignment, align
+from .linear import Alignment, align, align_present
 
 __all__ = ["AggregationClock", "is_aggregation", "parse_statistic"]
 
@@ -94,8 +94,18 @@ class AggregationClock:
 
     def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
-        al = align(data, self.features, imputation=imputation,
-                   coefficients=self.coefficients)
+        # The mean and percentile forms are defined over the probes the data
+        # carries. Teschendorff's reference code (EpiMitClocks: epiTOC1,
+        # HypoClock, EpiCMIT, stemTOC, stemTOCvitro) takes colMeans or the
+        # quantile over the matched rows with na.rm = TRUE. Filling an absent
+        # probe first pulled every sample toward the dataset mean and made one
+        # sample's score depend on the others in the run. The weighted form has
+        # no traced reference implementation and keeps the linear clocks' fill.
+        if self.statistic in ("mean", "quantile"):
+            al = align_present(data, self.features, coefficients=self.coefficients)
+        else:
+            al = align(data, self.features, imputation=imputation,
+                       coefficients=self.coefficients)
         if al.coverage < min_coverage:
             raise FeatureCoverageError(
                 f"{self.clock.id}: {al.coverage:.1%} of its {len(self.features)} "
