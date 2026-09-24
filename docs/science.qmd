@@ -1108,6 +1108,18 @@ them as per-clock discrepancies. The coverage record (`res.coverage[clock_id]`) 
 of values filled (`n_imputed`) and the method (`imputation`). Neither 0 nor a pooled mean is a published value for a CpG, which is why a
 per-CpG reference from each clock's own training data is the better fill.
 
+**Horvath's normalisation is optional in his own code, and the packages default differently.**
+Horvath 2013 supplied a calibration step (Additional file 24, `BMIQcalibration`): each sample's
+betas over 21,368 probes are mapped onto the distribution of `goldstandard2`, the per-probe means
+in Additional file 22 ([Genome Biology, CC BY 2.0](https://doi.org/10.1186/gb-2013-14-10-r115)),
+after absent probes are set to those means. dnaMethyAge 0.2.0 runs it by default for
+`HorvathS2013` (`simple_mode = TRUE` skips it), methylclock 1.16.0 does not (`normalize = FALSE`),
+and FALCONAge does not offer it yet. Run unmodified on 120 of the same EPIC v1 blood samples, it
+lowered Horvath 2013 age by a mean 1.87 years (SD 1.15 across samples, −4.6 to +3.3) and left the
+correlation with chronological age at 0.89; raw and normalised ages correlated at 0.9993. The step
+moves the level and barely the ranking, so a comparison across packages has to say whether it
+ran.
+
 ### 6.4 Imputation options used for benchmarking
 
 ComputAge exposes three and treats the choice as part of the model config

@@ -23,7 +23,10 @@
   Hannum and Skin & Blood scores to four decimal places, so coefficients and
   intercepts agree and the offset is the fill. The science page (§6.3) gives
   the formula and the table, and §20.4 notes that methylclock scores the
-  buccal PedBE clock on blood where FALCONAge refuses it.
+  buccal PedBE clock on blood where FALCONAge refuses it. §6.3 also records
+  that dnaMethyAge applies Horvath's gold-standard normalisation to Horvath
+  2013 by default and methylclock does not; run unmodified on 120 of the same
+  samples it lowered Horvath age by a mean 1.87 years (SD 1.15).
 
 - **`validate_panel()`: is a reduced KDM panel still the same clock?** Fits the
   full and reduced panels on the same reference rows, by sex, and reports their
