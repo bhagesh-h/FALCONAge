@@ -550,7 +550,7 @@ falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out re
 falconage score prepared.h5ad --clocks compatible --device cuda --dtype float32
 falconage bench results/ --condition-col condition --control HC
 falconage report results/ --out report.html
-falconage clocks --tier A --search mortality
+falconage clocks --tier bundled --search mortality
 falconage power horvath2013 --effect 0.5 --sd 6
 falconage consensus results/ --group condition
 ```

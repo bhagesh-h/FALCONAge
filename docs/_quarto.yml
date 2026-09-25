@@ -322,9 +322,10 @@ quartodoc:
     - combine
     - FalconResult
   - title: The clock catalogue
-    desc: 161 clocks in three availability tiers. Twenty-eight are scaffolds whose coefficients
-      are research-use-only; the registry says which, why, and what open clock answers the
-      same question.
+    desc: '175 clocks in three availability groups: 46 bundled, 89 untraced and 40 licensed
+      scaffolds whose coefficients are research-use-only or have no public source FALCONAge
+      may redistribute. The registry says which, why, and which bundled clocks answer the
+      same question.'
     contents:
     - registry.load
     - registry.ClockRegistry

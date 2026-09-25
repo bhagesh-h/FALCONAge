@@ -468,7 +468,8 @@ def discrepancy_table() -> str:
             rows.setdefault(" ".join(note.split()), []).append(c.id)
     n = len({cid for ids in rows.values() for cid in ids})
     out = [DISC_BEGIN, "",
-           f"{n} catalogued clocks carry a `known_discrepancies` note: a place where the "
+           f"{n} of the {len(fa.registry.load())} catalogued clocks carry a "
+           "`known_discrepancies` note: a place where the "
            "paper, its coefficients and the implementations in circulation disagree. "
            "Each is raised as a warning at score time.", "",
            "| Clock | The disagreement |", "|:---------|:----------------------------|"]

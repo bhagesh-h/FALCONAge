@@ -72,7 +72,7 @@
   means for dnaMethyAge 0.2.0, reproduces their DNAm PhenoAge, Horvath 2013,
   Hannum and Skin & Blood scores to four decimal places, so coefficients and
   intercepts agree and the offset is the fill. The science page (§6.3) gives
-  the formula and the table, and §20.4 notes that methylclock scores the
+  the formula and the table, and §19.4 notes that methylclock scores the
   buccal PedBE clock on blood where FALCONAge refuses it. §6.3 also records
   that dnaMethyAge applies Horvath's gold-standard normalisation to Horvath
   2013 by default and methylclock does not; run unmodified on 120 of the same
@@ -188,6 +188,20 @@
   makes the single-file HTML report reproducible rather than ad hoc.
 
 ## Fixed
+
+- **Stale numbers and retired vocabulary on the documentation pages.** The
+  install page printed a `falconage_config()` run from when the registry held
+  161 clocks in tiers A, B and C; the getting-started page and the R page's
+  quoted DESCRIPTION said 161; the developer pages described the shipped
+  system in tier letters; a reference group was titled after an internal
+  brief; and the GPU page said none of its GPU candidates shipped, though
+  AltumAge has since been bundled. Each now states the current registry (175:
+  46 bundled, 89 untraced, 40 licensed), and `check_docs_complete.py` compares
+  every stated total with the registry. The uncertainty and raw-array
+  sections were numbered 20.x and 21.x under sections 19 and 20, which the
+  text citing them did not follow; they are 19.x and 20.x. The engine page
+  marks the weight-caching rules for untraced clocks as specified and not
+  built.
 
 - **The responsive check read hidden table columns as overlapping text.**
   A wide table scrolls inside its wrapper, and the check measured the columns

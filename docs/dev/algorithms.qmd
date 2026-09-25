@@ -420,7 +420,7 @@ distinguishable from one computed from a redistributed set.
 
 ### Behaviour without coefficients
 
-Scoring a tier C clock with nothing registered raises rather than silently skipping:
+Scoring a licensed clock with nothing registered raises rather than silently skipping:
 
 ```
 WeightsUnavailableError: grimage2 is a scaffold-only clock.
@@ -454,8 +454,8 @@ bundled clock answers the question, as for SystemsAge, the message says so. The 
 `coefficient_source.alternatives` follow as "Related entries", each with its availability, so a
 sibling that is itself licensed is never presented as something to run instead.
 
-`clocks="compatible"` excludes unregistered tier C clocks by default and reports the exclusion.
-`clocks="all"` includes them and fails loudly. `falconage clocks list --tier C` shows the whole
+`clocks="compatible"` excludes unregistered licensed clocks by default and reports the exclusion.
+`clocks="all"` includes them and fails loudly. `falconage clocks list --tier licensed` shows the whole
 set with its obtain instructions.
 
 ### Testing a clock whose weights you do not have
@@ -474,7 +474,7 @@ The scaffold is still fully tested, three ways:
    range and scale type are all asserted from the registry entry regardless of which weights are
    loaded.
 
-A tier C clock without a published worked example carries `gold_standard.source:
+A licensed clock without a published worked example carries `gold_standard.source:
 "synthetic weights, architecture only"` and the docs say so on its page. It is honest about being
 an untested-against-truth implementation of a correctly-described architecture.
 

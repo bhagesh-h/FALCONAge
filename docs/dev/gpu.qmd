@@ -69,7 +69,7 @@ the scoring loop then recorded the request rather than the fact.
 | `AggregationClock` | yes, since 2026-08-10 | 6, none shipping weights |
 | `NeuralClock` | yes, since 2026-08-10 | AltumAge |
 | `ClinicalClock` | **no, by declaration** | PhenoAge, KDM, homeostatic dysregulation |
-| `ScaffoldClock` | not applicable | 28 tier C entries; it raises rather than scoring |
+| `ScaffoldClock` | not applicable | the licensed entries (28 when measured, 40 now); it raises rather than scoring |
 
 **Why the clinical three decline.** A methylation clock reduces thousands of
 probes. A clinical clock reduces nine markers: PhenoAge sums ten terms, KDM fits
@@ -217,7 +217,8 @@ machine that has one, silently. The GPU is opt-in: `device="cuda"` or
 
 ### When the GPU will be worth it
 
-Not for the 35 tier A clocks. It should pay for itself on:
+Not for the linear clocks that ship (35 of them bundled when this was measured). It should pay for
+itself on:
 
 - **the PC clocks** - 78,464 features and coefficient tensors of 78 MB to 1.2 GB.
   Thirty times the feature count of the current largest, so the matmul stops
@@ -226,8 +227,9 @@ Not for the 35 tier A clocks. It should pay for itself on:
   product, and has real depth to parallelise.
 - **CpGPT** - a transformer, where the GPU is not optional.
 
-None of those are tier A yet, which is exactly why this document can only report
-that the path is correct rather than that it is fast.
+None of those shipped when this was measured, which is why this document can only report that
+the path is correct rather than that it is fast. AltumAge has been bundled since; the PC clocks
+and CpGPT are licensed. Its speed on a GPU has not been measured.
 
 Both of the first two now route through the device (section 2). That is a
 correctness statement, not a speed one: no weights ship for either, so there is
@@ -328,7 +330,7 @@ pyaging vs biolearn on CPU (Bioinformatics 2024, Figure 1g–h):
 
 That comparison is GPU-pyaging against CPU-biolearn, so it measures two packages as much as two
 devices. Measuring one package on both devices gives the opposite answer for the clocks that ship
-here, eight tier A linear clocks over 2,340 features, on an RTX 4060, best of three:
+here, eight bundled linear clocks over 2,340 features, on an RTX 4060, best of three:
 
 | Samples | CPU float64 | CUDA float64 | CUDA float32 |
 |---:|---:|---:|---:|

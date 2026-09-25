@@ -114,9 +114,12 @@ interpreter, the registry version, and how many clocks are usable:
 ::: {.falcon-output}
 ```
 FALCONAge 1.0.0
-  registry     1.1.0 (161 clocks)
-  tiers        A 23 ship - B 110 need a traced source - C 28 scaffold only
+  registry     1.1.0 (175 clocks)
+  availability 46 bundled - 89 untraced - 40 licensed
+  numpy        2.5.1
+  torch        not installed (the CPU path needs none)
   devices      cpu
+  python       /usr/local/bin/python
 ```
 :::
 
@@ -337,6 +340,6 @@ docker run --rm \
   score --input /data/betas.csv --clocks compatible --outdir /results
 ```
 
-The named `falconage-cache` volume is worth adding from the start. Nothing in tier A needs it, but
+The named `falconage-cache` volume is worth adding from the start. Nothing bundled needs it, but
 the PC clocks are several hundred megabytes each and re-fetching them on every container start is
 the difference between a two-minute run and a twenty-minute one.

@@ -299,6 +299,39 @@ def main() -> int:
             f"docs/dev/operations.qmd 12.1 says these workflows ship: "
             f"{sorted(claimed)}; .github/workflows holds {sorted(on_disk)}.")
 
+    # 10b -- every stated total of the catalogue is the registry's.
+    #
+    # A reader takes "175 clocks" or "46 bundled" at face value, and these went
+    # stale by a whole release: the install page printed a falconage_config()
+    # run from when the registry held 161 entries in tiers A, B and C. The
+    # patterns are the ways the pages actually state a total; the pyaging
+    # appendix's "(173 clocks)" names another package's registry and matches
+    # none of them.
+    from collections import Counter
+
+    avail = Counter(c.availability for c in reg)
+    totals = (r"catalogue of (\d+) published aging clocks",
+              r"registry\s+\S+ \((\d+) clocks\)",
+              r"(\d+) catalogued clocks",
+              r"\*\*(\d+) clocks catalogued")
+    triple = r"(\d+) bundled - (\d+) untraced - (\d+) licensed"
+    for page in sorted((ROOT / "docs").rglob("*.qmd")):
+        rel = page.relative_to(ROOT).as_posix()
+        if rel.startswith(("docs/_site/", "docs/reference/", "docs/r/")):
+            continue
+        text = page.read_text(encoding="utf-8")
+        for pat in totals:
+            for n in re.findall(pat, text):
+                if int(n) != len(all_ids):
+                    problems.append(f"{rel} states {n} clocks; the registry has {len(all_ids)}")
+        for b, u, lic in re.findall(triple, text):
+            if (int(b), int(u), int(lic)) != (avail["bundled"], avail["untraced"],
+                                              avail["licensed"]):
+                problems.append(
+                    f"{rel} states {b} bundled, {u} untraced, {lic} licensed; the "
+                    f"registry has {avail['bundled']}, {avail['untraced']}, "
+                    f"{avail['licensed']}")
+
     # 11 -- pulling the published image is offered before building it.
     #
     # Both images are on Docker Hub as bhagesh/falconage. A page that opens

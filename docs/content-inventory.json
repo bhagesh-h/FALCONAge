@@ -24,6 +24,14 @@
 "17. [The frontier, and what FALCONAge does not yet compute]()"
 ]
 },
+"15d518ea9a56400c": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"21.2 Out-of-band signal, which everything downstream rests on",
+"21.2 Out-of-band signal, which everything downstream rests on"
+]
+},
 "17ab4c1d5fd5225b": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -38,6 +46,14 @@
 "science.qmd",
 "",
 "10. [Plots]()"
+]
+},
+"1dce6cf29183ae4f": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.4 Specimen type is not metadata",
+"20.4 Specimen type is not metadata"
 ]
 },
 "1f2800eb37ed9c92": {
@@ -56,6 +72,38 @@
 "12. [CI/CD and publishing]()"
 ]
 },
+"269f98b6b9da742e": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"21.1 What an IDAT does not contain",
+"21.1 What an IDAT does not contain"
+]
+},
+"2b877f1937e6ae23": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"21.4 Two steps that ship switched off, and why",
+"21.4 Two steps that ship switched off, and why"
+]
+},
+"2be1e7aff669891a": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.1 The point estimate problem",
+"20.1 The point estimate problem"
+]
+},
+"32b4a23f588f4efe": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.7 Before the first array, and after the last",
+"20.7 Before the first array, and after the last"
+]
+},
 "34d30c9707743f54": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -72,12 +120,36 @@
 "23. [Building a clock of your own]()"
 ]
 },
+"3ccd4ed3d896ce91": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.2 Propagating measurement error",
+"20.2 Propagating measurement error"
+]
+},
 "3e2d916afd94d1f1": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "1. [Scope, decisions and repository layout]()"
+]
+},
+"3ee24dcbe8ed7f94": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 6: score your own data",
+"The named `falconage-cache` volume is worth adding from the start. Nothing in tier A needs"
+]
+},
+"414a1886ee5a141b": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.8 Evidence, attached to the score",
+"20.8 Evidence, attached to the score"
 ]
 },
 "42bf7d4dfd9e2cd1": {
@@ -88,12 +160,28 @@
 "6. [Preprocessing, imputation, missing features]()"
 ]
 },
+"43cc6640174af35b": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"gpu.md",
+"When the GPU will be worth it",
+"Not for the 35 tier A clocks. It should pay for itself on:"
+]
+},
 "43e37f3b8a529786": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "22. [Structure above the single probe]()"
+]
+},
+"5a220a17cb5ab35f": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"gpu.md",
+"2. Which clocks the device actually reaches",
+"| `ScaffoldClock` | not applicable | 28 tier C entries; it raises rather than scoring |"
 ]
 },
 "5b7cbe934a50dbc5": {
@@ -104,6 +192,30 @@
 "4. [Algorithms, the complete operation catalogue]()"
 ]
 },
+"5e95a8a3e48e5760": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"1.4 What actually got laid down",
+"``` python/src/falconage/ \u251c\u2500\u2500 core/ backend.py config.py container.py errors.py \u2502 logging."
+]
+},
+"6198a9862a2c88dd": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"20.5 Probe loss, priced"
+]
+},
+"64fd843c2f1bbfc9": {
+"reason": "Item 28: the DESCRIPTION quoted on the R package page brought to the real file's 175 clocks; the discrepancy table's intro now reads '22 of the 175 catalogued clocks', so its count is not read as the catalogue's total.",
+"was": [
+"architecture.qmd",
+"8.6 DESCRIPTION",
+"``` Package: FALCONAge Title: Multiomic Biological Age and Aging Clock Scoring Version: 1."
+]
+},
 "69f18daa6c29e635": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -112,12 +224,36 @@
 "9. [Docker]()"
 ]
 },
+"6a3ed1ab91b0a135": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"gpu.md",
+"When the GPU will be worth it",
+"None of those are tier A yet, which is exactly why this document can only report that the "
+]
+},
+"6b10cc583ebe5b47": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"Behaviour without coefficients",
+"`clocks=\"compatible\"` excludes unregistered tier C clocks by default and reports the exclu"
+]
+},
 "6d74763e7238fa6b": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "2. [Core engine]()"
+]
+},
+"6eba971744b22431": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"3.2 Schema",
+"> **v1.0 stores this differently.** All 161 entries live in one file, > `python/src/falcon"
 ]
 },
 "6fccaab9a17e58cb": {
@@ -144,6 +280,14 @@
 "14. [GPU computing]()"
 ]
 },
+"73703a6eb69c1bd9": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"guide/FALCONAge.qmd",
+"",
+"FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data ag"
+]
+},
 "74d9e0324499fd70": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -160,12 +304,44 @@
 "10. [Testing]()"
 ]
 },
+"7d1bc9aa0aae66af": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"7.8 CLI",
+"```bash falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out resu"
+]
+},
 "801bdceeda456b65": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "16. [Failure modes]()"
+]
+},
+"8087c9df266aaad4": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.9 What was deliberately not built",
+"20.9 What was deliberately not built"
+]
+},
+"8157cca080e29e49": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"21.3 The validation, and why it is a real one",
+"21.3 The validation, and why it is a real one"
+]
+},
+"8471d05de39850f4": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.6 A reported score must not move when the next plate arrives",
+"20.6 A reported score must not move when the next plate arrives"
 ]
 },
 "87e1f97897396d89": {
@@ -184,6 +360,14 @@
 "4. [Algorithm families with full math]()"
 ]
 },
+"8c4479f4e3200788": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"guide/FALCONAge.qmd",
+"Installation",
+"``` FALCONAge 1.0.0 registry 1.1.0 (161 clocks) tiers A 23 ship - B 110 need a traced sour"
+]
+},
 "8c54122bfdecfdb0": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -198,6 +382,14 @@
 "architecture.qmd",
 "What of this exists",
 "11. [Documentation]()"
+]
+},
+"9058fb5c3207c329": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"21.6 What the chain still does not do",
+"21.6 What the chain still does not do"
 ]
 },
 "9180cfb7a05e6ff4": {
@@ -224,6 +416,14 @@
 "1. [Definitions and framing]()"
 ]
 },
+"9cc23576c92ff285": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.3.1 What the calibration found, and what it turned into",
+"20.3.1 What the calibration found, and what it turned into"
+]
+},
 "9de3c2e8baae7676": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -232,12 +432,28 @@
 "5. [Exact published formulas and constants]()"
 ]
 },
+"a04d21e03328a505": {
+"reason": "Item 28: the DESCRIPTION quoted on the R package page brought to the real file's 175 clocks; the discrepancy table's intro now reads '22 of the 175 catalogued clocks', so its count is not read as the catalogue's total.",
+"was": [
+"science.qmd",
+"15.2 Where the paper and the coefficients disagree",
+"22 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coef"
+]
+},
 "a0fb9fae5a2c032d": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "9. [Downstream statistics on an aging score]()"
+]
+},
+"a289444f4b09d56b": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"**The proteomic and transcriptomic chains ship without registry entries.** Every published"
 ]
 },
 "aa24f05ca81cf748": {
@@ -272,6 +488,14 @@
 "- [D - organAging organ protein panels]()"
 ]
 },
+"c0a2ed8a5e911136": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"Behaviour without coefficients",
+"Scoring a tier C clock with nothing registered raises rather than silently skipping:"
+]
+},
 "c746955c8a5d1190": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -296,6 +520,14 @@
 "15. [The layer that says what a score is worth]()"
 ]
 },
+"cfed6a434dc25771": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"references.qmd",
+"The four sources named in the brief",
+"The four sources named in the brief"
+]
+},
 "cfff5fb661c50c33": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -318,6 +550,14 @@
 "science.qmd",
 "",
 "- [E - Preprocess and postprocess operation inventory]()"
+]
+},
+"dc91fb91c3983aa3": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"Testing a clock whose weights you do not have",
+"A tier C clock without a published worked example carries `gold_standard.source: \"syntheti"
 ]
 },
 "e092c9c9ea483f02": {
@@ -352,12 +592,44 @@
 "7. [Scoring, analysis, plots, report]()"
 ]
 },
+"e5bc9491cfcd97e1": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"20.3 Prediction error is a different, larger question",
+"20.3 Prediction error is a different, larger question"
+]
+},
+"f09868d754e6c013": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"14.2 Published speedups, and what we measured instead",
+"That comparison is GPU-pyaging against CPU-biolearn, so it measures two packages as much a"
+]
+},
 "f5cbdf6bfb51439b": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "Contents"
+]
+},
+"f61805dec1f41a9a": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"architecture.qmd",
+"Which oracle",
+"| 5 | Synthetic weights, architecture only | tier C clocks with no published worked exampl"
+]
+},
+"f79e6076a6c1de3f": {
+"reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
+"was": [
+"science.qmd",
+"21.5 Probe masks: standard for an EWAS, a decision for a clock",
+"21.5 Probe masks: standard for an EWAS, a decision for a clock"
 ]
 },
 "fca7ccee7ea0dd81": {

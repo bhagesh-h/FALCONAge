@@ -191,7 +191,7 @@ Authors@R:
     person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5957-8005"))
 Description: Scores DNA methylation and clinical chemistry data against a
-    catalogue of 161 published aging clocks, and provides the downstream
+    catalogue of 175 published aging clocks, and provides the downstream
     statistics the field expects: age acceleration in its three conventions,
     survival and association models, technical reliability, and the AA1/AA2
     benchmark. Numerical work is delegated to the 'falconage' Python package

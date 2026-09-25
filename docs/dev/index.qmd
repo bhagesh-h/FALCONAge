@@ -51,7 +51,7 @@ the discrepancy where they differ, and some of the 110 have no public supplement
 `primary_source_traced: false` is the honest record of that debt.
 
 **The proteomic and transcriptomic chains ship without registry entries.** Every published model in
-both families is licence-restricted, so each would enter as a tier C scaffold. Scoring a proteomic
+both families is licence-restricted, so each would enter as a licensed scaffold. Scoring a proteomic
 matrix today refuses with "no clocks to score", which is accurate rather than broken.
 
 
@@ -339,7 +339,7 @@ python/src/falconage/
 │               batch.py  # frozen-reference ComBat
 │               proteomic.py transcriptomic.py  # modality chains
 ├── uncertainty/ __init__.py  # SE, conformal, ICC
-├── registry/   registry.py  data/clocks.yaml         # all 161 entries, one file
+├── registry/   registry.py  data/clocks.yaml         # all 175 entries, one file
 │               data/probe_icc.csv.gz  # reliability table
 │               data/platform_bias.csv conformal.csv  # derived artefacts
 │               data/evidence.yaml  # curated associations

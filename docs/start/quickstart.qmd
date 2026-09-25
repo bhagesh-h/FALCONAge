@@ -6,7 +6,7 @@ aliases:
 ---
 
 FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data against a
-catalogue of 161 published aging clocks. The numerical work happens in one Python core; the R
+catalogue of 175 published aging clocks. The numerical work happens in one Python core; the R
 package calls it through reticulate, so an R result and a Python result are the same bits rather
 than two implementations that agree approximately.
 

@@ -233,7 +233,7 @@ Oracles are therefore ranked, and each vector records which tier it used:
 | 2 | The authors' own reference implementation, run in a pinned environment | most clocks with an author repository |
 | 3 | Hand computation from the published equation, for clocks small enough | PhenoAge, Weidner, Vidal-Bralo, Bocklandt, Garagnani, ZhangMortality |
 | 4 | An independent third-party package, with at least two agreeing | the remainder |
-| 5 | Synthetic weights, architecture only | tier C clocks with no published worked example (§4.7) |
+| 5 | Synthetic weights, architecture only | licensed clocks with no published worked example (§4.7) |
 
 A rank-4 vector where pyaging and biolearn disagree is not a vector; it is an open question, and
 it goes to `registry/diffs/` rather than to `tests/vectors/`.

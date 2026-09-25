@@ -244,15 +244,15 @@ and a registry fix does not require a PyPI release.
 
 ### 3.2 Schema
 
-> **v1.0 stores this differently.** All 161 entries live in one file,
+> **v1.0 stores this differently.** All 175 entries live in one file,
 > `python/src/falconage/registry/data/clocks.yaml`, loaded into frozen dataclasses by
 > `registry/registry.py`. There is no `registry/` directory at the repository root, no file per
 > clock, and no pydantic.
 >
 > The per-clock tree below is the right shape for a registry that outside contributors edit
-> concurrently, one file per pull request, no merge conflicts. At 161 entries maintained by one
-> author it bought nothing and cost a directory walk on every import, plus 161 files to keep a
-> schema version in step across. The single file is 161 entries the loader validates in one pass,
+> concurrently, one file per pull request, no merge conflicts. At 175 entries maintained by one
+> author it bought nothing and cost a directory walk on every import, plus 175 files to keep a
+> schema version in step across. The single file is 175 entries the loader validates in one pass,
 > and it travels inside the wheel so a clock catalogue is never a download. Pydantic went the
 > same way: the fields are flat, the loader coerces and defaults them in about forty lines, and
 > a runtime dependency that exists to check a file the package itself ships is a dependency
@@ -561,3 +561,8 @@ Rules:
   sets are the exception. PhenoAge is ten numbers, so that path works with no network at all.
 - **Licence surfacing**: tier B prints the source licence once per clock per session on first
   fetch. Tier C prints the obtain-it-yourself instructions.
+
+> **As shipped.** Bundled coefficients ship inside the package and are checked against the
+> registry's SHA-256 before use; untraced clocks are not fetched (§3.7), so the cache and the
+> licence line for tier B were not built. Licensed clocks print the obtain-it-yourself
+> instructions, as above.

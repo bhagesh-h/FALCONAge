@@ -16,7 +16,7 @@ of these are preprints and are cited as preprints on purpose: the field moves
 faster than journal review, and a claim resting on one is worth knowing about.
 
 
-## The four sources named in the brief
+## Prior software this package builds on
 
 [1]{#ref-1}. de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. *Bioinformatics* 40(4):btae200 (2024). [https://doi.org/10.1093/bioinformatics/btae200](https://doi.org/10.1093/bioinformatics/btae200)
 

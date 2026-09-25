@@ -12,7 +12,7 @@
 # exists here.
 
 groups:
-  - title: "The four sources named in the brief"
+  - title: "Prior software this package builds on"
     entries:
       - n: 1
         text: "de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. *Bioinformatics* 40(4):btae200 (2024). doi:10.1093/bioinformatics/btae200"

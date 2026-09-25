@@ -6,7 +6,7 @@ title: "Failure modes and the frontier"
 
 <!-- BEGIN GENERATED: discrepancies -->
 
-22 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coefficients and the implementations in circulation disagree. Each is raised as a warning at score time.
+22 of the 175 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coefficients and the implementations in circulation disagree. Each is raised as a warning at score time.
 
 | Clock | The disagreement |
 |:---------|:----------------------------|

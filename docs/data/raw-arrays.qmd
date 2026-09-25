@@ -62,7 +62,7 @@ which is what BMIQ corrects by mapping type II onto the type I reference. On
 EPIC arrays type II probes are the large majority, so leaving this uncorrected
 shifts most of the matrix a clock will read.
 
-### 21.1 What an IDAT does not contain
+### 20.1 What an IDAT does not contain
 
 An IDAT is keyed by **bead address**, not by probe. A type I probe has two
 addresses and reads both in one colour; a type II probe has one address and
@@ -80,7 +80,7 @@ which manifest resolved its addresses, in exactly the way a score is a function
 of which coefficient file produced it, and recording one and not the other would
 be an odd place to stop.
 
-### 21.2 Out-of-band signal, which everything downstream rests on
+### 20.2 Out-of-band signal, which everything downstream rests on
 
 A type I probe's *other* colour, at its own two addresses, measures nothing
 real. It is the array's background, sampled on this chip, in this run, at tens
@@ -116,7 +116,7 @@ Two numerical points worth recording because both were wrong in a first draft:
   below background, which is *every undetected probe on the array*, not an edge
   case.
 
-### 21.3 The validation, and why it is a real one
+### 20.3 The validation, and why it is a real one
 
 The corpus holds raw IDATs for GSM5548192 and GSM5548193, and the betas their
 authors published for those same two physical samples. The two paths share
@@ -138,7 +138,7 @@ matrix agrees with our raw decode at r = 0.999, which says its own processing
 was minimal; comparing our background-corrected output against it would be
 asserting that a correction does nothing.
 
-### 21.4 Two steps that ship switched off, and why
+### 20.4 Two steps that ship switched off, and why
 
 **Dye bias.** Green and red do not fluoresce equally, and a type II probe reads
 methylated in one and unmethylated in the other, so it carries a tilt that is
@@ -164,7 +164,7 @@ It has to be asked for because clocks differ in how much they depend on it, and
 type I probes come out untouched, so BMIQ never moves a clock built purely on
 them.
 
-### 21.5 Probe masks: standard for an EWAS, a decision for a clock
+### 20.5 Probe masks: standard for an EWAS, a decision for a clock
 
 Zhou, Laird and Shen catalogued the probes that do not measure what their name
 says, multi-mapping, common SNP at the interrogated base, repeats, polymorphic
@@ -191,7 +191,7 @@ Two clocks, the same published mask, and opposite answers. For Horvath it is
 free; for DunedinPoAm38 it removes a ninth of the model. The coefficient-mass
 column is the one to read, and it is why this is a report rather than a step.
 
-### 21.6 What the chain still does not do
+### 20.6 What the chain still does not do
 
 - **No control-probe normalisation.** The core-columns manifest carries no
   control addresses, which is why dye bias is unvalidated (§20.4).

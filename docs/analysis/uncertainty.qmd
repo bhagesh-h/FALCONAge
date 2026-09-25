@@ -59,7 +59,7 @@ spanning sixty years of age, can be unable to resolve anything in a trial whose
 participants are all within a decade of each other. That is the calculation to
 run before recruiting, not after.
 
-### 20.1 The point estimate problem
+### 19.1 The point estimate problem
 
 Split one DNA sample, run both halves on the same array, and six prominent
 clocks disagree with themselves by **up to nine years**
@@ -72,7 +72,7 @@ is biology or the assay.
 Every package in the field emits that bare number. FALCONAge emits an
 interval, and the arithmetic behind it is short enough to check by hand.
 
-### 20.2 Propagating measurement error
+### 19.2 Propagating measurement error
 
 A linear clock is `score = f(b + wᵀβ)`. Give each probe a measurement variance
 `σ²ⱼ` and the score's variance follows directly:
@@ -133,7 +133,7 @@ array averages the noise away. That last result is the same mechanism that makes
 PC clocks robust to probe loss, arrived at from the other direction. Read all
 three as lower bounds, for the reason just given.
 
-### 20.3 Prediction error is a different, larger question
+### 19.3 Prediction error is a different, larger question
 
 `technical_se()` asks what a repeat of the same DNA would do. `conformal_interval()`
 asks how far the number is from the truth.
@@ -152,7 +152,7 @@ The limitation is not small and is stated in the output: every row carries
 overwhelmingly of European ancestry. On a paediatric or non-European cohort the
 guarantee does not transfer, and no widening factor would make it.
 
-### 20.3.1 What the calibration found, and what it turned into
+### 19.3.1 What the calibration found, and what it turned into
 
 The first calibration put Ying's DamAge and AdaptAge 37–150 years from
 chronological age. The obvious reading ("these are not age predictors") turned
@@ -191,7 +191,7 @@ They are `age_years_relative`: years, slope near one, no fixed zero.
 separately since v1.0 and nothing had ever read the difference; this is the
 first clock that needs it.
 
-### 20.4 Specimen type is not metadata
+### 19.4 Specimen type is not metadata
 
 Same 91 people, three specimens
 ([bioRxiv 2025.09.16.673560](https://doi.org/10.1101/2025.09.16.673560), CATSLife1,
@@ -253,7 +253,7 @@ age whatever tissue you read it from. That is exactly the failure the check
 exists to catch, and it caught it here first.
 :::
 
-### 20.5 Probe loss, priced
+### 19.5 Probe loss, priced
 
 `probe_loss()` has always said how much of a model is absent: count and
 coefficient mass. It could not say what that costs. Now it can, because the cost
@@ -308,7 +308,7 @@ QC (11.1% of its weight), while Horvath's 27 absent CpGs split into 8 removed by
 QC (2.7%) and 19 the array never carried. The remedy is to score clocks on
 normalised but unfiltered betas.
 
-### 20.6 A reported score must not move when the next plate arrives
+### 19.6 A reported score must not move when the next plate arrives
 
 ComBat estimates its location and scale from every sample at once. Add a batch,
 re-run, and every previously corrected value changes, measured directly on
@@ -339,7 +339,7 @@ correcting a confounded design removes the effect along with the artefact and
 returns a clean-looking null, the one failure mode of batch correction that
 looks like success.
 
-### 20.7 Before the first array, and after the last
+### 19.7 Before the first array, and after the last
 
 **`power()`** answers "how many samples to see this effect on this clock", and
 needs no data file. It refuses to default the standard deviation, because n
@@ -379,7 +379,7 @@ whatever its p-value. The verdict string always carries the counts it was
 computed from, a verdict without its arithmetic is an oracle, and that is the
 opposite of the posture of this package.
 
-### 20.8 Evidence, attached to the score
+### 19.8 Evidence, attached to the score
 
 `result.evidence()` returns what a value on this clock has been *shown* to
 predict, with effect sizes and DOIs. Seeded from studies that tested many clocks
@@ -400,7 +400,7 @@ are **uncorrelated: R = 0.12, P = 0.67**
 empirical justification for `scale_type` and `LEGAL_OPS`, and it is the reason
 "which clock is most accurate" is the wrong question.
 
-### 20.9 What was deliberately not built
+### 19.9 What was deliberately not built
 
 Recorded so it does not appear by accident.
 

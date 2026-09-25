@@ -101,9 +101,10 @@ groups:
 
   - title: The clock catalogue
     desc: >-
-      161 clocks in three availability tiers. Twenty-eight are scaffolds whose
-      coefficients are research-use-only; the registry says which, why, and
-      what open clock answers the same question.
+      175 clocks in three availability groups: 46 bundled, 89 untraced and 40
+      licensed scaffolds whose coefficients are research-use-only or have no
+      public source FALCONAge may redistribute. The registry says which, why,
+      and which bundled clocks answer the same question.
     python: [registry.load, registry.ClockRegistry, registry.Clock,
              registry.register_local_weights]
     r: [list_clocks, clock_info, cite_clock, compatible_clocks,
@@ -415,9 +416,8 @@ articles:
       By the question you asked, by what the scale permits, and by whether the
       clock's coefficients transfer to your data at all.
 
-# Pages that are neither a guide nor generated reference. They appear in the
-# Quarto navbar under "Background", and the pkgdown navbar links across to the
-# same rendered pages rather than duplicating five thousand lines into
+# Pages that are neither a guide nor generated reference. The pkgdown navbar
+# links across to the same rendered pages rather than duplicating five thousand lines into
 # r/vignettes/ -- which would put them in the CRAN tarball, where a reference
 # manual is welcome and a literature review is not.
 pages:
@@ -426,8 +426,8 @@ pages:
     desc: >-
       What the field knows to 2026: the biology each score encodes, the
       chemistry of every input layer, every algorithm with its equations, the
-      published constants, and the eleven places where a paper and its own
-      circulating implementation disagree.
+      published constants, and every place the registry records a paper
+      disagreeing with its own circulating implementation.
   - title: Architecture
     file: dev/index.qmd
     desc: >-
