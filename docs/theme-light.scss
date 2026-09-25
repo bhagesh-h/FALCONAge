@@ -1,33 +1,42 @@
 /*-- scss:defaults --*/
 // FALCONAge brand, light. Layered on Bootswatch cosmo.
 //
-// #e06000 is not a taste decision: it is the logo, sampled. 88% of the
-// non-grey pixels in logo.png are within one quantisation step of it, hue 26.
-// Everything here derives from that one value so the site and the mark cannot
-// drift apart.
-$falcon-orange:      #e06000;
-$falcon-orange-dark: #a84800;   // 4.7:1 on white -- the one safe for body links
-$falcon-ink:         #1a1a1a;
+// The colours and fonts are the interface tokens in plot/colorscheme.yaml,
+// written to _tokens.scss by docs/build_tokens.py; the reports read the same
+// block, so a page of the documentation and a page FALCONAge writes look like
+// one thing. #e06000, the brand, is the logo, sampled: 88% of the non-grey
+// pixels in logo.png are within one quantisation step of it, hue 26.
+@import "tokens";
 
-// Links take the darker shade. The logo orange is 3.4:1 on white, which passes
+$falcon-orange:      $falcon-light-brand;
+$falcon-orange-dark: $falcon-light-accent;   // 5.9:1 on white -- the one safe for body links
+$falcon-ink:         $falcon-light-ink;
+
+// The system font stack, as the reports use, instead of cosmo's Source Sans Pro
+// from Google Fonts: one typeface across the site and the reports, and no
+// request to a third party on every page view.
+$web-font-path:          false;
+$font-family-sans-serif: $falcon-font-sans;
+
+// Links take the darker shade. The logo orange is 3.6:1 on white, which passes
 // for large text and fails for a sentence, and most links sit in sentences.
 $primary:    $falcon-orange-dark;
 $body-color: $falcon-ink;
 $link-color: $falcon-orange-dark;
 
-$navbar-bg: #ffffff;
+$navbar-bg: $falcon-light-bg;
 $navbar-fg: $falcon-ink;
 
 // Tabular figures. Half this site is numbers in tables, and proportional
 // digits make a column of them impossible to compare down.
-$font-family-monospace: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+$font-family-monospace: $falcon-font-mono;
 
 // The names _falcon-shared.scss reads.
 $falcon-brand:    $falcon-orange;
 $falcon-accent:   $falcon-orange-dark;
-$falcon-hairline: rgba(0, 0, 0, 0.18);
-$falcon-wash:     rgba(0, 0, 0, 0.05);
-$falcon-invert:   #ffffff;
+$falcon-hairline: $falcon-light-line;
+$falcon-wash:     $falcon-light-panel;
+$falcon-invert:   $falcon-light-bg;
 
 /*-- scss:rules --*/
 @import "falcon-shared";

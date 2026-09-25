@@ -6,7 +6,8 @@
 # what it says. Python's matplotlib layer and R's ggplot2 layer both read it at
 # call time, so a colour changed here changes both, and a caption reworded here
 # is reworded in both. Nothing about a figure's appearance or its text lives in
-# code.
+# code. Its `ui` block does the same for pages: both HTML reports read it, and
+# the documentation site's _tokens.scss is generated from it.
 #
 # WHY THE TEXT IS HERE TOO, not just the colours. A figure that carries its own
 # title, subtitle and one-line description is readable when it is pasted into a
@@ -78,6 +79,47 @@ palette:
     MammalMethylChip40: "#E69F00"
     RRBS: "#D55E00"
     unknown: "#7F7F7F"
+
+# -----------------------------------------------------------------------------
+# interface: the reports and the documentation site
+# -----------------------------------------------------------------------------
+# The same neutrals, the same accent and the same status colours on every page
+# FALCONAge produces: the documentation site (docs/_tokens.scss is generated
+# from this block by docs/build_tokens.py), the one-page HTML report and the
+# Quarto report. Data colours stay in `palette` above; these are for text,
+# lines and surfaces.
+#
+# `brand` is the logo, sampled: 88% of the non-grey pixels in logo.png sit
+# within one quantisation step of #e06000. It is 3.6:1 on white, enough for the
+# wordmark (large text) and not for a sentence, so links and buttons use
+# `accent`. Every text colour here is at least 4.5:1 on both `bg` and `panel`
+# in its theme (WCAG 2.1 AA), which a test checks; the Okabe-Ito vermillion
+# the reports once used for warning text was 3.9:1.
+ui:
+  font_sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  font_mono: '"SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace'
+  light:
+    bg: "#ffffff"
+    panel: "#f7f7f7"
+    ink: "#1a1a1a"
+    muted: "#666666"
+    line: "#e0e0e0"
+    brand: "#e06000"
+    accent: "#a84800"
+    pass: "#00674c"
+    warn: "#8a6100"
+    stop: "#a4231c"
+  dark:
+    bg: "#1c1c1e"
+    panel: "#26262a"
+    ink: "#e6e6e6"
+    muted: "#a8a8ad"
+    line: "#3a3a3e"
+    brand: "#ff8c42"
+    accent: "#ff8c42"
+    pass: "#3fb68b"
+    warn: "#e3b341"
+    stop: "#ff7b72"
 
 # -----------------------------------------------------------------------------
 # typography and geometry

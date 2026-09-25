@@ -55,6 +55,36 @@ def theme_value(key: str) -> Any:
     return load()["theme"][key]
 
 
+def ui(mode: str = "light") -> dict[str, str]:
+    """Interface colours for one theme, ``"light"`` or ``"dark"``.
+
+    The reports and the documentation site read these, so a page FALCONAge
+    writes and a page of its documentation share neutrals, accent and status
+    colours. Data colours are :func:`palette`, not these.
+    """
+    if mode not in ("light", "dark"):
+        raise ValueError(f"mode must be 'light' or 'dark', not {mode!r}")
+    return dict(load()["ui"][mode])
+
+
+def ui_font(kind: str = "sans") -> str:
+    """The CSS font stack the reports and the site share (``"sans"`` or ``"mono"``)."""
+    return load()["ui"][f"font_{kind}"]
+
+
+def ui_css_variables() -> str:
+    """``:root`` custom properties for both themes, dark under prefers-color-scheme.
+
+    One string for every self-contained page FALCONAge writes, so the report
+    CSS names colours (``var(--accent)``) and never spells a hex value.
+    """
+    def block(mode: str) -> str:
+        return "".join(f"--{k}:{v};" for k, v in ui(mode).items())
+    return (f":root{{{block('light')}--font-sans:{ui_font('sans')};"
+            f"--font-mono:{ui_font('mono')};}}"
+            f"@media (prefers-color-scheme: dark){{:root{{{block('dark')}}}}}")
+
+
 def text(plot: str, **fields: Any) -> dict[str, str]:
     """Title, subtitle, description and axis labels for one figure.
 

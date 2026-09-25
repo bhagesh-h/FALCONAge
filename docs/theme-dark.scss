@@ -9,13 +9,19 @@
 // layout rules in _falcon-shared.scss, and this file changes colour only.
 //
 // Same hue as the light theme, lifted for contrast: #e06000 on a dark ground
-// is 3.0:1 and unreadable as body text; #ff8c42 is 7.4:1 on #1c1c1e.
-$falcon-orange: #ff8c42;
-$falcon-bg:      #1c1c1e;
-$falcon-surface: #26262a;
-$falcon-raised:  #2f2f34;
-$falcon-fg:      #e6e6e6;
-$falcon-dim:     #a8a8ad;
+// is 3.0:1 and unreadable as body text; #ff8c42 is 7.4:1 on #1c1c1e. The
+// values are the dark interface tokens (plot/colorscheme.yaml, _tokens.scss).
+@import "tokens";
+
+$falcon-orange:  $falcon-dark-brand;
+$falcon-bg:      $falcon-dark-bg;
+$falcon-surface: $falcon-dark-panel;
+$falcon-raised:  lighten($falcon-dark-panel, 4%);   // a third surface, for hover
+$falcon-fg:      $falcon-dark-ink;
+$falcon-dim:     $falcon-dark-muted;
+
+$web-font-path:          false;
+$font-family-sans-serif: $falcon-font-sans;
 
 $primary:    $falcon-orange;
 $body-bg:    $falcon-bg;
@@ -25,7 +31,7 @@ $link-hover-color: lighten($falcon-orange, 8%);
 
 // Cosmo is a light theme, so every surface Bootstrap paints has to be told
 // otherwise. Missing one shows up as a white card on a dark page.
-$border-color:       rgba(255, 255, 255, 0.15);
+$border-color:       $falcon-dark-line;
 $secondary-bg:       $falcon-surface;
 $tertiary-bg:        $falcon-raised;
 $secondary-color:    $falcon-dim;
@@ -54,12 +60,12 @@ $navbar-light-hover-color: $falcon-orange;
 $navbar-light-active-color: $falcon-orange;
 $navbar-light-brand-color: $falcon-orange;
 
-$font-family-monospace: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+$font-family-monospace: $falcon-font-mono;
 
 // The names _falcon-shared.scss reads.
 $falcon-brand:    $falcon-orange;
 $falcon-accent:   $falcon-orange;
-$falcon-hairline: rgba(255, 255, 255, 0.22);
+$falcon-hairline: $falcon-dark-line;
 $falcon-wash:     rgba(255, 255, 255, 0.08);
 $falcon-invert:   $falcon-bg;
 

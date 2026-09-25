@@ -421,28 +421,34 @@ ZOOM_JS = r"""
 })();
 """
 
-TABLE_CSS = r"""
+# Rules only; colours and fonts are the interface tokens in colorscheme.yaml,
+# shared with the one-page report and the documentation site.
+TABLE_RULES = r"""
+body { font-family:var(--font-sans); color:var(--ink); background:var(--bg); }
+a { color:var(--accent); }
+code, pre { font-family:var(--font-mono); }
 .fa-tablebar { display:flex; gap:.5rem; align-items:center; margin:.4rem 0 .5rem; }
 .fa-tablebar input[type=search] { flex:1 1 14rem; padding:.3rem .5rem;
-  border:1px solid var(--bs-border-color,#ddd); border-radius:4px; font-size:.85rem; }
-.fa-tablebar select { padding:.3rem; border:1px solid var(--bs-border-color,#ddd);
+  border:1px solid var(--line); border-radius:4px; font-size:.85rem; }
+.fa-tablebar select { padding:.3rem; border:1px solid var(--line);
   border-radius:4px; font-size:.85rem; }
-.fa-tablecount { font-size:.78rem; opacity:.7; white-space:nowrap; }
+.fa-tablecount { font-size:.78rem; color:var(--muted); white-space:nowrap; }
 .fa-tocfilter { width:100%; box-sizing:border-box; margin:0 0 .6rem; padding:.3rem .5rem;
-  border:1px solid var(--bs-border-color,#ddd); border-radius:4px; font-size:.85rem; }
-.fa-toggle { border:1px solid var(--bs-border-color,#e3e3e3); border-radius:6px;
+  border:1px solid var(--line); border-radius:4px; font-size:.85rem; }
+.fa-toggle { border:1px solid var(--line); border-radius:6px;
   padding:.4rem .7rem; margin:.8rem 0; }
 .fa-toggle > summary { cursor:pointer; font-weight:600; font-size:.92rem; }
 .fa-table { overflow-x:auto; }
-.fa-table table { width:100%; font-size:.84rem; border-collapse:collapse; }
-.fa-table th, .fa-table td { padding:.3rem .55rem; border-bottom:1px solid
-  var(--bs-border-color,#eee); text-align:left; white-space:nowrap; }
-/* Green, not the brand orange. These blocks state what a quantity is; orange
-   is the colour this report uses for cautions, and a definition rendered in it
-   read as a warning about the clock rather than a description of its output. */
-.fa-meaning { border-left:3px solid #009E73; padding:.55rem .95rem; margin:.8rem 0;
-  background:rgba(0,158,115,.06); font-size:.92rem; }
-.fa-meaning b, .fa-meaning strong { color:#00674c; }
+.fa-table table { width:100%; font-size:.84rem; border-collapse:collapse;
+  font-variant-numeric:tabular-nums; }
+.fa-table th, .fa-table td { padding:.3rem .55rem; border-bottom:1px solid var(--line);
+  text-align:left; white-space:nowrap; }
+/* Neutral, not a status colour. These blocks state what a quantity is; the
+   accent and the warning colours mean something else in this report, and a
+   definition drawn in either read as a caution about the clock. */
+.fa-meaning { border-left:3px solid var(--muted); padding:.55rem .95rem; margin:.8rem 0;
+  background:var(--panel); font-size:.92rem; }
+.fa-meaning b, .fa-meaning strong { color:var(--ink); }
 
 /* Uniform tiles, three across, so the section is scannable and the page does
    not lurch between a square heatmap and a wide forest plot. `contain` rather
@@ -452,9 +458,9 @@ TABLE_CSS = r"""
   gap:1.1rem; margin:1rem 0 1.6rem; }
 .fa-figure { margin:0; }
 .fa-figure img { width:100%; height:13rem; object-fit:contain; cursor:zoom-in;
-  border:1px solid var(--bs-border-color,#e3e3e3); border-radius:6px;
-  background:#fbfbfa; padding:.3rem; transition:border-color .12s; }
-.fa-figure img:hover, .fa-figure img:focus { border-color:#009E73; outline:none; }
+  border:1px solid var(--line); border-radius:6px;
+  background:#ffffff; padding:.3rem; transition:border-color .12s; }
+.fa-figure img:hover, .fa-figure img:focus { border-color:var(--accent); outline:none; }
 .fa-figure figcaption { font-size:.84rem; margin-top:.35rem; }
 .fa-figure .fa-readit { font-size:.8rem; }
 
@@ -465,12 +471,21 @@ TABLE_CSS = r"""
   background:rgba(20,20,20,.88); align-items:center; justify-content:center; padding:2rem; }
 #fa-zoom.on { display:flex; }
 #fa-zoom img { max-width:96vw; max-height:92vh; width:auto; height:auto;
-  background:#fff; border-radius:6px; padding:.5rem; }
+  background:#ffffff; border-radius:6px; padding:.5rem; }
 #fa-zoom button { position:absolute; top:1rem; right:1.4rem; font-size:2rem;
-  line-height:1; color:#fff; background:none; border:none; cursor:pointer; }
+  line-height:1; color:#ffffff; background:none; border:none; cursor:pointer; }
 .fa-readit { font-size:.88rem; margin:.4rem 0 0; }
-.fa-readit b { color:#00674c; }
+.fa-readit b { color:var(--ink); }
 """
+
+
+def report_css() -> str:
+    """Interface tokens, then the report's rules. Figures sit on white in both
+    themes because they are drawn on white; the frame around them follows the
+    theme."""
+    from ..plot.spec import ui_css_variables
+
+    return ui_css_variables() + TABLE_RULES
 
 
 def _b64(path: Path) -> str:
@@ -542,7 +557,7 @@ def write_quarto_report(
         f'title: "{title}"\n'
         "format:\n"
         "  html:\n"
-        "    theme: cosmo\n"
+        "    theme: default\n"
         "    toc: true\n"
         "    toc-location: left\n"
         "    toc-depth: 3\n"
@@ -551,7 +566,7 @@ def write_quarto_report(
         "    page-layout: full\n"
         "    code-tools: false\n"
         "---\n\n")
-    parts.append(f"```{{=html}}\n<style>{TABLE_CSS}</style>\n"
+    parts.append(f"```{{=html}}\n<style>{report_css()}</style>\n"
                  f"<script>{TABLE_JS}</script>\n"
                  f"<script>{ZOOM_JS}</script>\n```\n\n")
     parts.append(

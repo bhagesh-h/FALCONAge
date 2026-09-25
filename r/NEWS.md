@@ -5,6 +5,18 @@
 
 ## Added
 
+- **One set of interface colours and fonts for the site and both reports.**
+  They carried four palettes: the site's logo orange, a blue accent in the
+  one-page report, a green one in the Quarto report, and Okabe-Ito in the
+  figures. The `ui` block of `colorscheme.yaml` now holds the neutrals, accent
+  and status colours for light and dark; the reports read it at run time and
+  `docs/build_tokens.py` writes it to `docs/_tokens.scss` for the site (checked
+  in CI like the other generated files). Every text colour meets WCAG 2.1 AA
+  (4.5:1) on both surfaces in both themes, which a test checks; the report's
+  warning text, Okabe-Ito vermillion, was 3.9:1. The site and the reports use
+  the system font stack, so the site no longer loads Source Sans Pro from
+  Google Fonts. Okabe-Ito remains the data palette.
+
 - **Impossible ages and paces are flagged, as telomere lengths already were.**
   A human clock in years now warns (category `implausible`) when its cohort
   median leaves −1 to 122.45 years, the span from conception to Jeanne

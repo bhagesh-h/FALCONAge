@@ -13,7 +13,11 @@ screenshot taken once.
 
 The caption under each image is the same text the figure prints beneath its own
 axes. There is one copy of it, in `colorscheme.yaml`, so the website and the
-PNG cannot drift apart.
+PNG cannot drift apart. The same file's `ui` block sets the colours and fonts of
+both HTML reports and of this site, so a figure, a report and a page of the
+documentation share one palette: Okabe-Ito for data, because group membership
+is carried by hue alone and has to survive colour-vision deficiency, and the
+logo orange only for the wordmark and links.
 
 ::: {.callout-note}
 ## Reproducing these

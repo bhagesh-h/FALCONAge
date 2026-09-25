@@ -76,6 +76,7 @@ jobs:
           python docs/build_docs.py
           python docs/build_catalogue.py
           python docs/build_gallery.py
+          python docs/build_tokens.py
 
       - name: quartodoc
         run: quartodoc build --verbose

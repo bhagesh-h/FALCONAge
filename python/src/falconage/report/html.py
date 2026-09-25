@@ -14,17 +14,16 @@ from pathlib import Path
 
 import pandas as pd
 
-CSS = """
-:root { --fg:#1a1a1a; --muted:#666; --line:#e3e3e3; --accent:#0072B2; --warn:#D55E00; }
-@media (prefers-color-scheme: dark) {
-  :root { --fg:#e8e8e8; --muted:#9a9a9a; --line:#333; --accent:#56B4E9; --warn:#E69F00; }
-  body { background:#141414; }
-}
-body { font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-       color:var(--fg); max-width:60rem; margin:2rem auto; padding:0 1.25rem; }
+# Rules only. The colours and fonts are the interface tokens in
+# colorscheme.yaml, shared with the Quarto report and the documentation site,
+# so this file names roles (var(--accent)) and never spells a hex value.
+RULES = """
+body { font:15px/1.6 var(--font-sans); color:var(--ink); background:var(--bg);
+       max-width:60rem; margin:2rem auto; padding:0 1.25rem; }
 h1 { font-size:1.6rem; margin:0 0 .25rem; }
 h2 { font-size:1.15rem; margin:2rem 0 .5rem; border-bottom:1px solid var(--line);
      padding-bottom:.3rem; }
+a { color:var(--accent); }
 .sub { color:var(--muted); margin:0 0 1.5rem; }
 table { border-collapse:collapse; width:100%; font-size:.85rem; }
 th,td { text-align:left; padding:.35rem .6rem; border-bottom:1px solid var(--line); }
@@ -37,10 +36,17 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .kv dt { color:var(--muted); }
 .kv dd { margin:0; font-variant-numeric:tabular-nums; }
 img { max-width:100%; height:auto; }
-code { background:rgba(128,128,128,.13); padding:.1rem .3rem; border-radius:3px;
-       font-size:.85em; }
+code { font-family:var(--font-mono); background:var(--panel); padding:.1rem .3rem;
+       border-radius:3px; font-size:.85em; }
 footer { margin-top:3rem; color:var(--muted); font-size:.8rem; }
 """
+
+
+def css() -> str:
+    """The report stylesheet: interface tokens, then the rules that use them."""
+    from ..plot.spec import ui_css_variables
+
+    return ui_css_variables() + RULES
 
 
 def _table(df: pd.DataFrame, max_rows: int = 60) -> str:
@@ -143,6 +149,6 @@ def write_report(result, path: str | Path, *, age_col: str = "age",
     p.write_text(
         f"<!doctype html><meta charset='utf-8'><title>{html.escape(title)}</title>"
         f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        f"<style>{CSS}</style>{''.join(parts)}",
+        f"<style>{css()}</style>{''.join(parts)}",
         encoding="utf-8", newline="\n")
     return p
