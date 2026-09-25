@@ -150,6 +150,8 @@ reference:
   - falcon_scheme
   - falcon_theme
   - report
+  - run_report
+  - quarto_report
 - title: Downloading public data
   desc: Accession in, files and a normalised sample table out. Credentialed archives are documented
     rather than automated -- the access agreement is the user's, not the tool's.

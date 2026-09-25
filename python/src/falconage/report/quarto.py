@@ -26,7 +26,7 @@ import base64
 import html
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import pandas as pd
 
@@ -274,12 +274,41 @@ FIGURE_NOTES: dict[str, dict[str, str]] = {
 }
 
 
+#: File stems whose figure is defined in colorscheme.yaml under another name.
+_PLOT_ALIASES = {"platform": "platform_comparison", "study": "study_comparison"}
+
+
 def figure_note(stem: str) -> dict[str, str]:
-    return FIGURE_NOTES.get(stem, {
-        "caption": stem.replace("_", " ").capitalize(),
-        "read": "",
-        "wrong": "",
-    })
+    """The notes for a figure file's stem.
+
+    Per-clock figures are written as ``<kind>_<clock>`` (``ba_vs_ca_hannum``), so
+    the longest known kind the stem starts with is used and the clock is named
+    in the caption; an exact lookup missed every one of them. A kind with no
+    entry in :data:`FIGURE_NOTES` takes the title and description the figure
+    itself prints, from colorscheme.yaml, so its text is not written twice.
+    """
+    from ..plot.spec import load as _spec
+
+    plots = _spec()["plots"]
+    kinds = set(FIGURE_NOTES) | set(plots) | set(_PLOT_ALIASES)
+    kind, clock = stem, ""
+    if stem not in kinds:
+        for k in sorted(kinds, key=len, reverse=True):
+            if stem.startswith(k + "_"):
+                kind, clock = k, stem[len(k) + 1:]
+                break
+    if kind in FIGURE_NOTES:
+        note = dict(FIGURE_NOTES[kind])
+    elif _PLOT_ALIASES.get(kind, kind) in plots:
+        spec = plots[_PLOT_ALIASES.get(kind, kind)]
+        note = {"caption": spec["title"],
+                "read": " ".join(str(spec.get("description", "")).split()),
+                "wrong": ""}
+    else:
+        note = {"caption": stem.replace("_", " ").capitalize(), "read": "", "wrong": ""}
+    if clock:
+        note["caption"] = f'{note["caption"]}: {clock}'
+    return note
 
 
 # ---------------------------------------------------------------------------
@@ -476,6 +505,12 @@ code, pre { font-family:var(--font-mono); }
   line-height:1; color:#ffffff; background:none; border:none; cursor:pointer; }
 .fa-readit { font-size:.88rem; margin:.4rem 0 0; }
 .fa-readit b { color:var(--ink); }
+.fa-dl { display:inline-block; margin-left:.5rem; font-size:.76rem; color:var(--accent);
+  text-decoration:none; border:1px solid var(--accent); border-radius:4px;
+  padding:.05rem .45rem; white-space:nowrap; }
+.fa-dl:hover, .fa-dl:focus { background:var(--accent); color:var(--bg); }
+pre { background:var(--panel); border:1px solid var(--line); border-radius:6px;
+  padding:.6rem .8rem; font-size:.82rem; }
 """
 
 
@@ -519,185 +554,238 @@ def _figure(path: Path, *, hero: bool = False) -> str:
         f'{read}\n{wrong}\n</figure>\n')
 
 
-def write_quarto_report(
-    result: Any = None,
-    out: str | Path = "falconage-report.qmd",
-    *,
-    figures: Iterable[str | Path] = (),
-    tables: dict[str, pd.DataFrame] | None = None,
-    logo: str | Path | None = None,
-    title: str = "FALCONAge results",
-    registry: Any = None,
-    verdict: str | None = None,
-    consensus: pd.DataFrame | None = None,
-    conclusion_figure: str | Path | None = None,
-) -> Path:
-    """Write the report source. Render it with ``quarto render <file>``.
+#: One download link per figure, built from the image already on the page, so
+#: the full-resolution file costs no second copy of its bytes (as in cyRAVEN).
+DOWNLOAD_JS = r"""
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.fa-figure[data-file]').forEach(fig => {
+    const img = fig.querySelector('img');
+    const a = document.createElement('a');
+    a.className = 'fa-dl'; a.textContent = 'Download PNG';
+    a.download = fig.dataset.file.split('/').pop();
+    a.href = img.src;
+    fig.querySelector('figcaption').appendChild(a);
+  });
+});
+"""
 
-    Returns the path to the ``.qmd``. Rendering is left to the caller so the
-    same source can be produced on a machine with no Quarto and rendered
-    elsewhere, which is the normal shape of a CI job.
+#: A table above this size on disk is named in the last step instead of being
+#: embedded: a report that runs to hundreds of megabytes will not be opened.
+MAX_TABLE_BYTES = 2_000_000
+
+
+def _human(n: int) -> str:
+    for unit in ("B", "kB", "MB", "GB"):
+        if n < 1000 or unit == "GB":
+            return f"{n:.0f} {unit}" if unit == "B" else f"{n:.1f} {unit}"
+        n /= 1000
+    return f"{n} B"
+
+
+def _csv_link(path: Path) -> str:
+    return (f'<a class="fa-dl" download="{html.escape(path.name)}" '
+            f'href="data:text/csv;base64,{_b64(path)}">Download CSV</a>')
+
+
+def _manifest_html(path: Path) -> str:
+    """The run manifest as three readable tables rather than raw JSON."""
+    import json
+
+    m = json.loads(path.read_text(encoding="utf-8"))
+    keys = ("falconage_version", "registry_version", "started_utc", "finished_utc",
+            "caller", "python", "platform", "device_requested", "device", "dtype")
+    run = pd.DataFrame([{"field": k.replace("_", " "), "value": str(m.get(k, ""))}
+                        for k in keys if k in m])
+    weights = pd.DataFrame([
+        {"clock": c, "source": w.get("source", ""), "file": w.get("path", ""),
+         "sha256": w.get("sha256", ""),
+         "primary source traced": w.get("primary_source_traced", "")}
+        for c, w in sorted((m.get("weights") or {}).items())])
+    warns = pd.DataFrame(m.get("warnings") or [])
+    return (_table(run, title="Run", open_by_default=True)
+            + _table(weights, title="Coefficients used",
+                     note="The file and SHA-256 behind every clock scored. A different "
+                          "digest is a different clock, whatever its name.")
+            + _table(warns, title="Warnings raised",
+                     note="Every warning the run raised, with the clock it concerns."))
+
+
+def _category_notes(result: Any, reg: Any) -> str:
+    """What the number means, for each category of clock that was scored."""
+    if result is None or getattr(result, "scores", None) is None:
+        return ""
+    scored = [reg.get(c) for c in map(str, result.scores.columns) if c in reg]
+    out = []
+    for cat in CATEGORIES:
+        ids = sorted(c.id for c in scored if categorise(c) == cat["key"])
+        if not ids:
+            continue
+        out.append(
+            '<div class="fa-meaning">\n'
+            f'<p><strong>{html.escape(cat["title"])}</strong> '
+            f'({html.escape(", ".join(ids))})</p>\n'
+            f'<p><strong>What the number is.</strong> {html.escape(cat["output"])}</p>\n'
+            f'<p>{cat["means"]}</p>\n'
+            f'<p><strong>What follows from it.</strong> {cat["implication"]}</p>\n'
+            "</div>\n")
+    return "".join(out)
+
+
+def _verdict_html(path: Path) -> str:
+    """``consensus_verdict.txt`` is machine output; written here as a sentence."""
+    v = " ".join(path.read_text(encoding="utf-8").split())
+    v = v.replace(" -- ", ": ").replace("--", ":")
+    for word in ("unsupported", "supported", "equivocal"):
+        if v.lower().startswith(word):
+            rest = v[len(word):].lstrip(" .:")
+            v = word.capitalize() + ". " + rest[:1].upper() + rest[1:]
+            break
+    if v and not v.endswith("."):
+        v += "."
+    return (f'<div class="fa-meaning"><p><strong>Verdict.</strong> '
+            f"{html.escape(v)}</p></div>\n")
+
+
+def write_quarto_report(
+    outdir: str | Path,
+    result: Any = None,
+    *,
+    title: str = "FALCONAge report",
+    logo: str | Path | None = None,
+    registry: Any = None,
+    render: bool = False,
+) -> Path:
+    """Write ``falconage_report.qmd`` into a run's output directory; render it if asked.
+
+    Every file in ``outdir`` is placed under the step of the analysis that
+    produced it (:mod:`falconage.report.outputs`), in step order, with its
+    description: tables collapsible, searchable and downloadable as CSV,
+    figures zoomable and downloadable at full resolution. A file the output
+    table does not name is listed in the last step, so nothing in the directory
+    is left out. Rendering embeds every figure and table, so the HTML is one
+    file that references nothing.
+
+    ``result``, when given, adds what each scored category of clock means to the
+    scores step. ``render=True`` runs ``quarto render`` and returns the HTML
+    path; it raises if Quarto is not on the path, naming the source to render
+    elsewhere. Otherwise the ``.qmd`` path is returned.
     """
+    import shutil
+    import subprocess
+
+    from .. import __version__
     from .. import registry as _registry_mod
+    from .outputs import STEPS, collect
 
     reg = registry or _registry_mod.load()
-    out = Path(out)
+    outdir = Path(outdir)
+    qmd = outdir / "falconage_report.qmd"
     stamp = datetime.now(timezone.utc).strftime("%d %B %Y, %H:%M UTC")
+    placed = collect(outdir)
 
     logo_html = ""
     if logo and Path(logo).exists():
-        # 180px, matching the README. At 46 it read as a favicon beside the
-        # title rather than as the mark on the document.
         logo_html = (f'<img src="data:image/png;base64,{_b64(Path(logo))}" '
-                     f'alt="FALCONAge" style="width:180px;height:auto">')
+                     f'alt="FALCONAge" style="width:120px;height:auto">')
 
-    parts: list[str] = []
-    parts.append(
+    parts: list[str] = [
         "---\n"
         f'title: "{title}"\n'
+        "lang: en\n"
         "format:\n"
         "  html:\n"
         "    theme: default\n"
         "    toc: true\n"
         "    toc-location: left\n"
-        "    toc-depth: 3\n"
-        "    toc-title: Contents\n"
+        "    toc-depth: 2\n"
+        "    toc-title: Steps\n"
         "    embed-resources: true\n"
         "    page-layout: full\n"
-        "    code-tools: false\n"
-        "---\n\n")
-    parts.append(f"```{{=html}}\n<style>{report_css()}</style>\n"
-                 f"<script>{TABLE_JS}</script>\n"
-                 f"<script>{ZOOM_JS}</script>\n```\n\n")
-    parts.append(
+        "---\n\n",
+        f"```{{=html}}\n<style>{report_css()}</style>\n"
+        f"<script>{TABLE_JS}</script>\n<script>{ZOOM_JS}</script>\n"
+        f"<script>{DOWNLOAD_JS}</script>\n```\n\n",
         "```{=html}\n"
         '<div style="display:flex;align-items:center;gap:.9rem;margin:0 0 1.2rem">\n'
         f"{logo_html}\n"
-        f'<div><div style="font-size:.82rem;opacity:.7">Generated {stamp}</div></div>\n'
-        "</div>\n```\n\n")
+        f'<div class="fa-tablecount">Generated {stamp} by FALCONAge {__version__}, '
+        f"from {html.escape(str(outdir.resolve().name))}/</div>\n</div>\n```\n\n",
+        "The sections follow the order of the analysis, because each step is only "
+        "as reliable as the ones before it: coverage decides whether a score is a "
+        "measurement, and uncertainty decides whether a difference is one. Every "
+        "file in the output directory appears once, under the step that wrote it. "
+        "Tables expand, search, page and download; figures enlarge on click and "
+        "download at full resolution.\n\n",
+    ]
 
-    # ---- how to read this page --------------------------------------------
-    parts.append(
-        "## How to read this report\n\n"
-        "Clocks are grouped by **what they were trained to predict**, not "
-        "alphabetically, because that is what decides what a number means. Each "
-        "group below states its unit and what follows from it. A score from one "
-        "group is not comparable with a score from another, and the arithmetic "
-        "that mixes them has no defined meaning.\n\n"
-        "Every table collapses, searches, and shows 10, 50, 100 or all rows. "
-        "Every figure carries what to look for and what a bad one looks like.\n\n")
-
-    # ---- conclusion ---------------------------------------------------------
-    #
-    # First, not last. A reader who opens a fifty-figure report and has to scroll
-    # to the end to find out whether anything was detected will read the figures
-    # without knowing what they are looking for. The consensus test is the only
-    # statement in the document that is about the run as a whole rather than
-    # about one clock.
-    if verdict or (consensus is not None and len(consensus)):
-        parts.append("## Conclusion\n\n")
-        if verdict:
-            # `consensus_verdict.txt` is two lines of machine output: a one-word
-            # verdict, then the counts. Rendered verbatim it reads as a log line
-            # rather than a finding, so the word is capitalised, the counts are
-            # made a sentence, and the ASCII dash is not left in prose.
-            v = " ".join(str(verdict).split())
-            v = v.replace(" -- ", ": ").replace("--", ":")
-            for word in ("unsupported", "supported", "equivocal"):
-                if v.lower().startswith(word):
-                    rest = v[len(word):].lstrip(" .:")
-                    v = word.capitalize() + ". " + rest[:1].upper() + rest[1:]
-                    break
+    further: list[tuple[str, int, str]] = []
+    for step in STEPS:
+        items = placed.get(step.number, [])
+        parts.append(f"## {step.number}. {step.title} {{#step-{step.number}}}\n\n")
+        parts.append(f"{step.purpose}\n\n")
+        block: list[str] = []
+        figs: list[str] = []
+        if step.number == 3:
+            block.append(_category_notes(result, reg))
+        for path, o in items:
+            rel = path.relative_to(outdir).as_posix()
+            size = path.stat().st_size
+            if o.kind == "figure":
+                figs.append(_figure(path).replace(
+                    '<figure class="fa-figure">',
+                    f'<figure class="fa-figure" data-file="{html.escape(rel)}">', 1))
+            elif o.kind == "table" and size <= MAX_TABLE_BYTES:
+                df = pd.read_csv(path)
+                note = html.escape(o.description) + " " + _csv_link(path)
+                block.append(_table(df, title=f"{o.title} ({rel})", note=note,
+                                    open_by_default=(step.number in (3, 7))))
+            elif o.kind == "json" and rel == "run_manifest.json":
+                block.append(_manifest_html(path))
+            elif o.kind == "text" and rel == "consensus_verdict.txt":
+                block.append(_verdict_html(path))
+            elif o.kind == "text":
+                block.append(f"<p><strong>{html.escape(o.title or rel)}</strong> "
+                             f"({html.escape(rel)}). {html.escape(o.description)}</p>\n<pre>"
+                             f"{html.escape(path.read_text(encoding='utf-8'))}</pre>\n")
             else:
-                v = v[:1].upper() + v[1:]
-            if not v.endswith("."):
-                v += "."
-            parts.append(
-                '```{=html}\n<div class="fa-meaning">\n'
-                f"<p><strong>Verdict.</strong> {html.escape(v)}</p>\n"
-                "</div>\n```\n\n")
-        if consensus is not None and len(consensus):
-            n = len(consensus)
-            sig_b = int(consensus.get("sig_bonferroni", pd.Series(dtype=bool)).sum())
-            sig_h = int(consensus.get("sig_bh", pd.Series(dtype=bool)).sum())
-            gens = ", ".join(sorted(set(consensus.get("generation", []))))
-            parts.append(
-                f"{n} clocks were testable on this contrast. **{sig_b} reached "
-                f"significance after Bonferroni correction and {sig_h} after "
-                f"Benjamini-Hochberg.** The clocks span {gens}, which matters "
-                "for reading the result: a real effect appears across "
-                "generations, because they share the underlying biology and not "
-                "their feature sets. A single significant clock among twenty is "
-                "the documented signature of a false positive rather than of a "
-                "narrow effect.\n\n")
-        if conclusion_figure and Path(conclusion_figure).exists():
-            parts.append("```{=html}\n"
-                         + _figure(Path(conclusion_figure), hero=True)
-                         + "```\n\n")
-        if consensus is not None and len(consensus):
-            parts.append("```{=html}\n" + _table(
-                consensus, title="Consensus test, every clock",
-                note="Effect size, uncorrected p, and both corrected thresholds "
-                     "per clock. Sorted as tested, not by p, so the table cannot "
-                     "be read as a ranking.",
-                open_by_default=True) + "```\n\n")
+                why = o.description or "Not described by the report's output table."
+                if o.kind == "table":
+                    why = (f"{o.description} Not embedded: {_human(size)} is above the "
+                           f"{_human(MAX_TABLE_BYTES)} limit for an embedded table.")
+                further.append((rel, size, why))
+        if figs:
+            block.append('<div class="fa-figgrid">\n' + "".join(figs) + "</div>\n")
+        if step.number == STEPS[-1].number and further:
+            block.append(_table(
+                pd.DataFrame([{"file": f, "size": _human(n), "what it is": w}
+                              for f, n, w in further]),
+                title="Files in the output directory not embedded above",
+                open_by_default=True))
+        block = [b for b in block if b]
+        if block:
+            parts.append("```{=html}\n" + "".join(block) + "```\n\n")
+        else:
+            parts.append("*This run wrote nothing for this step.*\n\n")
 
-    # ---- the clock catalogue, by category ----------------------------------
-    parts.append("## Clocks by category\n\n")
-    scored = set()
-    if result is not None and getattr(result, "scores", None) is not None:
-        scored = set(map(str, result.scores.columns))
+    qmd.write_text("".join(parts), encoding="utf-8", newline="\n")
+    if not render:
+        return qmd
 
-    for cat in CATEGORIES:
-        members = [c for c in reg if categorise(c) == cat["key"]]
-        if not members:
-            continue
-        here = [c for c in members if c.id in scored] if scored else members
-        parts.append(f"### {cat['title']}\n\n")
-        parts.append(
-            '```{=html}\n<div class="fa-meaning">\n'
-            f'<p><strong>What the number is.</strong> {html.escape(cat["output"])}</p>\n'
-            f'<p>{cat["means"]}</p>\n'
-            f'<p><strong>What follows from it.</strong> {cat["implication"]}</p>\n'
-            "</div>\n```\n\n")
-        df = pd.DataFrame([{
-            "clock": c.id,
-            "scored here": "yes" if c.id in scored else "",
-            "unit": ", ".join(c.unit) or "",
-            "scale": c.scale_type,
-            "legal operations": ", ".join(sorted(c.legal_operations)),
-            "availability": c.availability,
-            "features": c.n_features or "",
-            "year": c.year or "",
-        } for c in sorted(members, key=lambda x: x.id)])
-        note = (f"{len(here)} of these {len(members)} were scored in this run."
-                if scored else f"{len(members)} catalogued.")
-        parts.append("```{=html}\n" + _table(df, title=f"{cat['title']}: catalogue",
-                                             note=note) + "```\n\n")
+    quarto = shutil.which("quarto")
+    if quarto is None:
+        raise RuntimeError(
+            f"Quarto is not on the path, so {qmd.name} was written but not rendered.\n"
+            f"  Render it where Quarto is installed:  quarto render {qmd}\n"
+            "  or, from that directory, with the Quarto container:\n"
+            "    docker run --rm --user \"$(id -u):$(id -g)\" -e HOME=/tmp -v \"$PWD:/w\" "
+            "-w /w ghcr.io/quarto-dev/quarto quarto render " + qmd.name)
+    done = subprocess.run([quarto, "render", qmd.name], cwd=outdir,
+                          capture_output=True, text=True)
+    if done.returncode != 0:
+        tail = "\n".join((done.stderr or done.stdout).strip().splitlines()[-12:])
+        raise RuntimeError(f"quarto render {qmd.name} failed:\n{tail}")
+    out = qmd.with_suffix(".html")
+    from ..core.logging import get_logger
 
-    # ---- results ------------------------------------------------------------
-    if result is not None:
-        parts.append("## Results\n\n")
-        for name, df in (tables or {}).items():
-            parts.append("```{=html}\n" + _table(df, title=name) + "```\n\n")
-
-    # ---- figures ------------------------------------------------------------
-    #
-    # A grid of uniform tiles rather than fifty-one full-width images stacked.
-    # Each tile zooms on click, because a thumbnail of a forty-clock heatmap is
-    # unreadable and cropping one to fit the grid would remove an axis.
-    figs = [Path(f) for f in figures if Path(f).exists()]
-    hero = Path(conclusion_figure) if conclusion_figure else None
-    if hero and hero.exists():
-        figs = [f for f in figs if f.resolve() != hero.resolve()]
-    if figs:
-        parts.append("## Figures\n\n")
-        parts.append(
-            "Every figure is shown at the same size so the section can be "
-            "scanned. Click one to see it full size, or press Escape to close.\n\n")
-        tiles = "".join(_figure(f) for f in sorted(figs, key=lambda p: p.stem))
-        parts.append('```{=html}\n<div class="fa-figgrid">\n' + tiles
-                     + "</div>\n```\n\n")
-
-    out.write_text("".join(parts), encoding="utf-8")
+    get_logger(__name__).info("wrote %s (%s)", out, _human(out.stat().st_size))
     return out

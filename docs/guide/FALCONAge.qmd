@@ -731,13 +731,80 @@ acceleration left to detect anything with.
 
 ## Reporting
 
+Two documents, each one self-contained HTML file.
+
+**The one-page report** is the scores, the run and a few figures, small enough to send:
+
 ```r
 write_results(res, "results/")
 report(res, "report.html", group = "condition")
 ```
 
-The HTML report is one self-contained file, inlined CSS, base64 figures, the table embedded, so
-it still works after somebody emails it, which is the only thing anybody does with a report.
+It is one file, inlined CSS, base64 figures, the table embedded, so it still works after somebody
+emails it, which is the only thing anybody does with a report.
+
+**The full run, step by step.** `run_report()` runs quality control, scoring, technical error,
+prediction intervals, age acceleration, a consensus test across clocks when a group column is
+named, and the interpretation tables, and writes every deliverable into one directory: the same
+directory the `report` command writes. With `quarto = TRUE` it adds `falconage_report.qmd`, in which
+every file of that directory sits under the step that produced it, in the order a reader has to
+take them, because each step is only as reliable as the ones before it:
+
+| Step | What it holds |
+|---|---|
+| 0. Provenance | versions, the coefficient file and SHA-256 behind each clock, device, warnings |
+| 1. Input and quality control | per-sample missingness and beta distribution; the QC figures |
+| 2. Coverage | per-clock coverage by feature count and by coefficient weight; clocks not scored, and why |
+| 3. Scores | the scores, what each category of clock measures, and how the clocks relate |
+| 4. Agreement with chronological age | error against age and whether it depends on age |
+| 5. Uncertainty | technical standard error and conformal prediction intervals |
+| 6. Age acceleration | residuals on age, for the scales where they are defined |
+| 7. Group comparison | the consensus verdict and the test for every clock |
+| 8. Interpretation | what each score means and the published evidence, with DOIs |
+| 9. Further outputs | every other file in the directory, named and sized |
+
+A file the report does not recognise still appears, in step 9, so nothing in the directory is
+left out. Tables expand, search, page and download as CSV; figures enlarge on click and download
+at full resolution. Rendered, it is one HTML file with every figure and table embedded: 3.7 MB for
+16 samples and three clocks.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.report.run_report(d, "results/", group_col="condition", quarto=True)
+```
+
+### R
+
+```r
+run_report(d, "results/", group = "condition", quarto = TRUE)
+```
+
+### Command line
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
+  report betas.csv --outdir results/ --group-col condition --quarto
+```
+
+:::
+
+**Rendering it.** Quarto is not in the FALCONAge image. Installed it takes 423 MB, which would add
+62% to the 680 MB image for an optional document, so inside the image the source is written and
+the run says so. Render it with the Quarto container, from the output directory, and open
+`falconage_report.html`:
+
+```bash
+cd results
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/w" -w /w \
+  ghcr.io/quarto-dev/quarto quarto render falconage_report.qmd
+```
+
+Where Quarto is installed, `run_report()` renders it directly, and `quarto_report("results/")`
+(R) or `fa.report.write_quarto_report("results/", render=True)` (Python) rewrites the report for
+a directory that already exists.
 
 ## The Claude skill {#claude-skill}
 The repository ships a [Claude](https://claude.com/claude-code) skill at

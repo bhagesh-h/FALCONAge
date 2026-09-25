@@ -300,6 +300,8 @@ quartodoc:
     - plot.palette
     - plot.save_all
     - report.write_report
+    - report.run_report
+    - report.write_quarto_report
   - title: Downloading public data
     desc: Accession in, files and a normalised sample table out. Credentialed archives are
       documented rather than automated -- the access agreement is the user's, not the tool's.

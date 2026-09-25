@@ -67,6 +67,7 @@ falconage bench --input results/       # the AA1/AA2 benchmark
 falconage power --clock horvath2013 --effect 0.5 --sd 6   # how many samples you need
 falconage consensus results/ --group-col condition        # does a group difference survive across clocks
 falconage report betas.csv --outdir results/              # read, QC, score, quantify, write HTML
+falconage report betas.csv --outdir results/ --quarto     # and falconage_report.qmd, every output under its step
 ```
 
 Which arguments are positional and which are flags is not guessable, and it
@@ -75,6 +76,10 @@ differs by verb: `report` and `consensus` take their input positionally,
 requires an action before any flag. `--help` on a verb is authoritative, and
 `docs/check_api_docs.py` runs every command written above through the real
 parser so this block cannot drift from it.
+
+`--quarto` writes `falconage_report.qmd`; Quarto is not in the image, so render it with the
+Quarto container from the output directory:
+`docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/w" -w /w ghcr.io/quarto-dev/quarto quarto render falconage_report.qmd`.
 
 `--dry-run` on `download` transfers nothing and prints every URL and byte count. Use it before
 committing to a GEO series; some are several hundred megabytes.

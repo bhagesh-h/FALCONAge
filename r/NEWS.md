@@ -5,6 +5,22 @@
 
 ## Added
 
+- **An optional report of the whole run, ordered by step.** `falconage report
+  --quarto`, `fa.report.run_report(..., quarto=True)` and `run_report(...,
+  quarto = TRUE)` in R write `falconage_report.qmd`, in which every file of the
+  output directory sits under the step of the analysis that produced it:
+  provenance, input and QC, coverage, scores, agreement with age, uncertainty,
+  acceleration, group comparison, interpretation, and the rest, named and
+  sized, so nothing in the directory is left out. Tables search, page and
+  download as CSV; figures enlarge and download at full resolution; rendered,
+  it is one HTML file that loads nothing from outside. Which file belongs to
+  which step is one table (`fa.report.OUTPUTS`), after cyRAVEN's run report.
+  Quarto (423 MB installed) is not added to the image; the guide gives the
+  one-line render with the Quarto container. `run_report` also writes the
+  skipped clocks, the acceleration table and the consensus table and verdict,
+  which the command computed and discarded. `quarto_report()` (R) and
+  `write_quarto_report()` rebuild the report for an existing directory.
+
 - **One set of interface colours and fonts for the site and both reports.**
   They carried four palettes: the site's logo orange, a blue accent in the
   one-page report, a green one in the Quarto report, and Okabe-Ito in the
@@ -150,6 +166,13 @@
   makes the single-file HTML report reproducible rather than ad hoc.
 
 ## Fixed
+
+- **Per-clock figures lost their reading notes in the Quarto report.** Notes
+  were looked up by the file's exact stem, so `ba_vs_ca_hannum` and every other
+  per-clock figure fell back to a bare caption. The longest known kind is now
+  matched and the clock named; a figure with no note takes the title and
+  description it prints itself, from `colorscheme.yaml`. `save_all` also drew
+  the chord diagram twice.
 
 - **Clinical PhenoAge used an alkaline phosphatase weight the paper does not
   print.** FALCONAge carried 0.00188, which appears in the equation of Liu et

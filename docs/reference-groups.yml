@@ -159,7 +159,8 @@ groups:
              plot.benchmark_heatmap,
              plot.reliability_forest, plot.score_interval, plot.platform_bias,
              plot.consensus_plot,
-             plot.palette, plot.save_all, report.write_report]
+             plot.palette, plot.save_all, report.write_report,
+             report.run_report, report.write_quarto_report]
     # pkgdown refuses to build when an exported topic is in no group, so this
     # list is not optional documentation -- it is a build dependency. The
     # coverage check in build_docs.py compares it against r/man/*.Rd and fails
@@ -171,7 +172,8 @@ groups:
         plot_clock_atlas,
         plot_coverage, plot_by_platform, plot_kaplan_meier, plot_volcano,
         plot_benchmark, plot_benchmark_error_bias, plot_benchmark_heatmap,
-        falcon_palette, falcon_scheme, falcon_theme, report]
+        falcon_palette, falcon_scheme, falcon_theme, report, run_report,
+        quarto_report]
 
   - title: Downloading public data
     desc: >-
@@ -276,6 +278,8 @@ pairs:
     - [plot_benchmark_heatmap, plot.benchmark_heatmap]
     - [falcon_palette, plot.palette]
     - [report, report.write_report]
+    - [run_report, report.run_report]
+    - [quarto_report, report.write_quarto_report]
   Downloading public data:
     - [download, download]
     - [cache_info, download.cache_info]

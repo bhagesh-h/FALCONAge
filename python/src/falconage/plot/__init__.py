@@ -119,7 +119,6 @@ def save_all(result, outdir, *, data=None, bench=None, acc=None, age_col: str = 
     # second recolours the layout clock_pca already draws. Both stay callable
     # for anyone who wants them; neither earns a slot in every run's output.
     emit("clock_chord", lambda: clock_chord(result))
-    emit("clock_chord", lambda: clock_chord(result))
     emit("clock_radar", lambda: clock_radar(result, group=group))
     if data is not None:
         emit("beta_density", lambda: beta_density(data))

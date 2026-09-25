@@ -125,3 +125,25 @@ _d4 = pd.DataFrame(np.full((3, 5), 0.5), index=list('abc'), columns=_f4)
   expect_error(score(d, clocks = "hannum"), "below the")
   expect_error(score(d, clocks = "grimage2"), "scaffold-only")
 })
+
+test_that("run_report writes the step-ordered report from R", {
+  skip_if_no_python()
+  reticulate::py_run_string("
+import numpy as np, pandas as pd, falconage as fa
+_f = list(fa.registry.load().feature_ids('hannum'))
+_rng = np.random.default_rng(7)
+_d5 = pd.DataFrame(_rng.uniform(0.2, 0.8, (8, len(_f))), index=[f's{i}' for i in range(8)], columns=_f)
+_o5 = pd.DataFrame({'age': np.linspace(25, 70, 8), 'tissue': 'whole blood'}, index=_d5.index)
+")
+  betas <- FALCONAge:::as_df(reticulate::py_eval("_d5", convert = FALSE))
+  pheno <- FALCONAge:::as_df(reticulate::py_eval("_o5", convert = FALSE))
+  d <- falcon_data(betas, obs = pheno, modality = "dna_methylation", platform = "450K")
+  out <- file.path(tempdir(), "falcon_run")
+  paths <- run_report(d, out, clocks = "hannum", figures = FALSE,
+                      quarto = TRUE, render = FALSE)
+  expect_true(file.exists(paths[["quarto"]]))
+  qmd <- paste(readLines(paths[["quarto"]]), collapse = "\n")
+  expect_match(qmd, "## 0. Provenance", fixed = TRUE)
+  expect_match(qmd, "## 9. Further outputs", fixed = TRUE)
+  expect_match(qmd, "scores_wide.csv", fixed = TRUE)
+})

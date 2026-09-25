@@ -181,6 +181,8 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `plot_benchmark_heatmap()` | `fa.plot.benchmark_heatmap()` |
 |  | `falcon_palette()` | `fa.plot.palette()` |
 |  | `report()` | `fa.report.write_report()` |
+|  | `run_report()` | `fa.report.run_report()` |
+|  | `quarto_report()` | `fa.report.write_quarto_report()` |
 |  | `falcon_scheme()` | *R only: loads the shared palette into R* |
 |  | `falcon_theme()` | *R only: a ggplot2 theme; Python styles via matplotlib* |
 |  | — | `fa.plot.missingness()` |

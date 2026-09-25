@@ -269,15 +269,14 @@ def cmd_consensus(args) -> int:
 
 
 def cmd_report(args) -> int:
-    """Read, check, score, quantify, interpret, and write one HTML file.
+    """Read, check, score, quantify, interpret, and write the run's deliverables.
 
-    The command a laboratory runs. Everything else in this CLI is a piece of
-    it, exposed separately for people who want the pieces.
+    The command a laboratory runs. The sequence itself is
+    :func:`falconage.report.run_report`, so R and scripts get the same
+    directory; this reads the input and prints what happened.
     """
     import falconage as fa
-
-    out = Path(args.outdir)
-    out.mkdir(parents=True, exist_ok=True)
+    from falconage.report import run_report
 
     data = fa.read(args.input)
     if data.modality == "dna_methylation":
@@ -285,59 +284,16 @@ def cmd_report(args) -> int:
     _p(f"read {data.n_samples} sample(s) x {data.n_features} feature(s)"
        + (f" on {data.platform}" if data.platform else ""))
 
-    if data.modality == "dna_methylation":
-        report = fa.qc(data)
-        report.per_sample.to_csv(out / "qc_per_sample.csv")
-        for w in report.warnings:
-            _p(f"  QC: {w}")
-
     clocks = args.clocks
     if clocks not in ("compatible", "all"):
         clocks = [c.strip() for c in clocks.split(",") if c.strip()]
-    res = fa.score(data, clocks=clocks, min_coverage=args.min_coverage)
-    _p(f"scored {res.scores.shape[1]} clock(s); {len(res.skipped)} skipped")
-
-    se = conf = cons = None
-    try:
-        se = fa.technical_se(res, data)
-        se.se.to_csv(out / "technical_se.csv")
-        se.diagnostics.to_csv(out / "reliability_diagnostics.csv")
-    except Exception as exc:                      # noqa: BLE001
-        _p(f"  technical_se unavailable: {exc}")
-    try:
-        conf = fa.conformal_interval(res, level=args.level)
-        conf.to_csv(out / "conformal_interval.csv", index=False)
-    except Exception as exc:                      # noqa: BLE001
-        _p(f"  conformal interval unavailable: {exc}")
-    if args.group_col and args.group_col in res.obs.columns:
-        try:
-            cons = fa.consensus(res, args.group_col, reference=args.reference)
-            _p(f"  consensus: {cons.verdict}")
-        except Exception as exc:                  # noqa: BLE001
-            _p(f"  consensus unavailable: {exc}")
-
-    res.write(out)
-    res.interpretation().to_csv(out / "interpretation.csv")
-    res.evidence().to_csv(out / "evidence.csv", index=False)
-
-    if not args.no_figures:
-        from falconage import plot as fplot
-
-        acc = None
-        if "age" in res.obs.columns:
-            try:
-                acc = fa.acceleration(res, method="residual")
-            except Exception:                     # noqa: BLE001
-                acc = None
-        w = fplot.save_all(res, out / "figures", data=data, acc=acc,
-                           group=args.group_col, se=se, conformal=conf,
-                           consensus=cons)
-        _p(f"  {len(w)} figure(s)")
-
-    from falconage.report import write_report
-
-    html = write_report(res, out / "report.html", group=args.group_col)
-    _p(f"\nwrote {html}")
+    written = run_report(data, args.outdir, clocks=clocks, group_col=args.group_col,
+                         reference=args.reference, level=args.level,
+                         min_coverage=args.min_coverage, figures=not args.no_figures,
+                         quarto=args.quarto, render=not args.no_render, log=_p)
+    _p(f"\nwrote {written['report']}")
+    if "quarto" in written:
+        _p(f"wrote {written['quarto']}")
     return 0
 
 # ---------------------------------------------------------------------------
@@ -445,6 +401,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--level", type=float, default=0.90)
     p.add_argument("--min-coverage", type=float, default=0.8)
     p.add_argument("--no-figures", action="store_true")
+    p.add_argument("--quarto", action="store_true",
+                   help="also write the step-ordered Quarto report and render it to "
+                        "one self-contained falconage_report.html")
+    p.add_argument("--no-render", action="store_true",
+                   help="with --quarto, write falconage_report.qmd without rendering it")
     p.set_defaults(fn=cmd_report)
 
     return ap

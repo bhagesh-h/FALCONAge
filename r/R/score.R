@@ -198,3 +198,72 @@ report <- function(x, path, age_col = "age", group = NULL,
                         group = or_none(group), title = title))
   invisible(path)
 }
+
+#' Run the whole analysis and write every deliverable to a directory
+#'
+#' Quality control, scoring, technical standard error, conformal intervals, age
+#' acceleration, a consensus test when `group` names a column, interpretation
+#' and evidence tables, figures and the one-page report: the directory
+#' `falconage report` writes. With `quarto = TRUE` it also writes
+#' `falconage_report.qmd`, with every file placed under the step of the
+#' analysis that produced it, and renders it to one self-contained
+#' `falconage_report.html` when Quarto is on the path.
+#'
+#' @param data A `falcon_data`, already prepared.
+#' @param outdir Output directory.
+#' @param clocks `"compatible"`, `"all"`, or a character vector of clock ids.
+#' @param group Optional column of the sample annotation to compare groups by.
+#' @param level Coverage of the conformal intervals.
+#' @param min_coverage Fraction of a clock's features that must be present.
+#' @param figures Draw the figures.
+#' @param quarto Also write the step-ordered Quarto report.
+#' @param render With `quarto = TRUE`, render it when Quarto is available.
+#' @return The paths of the main files, as a named character vector, invisibly.
+#' @examples
+#' \dontrun{
+#' run_report(d, "results", group = "condition", quarto = TRUE)
+#' }
+#' @export
+run_report <- function(data, outdir, clocks = "compatible", group = NULL,
+                       level = 0.90, min_coverage = 0.8, figures = TRUE,
+                       quarto = FALSE, render = TRUE) {
+  rp <- reticulate::import("falconage.report", convert = FALSE)
+  out <- py_do(rp$run_report(
+    data$py, path.expand(outdir),
+    clocks = if (length(clocks) == 1L && clocks %in% c("compatible", "all"))
+      clocks else reticulate::r_to_py(as.list(clocks)),
+    group_col = or_none(group), level = level, min_coverage = min_coverage,
+    figures = figures, quarto = quarto, render = render))
+  paths <- reticulate::py_to_r(out)
+  invisible(vapply(paths, function(p) if (is.character(p)) p else
+    reticulate::py_str(p), character(1)))
+}
+
+#' Write the step-ordered Quarto report for an output directory
+#'
+#' Every file in `outdir` is placed under the step of the analysis that
+#' produced it, in step order, with its description; a file the report does
+#' not recognise is listed in the last step, so nothing is left out. Rendering
+#' embeds every figure and table, so the HTML is one file that references
+#' nothing. Without Quarto on the path, the `.qmd` is written and the error
+#' names the command that renders it.
+#'
+#' @param outdir A directory written by [run_report()] or `falconage report`.
+#' @param x Optional `falcon_result`, to add what each scored category of clock
+#'   means to the scores step.
+#' @param title Page title.
+#' @param render Render to HTML as well as writing the source.
+#' @return The path of the `.html` (or the `.qmd` without rendering), invisibly.
+#' @examples
+#' \dontrun{
+#' quarto_report("results")
+#' }
+#' @export
+quarto_report <- function(outdir, x = NULL, title = "FALCONAge report",
+                          render = TRUE) {
+  rp <- reticulate::import("falconage.report", convert = FALSE)
+  p <- py_do(rp$write_quarto_report(path.expand(outdir),
+                                    if (is.null(x)) reticulate::py_none() else x$py,
+                                    title = title, render = render))
+  invisible(reticulate::py_str(p))
+}
