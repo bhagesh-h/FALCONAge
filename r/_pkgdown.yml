@@ -32,15 +32,15 @@ navbar:
       text: Background
       menu:
       - text: The science of aging clocks
-        href: https://bhagesh-h.github.io/FALCONAge/science.html
+        href: https://bhagesh-h.github.io/FALCONAge/index.html
       - text: Architecture
-        href: https://bhagesh-h.github.io/FALCONAge/architecture.html
+        href: https://bhagesh-h.github.io/FALCONAge/index.html
       - text: Figure gallery
-        href: https://bhagesh-h.github.io/FALCONAge/gallery.html
+        href: https://bhagesh-h.github.io/FALCONAge/figures.html
       - text: Clock catalogue
-        href: https://bhagesh-h.github.io/FALCONAge/clocks.html
+        href: https://bhagesh-h.github.io/FALCONAge/catalogue.html
       - text: Beyond the clock score
-        href: https://bhagesh-h.github.io/FALCONAge/beyond-clocks.html
+        href: https://bhagesh-h.github.io/FALCONAge/beyond.html
       - text: GPU support
         href: https://bhagesh-h.github.io/FALCONAge/gpu.html
 reference:

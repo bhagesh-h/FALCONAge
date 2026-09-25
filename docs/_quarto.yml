@@ -22,38 +22,91 @@ website:
     left:
     - text: Contents
       menu:
-      - text: 1. Orientation
+      - text: 1. Start
       - text: What FALCONAge is
         file: index.qmd
+      - text: Install
+        file: start/install.qmd
       - text: Getting started
-        file: guide/FALCONAge.qmd
+        file: start/quickstart.qmd
+      - text: Using FALCONAge from Claude
+        file: start/claude.qmd
+      - text: 2. Your data
       - text: Loading your data
-        file: guide/loading.qmd
-      - text: 2. Working with clocks
+        file: data/loading.qmd
+      - text: Preprocessing and coverage
+        file: data/preprocessing.qmd
+      - text: Raw arrays to betas
+        file: data/raw-arrays.qmd
+      - text: 3. Clocks
       - text: Choosing a clock
-        file: guide/clocks.qmd
+        file: clocks/choosing.qmd
+      - text: What a score means
+        file: clocks/meaning.qmd
       - text: Clock catalogue
-        file: clocks.qmd
+        file: clocks/catalogue.qmd
+      - text: 4. Analysis
+      - text: Age acceleration
+        file: analysis/acceleration.qmd
+      - text: Uncertainty
+        file: analysis/uncertainty.qmd
+      - text: Clinical chemistry and survival
+        file: analysis/clinical.qmd
+      - text: Benchmarking
+        file: analysis/benchmarking.qmd
       - text: Beyond the clock score
-        file: beyond-clocks.qmd
+        file: analysis/beyond.qmd
+      - text: Figures and reports
+        file: analysis/reporting.qmd
       - text: Figure gallery
-        file: gallery.qmd
-      - text: 3. The science
+        file: analysis/figures.qmd
+      - text: 5. Methods
       - text: The science of aging clocks
-        file: science.qmd
-      - text: 4. API reference
+        file: methods/index.qmd
+      - text: Biology and measurement
+        file: methods/biology.qmd
+      - text: Algorithm families
+        file: methods/algorithms.qmd
+      - text: Published formulas
+        file: methods/formulas.qmd
+      - text: The clocks, by family
+        file: methods/clocks.qmd
+      - text: Genotype and structure
+        file: methods/genetics.qmd
+      - text: Building a clock
+        file: methods/building.qmd
+      - text: Failure modes and the frontier
+        file: methods/failure-modes.qmd
+      - text: Datasets and resources
+        file: methods/resources.qmd
+      - text: 6. Reference
       - text: Python reference
         file: reference/index.qmd
       - text: R reference
         href: r/index.html
-      - text: 5. Internals and operations
-      - text: Architecture
-        file: architecture.qmd
-      - text: GPU and performance
-        file: gpu.md
-      - text: 6. References
       - text: References
         file: references.qmd
+      - text: 7. Developer notes
+      - text: Architecture
+        file: dev/index.qmd
+      - text: Core engine and registry
+        file: dev/engine.qmd
+      - text: Algorithms
+        file: dev/algorithms.qmd
+      - text: Modules
+        file: dev/modules.qmd
+      - text: R package
+        file: dev/r-package.qmd
+      - text: Docker, testing and CI
+        file: dev/operations.qmd
+      - text: GPU support
+        file: dev/gpu.qmd
+      - text: Design history
+        file: dev/history.qmd
+      - text: Other software
+        file: dev/software.qmd
+      - text: Appendices
+        file: dev/appendices.qmd
     right:
     - text: Download
       menu:
@@ -68,44 +121,98 @@ website:
     search: false
     collapse-level: 1
     contents:
-    - section: 1. Orientation
+    - section: 1. Start
       contents:
       - text: What FALCONAge is
         file: index.qmd
+      - text: Install
+        file: start/install.qmd
       - text: Getting started
-        file: guide/FALCONAge.qmd
+        file: start/quickstart.qmd
+      - text: Using FALCONAge from Claude
+        file: start/claude.qmd
+    - section: 2. Your data
+      contents:
       - text: Loading your data
-        file: guide/loading.qmd
-    - section: 2. Working with clocks
+        file: data/loading.qmd
+      - text: Preprocessing and coverage
+        file: data/preprocessing.qmd
+      - text: Raw arrays to betas
+        file: data/raw-arrays.qmd
+    - section: 3. Clocks
       contents:
       - text: Choosing a clock
-        file: guide/clocks.qmd
+        file: clocks/choosing.qmd
+      - text: What a score means
+        file: clocks/meaning.qmd
       - text: Clock catalogue
-        file: clocks.qmd
+        file: clocks/catalogue.qmd
+    - section: 4. Analysis
+      contents:
+      - text: Age acceleration
+        file: analysis/acceleration.qmd
+      - text: Uncertainty
+        file: analysis/uncertainty.qmd
+      - text: Clinical chemistry and survival
+        file: analysis/clinical.qmd
+      - text: Benchmarking
+        file: analysis/benchmarking.qmd
       - text: Beyond the clock score
-        file: beyond-clocks.qmd
+        file: analysis/beyond.qmd
+      - text: Figures and reports
+        file: analysis/reporting.qmd
       - text: Figure gallery
-        file: gallery.qmd
-    - section: 3. The science
+        file: analysis/figures.qmd
+    - section: 5. Methods
       contents:
       - text: The science of aging clocks
-        file: science.qmd
-    - section: 4. API reference
+        file: methods/index.qmd
+      - text: Biology and measurement
+        file: methods/biology.qmd
+      - text: Algorithm families
+        file: methods/algorithms.qmd
+      - text: Published formulas
+        file: methods/formulas.qmd
+      - text: The clocks, by family
+        file: methods/clocks.qmd
+      - text: Genotype and structure
+        file: methods/genetics.qmd
+      - text: Building a clock
+        file: methods/building.qmd
+      - text: Failure modes and the frontier
+        file: methods/failure-modes.qmd
+      - text: Datasets and resources
+        file: methods/resources.qmd
+    - section: 6. Reference
       contents:
       - text: Python reference
         file: reference/index.qmd
       - text: R reference
         href: r/index.html
-    - section: 5. Internals and operations
-      contents:
-      - text: Architecture
-        file: architecture.qmd
-      - text: GPU and performance
-        file: gpu.md
-    - section: 6. References
-      contents:
       - text: References
         file: references.qmd
+    - section: 7. Developer notes
+      contents:
+      - text: Architecture
+        file: dev/index.qmd
+      - text: Core engine and registry
+        file: dev/engine.qmd
+      - text: Algorithms
+        file: dev/algorithms.qmd
+      - text: Modules
+        file: dev/modules.qmd
+      - text: R package
+        file: dev/r-package.qmd
+      - text: Docker, testing and CI
+        file: dev/operations.qmd
+      - text: GPU support
+        file: dev/gpu.qmd
+      - text: Design history
+        file: dev/history.qmd
+      - text: Other software
+        file: dev/software.qmd
+      - text: Appendices
+        file: dev/appendices.qmd
     footer: "[Bhagesh Hunakunti](https://orcid.org/0000-0002-5957-8005)  \n[GPL-3.0-or-later](https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE)\
       \ · [source](https://github.com/bhagesh-h/FALCONAge)\n"
 format:

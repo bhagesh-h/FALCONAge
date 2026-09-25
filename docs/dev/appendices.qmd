@@ -1,0 +1,462 @@
+---
+title: "Appendices"
+subtitle: "Other packages' registries and the operation inventory"
+---
+
+## Appendix A - Full pyaging clock registry (173 clocks)
+
+Generated from [pyaging clock_metadata.json](https://github.com/lucascamillomd/pyaging).
+Columns: clock id, year, data type, species, tissue, predicts, training target, unit, model type,
+platform, n features, population, in-model preprocess, in-model postprocess, ships reference
+values.
+
+| clock | yr | data | species | tissue | predicts | trained_on | unit | model | platform | n_feat | pop | pre | post | ref |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| abec | 2020 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina EPIC | 1695 | adults |  |  |  |
+| adbahadosingh | 2021 | DNA methylation | Homo sapiens | whole blood | late-onset Alzheimer's disease | late-onset Alzheimer's disease | probability | logistic regression | Illumina EPIC | 4 | older adults |  | sigmoid |  |
+| altumage | 2022 | DNA methylation | Homo sapiens | multi-tissue | chronological age | chronological age | years | deep neural network | Illumina 27K; Illumina 450K | 20318 | all ages | scale |  | ref |
+| bitage | 2021 | transcriptomics | Caenorhabditis elegans | whole organism | biological age | biological age | hours | elastic net regression | RNA-seq | 576 | Caenorhabditis elegans | binarize |  |  |
+| bocklandt | 2011 | DNA methylation | Homo sapiens | saliva | EDARADD methylation | chronological age | beta value | single-CpG score | Illumina 27K | 1 | adults |  |  |  |
+| bohlin | 2016 | DNA methylation | Homo sapiens | cord blood | gestational age | gestational age | weeks | LASSO regression | Illumina 450K | 251 | newborns |  | days_to_weeks |  |
+| cabec | 2020 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 1892 | adults |  |  |  |
+| camilloh3k27ac | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 1275 | all ages |  |  |  |
+| camilloh3k27me3 | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 922 | all ages |  |  |  |
+| camilloh3k36me3 | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 870 | all ages |  |  |  |
+| camilloh3k4me1 | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 892 | all ages |  |  |  |
+| camilloh3k4me3 | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 1240 | all ages |  |  |  |
+| camilloh3k9ac | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 102 | all ages |  |  |  |
+| camilloh3k9me3 | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 341 | all ages |  |  |  |
+| camillopanhistone | 2025 | histone modification | Homo sapiens | multi-tissue | chronological age | chronological age | years | PCA + elastic net + ARD regression | ChIP-seq | 3739 | all ages |  |  |  |
+| cellpopage | 2024 | DNA methylation | Homo sapiens | cultured fibroblasts | cell-population passage age | cell passage number | passages | elastic net regression | Illumina EPIC | 42 | human cell cultures |  |  |  |
+| compil6 | 2021 | DNA methylation | Homo sapiens | whole blood | interleukin-6 | interleukin-6 | unitless | elastic net regression | Illumina 450K | 35 | older adults |  |  |  |
+| corticalclock | 2020 | DNA methylation | Homo sapiens | brain cortex | chronological age | chronological age | years | elastic net regression | Illumina 450K | 347 | human, age unspecified |  | anti_log_linear | ref |
+| cpgptgrimage3 | 2024 | DNA methylation | Homo sapiens | whole blood | biological age; mortality risk | mortality | years | Cox proportional hazards regression | Illumina 450K | 24 | adults | scale | cox_to_years |  |
+| cpgptpcgrimage3 | 2024 | DNA methylation | Homo sapiens | whole blood | biological age; mortality risk | mortality | years | PCA + Cox regression | Illumina 450K | 31 | adults | scale | cox_to_years |  |
+| ctsliver | 2024 | DNA methylation | Homo sapiens | liver | chronological age | chronological age | years | LASSO regression | Illumina EPIC | 90 | adults |  |  |  |
+| cvdwesterman | 2020 | DNA methylation | Homo sapiens | whole blood | cardiovascular disease risk | cardiovascular disease | probability | elastic net Cox ensemble | Illumina 450K | 235 | adults |  | sigmoid |  |
+| deconvolutebloodepicbcell | 2018 | DNA methylation | Homo sapiens | purified blood leukocytes | B cell proportion | cell-type-specific methylation contrast | proportion | reference-based constrained deconvolution | Illumina EPIC | 600 | adults | fill_with_reference_means |  | ref |
+| deconvolutebloodepiccd4tcell | 2018 | DNA methylation | Homo sapiens | purified blood leukocytes | CD4+ T cell proportion | cell-type-specific methylation contrast | proportion | reference-based constrained deconvolution | Illumina EPIC | 600 | adults | fill_with_reference_means |  | ref |
+| deconvolutebloodepiccd8tcell | 2018 | DNA methylation | Homo sapiens | purified blood leukocytes | CD8+ T cell proportion | cell-type-specific methylation contrast | proportion | reference-based constrained deconvolution | Illumina EPIC | 600 | adults | fill_with_reference_means |  | ref |
+| deconvolutebloodepicmonocyte | 2018 | DNA methylation | Homo sapiens | purified blood leukocytes | monocyte proportion | cell-type-specific methylation contrast | proportion | reference-based constrained deconvolution | Illumina EPIC | 600 | adults | fill_with_reference_means |  | ref |
+| deconvolutebloodepicneutrophil | 2018 | DNA methylation | Homo sapiens | purified blood leukocytes | neutrophil proportion | cell-type-specific methylation contrast | proportion | reference-based constrained deconvolution | Illumina EPIC | 600 | adults | fill_with_reference_means |  | ref |
+| deconvolutebloodepicnkcell | 2018 | DNA methylation | Homo sapiens | purified blood leukocytes | natural killer cell proportion | cell-type-specific methylation contrast | proportion | reference-based constrained deconvolution | Illumina EPIC | 600 | adults | fill_with_reference_means |  | ref |
+| depressionbarbu | 2021 | DNA methylation | Homo sapiens | whole blood | major depressive disorder | major depressive disorder | unitless | elastic net regression | Illumina EPIC | 196 | adults |  |  |  |
+| dnamfili | 2022 | DNA methylation | Homo sapiens | whole blood | frailty risk | frailty | unitless | LASSO regression | Illumina EPIC; Illumina 450K | 20 | older adults |  |  |  |
+| dnamfitage | 2023 | DNA methylation | Homo sapiens | whole blood | physical-fitness biological age | biological age | years | Klemera–Doubal composite | Illumina 450K | 630 | adults |  |  | ref |
+| dnamfitagegaitf | 2023 | DNA methylation | Homo sapiens | whole blood | gait speed | gait speed | meters per second | LASSO regression | Illumina 450K | 53 | adult women |  |  | ref |
+| dnamfitagegaitm | 2023 | DNA methylation | Homo sapiens | whole blood | gait speed | gait speed | meters per second | LASSO regression | Illumina 450K | 59 | adult men |  |  | ref |
+| dnamfitagegripf | 2023 | DNA methylation | Homo sapiens | whole blood | grip strength | grip strength | kilograms | LASSO regression | Illumina 450K | 91 | adult women |  |  | ref |
+| dnamfitagegripm | 2023 | DNA methylation | Homo sapiens | whole blood | grip strength | grip strength | kilograms | LASSO regression | Illumina 450K | 93 | adult men |  |  | ref |
+| dnamfitagevo2max | 2023 | DNA methylation | Homo sapiens | whole blood | VO2max | VO2max | milliliters per kilogram per minute | LASSO regression | Illumina 450K | 41 | adults |  |  | ref |
+| dnamic | 2025 | DNA methylation | Homo sapiens | whole blood | intrinsic capacity | intrinsic capacity | unitless | elastic net regression | Illumina EPIC | 91 | older adults |  |  |  |
+| dnamphenoage | 2018 | DNA methylation | Homo sapiens | whole blood | phenotypic age | phenotypic age | years | elastic net regression | Illumina 27K; Illumina 450K; Illumina EPIC | 513 | adults |  |  |  |
+| dnamstress | 2023 | DNA methylation | Homo sapiens | whole blood | stress exposure | stress exposure | unitless | bootstrap-stabilized elastic net regression | Illumina EPIC | 211 | adults |  |  |  |
+| dnamtl | 2019 | DNA methylation | Homo sapiens | whole blood | leukocyte telomere length | leukocyte telomere length | kilobases | elastic net regression | Illumina 450K; Illumina EPIC | 140 | adults |  |  |  |
+| downsyndrome | 2021 | DNA methylation | Homo sapiens | neonatal blood spots | Down syndrome methylation score | not applicable | unitless | weighted linear score | Illumina EPIC | 652 | newborns |  |  |  |
+| dunedinpace | 2022 | DNA methylation | Homo sapiens | whole blood | pace of aging | pace of aging | biological years per chronological year | elastic net regression | Illumina EPIC | 20000 | adults | quantile_normalization_with_gold_standard |  | ref |
+| dunedinpoam38 | 2020 | DNA methylation | Homo sapiens | whole blood | pace of aging | pace of aging | biological years per chronological year | elastic net regression | Illumina 450K | 46 | adults |  |  |  |
+| eabec | 2020 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina EPIC | 1791 | adults |  |  |  |
+| encen100 | 2023 | DNA methylation | Homo sapiens | whole blood; saliva; buccal epithelium | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 198 | centenarians |  |  |  |
+| encen40 | 2023 | DNA methylation | Homo sapiens | whole blood; saliva; buccal epithelium | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 559 | older adults |  |  |  |
+| ensembleagehumanmouse | 2025 | DNA methylation | Homo sapiens and Mus musculus | multi-tissue; whole blood | relative age | relative age | relative age | elastic net regression | mammalian methylation array | 100 | humans and mice |  |  |  |
+| ensembleagestatic | 2025 | DNA methylation | Mus musculus | multi-tissue | intervention-responsive epigenetic age | intervention-responsive epigenetic age | years | elastic net regression | Horvath MammalMethylChip40; Horvath MammalMethylChip320 | 288 | mice |  |  |  |
+| ensembleagestatictop | 2025 | DNA methylation | Mus musculus | multi-tissue | intervention-responsive epigenetic age | intervention-responsive epigenetic age | years | elastic net regression | Horvath MammalMethylChip40; Horvath MammalMethylChip320 | 431 | mice |  |  |  |
+| epicga | 2021 | DNA methylation | Homo sapiens | cord blood | gestational age | gestational age | days | LASSO regression | Illumina EPIC | 176 | newborns |  | days_to_weeks |  |
+| epicmithyper | 2020 | DNA methylation | Homo sapiens | B cells | mitotic age | replicative history | proportion | mean methylation aggregation | Illumina 450K; Illumina EPIC | 184 | human, age unspecified | mean |  | ref |
+| epicmithypo | 2020 | DNA methylation | Homo sapiens | B cells | mitotic age | replicative history | proportion | complement of mean methylation | Illumina 450K; Illumina EPIC | 1164 | human, age unspecified | mean |  | ref |
+| epitoc1 | 2016 | DNA methylation | Homo sapiens | multi-tissue; whole blood | mitotic age | chronological age | beta value | mean methylation aggregation | Illumina 450K | 385 | all ages | mean |  | ref |
+| epitoc2 | 2020 | DNA methylation | Homo sapiens | whole blood | mitotic age | chronological age | cell divisions per stem cell | dynamic methylation transmission model | Illumina 450K | 163 | adults | nan_to_zero |  | ref |
+| epitoc3 | 2020 | DNA methylation | Homo sapiens | cultured primary human cells; whole blood; multi-tissue; cord blood | mitotic age | population doublings | cell divisions per stem cell | dynamic methylation transmission model | Illumina 450K; Illumina EPIC | 170 | all ages | nan_to_zero |  | ref |
+| garagnani | 2012 | DNA methylation | Homo sapiens | whole blood | ELOVL2 methylation | not applicable | beta value | single-CpG score | Illumina 450K | 1 | all ages |  |  |  |
+| gliasin | 2024 | DNA methylation | Homo sapiens | brain cortex | chronological age | chronological age | years | elastic net regression | Illumina 450K | 220 | adults |  |  |  |
+| grimage | 2019 | DNA methylation | Homo sapiens | whole blood | mortality risk | mortality | years | two-stage elastic net + Cox regression | Illumina 450K | 1032 | adults |  | cox_to_years | ref |
+| grimage2 | 2022 | DNA methylation | Homo sapiens | whole blood | mortality risk | mortality | years | elastic net Cox regression | Illumina 450K | 1032 | older adults |  | cox_to_years | ref |
+| grimage2adm | 2022 | DNA methylation | Homo sapiens | whole blood | adrenomedullin | adrenomedullin | picograms per milliliter | elastic net regression | Illumina 450K | 187 | older adults |  | cox_to_years | ref |
+| grimage2b2m | 2022 | DNA methylation | Homo sapiens | whole blood | beta-2-microglobulin | beta-2-microglobulin | picograms per milliliter | elastic net regression | Illumina 450K | 92 | older adults |  | cox_to_years | ref |
+| grimage2cystatinc | 2022 | DNA methylation | Homo sapiens | whole blood | cystatin C | cystatin C | picograms per milliliter | elastic net regression | Illumina 450K | 88 | older adults |  | cox_to_years | ref |
+| grimage2gdf15 | 2022 | DNA methylation | Homo sapiens | whole blood | GDF-15 | GDF-15 | picograms per milliliter | elastic net regression | Illumina 450K | 138 | older adults |  | cox_to_years | ref |
+| grimage2leptin | 2022 | DNA methylation | Homo sapiens | whole blood | leptin | leptin | picograms per milliliter | elastic net regression | Illumina 450K | 187 | older adults |  | cox_to_years | ref |
+| grimage2loga1c | 2022 | DNA methylation | Homo sapiens | whole blood | hemoglobin A1c | hemoglobin A1c | natural-log percent | elastic net regression | Illumina 450K | 87 | older adults |  | cox_to_years | ref |
+| grimage2logcrp | 2022 | DNA methylation | Homo sapiens | whole blood | C-reactive protein | C-reactive protein | natural-log milligrams per liter | elastic net regression | Illumina 450K | 132 | older adults |  | cox_to_years | ref |
+| grimage2packyrs | 2022 | DNA methylation | Homo sapiens | whole blood | smoking exposure | smoking exposure | pack-years | elastic net regression | Illumina 450K | 173 | older adults |  | cox_to_years | ref |
+| grimage2pai1 | 2022 | DNA methylation | Homo sapiens | whole blood | PAI-1 | PAI-1 | picograms per milliliter | elastic net regression | Illumina 450K | 211 | older adults |  |  | ref |
+| grimage2timp1 | 2022 | DNA methylation | Homo sapiens | whole blood | TIMP-1 | TIMP-1 | picograms per milliliter | elastic net regression | Illumina 450K | 43 | older adults |  | cox_to_years | ref |
+| han | 2020 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | linear regression | Illumina 450K | 65 | all ages |  | anti_log_linear |  |
+| hannum | 2013 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina 450K | 71 | adults |  |  |  |
+| hep | 2024 | DNA methylation | Homo sapiens | liver | chronological age | chronological age | years | LASSO regression | Illumina EPIC | 70 | adults |  |  |  |
+| hepatoxu | 2017 | DNA methylation | Homo sapiens | plasma cell-free DNA | hepatocellular carcinoma | hepatocellular carcinoma | unitless | feature-selected logistic regression | targeted bisulfite sequencing | 10 | adults |  |  |  |
+| horvath2013 | 2013 | DNA methylation | Homo sapiens | multi-tissue | chronological age | chronological age | years | elastic net regression | Illumina 27K; Illumina 450K | 353 | all ages |  | anti_log_linear | ref |
+| hrsinchphenoage | 2022 | DNA methylation | Homo sapiens | whole blood | phenotypic age | phenotypic age | years | weighted linear score | Illumina 450K; Illumina EPIC | 959 | adults |  |  |  |
+| hypoclock | 2020 | DNA methylation | Homo sapiens | multi-tissue | mitotic age | not applicable | beta value | mean aggregation | Illumina 450K | 678 | human, age unspecified | mean | one_minus | ref |
+| intrinclock | 2024 | DNA methylation | Homo sapiens | multi-tissue | chronological age | chronological age | years | two-stage elastic net regression | Illumina 450K; Illumina EPIC | 380 | all ages |  | anti_log_linear |  |
+| knight | 2016 | DNA methylation | Homo sapiens | cord blood; neonatal blood spots | gestational age | gestational age | weeks | elastic net regression | Illumina 27K; Illumina 450K | 148 | newborns |  |  | ref |
+| leecontrol | 2019 | DNA methylation | Homo sapiens | placenta | gestational age | gestational age | weeks | elastic net regression | Illumina 450K; Illumina EPIC | 546 | pregnancies |  |  |  |
+| leerefinedrobust | 2019 | DNA methylation | Homo sapiens | placenta | gestational age | gestational age | weeks | elastic net regression | Illumina 450K; Illumina EPIC | 395 | pregnancies |  |  |  |
+| leerobust | 2019 | DNA methylation | Homo sapiens | placenta | gestational age | gestational age | weeks | elastic net regression | Illumina 450K; Illumina EPIC | 558 | pregnancies |  |  |  |
+| lin | 2016 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | linear regression | Illumina 27K; Illumina 450K | 99 | adults |  |  |  |
+| mammalian1 | 2023 | DNA methylation | multiple species | multi-tissue | chronological age | chronological age | years | elastic net regression | Horvath MammalMethylChip40 | 335 | multiple mammalian species |  | anti_logp2 |  |
+| mammalian2 | 2023 | DNA methylation | multiple species | multi-tissue | chronological age | relative age | years | elastic net regression | Horvath MammalMethylChip40 | 2572 | multiple mammalian species |  | mammalian2 | ref |
+| mammalian3 | 2023 | DNA methylation | multiple species | multi-tissue | chronological age | chronological age | years | elastic net regression | Horvath MammalMethylChip40 | 2467 | multiple mammalian species |  | mammalian3 | ref |
+| mammalianblood2 | 2023 | DNA methylation | multiple species | blood | chronological age | relative age | years | elastic net regression | Horvath MammalMethylChip40 | 2257 | multiple mammalian species |  | mammalian2 | ref |
+| mammalianblood3 | 2023 | DNA methylation | multiple species | blood | chronological age | chronological age | years | elastic net regression | Horvath MammalMethylChip40 | 2097 | multiple mammalian species |  | mammalian3 | ref |
+| mammalianfemale | 2023 | DNA methylation | multiple species | multi-tissue | sex | sex | probability | elastic net regression | mammalian methylation array | 101 | multiple mammalian species |  | sigmoid |  |
+| mammalianlifespan | 2024 | DNA methylation | multiple species | multi-tissue | species maximum lifespan | species maximum lifespan | years | elastic net regression | Horvath MammalMethylChip40 | 152 | multiple mammalian species |  | anti_log | ref |
+| mammalianskin2 | 2023 | DNA methylation | multiple species | skin | chronological age | relative age | years | elastic net regression | Horvath MammalMethylChip40 | 2240 | multiple mammalian species |  | mammalian2 | ref |
+| mammalianskin3 | 2023 | DNA methylation | multiple species | skin | chronological age | chronological age | years | elastic net regression | Horvath MammalMethylChip40 | 2055 | multiple mammalian species |  | mammalian3 | ref |
+| mayne | 2017 | DNA methylation | Homo sapiens | placenta | gestational age | gestational age | weeks | elastic net regression | Illumina 27K; Illumina 450K | 62 | pregnancies |  |  |  |
+| mccartneyalcohol | 2018 | DNA methylation | Homo sapiens | whole blood | alcohol consumption | alcohol consumption | units per week | LASSO regression | Illumina EPIC | 450 | adults |  |  |  |
+| mccartneybmi | 2018 | DNA methylation | Homo sapiens | whole blood | body mass index | body mass index | unitless | LASSO regression | Illumina EPIC | 1109 | adults |  | sigmoid |  |
+| mccartneybodyfat | 2018 | DNA methylation | Homo sapiens | whole blood | body fat percentage | body fat percentage | unitless | LASSO regression | Illumina EPIC | 968 | adults |  | sigmoid |  |
+| mccartneyeducation | 2018 | DNA methylation | Homo sapiens | whole blood | educational attainment | educational attainment | unitless | LASSO regression | Illumina EPIC | 373 | adults |  | sigmoid |  |
+| mccartneyhdlcholesterol | 2018 | DNA methylation | Homo sapiens | whole blood | HDL cholesterol | HDL cholesterol | unitless | LASSO regression | Illumina EPIC | 737 | adults |  | sigmoid |  |
+| mccartneyldlcholesterol | 2018 | DNA methylation | Homo sapiens | whole blood | LDL cholesterol | LDL cholesterol | unitless | LASSO regression | Illumina EPIC | 233 | adults |  | sigmoid |  |
+| mccartneysmoking | 2018 | DNA methylation | Homo sapiens | whole blood | smoking exposure | smoking exposure | pack-years | LASSO regression | Illumina EPIC | 233 | adults |  |  |  |
+| mccartneytotalcholesterol | 2018 | DNA methylation | Homo sapiens | whole blood | total cholesterol | total cholesterol | unitless | LASSO regression | Illumina EPIC | 204 | adults |  | sigmoid |  |
+| mccartneytotalhdlratio | 2018 | DNA methylation | Homo sapiens | whole blood | total-to-HDL cholesterol ratio | total-to-HDL cholesterol ratio | ratio | LASSO regression | Illumina EPIC | 412 | adults |  |  |  |
+| mccartneywhr | 2018 | DNA methylation | Homo sapiens | whole blood | waist-to-hip ratio | waist-to-hip ratio | ratio | LASSO regression | Illumina EPIC | 226 | adults |  |  |  |
+| meer | 2018 | DNA methylation | Mus musculus | multi-tissue | chronological age | chronological age | days | elastic net regression | RRBS | 435 | mice |  |  |  |
+| neusin | 2024 | DNA methylation | Homo sapiens | brain cortex | chronological age | chronological age | years | elastic net regression | Illumina 450K | 672 | adults |  |  |  |
+| ocampoatac1 | 2023 | chromatin accessibility | Homo sapiens | peripheral blood mononuclear cells | chronological age | chronological age | years | elastic net regression | ATAC-seq | 228 | adults | tpm_norm_log1p |  |  |
+| ocampoatac2 | 2023 | chromatin accessibility | Homo sapiens | peripheral blood mononuclear cells | chronological age | chronological age | years | elastic net regression | ATAC-seq | 380 | adults | tpm_norm_log1p |  |  |
+| pasta | 2025 | transcriptomics | Homo sapiens | multi-tissue | transcriptomic age | age ordering | years | ridge logistic regression | RNA-seq; gene expression microarray | 8113 | human, age unspecified | median_fill_and_rank_normalization | scale_and_shift | ref |
+| pastamouse | 2025 | transcriptomics | Mus musculus | multi-tissue | transcriptomic age | age ordering | years | orthologue-transferred ridge logistic regression | RNA-seq; gene expression microarray | 1600 | human, age unspecified | median_fill_and_rank_normalization | scale_and_shift | ref |
+| pcdnamtl | 2022 | DNA methylation | Homo sapiens | whole blood | leukocyte telomere length | DNAmTL output | base pairs | PCA + elastic net regression | Illumina 450K | 78464 | adults |  |  | ref |
+| pcgrimage | 2022 | DNA methylation | Homo sapiens | whole blood | mortality risk | DNAm GrimAge output | years | PCA + elastic net regression | Illumina 450K | 78466 | adults |  |  | ref |
+| pchannum | 2022 | DNA methylation | Homo sapiens | whole blood | chronological age | Hannum clock output | years | PCA + elastic net regression | Illumina 450K | 78464 | adults |  |  | ref |
+| pchorvath2013 | 2022 | DNA methylation | Homo sapiens | multi-tissue | chronological age | Horvath clock output | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 78464 | all ages |  | anti_log_linear | ref |
+| pcphenoage | 2022 | DNA methylation | Homo sapiens | whole blood | phenotypic age | phenotypic age | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 78464 | adults |  |  | ref |
+| pcskinandblood | 2022 | DNA methylation | Homo sapiens | skin; whole blood; cultured fibroblasts | chronological age | skin-and-blood clock output | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 78464 | all ages |  | anti_log_linear | ref |
+| pedbe | 2020 | DNA methylation | Homo sapiens | buccal epithelium | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 94 | children and adolescents |  | anti_log_linear |  |
+| petkovich | 2017 | DNA methylation | Mus musculus | whole blood | chronological age | chronological age | months | elastic net regression | bisulfite sequencing | 90 | mice |  | petkovich |  |
+| phenoage | 2018 | clinical biomarkers | Homo sapiens | blood | phenotypic age | mortality | years | penalized hazards regression with Gompertz calibration | clinical laboratory assays | 10 | adults |  | mortality_to_phenoage |  |
+| pipekelasticnet | 2022 | DNA methylation | Homo sapiens | multi-tissue | chronological age | chronological age | years | elastic net regression | Illumina 27K; Illumina 450K; Illumina EPIC | 239 | all ages |  | anti_log_linear |  |
+| pipekfilteredh | 2022 | DNA methylation | Homo sapiens | multi-tissue | chronological age | chronological age | years | elastic net regression | Illumina 27K; Illumina 450K; Illumina EPIC | 272 | all ages |  | anti_log_linear |  |
+| pipekretrainedh | 2022 | DNA methylation | Homo sapiens | multi-tissue | chronological age | chronological age | years | linear regression | Illumina 27K; Illumina 450K; Illumina EPIC | 308 | all ages |  | anti_log_linear |  |
+| prostatecancerkirby | 2017 | DNA methylation | Homo sapiens | prostate | prostate cancer | prostate cancer | log odds | logistic regression | Illumina 450K | 3 | adult men |  |  |  |
+| reedbmi | 2020 | DNA methylation | Homo sapiens | whole blood; cord blood | BMI methylation score | body mass index | unitless | weighted methylation aggregation | Illumina 450K | 135 | all ages |  |  |  |
+| reg | 2025 | transcriptomics | Homo sapiens | multi-tissue | chronological age | chronological age | years | ridge regression | RNA-seq; gene expression microarray | 8113 | human, age unspecified | median_fill_and_rank_normalization | add_constant | ref |
+| replitali | 2022 | DNA methylation | Homo sapiens | cultured primary human cells | replicative history | population doublings | population doublings | elastic net regression | Illumina EPIC | 87 | human cell cultures |  |  |  |
+| replitalinorm | 2022 | DNA methylation | Homo sapiens | cultured fibroblasts | replicative history | population doublings | population doublings | elastic net regression | Illumina EPIC | 218 | human cell cultures |  |  |  |
+| retroelementagev1 | 2024 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina EPIC | 1317 | all ages |  |  |  |
+| retroelementagev2 | 2024 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina EPIC | 1378 | all ages |  |  |  |
+| senchronoage | 2026 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 187 | adults |  |  |  |
+| sencultureage | 2026 | DNA methylation | Homo sapiens | cultured fibroblasts; cultured mesenchymal stromal cells | cellular senescence | cellular senescence | log odds | elastic net logistic regression | Illumina 450K; Illumina EPIC | 142 | human cell cultures |  |  |  |
+| senmortalityage | 2026 | DNA methylation | Homo sapiens | whole blood | mortality risk | mortality | log hazard | elastic net Cox regression | Illumina 450K; Illumina EPIC | 91 | adults |  |  |  |
+| skinandblood | 2018 | DNA methylation | Homo sapiens | buccal epithelium; whole blood; epithelium; cultured fibroblasts; skin; cord blood | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 391 | all ages |  | anti_log_linear |  |
+| stemtoc | 2024 | DNA methylation | Homo sapiens | multi-tissue; cultured human cells; whole blood | mitotic age | population doublings; chronological age | beta value | 95th-percentile methylation aggregation | Illumina 450K; Illumina EPIC | 371 | all ages | 0.95 quantile |  | ref |
+| stemtocvitro | 2024 | DNA methylation | Homo sapiens | multi-tissue; cultured human cells | mitotic age | population doublings | beta value | 95th-percentile methylation aggregation | Illumina 450K; Illumina EPIC | 629 | prenatal and newborn | 0.95 quantile |  | ref |
+| stoch | 2024 | DNA methylation | Homo sapiens | sorted monocytes | chronological age | chronological age | years | elastic net regression | Illumina 450K | 353 | adults |  |  |  |
+| stocp | 2024 | DNA methylation | Homo sapiens | sorted monocytes | chronological age | chronological age | years | elastic net regression | Illumina 450K | 513 | adults |  |  |  |
+| stocz | 2024 | DNA methylation | Homo sapiens | sorted monocytes | chronological age | chronological age | years | elastic net regression | Illumina 450K | 514 | adults |  |  |  |
+| stubbs | 2017 | DNA methylation | Mus musculus | multi-tissue; liver; lung; heart; brain cortex; skeletal muscle; cerebellum; spleen | chronological age | chronological age | months | quadratically calibrated elastic net regression | RRBS | 17992 | mice | quantile_normalization_and_scale_with_gold_standard | stubbs | ref |
+| systemsage | 2025 | DNA methylation | Homo sapiens | whole blood | multisystem biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsageblood | 2025 | DNA methylation | Homo sapiens | whole blood | blood-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsagebrain | 2025 | DNA methylation | Homo sapiens | whole blood | brain-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsageheart | 2025 | DNA methylation | Homo sapiens | whole blood | cardiovascular-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsagehormone | 2025 | DNA methylation | Homo sapiens | whole blood | endocrine-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsageimmune | 2025 | DNA methylation | Homo sapiens | whole blood | immune-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsageinflammation | 2025 | DNA methylation | Homo sapiens | whole blood | inflammatory-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsagekidney | 2025 | DNA methylation | Homo sapiens | whole blood | renal-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsageliver | 2025 | DNA methylation | Homo sapiens | whole blood | hepatic-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsagelung | 2025 | DNA methylation | Homo sapiens | whole blood | pulmonary-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsagemetabolic | 2025 | DNA methylation | Homo sapiens | whole blood | metabolic-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| systemsagemusculoskeletal | 2025 | DNA methylation | Homo sapiens | whole blood | musculoskeletal-system biological age | mortality | years | PCA + elastic net regression | Illumina 450K; Illumina EPIC | 125175 | older adults |  |  | ref |
+| thompson | 2018 | DNA methylation | Mus musculus | adipose tissue; blood; cerebellum; brain cortex; heart; kidney; liver; lung; skeletal muscle; spleen | chronological age | chronological age | months | elastic net regression | RRBS | 582 | mice |  |  |  |
+| twelvecelldeconvolutebloodepicbas | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | basophil proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepicbmem | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | memory B cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepicbnv | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | naive B cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepiccd4mem | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | memory CD4+ T cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepiccd4nv | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | naive CD4+ T cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepiccd8mem | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | memory CD8+ T cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepiccd8nv | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | naive CD8+ T cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepiceos | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | eosinophil proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepicmono | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | monocyte proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepicneu | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | neutrophil proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepicnk | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | natural killer cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| twelvecelldeconvolutebloodepictreg | 2022 | DNA methylation | Homo sapiens | purified blood leukocytes | regulatory T-cell proportion | cell-type proportions | proportion | reference-based constrained deconvolution | Illumina EPIC | 240 | adults | fill_with_reference_means |  | ref |
+| vidalbralo | 2016 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | linear regression | Illumina 27K | 8 | adults |  |  |  |
+| weidner | 2014 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | linear regression | Illumina 27K; bisulfite sequencing | 3 | adults |  |  |  |
+| wu | 2019 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | screened elastic net regression | Illumina 27K; Illumina 450K | 111 | children |  | anti_log_linear |  |
+| xchrom | 2021 | DNA methylation | Homo sapiens | whole blood | X-chromosome dosage | X-chromosome dosage | unitless | principal component analysis | Illumina 450K; Illumina EPIC | 4047 | adults | sex_estimation_autosomal_zscore |  | ref |
+| ychrom | 2021 | DNA methylation | Homo sapiens | whole blood | Y-chromosome presence | Y-chromosome presence | unitless | principal component analysis | Illumina 450K; Illumina EPIC | 284 | adults | sex_estimation_autosomal_zscore |  | ref |
+| yingadaptage | 2024 | DNA methylation | Homo sapiens | whole blood | adaptive epigenetic age | chronological age | years | causality-weighted elastic net regression | Illumina 450K | 999 | adults |  |  |  |
+| yingcausage | 2024 | DNA methylation | Homo sapiens | whole blood | chronological age | chronological age | years | causality-weighted elastic net regression | Illumina 450K | 585 | adults |  |  |  |
+| yingdamage | 2024 | DNA methylation | Homo sapiens | whole blood | damaging epigenetic age | chronological age | years | causality-weighted elastic net regression | Illumina 450K | 1089 | adults |  |  |  |
+| zhangblup | 2019 | DNA methylation | Homo sapiens | whole blood; saliva | chronological age | chronological age | years | best linear unbiased prediction | Illumina 450K; Illumina EPIC | 319607 | all ages | scale_row |  | ref |
+| zhangen | 2019 | DNA methylation | Homo sapiens | whole blood; saliva | chronological age | chronological age | years | elastic net regression | Illumina 450K; Illumina EPIC | 514 | all ages | scale_row |  | ref |
+| zhangmortality | 2017 | DNA methylation | Homo sapiens | whole blood | mortality risk | mortality | unitless | weighted linear score | Illumina 450K | 10 | older adults |  |  |  |
+
+## Appendix B - tAge transcriptomic clock registry (60 models)
+
+From [tAge clocks_metadata.csv](https://github.com/Gladyshev-Lab/tAge). Weights on
+Zenodo record 18763485. `lifespan_scaled = TRUE` means the raw prediction is multiplied by the
+species maximum lifespan (human 122.5, mouse 48, rat 50.4, monkey 39) to reach age units; FALSE
+means the output is already on its native scale, log10(hazard ratio) for mortality clocks, or a
+fraction of maximum lifespan for normalized-age clocks. `BR` is Bayesian Ridge, `EN` is Elastic
+Net. `Scaled` clocks take per-sample z-scored log10 RLE expression; `YuGene` clocks take the
+YuGene uniformised version. All are relative models and require reference centring.
+
+| filename | type | outcome | species | tissue | scaling | lifespan_scaled |
+|---|---|---|---|---|---|---|
+| BR_Chronoage_Mouse_Multitissue_scaleddiff.pkl | BR | Chronological | Mouse | Multi-Tissue | Scaled | TRUE |
+| BR_Chronoage_Mouse_Multitissue_yugenediff.pkl | BR | Chronological | Mouse | Multi-Tissue | YuGene | TRUE |
+| BR_Chronoage_Multispecies_Multitissue_scaleddiff.pkl | BR | Chronological | Multispecies | Multi-Tissue | Scaled | TRUE |
+| BR_Chronoage_Multispecies_Multitissue_yugenediff.pkl | BR | Chronological | Multispecies | Multi-Tissue | YuGene | TRUE |
+| BR_Chronoage_Rodents_Brain_WT_scaleddiff.pkl | BR | Chronological | Rodents | Brain | Scaled | TRUE |
+| BR_Chronoage_Rodents_Brain_WT_yugenediff.pkl | BR | Chronological | Rodents | Brain | YuGene | TRUE |
+| BR_Chronoage_Rodents_Kidney_WT_scaleddiff.pkl | BR | Chronological | Rodents | Kidney | Scaled | TRUE |
+| BR_Chronoage_Rodents_Kidney_WT_yugenediff.pkl | BR | Chronological | Rodents | Kidney | YuGene | TRUE |
+| BR_Chronoage_Rodents_Liver_scaleddiff.pkl | BR | Chronological | Rodents | Liver | Scaled | TRUE |
+| BR_Chronoage_Rodents_Liver_yugenediff.pkl | BR | Chronological | Rodents | Liver | YuGene | TRUE |
+| BR_Chronoage_Rodents_Multitissue_scaleddiff.pkl | BR | Chronological | Rodents | Multi-Tissue | Scaled | TRUE |
+| BR_Chronoage_Rodents_Multitissue_yugenediff.pkl | BR | Chronological | Rodents | Multi-Tissue | YuGene | TRUE |
+| BR_Chronoage_Rodents_Skeletal muscle_WT_yugenediff.pkl | BR | Chronological | Rodents | Skeletal Muscle | YuGene | TRUE |
+| BR_Chronoage_Rodents_Skeletal_muscle_WT_scaleddiff.pkl | BR | Chronological | Rodents | Skeletal Muscle | Scaled | TRUE |
+| BR_Mortality_Mouse_Multitissue_scaleddiff.pkl | BR | Mortality | Mouse | Multi-Tissue | Scaled | FALSE |
+| BR_Mortality_Mouse_Multitissue_yugenediff.pkl | BR | Mortality | Mouse | Multi-Tissue | YuGene | FALSE |
+| BR_Mortality_Multispecies_Multitissue_scaleddiff.pkl | BR | Mortality | Multispecies | Multi-Tissue | Scaled | FALSE |
+| BR_Mortality_Multispecies_Multitissue_yugenediff.pkl | BR | Mortality | Multispecies | Multi-Tissue | YuGene | FALSE |
+| BR_Mortality_Rodents_Liver_scaleddiff.pkl | BR | Mortality | Rodents | Liver | Scaled | FALSE |
+| BR_Mortality_Rodents_Liver_yugenediff.pkl | BR | Mortality | Rodents | Liver | YuGene | FALSE |
+| BR_Mortality_Rodents_Multitissue_scaleddiff.pkl | BR | Mortality | Rodents | Multi-Tissue | Scaled | FALSE |
+| BR_Mortality_Rodents_Multitissue_yugenediff.pkl | BR | Mortality | Rodents | Multi-Tissue | YuGene | FALSE |
+| BR_NormalizedAge_Mouse_Multitissue_scaleddiff.pkl | BR | Normalized age | Mouse | Multi-Tissue | Scaled | FALSE |
+| BR_NormalizedAge_Mouse_Multitissue_yugenediff.pkl | BR | Normalized age | Mouse | Multi-Tissue | YuGene | FALSE |
+| BR_NormalizedAge_Multispecies_Multitissue_scaleddiff.pkl | BR | Normalized age | Multispecies | Multi-Tissue | Scaled | FALSE |
+| BR_NormalizedAge_Multispecies_Multitissue_yugenediff.pkl | BR | Normalized age | Multispecies | Multi-Tissue | YuGene | FALSE |
+| BR_NormalizedAge_Rodents_Liver_scaleddiff.pkl | BR | Normalized age | Rodents | Liver | Scaled | FALSE |
+| BR_NormalizedAge_Rodents_Liver_yugenediff.pkl | BR | Normalized age | Rodents | Liver | YuGene | FALSE |
+| BR_NormalizedAge_Rodents_Multitissue_scaleddiff.pkl | BR | Normalized age | Rodents | Multi-Tissue | Scaled | FALSE |
+| BR_NormalizedAge_Rodents_Multitissue_yugenediff.pkl | BR | Normalized age | Rodents | Multi-Tissue | YuGene | FALSE |
+| EN_Chronoage_Mouse_Multitissue_scaleddiff.pkl | EN | Chronological | Mouse | Multi-Tissue | Scaled | TRUE |
+| EN_Chronoage_Mouse_Multitissue_yugenediff.pkl | EN | Chronological | Mouse | Multi-Tissue | YuGene | TRUE |
+| EN_Chronoage_Multispecies_Multitissue_scaleddiff.pkl | EN | Chronological | Multispecies | Multi-Tissue | Scaled | TRUE |
+| EN_Chronoage_Multispecies_Multitissue_yugenediff.pkl | EN | Chronological | Multispecies | Multi-Tissue | YuGene | TRUE |
+| EN_Chronoage_Rodents_Brain_scaleddiff.pkl | EN | Chronological | Rodents | Brain | Scaled | TRUE |
+| EN_Chronoage_Rodents_Brain_yugenediff.pkl | EN | Chronological | Rodents | Brain | YuGene | TRUE |
+| EN_Chronoage_Rodents_Kidney_scaleddiff.pkl | EN | Chronological | Rodents | Kidney | Scaled | TRUE |
+| EN_Chronoage_Rodents_Kidney_yugenediff.pkl | EN | Chronological | Rodents | Kidney | YuGene | TRUE |
+| EN_Chronoage_Rodents_Liver_scaleddiff.pkl | EN | Chronological | Rodents | Liver | Scaled | TRUE |
+| EN_Chronoage_Rodents_Liver_yugenediff.pkl | EN | Chronological | Rodents | Liver | YuGene | TRUE |
+| EN_Chronoage_Rodents_Multitissue_scaleddiff.pkl | EN | Chronological | Rodents | Multi-Tissue | Scaled | TRUE |
+| EN_Chronoage_Rodents_Multitissue_yugenediff.pkl | EN | Chronological | Rodents | Multi-Tissue | YuGene | TRUE |
+| EN_Chronoage_Rodents_Skeletal_muscle_scaleddiff.pkl | EN | Chronological | Rodents | Skeletal Muscle | Scaled | TRUE |
+| EN_Chronoage_Rodents_Skeletal_muscle_yugenediff.pkl | EN | Chronological | Rodents | Skeletal Muscle | YuGene | TRUE |
+| EN_Mortality_Mouse_Multitissue_scaleddiff.pkl | EN | Mortality | Mouse | Multi-Tissue | Scaled | FALSE |
+| EN_Mortality_Mouse_Multitissue_yugenediff.pkl | EN | Mortality | Mouse | Multi-Tissue | YuGene | FALSE |
+| EN_Mortality_Multispecies_Multitissue_scaleddiff.pkl | EN | Mortality | Multispecies | Multi-Tissue | Scaled | FALSE |
+| EN_Mortality_Multispecies_Multitissue_yugenediff.pkl | EN | Mortality | Multispecies | Multi-Tissue | YuGene | FALSE |
+| EN_Mortality_Rodents_Liver_scaleddiff.pkl | EN | Mortality | Rodents | Liver | Scaled | FALSE |
+| EN_Mortality_Rodents_Liver_yugenediff.pkl | EN | Mortality | Rodents | Liver | YuGene | FALSE |
+| EN_Mortality_Rodents_Multitissue_scaleddiff.pkl | EN | Mortality | Rodents | Multi-Tissue | Scaled | FALSE |
+| EN_Mortality_Rodents_Multitissue_yugenediff.pkl | EN | Mortality | Rodents | Multi-Tissue | YuGene | FALSE |
+| EN_NormalizedAge_Mouse_Multitissue_scaleddiff.pkl | EN | Normalized age | Mouse | Multi-Tissue | Scaled | FALSE |
+| EN_NormalizedAge_Mouse_Multitissue_yugenediff.pkl | EN | Normalized age | Mouse | Multi-Tissue | YuGene | FALSE |
+| EN_NormalizedAge_Multispecies_Multitissue_scaleddiff.pkl | EN | Normalized age | Multispecies | Multi-Tissue | Scaled | FALSE |
+| EN_NormalizedAge_Multispecies_Multitissue_yugenediff.pkl | EN | Normalized age | Multispecies | Multi-Tissue | YuGene | FALSE |
+| EN_NormalizedAge_Rodents_Liver_scaleddiff.pkl | EN | Normalized age | Rodents | Liver | Scaled | FALSE |
+| EN_NormalizedAge_Rodents_Liver_yugenediff.pkl | EN | Normalized age | Rodents | Liver | YuGene | FALSE |
+| EN_NormalizedAge_Rodents_Multitissue_scaleddiff.pkl | EN | Normalized age | Rodents | Multi-Tissue | Scaled | FALSE |
+| EN_NormalizedAge_Rodents_Multitissue_yugenediff.pkl | EN | Normalized age | Rodents | Multi-Tissue | YuGene | FALSE |
+
+## Appendix C - ComputAgeBench benchmark studies (65 datasets, blood/saliva/buccal)
+
+From [ComputAge BenchBSB_table.csv](https://github.com/ComputationalAgingLab/ComputAge).
+`HC content = HC` means the study contains its own healthy controls and can run the AA2 test;
+`No HC` means only the AA1 test is possible. Condition abbreviations: AS atherosclerosis,
+IHD ischaemic heart disease, CVA cerebrovascular accident, IBD inflammatory bowel disease,
+CD Crohn's, UC ulcerative colitis, HIV, TB tuberculosis, XOB extreme obesity, OBS obesity,
+T1D/T2D diabetes, ASD, RA rheumatoid arthritis, PA psoriatic arthritis, UA undifferentiated
+arthritis, OA osteoarthritis, OP osteoporosis, MS multiple sclerosis, AD Alzheimer's,
+PD Parkinson's, CJD Creutzfeldt–Jakob, COPD, WS Werner, aWS atypical Werner, MDPS
+mandibular dysplasia, HGPS Hutchinson–Gilford progeria, ncLMNA non-classical laminopathy,
+CGL congenital generalised lipodystrophy.
+
+| Class | Condition | Conditions | Dataset ID | PMID | Cited | First author, year | Tissue | N samples | HC content | Comment |
+|---|---|---|---|---|---|---|---|---|---|---|
+| CVD | AS | AS | GSE56046 | 25404168 | y | Reynolds, 2014 | Blood | 1202 | HC |   |
+| CVD | AS | AS | GSE56581 | 25404168 | y | Reynolds, 2014 | Blood | 214 | HC |   |
+| CVD | IHD | IHD | GSE62867 | 25856389 | y | Nazarenko, 2014 | Blood, vessels | 24 | No HC |   |
+| CVD | CVA | CVA | GSE69138 | 26643952 | y | Soriano-Tárraga, 2016 | Blood | 185 w/ages | No HC |   |
+| CVD | AS | AS | GSE107143 | 28698603 | y | Istas, 2017 | Blood | 16 (8 HC) | HC |   |
+| CVD | CVA | CVA | GSE203399 | 36180927 | y | Cullell, 2022 | Blood | 121 | No HC |   |
+| ISD | IBD | IBD | GSE32148 | 22467598 | y | Harris, 2012 | Blood | 48 (20 HC) | HC |   |
+| ISD | HIV | HIV | GSE53840 | 25969563 | y | Horvath, 2015a | Blood | 120 | No HC |   |
+| ISD | HIV | HIV | GSE53841 | 25969563 | y | Horvath, 2015a | Blood | 24 | No HC |   |
+| ISD | HIV | HIV | GSE67705 | 27105112 | y | Gross, 2016 | Blood | 284 | HC |   |
+| ISD | HIV | HIV | GSE67751 | 25969563 | y | Horvath, 2015a | Blood | 92 (69 HC) | HC |   |
+| ISD | HIV | HIV | GSE77696 | 27672717 | y | Zhang, 2016 | Blood | 378 (117 HC) | HC |   |
+| ISD | IBD | IBD (CD) | GSE81961 | 27279921 | y | Li Yim, 2016 | Blood | 40 (25 HC) | HC |   |
+| ISD | IBD | IBD (CD, UC) | GSE87640 | 27886173 | y | Ventham, 2016 | Blood | 240 (84 HC) | HC |   |
+| ISD | IBD | IBD (CD, UC) | GSE87648 | 27886173 | y | Ventham, 2016 | Blood | 382 (190 HC) | HC |   |
+| ISD | HIV | HIV | GSE100264 | 29269866 | v | Zhang, 2017 | Blood | 386 | No HC |   |
+| ISD | HIV | HIV | GSE107080 | 29269866 | v | Zhang, 2017 | Blood | 405 | No HC |   |
+| ISD | HIV | HIV | GSE117859 | 30545403 | v | Zhang, 2018 | Blood | 608 | No HC |   |
+| ISD | HIV | HIV | GSE117860 | 30545403 | v | Zhang, 2018 | Blood | 529 | No HC |   |
+| ISD | HIV | HIV | GSE140800 | 32760119 | v | Oriol-Tordera, 2020 | Blood | 70 | No HC |   |
+| ISD | HIV | HIV | GSE143942 | Unpublished |   | Unpublished | Blood | 85 | HC |   |
+| ISD | HIV_TB | HIV, TB | GSE145714 | 32125282 | v | DiNardo, 2020 | Blood | 32 | HC |   |
+| ISD | HIV | HIV | GSE185389 | 35325780 | v | Oriol-Tordera, 2022 | Blood | 56 | No HC |   |
+| ISD | HIV | HIV | GSE185390 | 35325780 | v | Oriol-Tordera, 2022 | Blood | 30 | No HC |   |
+| ISD | HIV | HIV | GSE217633 | 36640455 | v | Esteban-Cantos, 2023 | Blood | 413 (44 HC) | HC |   |
+| MBD | XOB | XOB, OBS, ASD | GSE49909 | 24034465 | v | Day, 2013 | Blood, brain | 283 | HC |   |
+| MBD | T1D | T1D | GSE56606 | 21980303 | v | Rakyan, 2011 | Blood | 100 (68 HC) | HC | MZ twins |
+| MBD | T2D | T2D | GSE62003 | 25585531 | v | Lunnon, 2015 | Blood | 70 | No HC |   |
+| MBD | XOB | XOB | GSE131461 | 31333715 | v | Ramos-Molina, 2019 | Blood, adipose | 40 | No HC |   |
+| MBD | XOB | XOB, OBS | GSE166611 | Unpublished |   | Unpublished | Blood | 32 (17 HC) | HC |   |
+| MBD | XOB | XOB | GSE193836 | 35369101 | v | Noronha, 2022 | Blood | 21 (11 HC) | HC |   |
+| MSD | RA | RA | GSE42861 | 23334450 | v | Liu, 2013 | Blood | 689 | HC |   |
+| MSD | RA | RA | GSE71841 | Unpublished |   | Unpublished | Blood | 24 (12 HC) | HC | Unpublished |
+| MSD | OP | OP | GSE99624 | 28926142 | v | Fernandez-Rebollo, 2018 | Blood | 48 | HC |   |
+| MSD | RA | RA | GSE131989 | 27723282 | v | Rhead, 2017 | Blood | 371 | HC |   |
+| MSD | RA | RA | GSE134429 | Unpublished |   | Unpublished | Blood | 64 (17 HC) | HC | Unpublished |
+| MSD | RA | RA, PA, UA, OA | GSE137593 | 31945409 | v | Clark, 2020 | Blood | 103 | No HC | Early arthritis |
+| MSD | RA | RA, PA, UA, OA | GSE137594 | 31945409 | v | Clark, 2020 | Blood | 119 | No HC | Early arthritis |
+| MSD | RA | RA | GSE138653 | 32909363 | v | Tao, 2021 | Blood | 80 | No HC | Before medication |
+| MSD | RA | RA, UA | GSE175364 | 34105306 | v | de la Calle-Fabregat, 2021 | Blood | 101 | HC | UA -> RA/OA |
+| MSD | RA | RA | GSE176168 | 35576644 | v | Julià, 2022 | Blood | 113 | No HC | Longitudinal (0,12 w), anti-TNF |
+| MSD | RA | RA | GSE228104 | 37744384 | v | Chen, 2023 | Blood | 40 | No HC | Leflunomide |
+| NDD | MS | MS | GSE43976 | 23422812 | v | Marabita, 2013 | Blood | 95 (20 HC) | No HC |   |
+| NDD | AD | AD | GSE59685 | 25129077 | v | Lunnon, 2014 | Brain, blood | 531 | HC |   |
+| NDD | PD | PD | GSE72774 | 26655927 | v | Horvath, 2015b | Blood | 508 (219 HC) | HC |   |
+| NDD | PD | PD | GSE72776 | 26655927 | v | Horvath, 2015b | Blood | 84 (38 HC) | HC |   |
+| NDD | MS | MS, OBS | GSE103929 | 30981648 | v | Castro, 2019 | Blood | 49 | No HC | BMI |
+| NDD | MS | MS | GSE106648 | 29921915 | v | Kular, 2019 | Blood | 279 (139 HC) | HC |   |
+| NDD | PD | PD | GSE111223 | 28851441 | v | Chuang, 2017 | Saliva | 259 (131 HC) | HC |   |
+| NDD | PD | PD | GSE111629 | 30958317 | v | Chuang, 2017 | Blood | 572 (237 HC) | HC |   |
+| NDD | MS | MS | GSE112596 | 30698680 | v | Ntranos, 2019 | Blood | 112 | No HC |   |
+| NDD | PD | PD | GSE122244 | Unpublished |   | Unpublished | Blood | 70 | HC | Non-Neurological controls |
+| NDD | MS | MS | GSE130029 | 31053557 | v | Ewing, 2019 | Blood | 31 (11 HC) | HC |   |
+| NDD | MS | MS | GSE130030 | 31053557 | v | Ewing, 2019 | Blood | 28 (14 HC) | HC |   |
+| NDD | MS | MS | GSE130491 | 31300673 | v | Carlström, 2019 | Blood | 82 (19x3x2) | No HC |   |
+| NDD | AD | AD | GSE144858 | 32745807 | v | Roubroeks, 2020 | Blood | 300 | HC |   |
+| NDD | PD | PD | GSE151355 | 32650713 | v | Go, 2020 | Blood, brain | 40 | No HC |   |
+| NDD | CJD | CJD | GSE156994 | 32918118 | v | Dabin, 2020 | Blood | 219 (106 HC) | HC |   |
+| NDD | MS | MS | GSE219293 | 36685876 | v | Bingen, 2023 | Blood | 47 (18 HC) | HC |   |
+| RSD | TB | TB | GSE72338 | 26374119 | v | Esterhuyse, 2015 | Blood | 38 | HC | HC = LTBI household concats |
+| RSD | COPD | COPD | GSE118468 | 33658578 | v | Chen, 2021 | Blood | 21 (6 HC) | HC |   |
+| RSD | TB | TB | GSE118469 | 32365959 | v | Chen, 2020 | Blood | 21 (6 HC) | HC |   |
+| RSD | TB | HIV, TB | GSE145714 | 32125282 | v | DiNardo, 2020 | Blood | 32 | HC |   |
+| PGS | WS | WS, aWS, MDPS | GSE131752 | 31259468 | v | Maierhofer, 2019 | Blood | 48 (24 HC) | HC |   |
+| PGS | HGPS | HGPS, ncLMNA | GSE182991 | 35045206 | v | Bejaoui, 2022 | Blood | 27 (12 HC) | HC |   |
+| PGS | CGL | CGL | GSE214297 | 36715159 | v | Qannan, 2022 | Blood | 16 (9 HC) | HC |   |
+
+## Appendix D - organAging organ protein panels
+
+Organ assignment rule: a plasma protein belongs to an organ if its GTEx expression in that
+tissue is at least 4× its mean expression across all other tissues. Counts from
+[organAging GTEx_4x_FC_genes.json](https://github.com/ludgergoeminne/organAging).
+Three model families ship per organ: full (Olink Explore 3072), feature-reduced (Olink Explore
+1536), and CSF. Each family has first-generation (chronological age, with intercept) and
+mortality (Cox elastic net, relative log hazard, no intercept) variants, each fitted over five
+folds, use fold 1 unless working in UK Biobank itself.
+
+| Organ panel | Proteins |
+|---|---|
+| Adipose | 5 |
+| Adrenal | 4 |
+| Artery | 14 |
+| Bladder | 0 (excluded from training) |
+| Brain | 118 |
+| Esophagus | 5 |
+| Female (reproductive) | 6 |
+| Heart | 7 |
+| Immune | 124 |
+| Intestine | 31 |
+| Kidney | 9 |
+| Liver | 79 |
+| Lung | 11 |
+| Male (reproductive) | 55 |
+| Muscle | 20 |
+| Pancreas | 29 |
+| Pituitary | 12 |
+| Salivary | 10 |
+| Skin | 17 |
+| Stomach | 12 |
+| Thyroid | 2 |
+| Organismal (any organ-enriched protein) | 2,347 |
+| Multi-organ (enriched in >1 organ) | 569 |
+| Conventional (all measured proteins) | 2,916 |
+
+Applying them: multiply Olink NPX values by the coefficients and sum; add the intercept for
+first-generation models only. For non-Olink platforms, log-transform to symmetry, z-score each
+protein, then multiply by the published Olink NPX standard deviations (Table S3 of the paper)
+before scoring. The authors ignored missing values rather than imputing, and warn that
+performance degrades with the number of missing high-coefficient proteins.
+
+## Appendix E - Preprocess and postprocess operation inventory
+
+Every distinct operation a clock can request, with the clocks that use it and the shape of the
+computation. This is the complete op set a new engine must implement to cover the pyaging
+registry.
+
+### Preprocess (runs on the clock's feature slice, after feature selection)
+
+| Op | Signature | Dependencies stored with model | Clocks |
+|---|---|---|---|
+| `identity` | `x → x` | - | most |
+| `fill_nan_with_reference` | `where(isnan(x), ref, x)` | `reference_values` (len = n_features) | ~90 (`LinearReferenceClock` and subclasses) |
+| `scale` | `(x − median) / std` | median vector, std vector | AltumAge, CpGPTGrimAge3 |
+| `scale_mean` | `(x − mean) / std` | mean vector, std vector | CpGPTPCGrimAge3 |
+| `scale_row` | `(x − rowmean) / rowstd` | - | ZhangEN, ZhangBLUP |
+| `quantile_normalize_with_gold_standard` | rank map onto sorted gold means, then subset | 20,000-length gold mean vector + scoring index list | DunedinPACE |
+| `quantile_normalize_and_scale` | as above, then `(x − gold_mean)/gold_std`, then subset | gold means, gold stds, index list | Stubbs |
+| `tpm_norm_log1p` | `log1p(1e6 · (1000·x/len) / rowsum)`, then subset | region lengths, index list | OcampoATAC1/2 |
+| `binarize` | per row, mask zeros, threshold at non-zero median | - | BiTAge |
+| `median_fill_and_rank` | fill NaN with global median, then per-row average ranks | - | Pasta, PastaMouse, REG |
+| `mean_over_present` | mean of entries ≠ −1 per row | - | epiTOC1, HypoClock, epiCMITHyper, epiCMITHypo |
+| `quantile95_over_present` | 0.95 quantile of entries ≠ −1 per row | - | stemTOC, stemTOCvitro |
+| `nan_to_zero` | `nan_to_num(x, 0)` | - | epiTOC2, epiTOC3 |
+| `autosomal_zscore` | z-score all probes against the autosomal mean/SD of that sample | autosome index list | XChrom, YChrom |
+| `expand_with_reference` | insert reference values for out-of-species features, then run the shared preprocess | full feature list, full reference vector, species index list | PastaMouse |
+
+### Postprocess (runs on the scalar model output)
+
+Listed in the transform table in §4.20. Fifteen distinct forms, of which `identity`,
+`anti_log_linear` and `cox_to_years` cover the large majority.
+
+### What FALCONAge implements of this
+
+Seven preprocess ops and nine postprocess transforms, in `models/ops.py`, which is what the 23
+scoring clocks reach for. Several are more general than their row above: `scale` takes centre and
+spread vectors and so covers `scale`, `scale_mean` and (with row statistics) `scale_row`;
+`quantile_normalize` takes the gold vector and the scoring index, covering the DunedinPACE and
+Stubbs rows.
+
+| Shipped | Covers |
+|---|---|
+| `beta_to_m`, `m_to_beta` | the β ↔ M logit pair, which no row above names because pyaging folds it into each clock |
+| `scale` | `scale`, `scale_mean`, `scale_row` |
+| `rank_normalize` | `median_fill_and_rank` |
+| `quantile_normalize` | `quantile_normalize_with_gold_standard`, `quantile_normalize_and_scale` |
+| `binarize` | `binarize` |
+| `simplex_projection` | the deconvolution row of the special passes |
+| `add`, `multiply`, `divide_by`, `clip`, `exp`, `expit`, `log_linear`, `anti_log_linear`, `cox_to_years` | the postprocess set |
+
+Reference filling is not an op here. `fill_nan_with_reference` is the largest row in the table and
+FALCONAge does it in `align()` instead, before any op runs, because the imputation choice is a
+property of the *dataset* rather than of the clock and has to be recorded in the manifest either
+way. Zero is never a fill value: in β space zero means completely unmethylated, which is a real
+and extreme measurement, and a clock with a large positive coefficient on a probe the array does
+not carry will read "totally unmethylated" and shift the prediction by whole years.
+
+Unbuilt: `tpm_norm_log1p`, `mean_over_present`, `quantile95_over_present`, `nan_to_zero`,
+`autosomal_zscore`, `expand_with_reference`, and all ten special forward passes. Every one belongs
+to a clock family whose coefficients are not redistributable, so building the op first would
+produce code with no real answer to test against, see the tier table in
+[Architecture](index.qmd).
+
+### Special forward passes (not expressible as preprocess → linear → postprocess)
+
+| Clock family | Structure |
+|---|---|
+| GrimAge / GrimAge2 | 8 or 10 sub-linear-models on disjoint feature index sets → concat with Age and Female in a fixed order → Cox linear layer → `cox_to_years` |
+| PCGrimAge | centre + rotate 78,464 → 1,933 PCs → concat Female, Age → 8 PC sub-models → Cox layer |
+| CpGPTPCGrimAge3 | scale → split age from proxies → rotate 30 → 29 PCs → concat → rescale PCs → linear → `cox_to_years` |
+| DNAmFitAge | split by sex → 5 sub-models (GaitF/M, GripF/M, VO2Max) → affine standardisation with sex-specific constants → sex-specific KDM layer → recombine |
+| Mammalian 2/3 and blood/skin variants | split CpG block from species one-hot (1,756 or 1,707 wide) → linear on CpGs → species-dependent inverse age transform using AnAge gestation / maturity / max lifespan |
+| SystemsAge | centre + rotate 125,175 CpGs → project to system components → 11 system linear modules + a PC→age model with quadratic correction → optional composite PCA layer → affine calibration → /12 |
+| Deconvolution | pseudo-inverse of the signature matrix → simplex projection → select one cell-type column |
+| epiTOC2 / epiTOC3 | `2/k · Σ (β − β₀)/(δ(1−β₀))` with per-CpG δ and β₀ vectors |
+| XChrom / YChrom | autosomal z-score → select sex-chromosome probes → `Σ (z − mean) · coef` |
+| PastaMouse | expand mouse features into the 8,113-gene human space with reference values → shared Pasta forward |

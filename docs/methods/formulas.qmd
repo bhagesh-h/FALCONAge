@@ -1,0 +1,147 @@
+---
+title: "Published formulas and constants"
+---
+
+## 5. Exact published formulas and constants
+
+### 5.1 PhenoAge (Levine 2018), clinical-biomarker version
+
+The paper prints the model to four decimals in Table 1 and Supplementary Table S1, with γ and the
+inversion to years in Supplement 1. BioAge carries the same fit at full precision. **Both are in
+the paper's units: SI, except CRP, which enters as ln(CRP) with CRP in mg/dL.**
+
+**As printed (Levine 2018 Table 1 and Supplement 1), FALCONAge's default:**
+
+```
+xb = −19.9067
+     − 0.0336 · albumin          (g/L)
+     + 0.0095 · creatinine       (µmol/L)
+     + 0.1953 · glucose          (mmol/L)
+     + 0.0954 · ln(CRP)          (CRP in mg/dL)
+     − 0.0120 · lymphocyte%      (%)
+     + 0.0268 · MCV              (fL)
+     + 0.3306 · RDW              (%)
+     + 0.0019 · ALP              (U/L)
+     + 0.0554 · WBC              (10³/µL)
+     + 0.0804 · age              (years)
+
+γ        = 0.0076927
+m        = 1 − exp( −exp(xb) · (exp(120γ) − 1) / γ )
+PhenoAge = 141.50225 + ln( −0.00553 · ln(1 − m) ) / 0.090165
+```
+
+**Full precision (BioAge `phenoage0`,
+[BioAge phenoage_calc.R](https://github.com/dayoonkwon/BioAge)), `coefficients="bioage"`:**
+
+```
+xb = −19.90667
+     − 0.03359355 · albumin      (g/L)
+     + 0.009506491 · creatinine  (µmol/L)
+     + 0.1953192  · glucose      (mmol/L)
+     + 0.09536762 · lncrp        (BioAge: lncrp = ln(1 + CRP), CRP in mg/dL)
+     − 0.01199984 · lymphocyte%  (%)
+     + 0.02676401 · MCV          (fL)
+     + 0.3306156  · RDW          (%)
+     + 0.001868778 · ALP         (U/L)
+     + 0.05542406 · WBC          (10³/µL)
+     + 0.08035356 · age          (years)
+
+m        = 1 − exp( (−1.51714 · exp(xb)) / 0.007692696 )
+PhenoAge = 141.50225 + ln( −0.0055305 · ln(1 − m) ) / 0.090165
+```
+
+Every full-precision weight rounds to its Table 1 value, so these are the fit the table was printed
+from. On BioAge's 8,924 NHANES III rows the printed table puts PhenoAge a mean 0.074 years above
+the full-precision fit (at most 0.14 years). With `coefficients="bioage"` and
+`crp_transform="log1p"` FALCONAge reproduces `phenoage0` on those rows to below 0.00001 years.
+
+**Four transcription errors circulate**, and all four appear in the equation printed in Liu et
+al. 2018 ([PLoS Med 15:e1002718](https://doi.org/10.1371/journal.pmed.1002718)): alkaline phosphatase
+0.00188 (Table 1: 0.0019), glucose 0.0195 (0.1953), RDW 0.3356 (0.3306), and the divisor 0.09165
+(Supplement 1: 0.090165). FALCONAge carried 0.00188 until this was checked. The divisor is the
+costly one: BioAge corrected it in its April 2026 commit ("Update PhenoAge constant to 0.090165 and
+recompute data"), and code still using 0.09165 shifts results by several years. Guard `m` away
+from 0 and 1 or `ln(1 − m)` blows up.
+
+**The units are part of the formula.** The weights are per SI unit. An implementation that
+applies them to albumin in g/dL, creatinine and glucose in mg/dL and CRP in mg/L without
+converting, as mcp-phenoage-clock does
+([phenoage.ts](https://github.com/199-mcp/mcp-phenoage-clock)), returns nonsense: for the healthy
+50-year-old of Appendix F it gives xb = 8.36 and a ten-year mortality of 1, where the converted
+inputs give xb = −9.07 and a PhenoAge of 41.85 years.
+
+**The CRP term is where BioAge departs from the paper.** Levine 2018 enters ln(CRP). BioAge's
+`lncrp`, the variable its NHANES PhenoAge (`phenoage0`) is computed from, is ln(1 + CRP)
+([`data-raw/nhanes_all.R`](https://github.com/dayoonkwon/BioAge/blob/master/data-raw/nhanes_all.R),
+`lncrp = log(1 + crp)`). The difference is not small. On NHANES III (n = 8,924) FALCONAge with
+ln(CRP) sits a mean 1.50 years below `phenoage0` (SD 0.45), and not by a constant: ln(1 + CRP) −
+ln(CRP) = ln(1 + 1/CRP), which is largest at low CRP. With ln(1 + CRP) the gap falls to the 0.074
+years of coefficient rounding, and with `coefficients="bioage"` as well it closes. FALCONAge follows
+the paper, records BioAge's choice as a known discrepancy, and offers
+`phenoage(df, crp_transform="log1p", coefficients="bioage")` for comparison with BioAge output. Every PhenoAge computed through BioAge carries the shift.
+
+**DNAm PhenoAge** is the methylation surrogate of this quantity: 513 CpGs, elastic net trained
+to predict the clinical PhenoAge. pyaging exposes both, `phenoage` (clinical, blood chemistry)
+and `dnamphenoage` (methylation).
+
+### 5.2 pyaging generalised PhenoAge postprocess
+
+The torch implementation with λ = 0.0192
+([pyaging _models.py:1456](https://github.com/lucascamillomd/pyaging)):
+
+```
+mortality = 1 − exp( −exp(x) · (exp(120λ) − 1) / λ )
+age       = 141.50225 + ln( −0.00553 · ln(1 − mortality) ) / 0.090165
+```
+
+### 5.3 BiT age (*C. elegans*) second correction
+
+The published biological ages are rescaled to account for truncation of the lifespan distribution.
+With median lifespan 372 h (15.5 d) and SD 192/3 h (8/3 d)
+([AgingClock biological_age_correction.py](https://github.com/Meyer-DH/AgingClock)):
+
+```
+corrected(y) = y − erfinv( 0.5 − ( ( erf(((372 − y)/sd)/√2)/2 ) + 0.5 ) / 2 ) · √2 · 2 · sd
+```
+
+Lifespan fold-change with error propagation uses `uncertainties.ufloat` with a 5% lifespan-assay
+bias and 0.5 d age-reporting bias; biological age is rescaled as
+`chronological_age × 15.5 / reported_median_lifespan`.
+
+### 5.4 Zhang 2019 predictors
+
+514 elastic-net probes or 319,607 BLUP probes, trained on 13,566 samples. Per-sample z-scoring of
+probes is mandatory (§4.1). Missing values are filled with the per-probe mean across individuals;
+probes that are NA across all individuals are dropped
+([DNAm-based-age-predictor pred.R](https://github.com/qzhang314/DNAm-based-age-predictor)). BLUP degrades more gracefully with
+missing probes than EN. RMSE reported as 2.04 y, the most accurate chronological clock, and the
+one whose acceleration stopped predicting mortality.
+
+## Appendix F - Reproducing the four reference computations by hand
+
+Small worked checks to use as smoke tests while building.
+
+**PhenoAge, from conventional units.** Inputs: age 50, albumin 4.5 g/dL, creatinine 0.9 mg/dL,
+glucose 90 mg/dL, CRP 1.0 mg/L, lymphocyte 30%, MCV 90 fL, RDW 13%, ALP 70 U/L, WBC 6.0 ×10³/µL.
+Convert first, to the units of Table 1: albumin 45 g/L, creatinine 79.5615 µmol/L, glucose
+4.9950 mmol/L, CRP 0.1 mg/dL. Then
+
+```
+xb = −19.9067 − 0.0336(45) + 0.0095(79.5615) + 0.1953(4.9950) + 0.0954·ln(0.1)
+     − 0.0120(30) + 0.0268(90) + 0.3306(13) + 0.0019(70) + 0.0554(6.0) + 0.0804(50)
+   = −9.0718
+m        = 1 − exp( −exp(xb) · (exp(120·0.0076927) − 1) / 0.0076927 )
+PhenoAge = 141.50225 + ln(−0.00553·ln(1 − m)) / 0.090165  =  41.85 years
+```
+
+Put the unconverted numbers into the same weights and xb is 8.36, m is 1, and there is no age.
+
+**Horvath output transform.** A raw linear score of −0.5 becomes
+`21·exp(−0.5) − 1 = 11.74` years; a score of 1.2 becomes `21·1.2 + 20 = 45.2` years.
+
+**GrimAge2 Cox → years.** A Cox linear predictor of 16.0 becomes
+`((16.0 − 15.370829484122)/1.09534876966487) × 9.05974444998421 + 66.0943807965085 = 71.30` years.
+
+**tAge chronological, mouse.** A model output of 0.35 (fraction of maximum lifespan) becomes
+`0.35 × 48 = 16.8` months. The same 0.35 from a mortality clock stays as
+`log10(HR) = 0.35`, i.e. HR ≈ 2.24 - never 16.8 anything.

@@ -1,0 +1,137 @@
+---
+title: "23. Building a clock of your own"
+---
+
+The catalogue is other people's clocks. This is the arithmetic of fitting one,
+with the numbers the published clocks actually used.
+
+## 23.1 The objective
+
+With $n$ samples and $p$ CpGs, $p \gg n$ always. Horvath had 8,000 samples
+against 21,369 candidate probes; a modern EPIC study has 850,000 columns and a
+few hundred rows. An unpenalised least-squares fit is not identifiable, because
+$X^\top X$ is singular whenever $p > n$. Penalisation is what makes the problem
+have an answer, not a refinement on one.
+
+$$
+\hat{\beta} = \arg\min_{\beta} \left\{ \frac{1}{2n}\sum_{i=1}^{n}\left(y_i - \beta_0 - x_i^{\top}\beta\right)^2 + \lambda\left[\frac{1-\alpha}{2}\lVert\beta\rVert_2^2 + \alpha\lVert\beta\rVert_1\right] \right\}
+$$
+
+The two penalties do different work. The $\ell_1$ term has a corner at zero, so
+its subgradient can hold a coefficient exactly at zero, which is what performs
+selection. The $\ell_2$ term is smooth and shrinks correlated predictors
+together rather than choosing between them, which matters because neighbouring
+CpGs are strongly correlated and pure LASSO picks among them close to
+arbitrarily.
+
+| $\alpha$ | Name | Behaviour on correlated CpGs | Used by |
+|---:|---|---|---|
+| 1 | LASSO | Selects one per correlated group, close to arbitrarily | eFRS, the McCartney EpiScores |
+| 0.5 | Elastic net | Keeps correlated groups together while still zeroing most coefficients | Horvath 2013 |
+| 0 | Ridge | Shrinks everything, selects nothing | Rarely used alone |
+
+Horvath fitted $\alpha = 0.5$ with $\lambda = 0.0226$ chosen by cross-validation,
+over the 21,369 probes shared by the 27K and 450K platforms that had fewer than
+ten missing values. That produced the 353 sites.
+
+::: {.callout-important}
+## The selected set is not the biology
+
+Rerun the same fit with a slightly different $\lambda$, a different fold split,
+or a different subset of samples, and a different CpG set comes out with almost
+identical accuracy. The correlated groups are interchangeable to the optimiser.
+This is the mechanism behind the eleven discrepancies in section 15, and it is
+why two faithful implementations of the same clock can disagree on membership.
+:::
+
+## 23.2 Choosing the penalty honestly
+
+$\lambda$ comes from $k$-fold cross-validation: fit on $k-1$ folds, measure on
+the held-out one, take the $\lambda$ minimising mean cross-validated error, or
+the largest $\lambda$ within one standard error of it for a sparser model.
+
+Any step that looked at the outcome must sit inside the loop. Selecting CpGs by
+their correlation with age on the full dataset and then cross-validating the fit
+on those CpGs leaks the held-out fold into the selection, and the reported error
+is optimistic by an amount that cannot be recovered afterwards.
+
+## 23.3 The age transform
+
+Methylation changes quickly in childhood and slowly afterwards, so a model
+linear in age fits adults and misses the first two decades. Horvath regresses a
+transformed age and inverts afterwards, with $A = 20$. Up to $A$,
+
+$$
+F(\text{age}) = \log(\text{age} + 1) - \log(A + 1),
+$$
+
+and above it,
+
+$$
+F(\text{age}) = \frac{\text{age} - A}{A + 1}.
+$$
+
+Both branches give 0 at $\text{age} = A$ and both have derivative $1/(A+1)$
+there, so $F$ is continuous and differentiable at the join. The model predicts
+$F$; the reported age is $F^{-1}$ of the linear predictor. Applying the inverse
+twice, or omitting it, is invisible in an adult cohort because the branches
+nearly agree there, and badly wrong in a paediatric one.
+
+## 23.4 Feature selection is not settled
+
+Elastic net is the default rather than the optimum. Benchmarked on the Hannum
+blood data (GSE40279, 656 samples, 473,035 CpGs, 10-fold cross-validation,
+80/20 split):
+
+| Method | CpGs kept | R² | Median error |
+|---|---:|---:|---|
+| SelectKBest (2,000) then Boruta | 35 | 0.873 | 3.08 years |
+| Boruta alone, or KBest alone | varies | 0.861 to 0.862 | |
+| Recursive elimination, 1% per iteration | varies | ≥ 0.81 | |
+| Genetic algorithm, most threshold methods | varies | 0.77 to 0.81 | |
+| Neural network on 65 features | 65 | 0.76 | found 61 CpGs no other method did |
+| Elastic net, no prior selection | 276 | below five of the above | |
+| The five most-selected CpGs overall | 5 | 0.83 | 3.79 years |
+| cg16867657 (ELOVL2) alone | 1 | 0.73 | |
+
+Two rows there are worth sitting with. A single CpG in ELOVL2 reaches R² = 0.73,
+so most of what a 353-CpG clock knows about chronological age is available from
+a handful of sites. And an unfiltered elastic net over all 450,000 probes was
+beaten by five selection strategies, which is the opposite of the usual
+intuition: past a point the extra probes contribute noise rather than signal.
+
+## 23.5 Two metrics that disagree, and both are needed
+
+$$
+\text{MAE} = \operatorname{median}_i\left|\hat{y}_i - y_i\right|, \qquad r = \operatorname{corr}(\hat{y}, y)
+$$
+
+Correlation is inflated by a wide age range and says nothing about bias. Median
+absolute error is in years and says nothing about ordering. A clock at r = 0.95
+on a cohort spanning 20 to 90 may have an MAE of six years; the same clock on a
+cohort spanning 55 to 65 may have r near zero and the same MAE. Neither number
+is wrong and neither alone is informative.
+
+Expect the fitted slope of $\hat{y}$ on $y$ to fall below one. Penalisation
+shrinks coefficients toward zero, which compresses predictions toward the
+training mean, so the old read young and the young read old. That is regression
+to the mean, a property of the estimator rather than a defect of the cohort, and
+it leaves the residual correlated with age unless the slope is corrected. It is
+why section 19 residualises before comparing anything.
+
+## 23.6 The step that gets skipped
+
+A model fitted to chronological age will correlate with chronological age.
+Reporting that as validation is circular. The claim worth making is about the
+residual: whether age acceleration associates with disease, mortality or an
+intervention, on a cohort that was not used to fit the model. Everything in
+section 11 applies to a clock you fitted exactly as it applies to a published
+one.
+
+## 23.7 What to publish
+
+Feature list, weights, intercept, the preprocessing chain and the postprocess,
+together and in the order they apply. A clock published without its postprocess
+is the commonest source of the disagreements in section 15, because the next
+implementer has to guess whether an anti-log was already applied, and a
+plausible wrong guess produces plausible wrong ages.

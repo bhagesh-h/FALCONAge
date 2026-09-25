@@ -309,46 +309,101 @@ pairs:
 # kept because pkgdown's own navbar is generated from them and it groups by
 # kind rather than by reading order.
 book:
-  - part: 1. Orientation
+  - part: 1. Start
     chapters:
       - title: What FALCONAge is
         file: index.qmd
+      - title: Install
+        file: start/install.qmd
       - title: Getting started
-        file: guide/FALCONAge.qmd
+        file: start/quickstart.qmd
+      - title: Using FALCONAge from Claude
+        file: start/claude.qmd
+  - part: 2. Your data
+    chapters:
       - title: Loading your data
-        file: guide/loading.qmd
-  - part: 2. Working with clocks
+        file: data/loading.qmd
+      - title: Preprocessing and coverage
+        file: data/preprocessing.qmd
+      - title: Raw arrays to betas
+        file: data/raw-arrays.qmd
+  - part: 3. Clocks
     chapters:
       - title: Choosing a clock
-        file: guide/clocks.qmd
+        file: clocks/choosing.qmd
+      - title: What a score means
+        file: clocks/meaning.qmd
       - title: Clock catalogue
-        file: clocks.qmd
+        file: clocks/catalogue.qmd
+  - part: 4. Analysis
+    chapters:
+      - title: Age acceleration
+        file: analysis/acceleration.qmd
+      - title: Uncertainty
+        file: analysis/uncertainty.qmd
+      - title: Clinical chemistry and survival
+        file: analysis/clinical.qmd
+      - title: Benchmarking
+        file: analysis/benchmarking.qmd
       - title: Beyond the clock score
-        file: beyond-clocks.qmd
+        file: analysis/beyond.qmd
+      - title: Figures and reports
+        file: analysis/reporting.qmd
       - title: Figure gallery
-        file: gallery.qmd
-  - part: 3. The science
+        file: analysis/figures.qmd
+  - part: 5. Methods
     chapters:
       - title: The science of aging clocks
-        file: science.qmd
-  - part: 4. API reference
+        file: methods/index.qmd
+      - title: Biology and measurement
+        file: methods/biology.qmd
+      - title: Algorithm families
+        file: methods/algorithms.qmd
+      - title: Published formulas
+        file: methods/formulas.qmd
+      - title: The clocks, by family
+        file: methods/clocks.qmd
+      - title: Genotype and structure
+        file: methods/genetics.qmd
+      - title: Building a clock
+        file: methods/building.qmd
+      - title: Failure modes and the frontier
+        file: methods/failure-modes.qmd
+      - title: Datasets and resources
+        file: methods/resources.qmd
+  - part: 6. Reference
     chapters:
       - title: Python reference
         file: reference/index.qmd
       - title: R reference
         href: r/index.html
-  - part: 5. Internals and operations
-    chapters:
-      - title: Architecture
-        file: architecture.qmd
-      - title: GPU and performance
-        file: gpu.md
-  # Last, and its own part, because it is what the bracketed numbers on every
-  # other page point at rather than a topic somebody reads through.
-  - part: 6. References
-    chapters:
+      # What the bracketed numbers on every other page point at.
       - title: References
         file: references.qmd
+  # Last: what a contributor reads, not what a user needs. The original design
+  # document is here, split into what exists and the plan it was built from.
+  - part: 7. Developer notes
+    chapters:
+      - title: Architecture
+        file: dev/index.qmd
+      - title: Core engine and registry
+        file: dev/engine.qmd
+      - title: Algorithms
+        file: dev/algorithms.qmd
+      - title: Modules
+        file: dev/modules.qmd
+      - title: R package
+        file: dev/r-package.qmd
+      - title: Docker, testing and CI
+        file: dev/operations.qmd
+      - title: GPU support
+        file: dev/gpu.qmd
+      - title: Design history
+        file: dev/history.qmd
+      - title: Other software
+        file: dev/software.qmd
+      - title: Appendices
+        file: dev/appendices.qmd
 
 articles:
   - title: Getting started
@@ -367,33 +422,33 @@ articles:
 # manual is welcome and a literature review is not.
 pages:
   - title: The science of aging clocks
-    file: science.qmd
+    file: methods/index.qmd
     desc: >-
       What the field knows to 2026: the biology each score encodes, the
       chemistry of every input layer, every algorithm with its equations, the
       published constants, and the eleven places where a paper and its own
       circulating implementation disagree.
   - title: Architecture
-    file: architecture.qmd
+    file: dev/index.qmd
     desc: >-
       Which file computes what, why each decision went the way it did, and an
       explicit accounting of where the specification is wider than v1.0.
   - title: Figure gallery
-    file: gallery.qmd
+    file: analysis/figures.qmd
     desc: >-
       Every figure the package draws, on the public corpus, each with the same
       interpretation the figure itself prints under its axes.
   - title: Clock catalogue
-    file: clocks.qmd
+    file: clocks/catalogue.qmd
     desc: All 175 entries, generated from the registry that scores them.
   - title: Beyond the clock score
-    file: beyond-clocks.qmd
+    file: analysis/beyond.qmd
     desc: >-
       Entropy, drift, the noise barometer, repertoire structure and coefficient
       mass. What a methylation matrix answers when the question is about
       variance rather than about level.
   - title: GPU support
-    file: gpu.md
+    file: dev/gpu.qmd
     desc: >-
       What was verified on real hardware, what had to be installed, and why
       device="auto" resolves to CPU.

@@ -1,0 +1,396 @@
+---
+title: "8. R package"
+---
+
+## 8.1 What "identical" means here
+
+`FALCONAge` is not a reimplementation. Every number it returns is computed by the Python core
+through `reticulate`, so the R and Python answers are the same bytes because they are the same
+computation. What the R package adds is an interface an R user would have written: S3 classes
+with `print`, `summary`, `plot` and `as.data.frame`; `data.frame` in and `data.frame` out;
+roxygen2 documentation; a pkgdown site; and errors that arrive as R conditions rather than Python
+tracebacks.
+
+This is the design tAge uses ([`tAge/R/predict.R`](https://github.com/Gladyshev-Lab/tAge)),
+with one difference: tAge asks the user to set `RETICULATE_PYTHON` by hand, and FALCONAge manages
+the environment itself.
+
+## 8.2 Environment management
+
+`R/install.R`
+
+```r
+falconage_install(method = c("auto", "uv", "virtualenv", "conda"),
+                  envname = "r-falconage",
+                  version = NULL,        # NULL = the version matching this R package
+                  gpu = FALSE,
+                  force = FALSE)
+
+falconage_config()      # what Python, what version, what device, what registry
+falconage_available()   # logical, does a working core exist
+falconage_update()
+```
+
+`method = "auto"` prefers `uv` when it is on the PATH, because it resolves in seconds rather than
+minutes, and falls back to `virtualenv`. `gpu = TRUE` installs the CUDA torch build.
+
+`version = NULL` pins the Python core to the exact version that matches the R package, read from
+`DESCRIPTION`'s `Config/falconage/python-version` field. This is the mechanism that stops an R
+package from silently driving a Python core it was never tested against.
+
+`falconage_config()` prints the same block the CLI prints, so a bug report from an R user and one
+from a Python user carry comparable information:
+
+```
+FALCONAge 1.0.0 (R)
+  python core   1.0.0  /home/x/.virtualenvs/r-falconage/bin/python
+  torch         2.6.0  CUDA 12.4
+  device        cuda:0  NVIDIA RTX A4000, 16 GB
+  dtype         float64
+  registry      1.1.0  (175 clocks)
+  cache         /home/x/.cache/falconage  (2.1 GB)
+```
+
+## 8.3 The bridge
+
+`R/zzz.R` and `R/bridge.R`
+
+```r
+.falconage <- new.env(parent = emptyenv())
+
+.onLoad <- function(libname, pkgname) {
+  .falconage$py <- reticulate::import("falconage", delay_load = list(
+    environment = "r-falconage",
+    on_load  = function() check_version_compatibility(),
+    on_error = function(e) NULL          # defer the error to first use
+  ))
+  set_default_options()
+}
+```
+
+`delay_load` matters: without it, `library(FALCONAge)` fails on a machine with no Python
+environment yet, which breaks `R CMD check` on CRAN's build farm. With it, the package loads,
+`falconage_available()` returns `FALSE`, and every exported function that needs the core calls
+`require_core()`, which raises a condition telling the user to run `falconage_install()`.
+
+**Type marshalling.** Explicit, never implicit.
+
+| R | Python | Direction |
+|---|---|---|
+| `data.frame` | `pandas.DataFrame` | both, via reticulate |
+| `falcon_data` | `.h5ad` path | both: the object is passed as a file path, never marshalled cell by cell |
+| `falcon_result` | `.h5ad` path plus a results `data.frame` | both |
+| `character(1)` | `str` | both |
+| `NULL` | `None` | both |
+| `NA` | `float('nan')` for numerics, `None` for strings | R to Python |
+| `matrix` | `numpy.ndarray` | both |
+
+The `falcon_data` rule is the important one. Passing an 850,000-column matrix through reticulate
+cell by cell is slow and copies twice. Instead the R object holds a path to an `.h5ad` file plus a
+cached summary (dimensions, platform, sample table), and both languages read the same file. This
+is also what makes a mixed-language workflow possible: preprocess in R, score in Python, plot
+back in R, one artefact throughout.
+
+**Error translation.** `bridge.R` wraps every call:
+
+```r
+py_call <- function(fn, ...) {
+  tryCatch(fn(...), error = function(e) {
+    info <- parse_python_error(e)      # class, message, .remedy
+    rlang::abort(
+      message = info$message,
+      class   = paste0("falconage_", info$class),
+      remedy  = info$remedy,
+      parent  = e
+    )
+  })
+}
+```
+
+A `MissingUnitsError` from Python becomes an R condition of class
+`falconage_missing_units_error`, so R users can `tryCatch` on it, and the message is the
+one-sentence remedy rather than a 40-line traceback. The Python traceback stays available as
+`parent`.
+
+## 8.4 Public API - one-to-one with Python
+
+Every Python verb has an R counterpart with the same name in snake_case and the same argument
+names. This table is the contract the conformance tests enforce (§10.5).
+
+| Python | R | Returns |
+|---|---|---|
+| `fa.download()` | `download()` | `falcon_download` |
+| `fa.download(dry_run=True)` | `download(dry_run = TRUE)` | `data.frame` |
+| `fa.prepare()` | `prepare()` | `falcon_data` |
+| `fa.prepare_clinical()` | `preprocess_clinical()` | `falcon_data` |
+| `fa.qc()` | `qc()` | `falcon_qc` |
+| `fa.score()` | `score()` | `falcon_result` |
+| `fa.acceleration()` | `acceleration()` | `data.frame` |
+| `fa.cox_hazard()` | `cox()` | `data.frame` |
+| `fa.icc()` | `icc()` | `data.frame` |
+| `fa.run_benchmark()` | `run_benchmark()` | `falcon_benchmark` |
+| `fa.registry.list()` | `list_clocks()` | `data.frame` |
+| `fa.registry.get()` | `clock_info()` | `list` |
+| `fa.registry.cite()` | `cite_clock()` | `character` |
+| `fa.registry.compatible_with()` | `compatible_clocks()` | `data.frame` |
+| `fa.plot.ba_vs_ca()` | `plot_ba_vs_ca()` | `ggplot` |
+| `fa.report()` | `report()` | path, invisibly |
+
+Plotting is the one place the two diverge deliberately. Python returns matplotlib figures; R calls
+the Python `*_data()` function to get the frame and renders it with ggplot2, so an R user gets a
+`ggplot` object they can modify. The data is identical; the rendering is native to each language.
+
+## 8.5 S3 classes
+
+`R/classes.R`
+
+```r
+# falcon_data
+print.falcon_data       # dimensions, modality, platform, species, age availability
+summary.falcon_data     # plus per-clock coverage
+dim.falcon_data
+as.data.frame.falcon_data
+
+# falcon_result
+print.falcon_result     # clocks run, samples, warnings
+summary.falcon_result   # per-clock mean, SD, missingness, flags
+as.data.frame.falcon_result   # the long table
+plot.falcon_result      # dispatches to plot_ba_vs_ca()
+`[.falcon_result`       # subset by clock or sample
+
+# falcon_qc
+print.falcon_qc
+plot.falcon_qc
+```
+
+`print.falcon_result` shows what a user needs before trusting the numbers:
+
+```
+<falcon_result>  120 samples x 5 clocks
+
+  clock          unit     mean     sd   missing  flags
+  horvath2013    years    54.2    9.1      0.8%  -
+  hannum         years    51.7    8.4      0.0%  -
+  phenoage       years    56.9   11.2      0.0%  -
+  grimage2       years    61.4    8.8     12.4%  -
+  dunedinpace    ratio     1.03   0.11     2.1%  -
+
+  2 warnings. See warnings(x).
+  grimage2 is research-use-only.
+```
+
+## 8.6 DESCRIPTION
+
+The file as it ships, not as it was specified: the differences are noted below it:
+
+```
+Package: FALCONAge
+Title: Multiomic Biological Age and Aging Clock Scoring
+Version: 1.0.0
+Authors@R:
+    person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-5957-8005"))
+Description: Scores DNA methylation and clinical chemistry data against a
+    catalogue of 161 published aging clocks, and provides the downstream
+    statistics the field expects: age acceleration in its three conventions,
+    survival and association models, technical reliability, and the AA1/AA2
+    benchmark. Numerical work is delegated to the 'falconage' Python package
+    through 'reticulate', so results from R and from Python are the same bits
+    rather than two implementations that agree approximately. Twenty-three
+    clocks carry coefficients inside the package and run offline; twenty-eight
+    are implemented as scaffolds whose research-use-only coefficients the user
+    supplies.
+License: GPL (>= 3)
+URL: https://github.com/bhagesh-h/FALCONAge,
+    https://bhagesh-h.github.io/FALCONAge/,
+    https://bhagesh-h.github.io/FALCONAge/r
+BugReports: https://github.com/bhagesh-h/FALCONAge/issues
+Depends:
+    R (>= 4.1)
+Imports:
+    grDevices,
+    reticulate (>= 1.34),
+    stats,
+    utils,
+    yaml
+Suggests:
+    ggplot2,
+    knitr,
+    optparse,
+    patchwork,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+biocViews: Epigenetics, DNAMethylation, DifferentialMethylation,
+    MethylationArray, Software
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-GB
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+```
+
+Four departures from the specification, each deliberate:
+
+| Specified | Shipped | Why |
+|---|---|---|
+| `ggplot2`, `cli`, `rlang`, `jsonlite` in `Imports` | `ggplot2` in `Suggests`; the other three absent | Plotting returns a data frame and draws with base graphics, so `grDevices` is the hard dependency and `ggplot2` is optional. Four fewer required packages is four fewer ways for a CRAN check to fail on a machine we do not control. |
+| `Methods implemented include ... <doi:...>` in the description | Absent | CRAN wants DOIs for methods the package *implements in R*. Every method here is implemented in the Python core; the per-clock references live in the registry and come back from `cite()`, which is a truer place for them than a fixed list of five. |
+| `SystemRequirements: Python (>= 3.10) ...` | Absent | On reticulate ≥ 1.41 the environment is provisioned automatically on first use, so Python is not a system requirement the user must satisfy. Still to be added before a CRAN submission, since the field is also documentation. |
+| `Config/falconage/python-version` | Absent | The R package pins the Python core by git tag inside `falconage_install()`, so the field would be a second copy of a number that already exists in one place. |
+
+Every example and every test that needs the core is wrapped in
+`skip_if_not(falconage_available())`, so `R CMD check` passes on a machine with no Python.
+
+## 8.7 Roxygen conventions
+
+Following the cyRAVEN register, see
+`R/thresholds.R` in that package for the model. Every exported function
+gets:
+
+- an opening paragraph saying **what** it does, then **why** it does it that way when the choice
+  is not obvious
+- `@param` on every argument, naming the unit or the allowed values
+- `@return` on every export, describing the object rather than naming its class
+- `@examples`, runnable, wrapped in `\donttest{}` when they need the core or the network
+- `@seealso` linking the Python equivalent by name
+- `@references` with the DOI for anything implementing a published method
+
+Worked example:
+
+```r
+#' Score biological age with one or more aging clocks
+#'
+#' WHAT: applies published aging-clock definitions to a prepared dataset and
+#' returns one value per sample per clock, with the provenance needed to
+#' interpret it.
+#'
+#' WHY THE DEFAULT IS `"compatible"` RATHER THAN `"all"`: the registry holds
+#' clocks for several species, platforms and molecular layers, and most of them
+#' do not apply to any given dataset. Running everything produces a table whose
+#' majority of rows were computed almost entirely from imputed reference values,
+#' which looks like a result and is not one. `"compatible"` selects the clocks
+#' whose species, platform and feature coverage actually match the data, and
+#' reports what it excluded.
+#'
+#' @param data A `falcon_data` object from [preprocess_methylation()] or
+#'   [preprocess_clinical()].
+#' @param clocks Clock identifiers, or `"compatible"` (default) to select
+#'   automatically, or `"all"`. See [list_clocks()].
+#' @param device `"auto"`, `"cpu"`, `"cuda"`, or a specific device such as
+#'   `"cuda:1"`. `"auto"` uses CUDA when it is available.
+#' @param dtype `"float64"` (default) or `"float32"`. Clocks whose registry
+#'   entry requires double precision are promoted regardless, with a warning.
+#' @param max_missing Largest fraction of a clock's features that may be absent
+#'   before scoring that clock is an error rather than a warning. Default 0.30.
+#' @param sex_unknown What to do when a clock needs sex and it is not recorded:
+#'   `"error"` (default), `"impute_from_methylation"`, or `"half"`.
+#'
+#' @return A `falcon_result`. [as.data.frame()] gives one row per sample per
+#'   clock with the value, its unit, its scale type, the fraction of features
+#'   that had to be imputed, and any flags raised. The underlying dataset,
+#'   including the run manifest, is reachable through the object.
+#'
+#' @examples
+#' \donttest{
+#' if (falconage_available()) {
+#'   data <- preprocess_methylation(
+#'     system.file("extdata", "example_betas.csv", package = "FALCONAge"),
+#'     platform = "illumina_450k"
+#'   )
+#'   res <- score(data, clocks = c("horvath2013", "phenoage"))
+#'   head(as.data.frame(res))
+#' }
+#' }
+#'
+#' @seealso [acceleration()] for age acceleration, [list_clocks()] to browse the
+#'   registry, and the Python equivalent `falconage.score()`.
+#' @references
+#' Horvath S (2013). DNA methylation age of human tissues and cell types.
+#' Genome Biology 14:R115. \doi{10.1186/gb-2013-14-10-r115}
+#' @export
+score <- function(data, clocks = "compatible", device = "auto",
+                  dtype = "float64", max_missing = 0.30,
+                  sex_unknown = "error", ...) { }
+```
+
+## 8.8 Command-line front end
+
+`inst/scripts/falconage.R`, invoked the cyRAVEN way:
+
+```bash
+Rscript "$(Rscript -e 'cat(system.file("scripts","falconage.R",package="FALCONAge"))')" \
+  score --input prepared.h5ad --clocks horvath2013,grimage2 --outdir results/
+```
+
+Options are built in `R/cli-options.R` with `optparse`, and the flag names match the Python CLI
+exactly, so a script written against one runs against the other with only the interpreter
+changed.
+
+## 8.9 pkgdown reference groups
+
+`r/_pkgdown.yml`. Group titles are identical to the quartodoc sections in §11, which is what
+makes the two sites navigable as one.
+
+```yaml
+url: https://bhagesh-h.github.io/FALCONAge
+
+template:
+  bootstrap: 5
+  light-switch: true
+
+reference:
+- title: Setup
+  desc: >
+    FALCONAge computes through a Python core. These functions create and inspect
+    that environment; everything else assumes it exists.
+  contents: [falconage_install, falconage_config, falconage_available, falconage_update]
+
+- title: Download
+  desc: >
+    Public data by accession. One verb covers GEO, ArrayExpress, SRA, Zenodo,
+    Figshare, Hugging Face and GDC, and returns files alongside a sample table
+    with age and sex extracted from whatever free-text field held them.
+  contents: [download, probe, cache_ls, cache_rm, cache_verify]
+
+- title: Preprocess
+  desc: >
+    Raw intensities or a public matrix into a scoreable one. Normalisation is
+    selectable and recorded, because it changes the answer.
+  contents: [preprocess_methylation, preprocess_clinical, detect_platform,
+             aggregate_epicv2, estimate_sex, qc]
+
+- title: Score
+  desc: One call runs any number of clocks. Every value carries its provenance.
+  contents: [score, acceleration]
+
+- title: The clock registry
+  desc: >
+    What is available, what it predicts, in what unit, on what platform, and
+    where the published definition and the circulating coefficients disagree.
+  contents: [list_clocks, clock_info, compatible_clocks, cite_clock,
+             registry_version]
+
+- title: Analysis
+  desc: >
+    Tests on per-sample values. Age acceleration is standardised within sex
+    before any hazard ratio, so effect sizes compare across clocks.
+  contents: [cox, c_index, associate, interactions, icc, run_benchmark]
+
+- title: Figures
+  contents: [starts_with("plot_"), theme_falconage]
+
+- title: Reporting
+  contents: [report, run_manifest]
+
+articles:
+- title: Get started
+  navbar: ~
+  contents: [FALCONAge, methylation]
+- title: Working with data
+  navbar: Working with data
+  contents: [download, clinical, clocks]
+- title: Going further
+  navbar: Going further
+  contents: [gpu, benchmarking]
+```

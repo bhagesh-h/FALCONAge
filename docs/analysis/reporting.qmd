@@ -1,0 +1,171 @@
+---
+title: "Figures and reports"
+---
+
+## Reporting
+
+Two documents, each one self-contained HTML file.
+
+**The one-page report** is the scores, the run and a few figures, small enough to send:
+
+```r
+write_results(res, "results/")
+report(res, "report.html", group = "condition")
+```
+
+It is one file, inlined CSS, base64 figures, the table embedded, so it still works after somebody
+emails it, which is the only thing anybody does with a report.
+
+**The full run, step by step.** `run_report()` runs quality control, scoring, technical error,
+prediction intervals, age acceleration, a consensus test across clocks when a group column is
+named, and the interpretation tables, and writes every deliverable into one directory: the same
+directory the `report` command writes. With `quarto = TRUE` it adds `falconage_report.qmd`, in which
+every file of that directory sits under the step that produced it, in the order a reader has to
+take them, because each step is only as reliable as the ones before it:
+
+| Step | What it holds |
+|---|---|
+| 0. Provenance | versions, the coefficient file and SHA-256 behind each clock, device, warnings |
+| 1. Input and quality control | per-sample missingness and beta distribution; the QC figures |
+| 2. Coverage | per-clock coverage by feature count and by coefficient weight; clocks not scored, and why |
+| 3. Scores | the scores, what each category of clock measures, and how the clocks relate |
+| 4. Agreement with chronological age | error against age and whether it depends on age |
+| 5. Uncertainty | technical standard error and conformal prediction intervals |
+| 6. Age acceleration | residuals on age, for the scales where they are defined |
+| 7. Group comparison | the consensus verdict and the test for every clock |
+| 8. Interpretation | what each score means and the published evidence, with DOIs |
+| 9. Further outputs | every other file in the directory, named and sized |
+
+A file the report does not recognise still appears, in step 9, so nothing in the directory is
+left out. Tables expand, search, page and download as CSV; figures enlarge on click and download
+at full resolution. Rendered, it is one HTML file with every figure and table embedded: 3.7 MB for
+16 samples and three clocks.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.report.run_report(d, "results/", group_col="condition", quarto=True)
+```
+
+### R
+
+```r
+run_report(d, "results/", group = "condition", quarto = TRUE)
+```
+
+### Command line
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
+  report betas.csv --outdir results/ --group-col condition --quarto
+```
+
+:::
+
+**Rendering it.** Quarto is not in the FALCONAge image. Installed it takes 423 MB, which would add
+62% to the 680 MB image for an optional document, so inside the image the source is written and
+the run says so. Render it with the Quarto container, from the output directory, and open
+`falconage_report.html`:
+
+```bash
+cd results
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/w" -w /w \
+  ghcr.io/quarto-dev/quarto quarto render falconage_report.qmd
+```
+
+Where Quarto is installed, `run_report()` renders it directly, and `quarto_report("results/")`
+(R) or `fa.report.write_quarto_report("results/", render=True)` (Python) rewrites the report for
+a directory that already exists.
+
+## 10. Plots
+
+### 10.1 The standard set
+
+1. **BA vs CA scatter, faceted by clock, coloured by sex**, with a fitted line, the identity line,
+   and Pearson r annotated in the corner. This is `plot_ba`
+   ([BioAge plot_ba.R](https://github.com/dayoonkwon/BioAge)), ggplot2, `geom_point(shape = 1)`,
+   `geom_smooth(method = lm)`, `facet_wrap(~ method, scales = "free")`, colours `#7294D4` (men)
+   and `#E6A0C4` (women).
+2. **Pairs / correlation matrix of age accelerations.** Scatter plots below the diagonal, Pearson
+   r above the diagonal colour-mapped, clock labels on the diagonal. `plot_baa`
+   ([BioAge plot_baa.R](https://github.com/dayoonkwon/BioAge)) implements this in base graphics with a
+   custom `layout()` matrix so the diagonal cells can hold text.
+3. **Hierarchical clustering + Spearman heatmap of clocks.** pyaging Figure 1a - 38 methylation
+   clocks over ~13,000 samples; telomere predictors cluster together, chronological predictors
+   separate from mortality predictors.
+4. **UMAP of samples in clock space.** pyaging Figures 1b–e; reveals "ageotypes" where AltumAge
+   (chronological) and GrimAge2 (mortality) disagree.
+5. **Reprogramming / intervention timecourse.** pyaging Figure 1f, GSE54848, 39 clocks over
+   OSKM days; most rejuvenate between days 10 and 20, telomere predictors go *up*, ENCen100 is
+   flat. Any tool should make "run N clocks across a timepoint variable and plot trajectories" a
+   one-liner.
+6. **Benchmark grids.** ComputAgeBench `plot_class_bench` - a boolean matrix of
+   clock × (dataset:condition:test) with per-condition-class column groups and a total column;
+   `plot_medae` (MedAE bar chart, upper bound 18 y); `plot_bias` (median error, x-limits ±20 y).
+   Saved as PDF at 180 dpi
+   ([ComputAge benchmarking.py:451](https://github.com/ComputationalAgingLab/ComputAge)).
+7. **Forest plot of hazard ratios** per clock, per outcome, per cohort.
+8. **Density / violin of age acceleration by group** (disease vs control, treated vs untreated).
+9. **Organ or system radar/heatmap.** organAging uses heatmaps of organ ages against traits,
+   medications, foods, professions, diseases; SystemsAge gives an 11-spoke profile.
+10. **Expression-density QC plots at each preprocessing stage.** tAge's `plot_eset_density` is
+    called after raw, RLE, log, scale, YuGene and centring - a cheap way to catch a broken
+    normalisation.
+11. **Volcano / GSEA plots** when linking clock features to biology.
+12. **Spatial maps** of predicted age or age acceleration over tissue coordinates, plus proximity
+    effect matrices (effector cell type × target cell type, coloured by t-statistic).
+13. **Calibration plot** for probability-output clocks; **precision–recall curve** for
+    classifiers on imbalanced test sets (CellBiAge's choice of AUPRC over AUROC).
+14. **Missingness bar chart** per clock, percent of features absent, drawn before the results so
+    the user sees which clocks are untrustworthy for their platform.
+
+### 10.2 Plotting conventions worth adopting
+
+- Always draw the identity line on BA-vs-CA plots.
+- Never plot rate clocks (DunedinPACE) on the same axis as age clocks.
+- Facet by clock generation, not alphabetically.
+- Annotate every panel with n, r and the missingness fraction.
+- Colour by group, shape by platform; keep the palette stable across the whole report.
+
+### 10.3 What FALCONAge draws, and against which of the above
+
+Twenty-five figures, identical in Python and R because both read their colours, titles,
+subtitles and one-line descriptions from the same `colorscheme.yaml`. Every function returns its
+data frame as well as its figure, which is how two rendering engines draw the same numbers.
+
+| Figure | Answers | From §10.1 |
+|---|---|---|
+| `ba_vs_ca` | does this clock track age here, and with what bias | 1 |
+| `bland_altman` | is the error age-dependent (regression dilution made visible) | - |
+| `calibration` | is the predicted age calibrated across the age range | 13 |
+| `acceleration_by_group` | do cases accelerate relative to controls | 8 |
+| `acceleration_density` | the same, as distributions rather than summaries | 8 |
+| `acceleration_heatmap` | clock × study, the whole pooled picture in one panel | - |
+| `forest` | effect size with an interval, per clock | 7 |
+| `clock_corr` | which clocks agree, clustered | 3 |
+| `clock_chord` | how much of that agreement is shared CpGs rather than shared signal | - |
+| `clock_radar` | one profile per group across clocks, on a common z scale | 9 |
+| `clock_pca`, `clock_embedding` | sample structure in clock space; ageotypes | 4 |
+| `clock_scatter_matrix` | pairwise acceleration, the `plot_baa` layout | 2 |
+| `coverage_bar`, `missingness` | which clocks are scoring imputed values, read before the scores | 14 |
+| `beta_density` | is the beta distribution bimodal, or did normalisation break | 10 |
+| `sex_check` | does the X/Y dosage match the recorded sex | - |
+| `platform_comparison`, `study_comparison` | is the batch bigger than the biology | - |
+| `benchmark_bars`, `benchmark_error_bias`, `benchmark_heatmap` | AA1/AA2, the MedAE–MedE tradeoff, clock × dataset | 6 |
+| `timecourse`, `trajectory` | clocks across a timepoint variable | 5 |
+| `clock_atlas` | every clock, every pooled study, one figure | - |
+
+`clock_chord` is the one with no precedent in the list above and it earns its place: the
+correlation heatmap says two clocks agree, and the chord says how much of that agreement was
+built in by construction. A pair with a thick chord and a high correlation has told you much less
+than a pair with a high correlation and no chord at all.
+
+Not implemented, and honestly out of scope for v1.0: volcano and GSEA plots (11) belong to
+feature-level biology rather than to scoring, and spatial maps (12) wait on the spatial modality.
+
+Two rules the code enforces rather than recommends. A figure whose data is empty, flat, or all
+zeros raises `NothingToPlot` and `save_all` records the reason, because an axis-free rectangle in
+a report reads as a measurement of nothing rather than as an absence of measurement. And the
+scale-type gate applies to figures too: a `pace_ratio` clock never reaches an acceleration panel.

@@ -50,17 +50,22 @@ from pathlib import Path
 # and where a desktop-only review never looks.
 WIDTHS = [320, 360, 390, 768, 1280]
 
-PAGES = [
-    "gallery.html",
-    "index.html",
-    "clocks.html",
-    "gpu.html",
-    "science.html",
-    "architecture.html",
-    "guide/FALCONAge.html",
-    "guide/clocks.html",
-    "reference/index.html",
-]
+def _book_pages() -> list[str]:
+    """Every chapter of the site's book spine, as rendered paths.
+
+    Read from docs/reference-groups.yml, the file the sidebar is generated
+    from, so a new chapter is measured without editing this list. A regex, not
+    a YAML parser: the Playwright image this runs in carries no PyYAML.
+    """
+    import re
+
+    spec = (Path(__file__).resolve().parent.parent / "docs" /
+            "reference-groups.yml").read_text(encoding="utf-8")
+    book = spec.split("\nbook:\n", 1)[1].split("\narticles:", 1)[0]
+    return [f[:-4] + ".html" for f in re.findall(r"^\s+file:\s*(\S+\.qmd)\s*$", book, re.M)]
+
+
+PAGES = _book_pages()
 
 OVERFLOW = """
 () => {
@@ -94,8 +99,24 @@ OVERFLOW = """
 }
 """
 
+# Clipped to every ancestor that clips. A wide table scrolls inside its
+# wrapper, and getClientRects() still reports its hidden columns where they
+# would be: the first run after the pages were split flagged the header cells
+# "species" and "tissue", scrolled out of view, as lying under the margin
+# contents list at 768px. What the reader sees is the clipped box.
 OVERLAP = """
 () => {
+  const clip = (el, r) => {
+    let L = r.left, T = r.top, R = r.right, B = r.bottom;
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const s = getComputedStyle(p);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const q = p.getBoundingClientRect();
+      if (s.overflowX !== 'visible') { L = Math.max(L, q.left); R = Math.min(R, q.right); }
+      if (s.overflowY !== 'visible') { T = Math.max(T, q.top); B = Math.min(B, q.bottom); }
+    }
+    return {left: L, top: T, right: R, bottom: B, width: R - L, height: B - T};
+  };
   const boxes = [];
   for (const el of document.querySelectorAll('body *')) {
     if (el.children.length) continue;
@@ -103,7 +124,8 @@ OVERLAP = """
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
     if (cs.position === 'fixed' || cs.position === 'absolute') continue;
-    for (const r of el.getClientRects()) {
+    for (const raw of el.getClientRects()) {
+      const r = clip(el, raw);
       if (r.width < 4 || r.height < 4) continue;
       boxes.push({el, r, t: (el.textContent || '').trim()});
     }

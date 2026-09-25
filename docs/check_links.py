@@ -76,6 +76,10 @@ NAME = re.compile(r'<a\b[^>]*?\bname="([^"]+)"', re.I)
 #: tab to speak of. That is what turned this check red the first time it ran
 #: against a full site: 15 of 222 pages, every one of them a stub.
 REDIRECT = re.compile(r'<meta[^>]+http-equiv="refresh"', re.I)
+#: Quarto's equivalent, written for every `aliases:` entry when the pages were
+#: reorganised, so each old URL keeps working: a page titled "Redirect" whose
+#: only content is a script that sends the reader on.
+QUARTO_REDIRECT = re.compile(r"<title>Redirect</title>.*?var redirects = \{", re.S)
 LINK = re.compile(r"<link\b[^>]*>", re.I)
 ATTR = re.compile(r'\b(rel|href)="([^"]*)"', re.I)
 
@@ -100,7 +104,7 @@ def check_icons(pages: list[Path]) -> list[str]:
     for page in pages:
         rel = page.relative_to(SITE).as_posix()
         text = page.read_text(encoding="utf-8", errors="ignore")
-        if REDIRECT.search(text):
+        if REDIRECT.search(text) or QUARTO_REDIRECT.search(text):
             SKIPPED.append(rel)
             continue
         hrefs = []
@@ -222,7 +226,7 @@ def main() -> int:
         return 1
 
     print(f"{len(pages) - len(SKIPPED)} rendered page(s) all carry a tab icon "
-          f"that resolves ({len(SKIPPED)} pkgdown alias redirect(s) skipped: "
+          f"that resolves ({len(SKIPPED)} alias redirect(s) skipped: "
           f"they bounce before anything paints)")
     print(f"{counts['checked'] - counts['deferred']} internal link(s) across "
           f"{len(pages)} rendered page(s) all resolve, anchors included "

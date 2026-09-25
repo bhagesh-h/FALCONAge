@@ -1,6 +1,8 @@
 ---
 title: "Choosing a clock"
 subtitle: "By the question, by the scale, and by whether the coefficients transfer at all"
+aliases:
+  - ../guide/clocks.html
 ---
 
 There is no best clock. There is a clock that answers the question you asked, and a much larger
@@ -34,7 +36,7 @@ sample looks.
 | Is a named disease more likely? | — | — | `adbahadosingh`, `cvdwesterman`, `depressionbarbu`, `hepatoxu`, `prostatecancerkirby` | `relative_score` |
 | What is the sample's chromosomal sex, or its species? | — | — | `mammalianfemale`, `xchrom`, `ychrom` | `relative_score` |
 
-Every one of the 175 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](../clocks.qmd).
+Every one of the 175 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](catalogue.qmd).
 
 <!-- END GENERATED: by-question -->
 
@@ -118,7 +120,7 @@ confident number. The gap opens because elastic-net coefficients are far from un
 of probes carry a disproportionate share of the total weight, and losing four per cent of the
 probes loses thirty-five per cent of the model when the missing four per cent are those.
 
-→ [The science, §19.5](../science.qmd#probe-loss-priced) prices the same loss in years, per clock
+→ [The science, §19.5](../analysis/uncertainty.qmd#probe-loss-priced) prices the same loss in years, per clock
 per platform, and explains why the PC clocks barely move where first-generation clocks shift by
 double digits.
 
@@ -136,7 +138,7 @@ often used to claim an intervention worked. `res.interpretation()` carries both 
 `None` meaning "not established" rather than "fine".
 
 **The rule:** measuring change within a person, prefer a clock with a published biological ICC, or
-a principal-component version. → [The science, §17.7](../science.qmd#reliability-and-why-it-governs-everything-above).
+a principal-component version. → [The science, §17.7](../methods/failure-modes.qmd#reliability-and-why-it-governs-everything-above).
 
 ### Measure it on your own cohort
 
@@ -158,7 +160,7 @@ se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
 For scale: on this package's test corpus Horvath 2013 comes out at ±1.58 years, DunedinPoAm38 is
 least repeatable at 0.72, and the 319,607-probe BLUP clock reaches 1.00. With technical duplicates,
 `fa.icc_from_replicates(data, "subject")` replaces the published per-probe table with your own
-plates. → [The science, §19.2](../science.qmd#propagating-measurement-error) for the propagation
+plates. → [The science, §19.2](../analysis/uncertainty.qmd#propagating-measurement-error) for the propagation
 itself.
 
 ### Then ask how many samples you need
@@ -186,7 +188,7 @@ clock was fitted on. Pan-tissue clocks say nothing, most warn with the measured 
 twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
 warning saying the check did not run.
 
-→ [The science, §19.4](../science.qmd#specimen-type-is-not-metadata) for the twelve refusals and
+→ [The science, §19.4](../analysis/uncertainty.qmd#specimen-type-is-not-metadata) for the twelve refusals and
 the measurements behind each. Reliability, technical against biological, is [[39]](../references.qmd#ref-39).
 
 ## Availability
@@ -210,3 +212,51 @@ The distinction between B and C matters. C is a licensing decision by the author
 one by us: copying a coefficient set out of another package without knowing where that package got
 it is how the known paper-versus-implementation discrepancies spread in the first place, and a
 traced extractor is a welcome contribution.
+
+## The clock catalogue
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+reg = fa.registry.load()
+reg.filter(availability="bundled")
+reg.search("mortality")
+reg.get("horvath2013")
+reg.get("dnamphenoage").cite("bibtex")
+```
+
+### R
+
+```r
+list_clocks(tier = "bundled")
+list_clocks(search = "mortality")
+clock_info("horvath2013")
+cite_clock("dnamphenoage", "bibtex")
+```
+
+:::
+
+Forty clocks are `licensed` scaffolds: the model, the feature list, the transform chain and the
+expected shapes all ship, but the coefficients are research-use-only or have no public source
+FALCONAge may redistribute. Asking about one says why, where to obtain a file, and which open clocks answer the
+same question.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.registry.register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
+fa.score(d, clocks=["grimage2"])
+```
+
+### R
+
+```r
+register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
+score(d, clocks = "grimage2")
+```
+
+:::

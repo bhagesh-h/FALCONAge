@@ -21,7 +21,7 @@ perturbs a component slightly instead of removing a term outright.
 WHAT THIS COSTS, AND WHY IT MATTERS HERE. The rotation is the model. PCHorvath1
 carries 78,464 CpGs against Horvath2013's 353, and the matrices run from 78 MB
 to about 1.2 GB. That is two things at once: the first architecture in this
-package where a GPU should actually earn its transfer cost (see docs/gpu.md,
+package where a GPU should actually earn its transfer cost (see docs/dev/gpu.qmd,
 where the shipping clocks are *slower* on CUDA because a 2,340-feature matmul is
 a rounding error next to the alignment that feeds it), and the reason a
 coefficient CSV cannot express one.

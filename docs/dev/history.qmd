@@ -1,0 +1,120 @@
+---
+title: "Design history"
+subtitle: "The plan the package was built from, and what it left open"
+---
+
+## 15. Design blueprint
+The requirement was one tool, Python and R, multiomic input, optional GPU, and correct, meaning
+it reproduces published clock values on published test vectors.
+
+This section was the sketch that turned that into a design. It is now documented properly
+elsewhere, and the sketch has been cut rather than kept in parallel: it used the abandoned working
+name `agingscore` and an API that no longer exists, so anyone who copied from it got nothing that
+runs.
+
+[Architecture](index.qmd) is the design record for the built system, and it is checked
+against the running package rather than remembered. Where to look:
+
+| What the blueprint specified | Where it is documented now |
+|---|---|
+| Layered architecture, module boundaries | [Architecture §1.4](index.qmd), the file tree |
+| Data model (`X`, `obs`, `var`, `uns`, multi-modality) | [Architecture §2](index.qmd), the shipped `FalconData`, AnnData-backed |
+| Clock registry schema | [Architecture §3](index.qmd), the schema as validated, field by field |
+| API surface, Python and R | [Getting started](../start/quickstart.qmd), and the [Python](../reference) and [R](../r/reference) references |
+| Correctness strategy | §15.1 below, which is the part that did not reduce to an implementation detail |
+| Packaging, distribution, CI | [Architecture §9, §12](index.qmd) |
+| Build order and milestones | [Architecture §13](index.qmd), with the exit criterion each milestone was held to |
+
+Two decisions from the blueprint are worth restating because they are about the field rather than
+about this package. Weights belong outside the git repository, in `safetensors` rather than
+pickles, `torch.load(weights_only=False)` executes arbitrary code while unpickling, and it is
+what several packages still accept. And a `license` field has to gate use and print at score time:
+tAge models are MGB Open Access (non-commercial), organAging is Academic Non-Commercial, and a tool
+that redistributes weights must surface that rather than bury it.
+
+### 15.1 Correctness strategy
+
+This is the part that decides whether a clock implementation is trusted, and it is the reason the
+next subsection exists at all.
+
+1. **Gold-standard vectors.** For every clock, an input matrix and the expected output from the
+   original implementation, asserted to 1e-6 in FP64.
+2. **Cross-implementation agreement.** Where two packages implement the same clock, compare, and
+   record disagreements in the registry rather than picking a side silently. §15.2 is that record.
+3. **Registry validation** against a controlled vocabulary for tissue, platform, predicts,
+   training target, unit, data type, species, model type and population. With 161 entries there is
+   no other way to keep them coherent.
+4. **Property tests.** Proportions sum to 1; probabilities in [0,1]; monotone response to a
+   synthetic age gradient; permuting feature order must not change results; adding a duplicated
+   sample must not change either sample's score.
+5. **Numerical dtype tests.** FP32-versus-FP64 divergence held under a documented per-clock
+   tolerance. The PC clocks are the ones to watch.
+
+## 13. Build order
+
+Fourteen milestones. Each has an exit criterion that is testable, not a feeling.
+
+| # | Milestone | Exit criterion |
+|---|---|---|
+| 1 | Repo scaffold: monorepo layout, `pyproject.toml`, `DESCRIPTION`, licences, CI skeletons | `pip install -e python/` and `R CMD INSTALL r/` both succeed; empty test suites pass on CI |
+| 2 | Core engine: device, dtype, `FalconData`, manifest, logging, config, units, errors | Round-trip a `FalconData` through `.h5ad` unchanged; unit conversion table tested both directions; `resolve_device` correct on CPU and CUDA |
+| 3 | Registry: schema, validator, vocabulary, weight resolution, 5 hand-written clock YAMLs | `registry-validate` green; `resolve_weights` fetches, verifies and caches; offline mode raises correctly |
+| 4 | Op catalogue: all 15 preprocess ops, all 15 postprocess transforms, vectorised | Each op has a hand-computed unit test; no Python loop over samples anywhere in `ops/` |
+| 4b | Coefficient extraction: one extractor per primary source, tier assignment, diffs against pyaging/biolearn | Every tier A and B clock extracted from its own source with a checksum; `registry/diffs/` written; untraced count reported |
+| 5 | Linear and PC clocks + `score()`: Horvath, Hannum, Lin, PCHorvath2013, PCPhenoAge | Gold-standard vectors pass at 1e-6 FP64; missingness accounting correct |
+| 6 | Clinical clocks: PhenoAge both variants, KDM with fit/project, HD | Matches BioAge on NHANES to 1e-6; `units` omission raises; packaged NHANES fits load |
+| 7 | Remaining architectures: GrimAge family, AltumAge, mitotic, deconvolution, SystemsAge, mammalian, sex | Every tier A and B clock has a passing gold-standard vector; every tier C clock has a passing synthetic-weight architecture test and a working `register_local_weights`; registry covers 161 clocks |
+| 8 | Preprocess: IDAT chain, platform detection, EPIC v2 aggregation, clinical, QC | Beta matrix from a known GEO series matches the published one within noise; EPIC v2 without aggregation raises |
+| 9 | Download: GEO, ArrayExpress, SRA, Zenodo, Figshare, HF, GDC; cache; metadata normalisation | `download("GSE40279", dry_run=True)` reports correct sizes; age extracted for a known series matches its published table |
+| 10 | Analysis and plots: acceleration, Cox, ICC, AA1/AA2, the 14 figures | Cox HRs reproduce the BioAge NHANES IV table; AA1/AA2 reproduce a published ComputAgeBench row |
+| 11 | R package: bridge, S3 classes, all exports, roxygen, vignettes | Conformance suite green at `atol=0`; `R CMD check --as-cran` clean with and without Python |
+| 12 | Docker: cpu, cuda, slim; entrypoint; compose | Build-time smoke test passes; a GPU run on a CUDA host produces the same numbers as CPU within FP tolerance |
+| 13 | Documentation: Quarto site, quartodoc, pkgdown, generated clock pages, bilingual examples | Docs build green with every example executed; both reference trees render with matching sections |
+| 14 | Release 1.0.0 | Version guard passes on all four files; PyPI, r-universe, GHCR and Zenodo all carry 1.0.0 |
+| 15 | *(v1.5)* Native clock training: elastic net, Cox elastic net and KDM fitted on the open ComputAgeBench split | A FALCONAge-native chronological and mortality clock, benchmarked against the registry, distributed under GPL with no permission constraint |
+
+Milestones 1–7 are the critical path; 4b gates 5 and 7, because a clock cannot be tested before
+its coefficients have a traced source. 8–10 can proceed in parallel once 2 and 3 land; 11 needs 7;
+12 and 13 need 11. Milestone 15 is post-1.0 and is the answer to "can the permission-gated clocks
+be replaced rather than licensed", not with the same clocks, but with open ones.
+
+## 14. Open questions
+
+**Weight redistribution, resolved into policy, but the letters still need writing.** §3.7 sorts
+every clock into tier A, B or C, and §4.7 specifies what a tier C clock ships. That closes the
+design question. What remains is correspondence: the maintainers of the GrimAge, SystemsAge and
+DunedinPACE coefficient sets should be asked directly whether FALCONAge may redistribute them,
+and each answer recorded in the registry entry. A yes moves a clock from C to A and is worth
+having; a no costs nothing, because the scaffold already works with a user-supplied file.
+
+The same question arrives again for the transcriptomic and proteomic layers: tAge models are MGB Open Access
+non-commercial, and organAging is an Academic Non-Commercial License. Both are likely tier B or C.
+
+**Whether the 37 package-to-package clocks can all be traced.** §3.8 asserts that every tier B
+clock will get a primary source. Some may not have one, a coefficient file that entered
+circulation through a personal communication and was never published leaves no trail. Those end
+up as tier C by default, and the count in §3.7 could grow. The honest position is that the number
+is not yet known, and `primary_source_traced: false` makes the debt visible rather than hidden.
+
+**CRAN name.** `available::available("FALCONAge")` has not been run. PyPI is clear for both
+`falconage` and `FALCONAge`. If CRAN objects, the Python name stays and only the R name moves.
+
+**How much benchmark data to vendor.** ComputAgeBench is 10,404 samples across 65 studies, several
+gigabytes. Fetching on demand from Hugging Face keeps the package small but makes the benchmark
+untestable offline and in CI. Likely answer: vendor a small deterministic subset (3 studies,
+around 200 samples) for CI and tests, fetch the full set on demand.
+
+**IDAT parsing dependency.** `methylprep` is the only maintained pure-Python IDAT reader, and it
+is a heavy dependency with an opinionated pipeline of its own. The alternatives are vendoring the
+IDAT binary parser (roughly 300 lines, well-specified format) or requiring R and `minfi` through
+`rpy2`. Leaning toward vendoring the parser and implementing noob and BMIQ natively, with
+`methylprep` as an optional accelerated path.
+
+**Which normalisation is the default.** `noob + BMIQ` and SeSAMe both perform well and are not
+interchangeable. Defaulting to either makes results from the two paths incomparable while looking
+identical. Current plan is to require the choice explicitly on the first call and record it
+everywhere, with `noob_bmiq` as the documented default only because it is what most published
+clock coefficients were derived under.
+
+**Mammalian species table.** The AnAge lookup that the mammalian clocks need covers 1,756
+species, and its licence and redistribution terms need checking before it is packaged.

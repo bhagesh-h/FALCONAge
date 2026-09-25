@@ -12,6 +12,20 @@ own `registry_version` so a coefficient correction can be pinned independently o
 
 ### Added
 
+- **The documentation is arranged by what a reader is doing.** The site was
+  eleven pages, two of them over 3,000 lines, with the literature review, the
+  methods, the design plan and other packages' registries on one page. It is
+  now thirty-six pages in seven parts: Start, Your data, Clocks, Analysis,
+  Methods, Reference and Developer notes. Nothing was dropped:
+  `docs/check_content_preserved.py` recorded all 3,146 blocks of the old pages
+  first and checks in CI that each is present; the only removals are the two
+  generated in-page contents lists, recorded with the reason, which the
+  sidebar replaces. Every old URL redirects to its new page, links and anchors
+  were rewritten for the new locations, and the generators, the PDF, the link
+  check and the responsive check read their page lists from the book spine
+  instead of naming files. The responsive check is clean on all 38 pages at
+  five widths, and the PDF binds all 37 chapters.
+
 - **A quieter site.** The sidebar carried a one-line description and two
   citation buttons on every page; it now carries the book spine and nothing
   else. The description is the home page's subtitle and the citation stays in
@@ -181,6 +195,13 @@ own `registry_version` so a coefficient correction can be pinned independently o
   makes the single-file HTML report reproducible rather than ad hoc.
 
 ### Fixed
+
+- **The responsive check read hidden table columns as overlapping text.**
+  A wide table scrolls inside its wrapper, and the check measured the columns
+  scrolled out of view where they would have been, under the margin contents
+  list. Each text box is now clipped to its scrolling ancestors, as the
+  browser draws it. The link check likewise skips Quarto's redirect stubs, as
+  it already skipped pkgdown's.
 
 - **Horvath's age transform rendered as overlapping text.** The row break in
   the science page's two-case formula was written `\[4pt]` for `\\[4pt]`, so

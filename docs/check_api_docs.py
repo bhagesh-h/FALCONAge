@@ -187,12 +187,12 @@ def _check_cli_commands() -> list[str]:
         if not path.exists():
             continue
         rel = path.relative_to(ROOT)
-        # architecture.qmd is the design record, written before the code and
-        # deliberately wider than it. Its command lines are the specified
-        # interface, several of which the shipped parser does not implement,
-        # and §7.8 says so in the page. Checking them would fail on the gap the
-        # page exists to document.
-        if rel.as_posix() == "docs/architecture.qmd":
+        # The developer notes (docs/dev/) hold the design record, written
+        # before the code and deliberately wider than it. Its command lines are
+        # the specified interface, several of which the shipped parser does not
+        # implement, and §7.8 says so. Checking them would fail on the gap the
+        # pages exist to document.
+        if rel.as_posix().startswith("docs/dev/"):
             continue
         text = path.read_text(encoding="utf-8")
         for m in re.finditer(r"(?m)^\s*(?:\$\s*)?falconage ((?:[^\n#]|\\\n)+)", text):

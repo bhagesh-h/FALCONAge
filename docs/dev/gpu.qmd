@@ -1,4 +1,8 @@
-# GPU support: what was tested, on what, and what it is worth
+---
+title: "GPU support: what was tested, on what, and what it is worth"
+aliases:
+  - ../gpu.html
+---
 
 Verified on real hardware, re-measured in full on 2026-08-10. The short version:
 the GPU path works, it is numerically sound, and for the clocks that ship today
@@ -289,3 +293,88 @@ minutes into a build.
 this was measured on; `--skip-profile` drops the last step.
 
 If your card disagrees with the tables above: the tables are what should change.
+
+## 14. GPU computing
+
+### 14.1 What actually benefits
+
+Profile before optimising. The expensive operations, in order:
+
+1. **KNN imputation** on wide matrices (n_samples × 800K probes). Dominant cost for a single
+   dataset. `cuML.KNNImputer` or a chunked CuPy distance computation.
+2. **PC-clock rotation** - a dense 78,464 × 1,933 matmul per clock, 125,175 × k for SystemsAge.
+   Trivially GPU-bound and highly parallel across samples.
+3. **Quantile normalisation** for DunedinPACE - a sort per sample over 20,000 probes. `torch.sort`
+   over a batch is one kernel.
+4. **Rank normalisation** for Pasta/REG - average ranks over 8,113 genes per sample. pyaging's
+   current implementation is a Python `while` loop per row and is the slowest path in the package;
+   vectorise with `torch.argsort` twice plus a scatter-mean for ties.
+5. **Deconvolution simplex projection** - already vectorised in pyaging; keep that pattern.
+6. **Running many clocks over many samples** - the embarrassingly parallel case, and the one
+   pyaging's paper benchmarks.
+7. **Spatial smoothing propagation** - sparse matmul iterated to convergence; cuSPARSE.
+8. **Elastic net *training*** (for users fitting their own clocks), `cuML.ElasticNet`,
+   `cuML.LogisticRegression`, or a torch implementation with proximal gradient.
+
+### 14.2 Published speedups, and what we measured instead
+
+pyaging vs biolearn on CPU (Bioinformatics 2024, Figure 1g–h):
+
+| Samples | pyaging (s) | biolearn CPU (s) | Ratio |
+|---|---|---|---|
+| 1,024 | 0.233 | 0.386 | 1.7× |
+| 32,768 | 0.642 | 76.608 | ~120× |
+| 65,536 | runs on GPU | out of memory | - |
+
+That comparison is GPU-pyaging against CPU-biolearn, so it measures two packages as much as two
+devices. Measuring one package on both devices gives the opposite answer for the clocks that ship
+here, eight tier A linear clocks over 2,340 features, on an RTX 4060, best of three:
+
+| Samples | CPU float64 | CUDA float64 | CUDA float32 |
+|---:|---:|---:|---:|
+| 128 | **0.009 s** | 0.011 s | 0.013 s |
+| 1,024 | **0.032 s** | 0.053 s | 0.051 s |
+| 4,096 | **0.143 s** | 0.307 s | 0.190 s |
+| 16,384 | **0.506 s** | 2.328 s | 1.726 s |
+
+The gap widens with size, which is the reverse of the usual shape, and profiling says why: at
+4,096 samples the aligned matrix takes 134 ms to build and the dot products take 5 ms on the CPU
+against 10 ms on the GPU, most of which is transfer rather than multiply. A dot product over a few thousand features is too small a
+matrix multiplication to be worth a device, and the list in §14.1 is a list of things that are
+*not* what a first-generation linear clock does.
+
+So the expected pattern holds only where the list in §14.1 does: the PC rotations (item 2, thirty
+times the feature count), neural architectures, and the single-cell paths where
+rapids-singlecell reports ~15× over the best CPU path and ScaleSC 20–100× over Scanpy. For the
+2,340-feature case, `device="auto"` resolving to CUDA would make the common case several times slower
+on every machine that has a card.
+
+Two other findings worth recording. **CPU and GPU do not agree bit for bit** - up to 1.3e-13
+years, 14 ulps, because numpy's BLAS and cuBLAS sum in different orders and floating-point
+addition is not associative. And **single precision costs 7e-5 years** on the same device: four
+orders of magnitude more than the device difference, still negligible against effects measured in
+single-digit years, and the right way round.
+
+### 14.3 Implementation pattern from pyaging
+
+- Detect once: `torch.device("cuda" if torch.cuda.is_available() else "cpu")`.
+- Optional CuPy for the AnnData matrix itself:
+  `adata.X = cp.array(adata.X) if CUPY_AVAILABLE else np.asfortranarray(adata.X)`.
+- Load every model in `float64` and `.eval()`; run under `torch.inference_mode()`.
+- Batch with `anndata.experimental.pytorch.AnnLoader`, default `batch_size = 1024`.
+- After each clock: `del adata.obsm[f"X_{clock}"]`, `gc.collect()`, `torch.cuda.empty_cache()`.
+- Preallocate the per-clock feature matrix with CuPy when available, NumPy Fortran-order otherwise.
+
+Caveats to fix in the new tool: `float64` doubles memory and halves throughput on consumer GPUs
+with poor FP64 rates, offer `float32` with a documented numerical tolerance, and keep FP64 for
+the PC clocks where the rotation is ill-conditioned. Several pyaging preprocess functions loop
+over rows in Python (`stemTOC`, `epiTOC1`, `HypoClock`, `BiTAge`, `Pasta`, `DunedinPACE`,
+`Stubbs`); all are vectorisable.
+
+### 14.4 R side
+
+R has no comparable GPU story for this workload. The pragmatic answer, which tAge already uses,
+is **reticulate**: the R package is the interface and the numerics happen in Python. Alternatives
+if a pure-R path is needed: `gpuR`/`torch for R` for matmuls, or shell out to a small Python
+worker over Arrow IPC. Whatever the mechanism, the R and Python front ends must call the same
+weights and the same transform code so results are bit-comparable.

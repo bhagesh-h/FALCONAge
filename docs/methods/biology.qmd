@@ -1,0 +1,275 @@
+---
+title: "Biology and measurement"
+---
+
+## 2. Biology of aging that the scores encode
+
+![Two tissues of the same chronological age that have divided a different number of times](../images/mitotic-vs-chronological.png)
+
+Elapsed time and accumulated cell divisions are separate axes, and a mitotic
+clock reads the second one. Colon epithelium turns over in days and brain
+tissue barely at all, so two samples taken from the same donor on the same day
+carry the same chronological age and very different division counts. This is
+why a division count is not reported in years and why subtracting a
+chronological age from one is refused: the quantity was never elapsed time.
+
+The 12 hallmarks (López-Otín 2013 [[55]](../references.qmd#ref-55), updated 2023 [[56]](../references.qmd#ref-56)) are the biological vocabulary the scores are
+trying to summarise. Grouped as primary (damage), antagonistic (compensatory responses that
+turn harmful), integrative (system-level consequence). A hallmark must show age-associated
+manifestation, experimental acceleration of aging when worsened, and therapeutic reversibility.
+
+### Primary
+
+1. **Genomic instability** - point mutations, indels, single/double-strand breaks (local);
+   translocations, chromosomal rearrangement, nuclear-architecture defects, transposon and viral
+   integration (global). Species somatic mutation rate is inversely correlated with lifespan
+   (Cagan 2022). Pathogenic mechanisms: clonal expansion, somatic evolution, disruption of gene
+   regulatory networks producing transcriptional noise. Mitochondrial DNA is separately unstable
+   - many copies, high replicative index, oxidative microenvironment, no histones; most aged-cell
+   mtDNA mutations come from POLG replication error rather than oxidative damage. DNA damage
+   feeds inflammation via cytoplasmic chromatin fragments (CCF), escaped mtDNA, and transposon cDNA.
+   Progeroid syndromes from repair defects: Werner, Bloom, xeroderma pigmentosum,
+   trichothiodystrophy, Cockayne, Seckel.
+2. **Telomere attrition** - TTAGGG tandem repeats, several to tens of kb, with a 75–300 nt
+   G-rich 3′ overhang forming the protective cap. Telomere dysfunction signals to mitochondria
+   through p53 → PGC-1α suppression. Measured molecularly (qPCR T/S ratio, Southern TRF,
+   flow-FISH) or estimated from methylation (DNAmTL, PCDNAmTL).
+3. **Epigenetic alterations** - histone PTMs, DNA methylation, ncRNA, chromatin remodelling.
+   The direction of travel in aging is de-repression: global hypomethylation, heterochromatin
+   relaxation, transposon (LINE-1/SINE) reactivation, active histone acetylation. Age-related
+   methylation change concentrates in introns, intergenic regions, tumour-suppressor and
+   Polycomb-target promoters. Cross-talk with known longevity pathways: histone demethylases act
+   on IGF-1 signalling; sirtuins are NAD⁺-dependent deacetylases.
+4. **Loss of proteostasis** - mistranslation, misfolding, incomplete products; slowed elongation;
+   cumulative oxidative protein damage saturating chaperones. Drives ALS, Alzheimer's.
+5. **Disabled macroautophagy** - autophagosome capture then lysosomal digestion. Selective
+   subtypes: glycophagy, lipophagy, mitophagy, ER-phagy, nucleophagy, xenophagy, lysophagy.
+   Autophagy-gene expression falls with age; genetic inhibition accelerates aging in models;
+   CD4+ T cells from exceptionally long-lived people show enhanced autophagic flux. Reduced flux
+   permits aggregate accumulation, dysfunctional organelles, uncleared pathogens, and
+   inflammasome activation. NAD⁺ precursors have clinical-trial evidence in non-melanoma skin
+   cancer chemoprevention, prediabetic insulin resistance, and Parkinson's neuroinflammation.
+
+### Antagonistic
+
+6. **Cellular senescence** - stable proliferative arrest via TP53→CDKN1A/p21 and
+   CDKN2A/p16→RB1. SASP effects: chemokine/cytokine recruitment (CCL2, CXCL2, CXCL3, IL-18,
+   IL-2, IL-6, IL-8); immune suppression (TGF-β); fibroblast activation and collagen deposition
+   (TGF-β, IL-11, PAI-1); ECM remodelling (MMPs); progenitor activation (EGF, PDGF); paracrine
+   senescence (TGF-β, TNF-α, IL-8). Lamin B1 depletion → SAHF (H3K9me3, HP1α foci) → LINE-1
+   de-repression → cytosolic dsDNA → cGAS/STING and TLR activation.
+7. **Deregulated nutrient sensing** - insulin/IGF-1 → PI3K-AKT and Ras-MEK-ERK; FOXO and E26
+   transcription factors; MTORC1 responding to glucose, amino acids (leucine), hypoxia, low
+   energy, acting on SREBP and TFEB. Overnutrition activates MTORC1 and EP300 and inhibits AMPK,
+   SIRT1, SIRT3; fasting and dietary restriction do the reverse and extend lifespan across
+   models including primates.
+8. **Mitochondrial dysfunction** - falling ATP output, rising ROS. POLG-mutator mice show
+   fragmented cristae, disrupted outer membrane, and premature aging (alopecia, kyphosis, low
+   body weight and subcutaneous fat, low BMD, anaemia, cardiomyopathy) mirroring
+   telomerase-deficient, p53-hyperactive, and PGC1α/β-null mice.
+
+### Integrative
+
+9. **Stem cell exhaustion** - reduced steady-state renewal and injury repair. OSKM (OCT4, SOX2,
+    KLF4, MYC) full reprogramming resets p16, telomere length, and the DNA methylation clock;
+    partial/transient reprogramming rejuvenates clock, DNA damage, epigenetic patterns and
+    transcriptome without identity loss.
+10. **Altered intercellular communication** - pro-aging circulating factors: CCL11/eotaxin and
+    β2-microglobulin (reduce neurogenesis), IL-6 and TGF-β (impair haematopoiesis), complement
+    C1q (compromises muscle repair). A single old-blood transfusion ages young mice within days;
+    dilution of old mouse blood with saline + 5% albumin rejuvenates multiple tissues.
+11. **Chronic inflammation (inflammaging)** - rising CRP, IL-6; plasma IL-6 predicts all-cause
+    mortality. Fed by CHIP, cytosolic DNA, SASP, uncleared debris, circadian disruption, gut
+    barrier failure.
+12. **Dysbiosis** - gut microbiota diversity declines; SCFA, vitamin, secondary bile acid and
+    amino-acid-derivative production shifts; gut–brain and gut–organ signalling degrades.
+
+**PIP framing** - each hallmark is Part of a complex process, Interdependent with the others,
+and a Point-of-entry for intervention. No single hallmark accounts for aging.
+
+### What the clocks actually pick up
+
+- Most age-related DNAm changes are small: ~1.5–5% absolute beta shift over decades. Clock
+  signal is an aggregate of many tiny shifts, not a few large ones.
+- ~20% of 450K loci can support *some* chronological clock (Porter 2021), so CpG identity across
+  published clocks overlaps very little. Liu 2020 argues the clocks capture genuinely different
+  aging axes rather than being noisy versions of one thing.
+- CTCF-binding sites are enriched among top-ranked CpGs in AltumAge SHAP/DeepPINK analyses.
+- Epigenetic drift: interindividual methylation variance rises with age (Hannum 2013).
+- Men age ~4% faster than women on the Hannum clock.
+- Epigenetic age is ~40% heritable (Horvath & Raj 2018).
+- Clocks work in immortalised non-senescent B cells and embryonic cells, so they are not simply
+  senescence detectors; they work in non-proliferating brain cells, so they are not simply
+  division counters. Multi-tissue clocks trained on one tissue transfer to others; single-tissue
+  and second-generation clocks may partly reflect cell composition.
+
+## 3. Measurement chemistry, per omics layer
+
+### 3.1 DNA methylation
+
+![What each conversion chemistry does to an unmodified C, a 5mC and a 5hmC](../images/methylation-chemistry.png)
+
+The four columns answer the same question differently, and the differences are
+what a clock's coefficients were fitted through. Bisulfite protects 5mC and 5hmC
+alike, so a bisulfite beta is their sum and every array clock is trained on that
+sum. Oxidative bisulfite converts 5hmC to a form that then reads as T, which
+isolates 5mC. EM-seq and TAPS are both enzymatic and both leave the DNA intact,
+but they are inverses of each other at the readout: EM-seq reads a methylated
+cytosine as C, TAPS reads it as T. Nanopore skips conversion and calls the base
+from the current trace. A coefficient fitted on a bisulfite array does not
+transfer to a TAPS library without accounting for that.
+
+**Chemistry.** 5-methylcytosine at CpG dinucleotides. In mammals 70–80% of CpG cytosines are
+methylated. Bisulfite treatment deaminates unmethylated cytosine to uracil (read as thymine)
+and leaves 5mC intact, creating a C/T polymorphism that every downstream assay queries.
+Enzymatic conversion (EM-seq, TAPS) is the low-damage alternative and is displacing bisulfite for
+sequencing.
+
+**Beta value.** For a CpG, `β = M / (M + U + α)` where M and U are methylated and unmethylated
+intensities and α is a stabilising offset (Illumina default 100). β ∈ [0,1]. Nearly every clock
+consumes β. The M-value `M = log2(β / (1 − β))` is preferred for differential testing because it
+is homoscedastic, but clock coefficients are almost always in β space, do not silently swap.
+
+**Array platforms.**
+
+| Platform | Probes | Notes |
+|---|---|---|
+| Illumina 27K (HumanMethylation27) | 27,578 | Horvath 2013 and Bocklandt-era clocks |
+| Illumina 450K | 485,512 | The workhorse; most published coefficient sets |
+| EPIC v1 (850K) | 866,554 | Drops ~40% of 450K probes; adds enhancers |
+| EPIC v2 | 937,690 probes / 923,452 unique sites | Probe IDs carry suffixes (`cg00000029_TC21`); replicate probes must be aggregated before applying any clock |
+| Illumina MSA (Methylation Screening Array) | ~270K | Targeted, cheaper; emerging |
+| HorvathMammalMethylChip40 | ~37K conserved loci | 128+ mammalian species, 59 tissues; basis of the universal mammalian clocks |
+| HorvathMammalMethylChip320 | expanded | Used by EnsembleAge |
+
+**Probe chemistry inside the array.** Infinium Type I uses two beads per CpG (one for the
+methylated allele, one for unmethylated) in a single colour channel; Type II uses one bead with
+two-colour single-base extension. Type II is ~85% of probes on EPIC and has a compressed dynamic
+range and different beta distribution. This design bias is what BMIQ corrects.
+
+**Sequencing assays.**
+- **RRBS** - MspI digestion enriches CpG-dense regions; sparse, integer-count coverage.
+  Petkovich (90 CpGs, mouse blood), Stubbs (multi-tissue mouse), Meer, Thompson all use RRBS.
+- **WGBS** - full coverage, expensive; the substrate for scAge/scEpiAge single-cell work.
+- **Targeted bisulfite sequencing** - HepatoXu (10 loci, plasma cfDNA HCC detection).
+- **scM&T-seq / snmC-seq** - single-cell methylation, binary and extremely sparse
+  (often <10% of CpGs covered per cell), forcing entirely different algorithms.
+
+**Normalisation pipeline (array).** IDAT → background correction and dye bias (`noob`) →
+between-array (`funnorm`, quantile, or `SeSAMe`) → probe-type bias (`BMIQ` or `SWAN`) →
+detection-p filtering, cross-reactive/SNP probe masking, sex-chromosome handling.
+Consensus from Illumina EPIC comparisons: `noob + BMIQ` and `SeSAMe` perform well;
+funnorm is preferred when global methylation differences are expected between groups.
+`sesame_450k_median.csv` in ComputAge is the field's standard NA-fill vector
+([ComputAge clocks dir](https://github.com/ComputationalAgingLab/ComputAge)).
+
+**Cell composition.** Whole blood is a mixture; a clock trained on bulk blood partly reads cell
+proportion. Two standard reference libraries: Reinius/Houseman 6-cell (450K,
+`450K_reinius_12_reference.csv`) and Salas/IDOL 12-cell EPIC (`EPIC_salas_18_reference.csv`).
+Deconvolution is a constrained regression onto a reference signature matrix; pyaging exposes
+6-cell and 12-cell EPIC deconvolution as clocks in their own right, returning proportions.
+
+**Sex estimation from methylation.** X and Y chromosome probe z-scores against the autosomal
+mean and SD, projected on PCA loadings, implemented as `XChrom` (4,047 probes) and `YChrom`
+(284 probes) in [pyaging `_models.py`](https://github.com/lucascamillomd/pyaging) lines 1338–1399.
+Needed because GrimAge, DNAmFitAge and the mammalian clocks take sex as an input.
+
+### 3.2 Transcriptomics
+
+- **Bulk RNA-seq.** Raw counts → library-size normalisation. Three conventions appear in
+  published clocks:
+  - **TPM then log1p** - divide by transcript length, rescale to 1e6, `log1p`. Used by
+    OcampoATAC1/2 in pyaging.
+  - **CPM then binarise** - BiT age (*C. elegans*).
+  - **RLE (edgeR `calcNormFactors(method="RLE")`) scaled to 1e7, then log10(x+1)** - tAge.
+- **Microarray expression** - treat as already normalised; rank or quantile align to the RNA-seq
+  reference distribution.
+- **Gene identifier space.** tAge maps everything into **mouse Entrez** space via ortholog tables
+  for human, rat, macaque
+  ([tAge inst/extdata/metadata/](https://github.com/Gladyshev-Lab/tAge)). Pasta/REG use human
+  Ensembl and derive `PastaMouse` by selecting `ENSMUSG*` features from an 8,113-gene joint space
+  and filling human-only genes with reference values.
+- **Single cell.** Sparsity and dropout break bulk assumptions. Three strategies in the
+  literature:
+  - **Pseudobulk** - average n cells per (donor, cell type), repeated B times. scImmuAging uses
+    size 15, n = 100 repeats
+    ([scImmuAging/R/main.R](https://github.com/CiiM-Bioinformatics-group/scImmuAging)); SpatialAgingClock uses n = 20,
+    B = 100.
+  - **Binarisation** - CellBiAge: after log-normalisation, CCA batch integration and scaling,
+    set entry = 1 if scaled value > 0 else 0, on the top 2,000 HVGs. This is the single largest
+    performance lever in that paper (see §4.11).
+  - **Spatial smoothing** - propagate expression over a spatial neighbour graph before
+    prediction (see §4.13).
+
+### 3.3 Chromatin
+
+- **Histone-mark ChIP-seq.** Signal is read from bigWig files, averaged over each Ensembl gene
+  body (chr 1–22, X), then `arcsinh`-transformed
+  ([pyaging `bigwig_to_df`](https://github.com/lucascamillomd/pyaging)). Eight marks
+  have published clocks: H3K4me1, H3K4me3, H3K9ac, H3K9me3, H3K27ac, H3K27me3, H3K36me3, plus a
+  pan-histone model. All are PCA + elastic net + ARD.
+- **ATAC-seq.** Counts per open chromatin region (OCR) → length-normalised TPM → `log1p` →
+  subset to the model's OCRs. OcampoATAC1 (228 OCRs) and OcampoATAC2 (380 OCRs), PBMC.
+
+### 3.4 Proteomics
+
+- **Olink Explore** (proximity extension assay). Output is **NPX**, a log2-scaled relative
+  quantification. Explore 3072 vs Explore 1536 have different panels; organAging ships separate
+  full and feature-reduced models for each. Application is a plain dot product of NPX with
+  coefficients, plus intercept for first-generation models
+  ([organAging README](https://github.com/ludgergoeminne/organAging)).
+- **SomaScan** (aptamer). Used by Oh et al. 2023 organ clocks (~5,000 proteins, ~5,700 people).
+- **Mass spectrometry.** For any non-Olink platform, organAging's recommendation is: transform to
+  a roughly symmetric distribution (log intensities), z-score each protein, then multiply by the
+  Olink NPX standard deviations published in their Table S3 before applying coefficients.
+- **Organ-enrichment definition.** A protein is assigned to an organ if its GTEx expression in
+  that tissue is ≥ 4× the mean across all other tissues. organAging's feature sets from
+  [organAging `GTEx_4x_FC_genes.json`](https://github.com/ludgergoeminne/organAging):
+  Adipose 5, Adrenal 4, Artery 14, Brain 118, Esophagus 5, Female 6, Heart 7, Immune 124,
+  Intestine 31, Kidney 9, Liver 79, Lung 11, Male 55, Muscle 20, Pancreas 29, Pituitary 12,
+  Salivary 10, Skin 17, Stomach 12, Thyroid 2, Organismal 2,347, Multi-organ 569,
+  Conventional 2,916.
+
+### 3.5 Clinical chemistry and haematology
+
+The PhenoAge / KDM / HD family. Canonical nine PhenoAge markers plus age:
+
+| Marker | Unit (Levine) | Alternative unit |
+|---|---|---|
+| Albumin | g/L | g/dL |
+| Creatinine | µmol/L | mg/dL |
+| Glucose | mmol/L | mg/dL |
+| C-reactive protein | ln(mg/dL) | ln(mg/L) |
+| Lymphocyte percent | % | |
+| Mean cell volume | fL | |
+| Red cell distribution width | % | |
+| Alkaline phosphatase | U/L | |
+| White blood cell count | 10³ cells/µL | |
+
+Unit mismatch is the number-one source of wrong PhenoAge values in the wild, see §16.
+
+The BioAge R package extends this to a larger marker menu with clinically-healthy windows used
+to build the HD reference cohort
+([BioAge hd_nhanes.R](https://github.com/dayoonkwon/BioAge)): albumin, ALP, ln(CRP) with CRP < 2,
+total cholesterol < 200, ln(creatinine), HbA1c 4–5.6, SBP < 120, DBP < 80, mean BP < 93.33,
+BUN, uric acid (sex-specific 2.7–6.3 F / 3.7–8.0 M), lymphocyte % 20–40, MCV, WBC 4.5–11,
+RBC (sex-specific), RDW 11.5–14.5, monocytes 3–10, neutrophils 45–74, cystatin C 0.51–0.98,
+GGT (sex-specific), insulin 2.52–24.1, HDL (sex-specific), LDL 80–130, triglycerides 54–110,
+pulse 60–100, FEV1 ≥ 0.8 × mean, cadmium 2.7–10.7, vitamins A/E/B12/C.
+
+### 3.6 Other layers
+
+- **Glycomics.** IgG N-glycan composition. GlycanAge from 5,117 European individuals; three
+  glycans (GP6 non-galactosylated, GP14 and GP15 bis-galactosylated) explain ~60% of CA variance;
+  prediction error ~9.7 years. Notable as the first clock class with repeated demonstrations of
+  reversal by lifestyle intervention.
+- **Metabolomics.** MetaboAge and the metabolite arm of GOLD BioAge / StackAge / OMICmAge.
+  Nightingale NMR and LC-MS panels dominate; features are usually log-transformed and z-scored.
+- **Microbiome.** Deep-learning microbiome clocks exist (Galkin 2018) but predictive accuracy is
+  poor relative to methylation; treat as exploratory.
+- **Imaging.** MRI-based multi-organ clocks (Nature Medicine 2025) and retinal/face age. Out of
+  scope for a molecular tool but worth a plug-in slot.
+- **EHR / clinical composite.** EMRAge (the target OMICmAge is trained on), frailty index (FI),
+  intrinsic capacity (dnamic clock predicts it from methylation).
+- **Telomere length.** Direct assays (qPCR T/S, TRF Southern, flow-FISH, TelSeq from WGS) and
+  DNAm estimators (DNAmTL 140 CpGs → kb; PCDNAmTL → base pairs).

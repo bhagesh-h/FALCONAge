@@ -98,7 +98,6 @@ jobs:
           python docs/build_news.py --check
           python docs/build_catalogue.py --check
           python docs/build_gallery.py --check
-          python docs/build_contents.py --check
           python docs/build_tokens.py --check
           python docs/check_content_preserved.py --check
 

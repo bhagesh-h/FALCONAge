@@ -1,0 +1,28 @@
+---
+title: "The Claude skill"
+---
+
+The repository ships a [Claude](https://claude.com/claude-code) skill at
+`.claude/skills/falconage/`. It is four markdown files: the workflow above, the Docker command
+set, the clock catalogue routed by the question each clock answers, and every refusal with the
+measurement behind it.
+
+It is active already for anyone working inside a clone. To have it available in any directory,
+copy it into your personal skills folder with `cp -r .claude/skills/falconage ~/.claude/skills/`,
+or on Windows PowerShell
+`Copy-Item -Recurse .claude\skills\falconage $HOME\.claude\skills\`.
+
+Then ask in plain language. "Score these IDATs and tell me which clocks you refused and why" is
+enough; the skill supplies the rest.
+
+::: {.callout-note title="Why the skill is checked by CI, and checked harder than the prose"}
+`docs/check_api_docs.py` resolves every `fa.*` name and every `falconage <verb>` in the skill
+against the running package on each push, exactly as it does for these pages.
+
+The reason it matters more here is that these pages are read by a person, who notices when a
+function does not exist and goes looking. A skill is read by a model that then *runs* what it
+says. The first draft named five readers at top level that actually live under `fa.preprocess`,
+and invented a `falconage probe` verb outright, copied from a specification
+section of the architecture page that described a verb never built. The check caught all six, and
+then caught two more invented verbs on that page.
+:::

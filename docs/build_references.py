@@ -101,7 +101,10 @@ def render(groups: list[dict]) -> str:
 def cited() -> dict[Path, list[tuple[int, int]]]:
     """Every citation in the hand-written pages, by file."""
     found: dict[Path, list[tuple[int, int]]] = {}
-    for p in sorted(HERE.glob("*.qmd")) + sorted(HERE.glob("guide/*.qmd")):
+    skip = {"_site", ".quarto", "reference", "r", "figures", "images", "downloads"}
+    pages = [p for p in sorted(HERE.rglob("*.qmd"))
+             if not skip.intersection(p.relative_to(HERE).parts[:-1])]
+    for p in pages:
         if p == PAGE:
             continue
         hits = [(int(a), int(b))

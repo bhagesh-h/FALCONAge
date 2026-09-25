@@ -1,0 +1,101 @@
+---
+title: "Genotype and structure above the probe"
+---
+
+## 21. Genetic variation under the probe
+
+Every section above treats a beta value as a measurement of methylation. It is
+also, in part, a measurement of genotype, and the two are not separable by
+looking at the number.
+
+### 21.1 A probe sits at a genomic coordinate
+
+Each probe has a chromosome and a base position, so the probe set can be
+intersected with any variant catalogue: ClinVar for clinically annotated
+variants, dbSNP for the general catalogue. The intersection is an ordinary
+range join, which `GenomicRanges` or `bedtools` will do, and it answers a
+question that matters before scoring: does this clock depend on probes whose
+signal a common variant can move.
+
+### 21.2 Three ways a variant reaches the beta value
+
+**A SNP at the interrogated base.** Single-base extension reads the variant
+rather than the methylation state, so the beta becomes a genotype readout. This
+is the population of probes the published masks remove, and it is why
+FALCONAge applies the Zhou masks rather than treating every probe as equally
+informative.
+
+**A SNP under the probe body.** Hybridisation is weakened, intensity falls, and
+the beta drifts toward the middle of the range without any obvious signature of
+failure.
+
+**Cross-reactivity.** A 50-mer against a three-base genome maps to more than one
+locus more often than the design intends. Chen and colleagues catalogued these
+for the 450K, and the affected probes carry a mixture of signals from several
+places in the genome.
+
+### 21.3 meQTL: the variant is somewhere else entirely
+
+A methylation quantitative trait locus is a variant associated with methylation
+at a CpG, usually nearby but sometimes far away. GoDMC and the EPIGEN meQTL
+resource map these genome-wide. The consequence for a clock is direct: if a
+clock CpG is under strong meQTL control, part of the between-person variance in
+that clock is genetic and fixed at conception rather than acquired, and no
+intervention will move it.
+
+::: {.callout-note}
+## What this changes about a score
+
+A clock's between-person variance splits into an acquired component, which is
+what the clock is meant to measure, and a genetic component, which is not. The
+split is not visible in the score. Two people with the same clock age can differ
+because one has lived differently and the other inherited a different genotype
+at a handful of high-weight probes.
+:::
+
+### 21.4 The arrays carry genotype probes on purpose
+
+450K and EPIC include rsID-labelled SNP probes, 65 on the 450K, for sample
+identity. They confirm that two arrays came from the same person, which is the
+check that catches a swapped sample. `MethylToSNP` goes further and infers
+genotypes from the methylation pattern itself, which is useful and is also a
+reminder that array data is identifiable.
+
+## 22. Structure above the single probe
+
+### 22.1 A clock is a combination score
+
+A clock sums hundreds of weighted features, which makes it the same kind of
+object as a polygenic risk score, and methylation risk scores for individual
+traits are built the same way. The TranslAGE panel is largely made of them:
+1,694 of its 1,803 biomarkers are proxies for proteins, metabolites and clinical
+values rather than clocks.
+
+The shared property matters more than the shared arithmetic. A combination score
+is robust where a single probe is noisy, and it is opaque in the same measure: a
+change in the total does not say which component moved. That is the argument for
+the subscore clocks in section 5.
+
+### 22.2 Co-methylation modules
+
+CpGs covary. Weighted correlation network analysis groups them into modules and
+summarises each by its first principal component, and the module can then be
+tested as one unit rather than as several thousand correlated tests. This is
+where the multiple-testing burden of an epigenome-wide scan becomes tractable,
+and it recovers structure that a per-probe analysis cannot see.
+
+### 22.3 Allele-specific methylation
+
+The two alleles at a locus can carry different methylation, and the pattern can
+follow a haplotype block. Array data cannot resolve this because a beta value
+averages both alleles into one number. Sequencing can, and tools such as
+MethHaplo combine allele-specific methylation with genotype to identify the
+regions involved. Imprinted loci are the familiar case and not the only one.
+
+### 22.4 Interactions between variants are real and small
+
+Genome-wide tests for SNP by SNP effects on methylation find them, and find that
+they explain little variance. The practical reading is that additive models are
+not leaving much on the table at this level, which is consistent with the
+observation in section 4 that elastic net remains competitive with deep networks
+on this problem.

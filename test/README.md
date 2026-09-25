@@ -80,13 +80,13 @@ table is quoted from a paper; those carry a DOI at the point of use instead.
 | Gestational clocks against recorded days-not-weeks | [below](#gestational-clocks) | `python test/run_all.py --groups gestational` |
 | PhenoAge / KDM / HD on blood chemistry | [below](#clinical-chemistry) | `python test/run_all.py --groups clinical` (synthetic); the R suite runs the real 15,160-sample NHANES III |
 | Registry counts: 175 clocks, 46 bundled / 89 untraced / 40 licensed | [below](#the-registry) | `python test/run_all.py --groups registry` |
-| Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [science §19.2](../docs/science.qmd) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
-| `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [science §19.5](../docs/science.qmd) | `python python/tools/build_platform_bias.py` |
-| Conformal interval widths per clock | [science §19.3](../docs/science.qmd) | `python python/tools/build_conformal.py` |
-| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [science §19.6](../docs/science.qmd) | `pytest python/tests/unit/test_batch.py` |
-| Dye bias moves the median beta by **+0.10 to +0.12** | [science §20.4](../docs/science.qmd) | `python test/run_all.py --groups idat` |
-| R and Python agree at tolerance **exactly zero** | [architecture §8](../docs/architecture.qmd) | `Rscript -e 'testthat::test_local("r")'` |
-| GPU speed table, including where CUDA is slower | [docs/gpu.md](../docs/gpu.md) | `python test/gpu_check.py` on a CUDA machine |
+| Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [science §19.2](../docs/analysis/uncertainty.qmd) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
+| `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [science §19.5](../docs/analysis/uncertainty.qmd) | `python python/tools/build_platform_bias.py` |
+| Conformal interval widths per clock | [science §19.3](../docs/analysis/uncertainty.qmd) | `python python/tools/build_conformal.py` |
+| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [science §19.6](../docs/analysis/uncertainty.qmd) | `pytest python/tests/unit/test_batch.py` |
+| Dye bias moves the median beta by **+0.10 to +0.12** | [science §20.4](../docs/data/raw-arrays.qmd) | `python test/run_all.py --groups idat` |
+| R and Python agree at tolerance **exactly zero** | [architecture §8](../docs/dev/r-package.qmd) | `Rscript -e 'testthat::test_local("r")'` |
+| GPU speed table, including where CUDA is slower | [docs/dev/gpu.qmd](../docs/dev/gpu.qmd) | `python test/gpu_check.py` on a CUDA machine |
 | No page scrolls sideways at 320--1280 px | the rendered site | `python test/responsive_check.py` |
 | Every documented `fa.*` name and CLI verb exists | all 129 prose files, including the Claude skill | `python docs/check_api_docs.py` |
 | The documentation describes *this* release, not the last one | landing page, catalogue, architecture, guide, parity table | `python docs/check_docs_complete.py` |
@@ -111,7 +111,7 @@ rather than failing, so a contributor can run the whole thing on a fresh clone.
 
 ### GPU
 
-Reproduces every number in [../docs/gpu.md](../docs/gpu.md): device resolution, CPU-versus-GPU
+Reproduces every number in [../docs/dev/gpu.qmd](../docs/dev/gpu.qmd): device resolution, CPU-versus-GPU
 agreement, the speed table and the profile behind it. It stops after the first step with an
 explanation on a machine with no CUDA device:
 

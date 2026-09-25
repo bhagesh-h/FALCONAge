@@ -1,6 +1,8 @@
 ---
 title: "Loading your data"
 subtitle: "Every input type this package reads, what the file looks like, the call, and what comes back"
+aliases:
+  - ../guide/loading.html
 ---
 
 Nine input types reach the same place: a `FalconData` carrying a samples-by-features

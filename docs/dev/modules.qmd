@@ -1,0 +1,637 @@
+---
+title: "Download, preprocessing, scoring and reports"
+---
+
+## 5. Download module
+
+### 5.1 Contract
+
+One verb, one accession, files plus a normalised sample table.
+
+```python
+def download(
+    accession: str | Sequence[str],
+    dest: Path | None = None,          # None -> the managed cache
+    what: Literal["raw", "processed", "metadata", "auto"] = "auto",
+    credentials: Path | None = None,
+    dry_run: bool = False,
+    max_size_gb: float | None = None,
+    resume: bool = True,
+    n_jobs: int = 4,
+) -> DownloadResult
+```
+
+```python
+@dataclass
+class DownloadResult:
+    accession:  str
+    source:     str                 # "geo" | "arrayexpress" | ...
+    files:      list[FileRecord]    # path, role, sha256, size, url
+    samples:    pd.DataFrame        # the normalised sample table
+    raw_metadata: dict              # whatever the source gave, unmodified
+    manifest_path: Path
+```
+
+`what="auto"` prefers raw over processed when raw exists, because a beta matrix someone else
+normalised is not reproducible. `dry_run=True` returns the same object with `files` populated and
+sizes filled but nothing transferred, which is how a user finds out that a series is 12 GB before
+committing to it.
+
+### 5.2 Source dispatch
+
+`falconage/download/resolve.py` recognises the accession by pattern and returns the right
+`Downloader`. Unrecognised input raises with the list of recognised patterns rather than guessing.
+
+| Pattern | Source | Backend | Ships |
+|---|---|---|---|
+| `GSE\d+` | GEO series | GEOparse plus supplementary-file fetch; `methylprep` when the series has IDATs | now |
+| `GSM\d+` | GEO sample | same, single sample | now |
+| `GPL\d+` | GEO platform | manifest only | now |
+| `E-\w+-\d+` | ArrayExpress / BioStudies | BioStudies REST v1 | now |
+| `SR[PRXS]\d+`, `PRJNA\d+`, `ERP\d+`, `DRP\d+` | SRA / ENA | `pysradb` for metadata, ENA FTP or `fasterq-dump` for reads | now |
+| `10\.\d{4,}/.*` | Zenodo, Figshare, Dryad | DOI resolution then the host REST API | now |
+| numeric with `source="zenodo"` | Zenodo record | Zenodo REST | now |
+| `hf://owner/repo[/path]` | Hugging Face | `huggingface_hub` | now |
+| `TCGA-\w+`, GDC UUID | GDC | GDC files/data API | now |
+| `PXD\d+` | PRIDE | PRIDE REST | later |
+| `MTBLS\d+` | MetaboLights | MetaboLights REST | later |
+| `ST\d{6}` | Metabolomics Workbench | MW REST | later |
+| `syn\d+` | Synapse | `synapseclient`, credentialed | later |
+| `EGAD\d+`, `EGAS\d+` | EGA | documented, credentialed | later |
+| `phs\d+` | dbGaP | documented, not automated | - |
+
+### 5.3 GEO, in detail
+
+GEO is where most of the traffic goes, and it has three shapes that need different handling.
+
+```python
+class GEODownloader(Downloader):
+    def probe(self, gse: str) -> GEOSeriesInfo
+    def fetch(self, gse: str, what: str, dest: Path) -> DownloadResult
+```
+
+`probe` reads the MINiML metadata and reports what is actually available before anything is
+transferred:
+
+```python
+@dataclass
+class GEOSeriesInfo:
+    gse: str
+    title: str
+    n_samples: int
+    platforms: list[str]              # GPL ids, mapped to falconage platform names
+    has_idats: bool
+    has_series_matrix: bool
+    supplementary_types: list[str]
+    total_size_bytes: int
+    characteristics_fields: list[str] # the free-text keys that might hold age and sex
+```
+
+The three shapes:
+
+1. **IDATs present** - roughly 40% of methylation series. Download the `_Grn.idat.gz` and
+   `_Red.idat.gz` pairs plus the platform manifest, and hand off to the preprocess module. This
+   is the only path that yields a reproducible beta matrix.
+2. **Series matrix only.** Parse the `!Sample_` header block for metadata and the tab-delimited
+   body for the value matrix. The values are whatever the submitter normalised, which is recorded
+   in the manifest as `normalisation: submitter-reported` and carried into the result, so a
+   downstream comparison across series knows the matrices are not commensurable.
+3. **Supplementary processed files.** A CSV, TSV or RData of betas with no fixed convention.
+   `read_betas` sniffs orientation, delimiter, and whether values are betas in `[0,1]` or
+   M-values, and asks rather than guesses when it cannot tell.
+
+### 5.4 Metadata normalisation
+
+`falconage/download/metadata.py`. The hardest part of the download module is not transfer: it is
+that the GEO `characteristics_ch1` field is free text and every submitter writes age differently.
+
+```python
+def normalise_samples(raw: pd.DataFrame, source: str,
+                      mapping: dict[str, str] | None = None) -> pd.DataFrame
+```
+
+Target schema, which is what the rest of the package consumes:
+
+| Column | Type | Notes |
+|---|---|---|
+| `sample_id` | str | index; GSM id for GEO |
+| `title` | str | submitter sample title |
+| `age` | float | years; months and weeks converted, source unit recorded |
+| `sex` | category | `male`, `female`, `unknown` |
+| `tissue` | str | controlled vocabulary where mappable, raw string otherwise |
+| `condition` | str | `HC` for controls where identifiable |
+| `platform` | str | falconage platform name |
+| `subject_id` | str | for repeated measures |
+| `timepoint` | float | for longitudinal series |
+| `raw_characteristics` | str | the original text, always kept |
+
+Extraction is rule-based and conservative: regex patterns for the common age spellings
+(`age: 54`, `age (years): 54`, `agey: 54`, `54 yr`), a sex vocabulary, and a tissue lexicon.
+Every extracted value keeps its source string in `raw_characteristics`, and the fraction of
+samples where extraction succeeded is reported. When it falls below a threshold the module says
+so loudly rather than returning a half-empty age column:
+
+```
+WARNING  age extracted for 41/120 samples (34%) from field 'characteristics_ch1'
+         unparsed examples: "age at diagnosis: 54y", "AGE=54", "54 years old"
+         supply mapping={"age": "characteristics_ch1"} with a custom parser, or
+         edit the returned sample table directly
+```
+
+No LLM, no fuzzy matching that might silently mis-assign. A wrong age is worse than a missing one
+because age acceleration is computed against it.
+
+### 5.5 Transfer, cache, credentials
+
+`transfer.py` - HTTP range requests for resume, parallel connections capped at `n_jobs`, SHA-256
+verification against the published checksum where one exists and against a recorded one on
+re-download, exponential backoff on 429 and 5xx, and a per-source rate limit (NCBI allows 3
+requests per second without an API key, 10 with one).
+
+`cache.py` - content-addressed under `FALCONAGE_CACHE`, default `~/.cache/falconage`, laid out as
+`<source>/<accession>/<sha256-prefix>/<filename>` with a `manifest.json` per accession.
+
+```bash
+falconage cache ls              # accession, source, size, last used
+falconage cache size
+falconage cache rm GSE40279
+falconage cache verify          # re-check every stored checksum
+falconage cache gc --older-than 90d --keep-under 20GB
+```
+
+`credentialed.py` covers the sources that need authorisation. Synapse and EGA get working
+implementations behind an explicit credentials file; dbGaP and UK Biobank get documentation and a
+clear error explaining that access is granted per project and cannot be automated:
+
+```python
+raise CredentialsRequiredError(
+    "dbGaP accession phs000424 requires an approved data access request. "
+    "FALCONAge cannot download it for you.",
+    remedy="Download via the dbGaP repository key and SRA Toolkit, then point "
+           "falconage preprocess at the resulting files.",
+)
+```
+
+Credentials come from a file or the environment, never from a function argument that would land
+in a shell history or a notebook.
+
+### 5.6 CLI
+
+```bash
+falconage download GSE40279 --dest data/ --what raw
+falconage download GSE40279 --dry-run              # sizes and file list only
+falconage download GSE40279 GSE42861 --n-jobs 8
+falconage download 10.5281/zenodo.18763485
+```
+
+As shipped, `--dry-run` is what answers "what is in this series?": it prints every URL and byte
+count and transfers nothing. The specification also had a separate `probe` verb for that; it was
+not built, because it would have been the same code behind a second name.
+
+## 6. Preprocess module
+
+### 6.1 Contract
+
+Raw or public data in, a `FalconData` the scoring module accepts out. One entry point per
+modality, all converging on samples by features with exact feature identifiers and declared
+units.
+
+```python
+def preprocess_methylation(
+    source: Path | pd.DataFrame | DownloadResult,
+    platform: str | None = None,        # None -> auto-detect
+    pipeline: str = "noob_bmiq",        # "noob_bmiq" | "sesame" | "noob" | "raw"
+    detection_p: float = 0.01,
+    mask_probes: bool = True,           # cross-reactive, SNP, sex-chromosome
+    aggregate_epicv2: bool = True,
+    imputation: str = "none",           # dataset-level; clock-level is separate
+    sample_table: pd.DataFrame | None = None,
+    device: str = "auto",
+) -> FalconData
+```
+
+Analogous `preprocess_clinical`, plus `preprocess_expression` and `preprocess_proteomics`.
+
+### 6.2 Methylation
+
+**IDAT to beta.** The chain is [the science notes](../methods/index.qmd) section 3.1:
+
+```
+IDAT pair (Grn, Red)
+  -> parse binary IDAT, match to platform manifest
+  -> out-of-band background correction and dye bias (noob)
+  -> probe-type bias correction (BMIQ), or SeSAMe as a single-step alternative
+  -> detection p-value filter
+  -> cross-reactive / SNP / sex-chromosome probe masking
+  -> beta = M / (M + U + 100)
+  -> beta matrix, samples by probes
+```
+
+Implementation route: `methylprep` for IDAT parsing and noob, a native BMIQ port (beta-mixture
+quantile normalisation is around 150 lines, and having it in-tree avoids an R dependency inside
+the Python core), and SeSAMe through `rpy2` only when the user asks for it. The pipeline choice
+is recorded in the manifest because it changes the answer, [the science notes](../methods/index.qmd) section 3.1 notes that
+`noob + BMIQ` and SeSAMe both perform well but are not interchangeable, and funnorm is preferred
+when global methylation differs between groups.
+
+**Platform detection.**
+
+```python
+def detect_platform(feature_ids: Sequence[str]) -> PlatformInfo
+```
+
+Decides from probe-ID pattern and count: EPIC v2 if any ID carries a `_TC21`-style suffix, then
+by overlap against packaged manifest probe sets for 27K, 450K, EPIC v1, EPIC v2, MSA,
+MammalMethylChip40 and MammalMethylChip320. Returns the best match with its overlap fraction, and
+raises `PlatformMismatchError` when the best overlap is under 50% rather than proceeding with the
+wrong manifest.
+
+**EPIC v2 aggregation.** Split each column name on `_`, group by the CpG prefix, average
+replicates. Mandatory, [the science notes](../methods/index.qmd) section 16 records that skipping it means every clock sees
+zero overlapping features. When `detect_platform` says EPIC v2 and `aggregate_epicv2=False`, the
+module raises rather than producing a silently empty result.
+
+**Cross-platform harmonisation.** A 450K clock applied to EPIC data uses the probes present on
+both. The module reports the intersection size per clock before scoring, and records
+`platform_native` alongside `platform_applied`, so a result computed on 340 of Horvath's 353
+probes says so.
+
+**Series matrix and beta CSV** paths run the same masking, aggregation and detection steps, minus
+the normalisation the submitter already applied, with `normalisation: submitter-reported` in the
+manifest.
+
+### 6.3 Clinical chemistry
+
+```python
+def preprocess_clinical(
+    data: pd.DataFrame,
+    units: dict[str, str],              # required, see core/units.py
+    validate_ranges: bool = True,
+    range_action: str = "warn",         # "warn" | "na" | "error"
+) -> FalconData
+```
+
+Three steps: map column names to canonical marker names through a synonym table, so `ALB`,
+`albumin` and `Albumin (g/dL)` all resolve to `albumin`; convert every marker to the canonical
+unit the clocks expect; validate against physiological ranges. The ranges are the BioAge
+clinically-healthy windows ([the science notes](../methods/index.qmd) section 3.5) for the reference-cohort case, and wider
+physiological bounds for the general case, a CRP of 40 mg/L is outside the healthy window but is
+a real measurement, so it warns rather than nulls by default.
+
+### 6.4 Imputation, kept in three distinct places
+
+[the science notes](../methods/index.qmd) section 6.3 separates three stages that are routinely conflated. Keeping them
+separate is what makes the missingness report meaningful.
+
+| Stage | Where | Options | Recorded as |
+|---|---|---|---|
+| Dataset-level | `preprocess.impute` | `none`, `mean`, `median`, `constant`, `knn` | `imputation.dataset` |
+| Clock-level | `score.features` | reference values from the registry; zero only when no reference exists | `imputation.clock` |
+| Model-internal | inside the clock | the model's own stored statistic | `imputation.model` |
+
+Dataset-level KNN is the expensive one and is GPU-accelerated when a device is available:
+`cuml.KNNImputer` when RAPIDS is installed, a chunked CuPy distance otherwise, sklearn on CPU.
+
+Clock-level filling uses `reference_values` from the registry. Filling a missing beta with zero
+means "fully unmethylated", which is biologically wrong for most sites, so a clock with no
+reference vector and missing features emits a warning naming the fraction affected. Above
+`max_missing`, default 0.30, scoring raises `ExcessiveMissingnessError` rather than returning a
+number nobody should use; `max_missing=1.0` restores the permissive behaviour deliberately.
+
+### 6.5 QC report
+
+```python
+@dataclass
+class QCReport:
+    n_samples: int
+    n_features: int
+    platform: PlatformInfo
+    missingness_overall: float
+    missingness_per_sample: pd.Series
+    beta_distribution: dict            # quantiles, bimodality statistic
+    failed_detection: pd.Series        # per sample
+    predicted_sex: pd.DataFrame        # XChrom/YChrom, against declared sex
+    sex_mismatches: list[str]
+    age_available: float               # fraction of samples with age
+    clock_coverage: pd.DataFrame       # clock, n_present, n_total, pct
+    warnings: list[str]
+```
+
+`clock_coverage` prints before scoring, not after. A user who can see that GrimAge2 will run on
+61% of its features gets to decide whether to proceed; a user who discovers it afterwards has
+already written the number down.
+
+### 6.6 CLI
+
+```bash
+falconage preprocess methylation data/GSE40279/ --out prepared.h5ad --pipeline noob_bmiq
+falconage preprocess methylation betas.csv --platform illumina_450k --out prepared.h5ad
+falconage preprocess clinical labs.csv --units units.yaml --out prepared.h5ad
+```
+
+The specification had a separate `qc` verb writing its own HTML. Not built: `preprocess` already
+prints the QC summary, and `report` embeds the full set of QC figures, so a third path to the same
+numbers was a third thing to keep in step.
+
+## 7. Scoring, analysis, plots, report
+
+### 7.1 score()
+
+```python
+def score(
+    data: FalconData,
+    clocks: str | Sequence[str] | Literal["all", "compatible"] = "compatible",
+    device: str = "auto",
+    dtype: str = "float64",
+    batch_size: int | None = None,
+    max_missing: float = 0.30,
+    imputation: str = "reference",
+    sex_unknown: str = "error",
+    keep_features: bool = False,
+    progress: bool = True,
+) -> FalconResult
+```
+
+`clocks="compatible"` is the default and calls `registry.compatible_with(data)`, which is the
+behaviour a first-time user wants. `"all"` runs everything and warns about the ones that will be
+mostly imputed.
+
+Loop, per clock:
+
+1. Resolve metadata; warn on `research_only` and on any `known_discrepancies`.
+2. Check required covariates; raise `MissingCovariateError` naming the clock and the covariate.
+3. Align features into `obsm[f"X_{clock}"]`, filling absences from `reference_values`. Record
+   `percent_na` and the missing-feature list. Raise at 100% missing, or above `max_missing`.
+4. Promote dtype if `requires_fp64`.
+5. Batch through the model under `torch.inference_mode()`.
+6. Write predictions to `obs[clock]` and metadata to `uns[f"{clock}_metadata"]`.
+7. Range-check against `plausible_range`; flag, never clip.
+8. Free the `obsm` slice unless `keep_features`, then `gc.collect()` and
+   `torch.cuda.empty_cache()`.
+
+### 7.2 FalconResult
+
+```python
+class FalconResult:
+    data: FalconData
+    manifest: RunManifest
+
+    def table(self, long: bool = True) -> pd.DataFrame
+    def wide(self) -> pd.DataFrame
+    def acceleration(self, method: str = "both",
+                     within: str | None = None) -> pd.DataFrame
+    def qc(self) -> pd.DataFrame
+    def to_csv(self, path) -> None
+    def to_h5ad(self, path) -> None
+```
+
+The long table carries every provenance field from [the science notes](../methods/index.qmd) section 8.1:
+
+```
+sample_id, clock, clock_version, registry_version, value, unit, scale_type,
+chronological_age, aa_absolute, aa_relative, percent_features_missing,
+n_features_missing, imputation, preprocess_ops, postprocess_ops,
+species, tissue, platform_native, platform_applied, research_only,
+flags, citation, doi
+```
+
+`flags` is a comma-separated list drawn from a fixed vocabulary: `out_of_range`,
+`high_missingness`, `clamped`, `dtype_promoted`, `platform_mismatch`, `known_discrepancy`,
+`extrapolated_age_range`, `sex_imputed`.
+
+### 7.3 Age acceleration
+
+```python
+def acceleration(result, method="both", within=None, covariates=None) -> pd.DataFrame
+```
+
+Three conventions ([the science notes](../methods/index.qmd) section 1.1), all guarded by `scale_type`:
+
+- `absolute` - `value − chronological_age`. Legal only for `scale_type` in `{age_years,
+  age_months, age_days, age_hours, gestational_weeks}`. Attempting it on `rate`, `log_hazard`,
+  `probability` or `proportion` raises `IncompatibleScaleError`: DunedinPACE is not an age, and
+  subtracting CA from it is a category error.
+- `relative` - residual of `lm(value ~ age)`, optionally with covariates. Legal for any
+  continuous scale. This is the convention that removes the regression-dilution bias every
+  penalised clock carries.
+- `within` - residual against a group mean, for the single-cell and spatial case where the
+  reference is the animal rather than the calendar, following
+  [SpatialAgingClock](https://github.com/sunericd/SpatialAgingClock).
+
+`method="both"` returns absolute and relative side by side, and omits absolute for scales where
+it is illegal rather than emitting NaN.
+
+### 7.4 Survival, association, reliability, benchmark
+
+```python
+# survival.py
+def cox(result, time, status, clocks=None, covariates=("age", "sex"),
+        standardise_within=("sex",)) -> pd.DataFrame     # HR, CI, p, n, events
+def c_index(result, time, status, clocks=None) -> pd.DataFrame
+def time_dependent_auc(result, time, status, horizons=(5, 10, 15)) -> pd.DataFrame
+
+# association.py
+def associate(result, outcome, family="gaussian", covariates=("age", "sex")) -> pd.DataFrame
+def interactions(result, outcome,
+                 modifiers=("bmi", "sex", "smoking", "education")) -> pd.DataFrame
+
+# reliability.py
+def icc(result, subject_col, replicate_col, kind="ICC2_1") -> pd.DataFrame
+def pool_icc(iccs: Sequence[pd.DataFrame]) -> pd.DataFrame        # Fisher-Z
+
+# benchmark.py
+def aa2_test(result, condition_col, control="HC", assumption="normal") -> pd.DataFrame
+def aa1_test(result, condition_col, control="HC", assumption="normal") -> pd.DataFrame
+def ca_accuracy(result, control="HC") -> pd.DataFrame   # MedAE, MAE, RMSE, r, rho, slope, MedE
+def total_score(aa2, aa1, accuracy) -> pd.DataFrame
+def run_benchmark(result, condition_col, ...) -> BenchmarkResult
+```
+
+`cox` standardises the acceleration within sex before fitting, so the hazard ratio is per
+sex-specific SD - the BioAge convention
+([BioAge table_surv.R](https://github.com/dayoonkwon/BioAge)), which is what makes effect sizes
+comparable across clocks with different variances.
+
+The benchmark functions implement the ComputAgeBench methodology ([the science notes](../methods/index.qmd) section 11.1):
+
+```
+AA2:   one-sided Welch t-test (normal) or Mann-Whitney U (none), AAC against HC
+AA1:   one-sided one-sample t-test or Wilcoxon signed-rank, AAC against 0
+FDR:   Benjamini-Hochberg per model across datasets, threshold 0.05
+total = aa2_passed + aa1_passed * (1 - max(0, MedE) / MedAE)
+```
+
+The bias penalty in the total is what stops a clock that simply over-predicts everyone from
+sweeping AA1. `total_score` returns the components alongside the total, and the report never
+prints the total on its own.
+
+`run_benchmark(..., dataset="computage")` fetches the 65-study benchmark set from Hugging Face
+and runs the whole thing, so a user can place their own clock on the published leaderboard.
+
+### 7.5 Agreement
+
+```python
+def clock_correlation(result, method="spearman", cluster=True) -> pd.DataFrame
+def clock_embedding(result, method="umap", n_neighbors=15) -> pd.DataFrame
+def concordance(result, reference_clock: str) -> pd.DataFrame
+```
+
+`clock_correlation` with `cluster=True` returns the matrix plus a dendrogram order, which is the
+pyaging Figure 1a analysis: telomere predictors cluster together, and chronological predictors
+separate from mortality predictors.
+
+### 7.6 Plots
+
+Every plotting function returns the figure and has a parallel `*_data()` function returning the
+frame it plotted, so the R side renders the same numbers with ggplot2 rather than passing
+matplotlib figures across the bridge. The fourteen from [the science notes](../methods/index.qmd) section 10:
+
+| Function | Figure |
+|---|---|
+| `ba_vs_ca` | BA against CA, faceted by clock, coloured by sex, identity line, r annotated |
+| `clock_corr` | correlation matrix: scatter below the diagonal, r above, labels on it |
+| `clock_dendrogram` | hierarchical clustering of clocks |
+| `clock_umap` | samples embedded in clock space |
+| `trajectory` | prediction across a timepoint variable, one line per clock |
+| `class_bench` | boolean clock by dataset:condition:test grid with per-class column groups |
+| `medae_bar` | median absolute error per clock, healthy controls only |
+| `bias_bar` | median error per clock, symmetric x-limits |
+| `forest` | hazard ratios per clock per outcome |
+| `acceleration_density` | violin or density of age acceleration by group |
+| `system_profile` | radar or heatmap over SystemsAge systems and organAging organs |
+| `qc_density` | beta distribution per sample at each preprocessing stage |
+| `calibration` | predicted against observed, for probability outputs |
+| `missingness` | percent of features absent per clock, drawn before the results |
+| `kaplan_meier` | survival of the fastest-ageing tail against the slowest, with the log-rank p |
+| `volcano` | effect size against evidence, thresholded at the BH cut rather than a raw p |
+
+The last two close the gap against the figure conventions in current papers. Both estimators are
+written out rather than imported: the product-limit form and the two-sample log-rank statistic are
+about forty lines together, and `survival` and `lifelines` are heavier dependencies than that
+deserves. The R side calls the Python core for the log-rank p and redraws the curve in ggplot2, so
+the statistic cannot differ between the languages while the figure still carries the R theme.
+
+`volcano` draws the Benjamini-Hochberg threshold, taken from the `q` column that
+[`associate()`](../reference/associate.qmd) already returns rather than recomputed. Drawing a raw
+p-value cut is the usual error and, across thousands of tests, calls noise significant.
+
+Conventions enforced in `theme.py`: the identity line is always drawn on BA-against-CA; rate
+clocks never share an axis with age clocks; facets are ordered by clock generation rather than
+alphabetically; every panel is annotated with n, r and missingness; colour encodes group and
+shape encodes platform, with one palette across a whole report.
+
+### 7.7 Report
+
+```python
+def report(result, path: Path, sections="all", embed_data=True) -> Path
+```
+
+One self-contained HTML file, inlined CSS, base64 figures, no external requests, carrying the
+run manifest, the QC block, the results table, the standard figures, and the caveats that apply
+to the clocks that actually ran. `embed_data=True` attaches the results CSV as a data URI so the
+report is a complete record.
+
+### 7.8 CLI
+
+> **The command lines in this section, in 5.5, 5.6 and 6.6, are the specified interface and
+> several of them do not parse against the shipped one.** The verbs are right; the argument shapes
+> are not. `score`, `bench` and `preprocess` take `--input` rather than a positional, `preprocess`
+> has no `methylation` or `clinical` sub-verb, `clocks` requires an action (`list`, `info`, `cite`)
+> before any filter, `power` takes `--clock`, and `cache` has `ls` and `rm` but not `size`,
+> `verify` or `gc`.
+>
+> Left as written because this is the design record and the spec is what it records. The shipped
+> interface is in [Getting started](../guide/FALCONAge.html) and in `--help`, which is generated from
+> the parser and cannot drift. `docs/check_api_docs.py` parses every command in every other
+> document against that parser and skips this page for exactly this reason.
+
+```bash
+falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out results/
+falconage score prepared.h5ad --clocks compatible --device cuda --dtype float32
+falconage bench results/ --condition-col condition --control HC
+falconage report results/ --out report.html
+falconage clocks --tier A --search mortality
+falconage power horvath2013 --effect 0.5 --sd 6
+falconage consensus results/ --group condition
+```
+
+Two departures from the specification. `analyse --cox` was not built as a verb: survival and
+association are two functions with several arguments each, and a command line is a poor place to
+specify a model formula, so they stay in `score()`'s Python and R surfaces where the arguments can
+be named. And `clocks` took `list`/`info`/`cite` sub-verbs in the specification; as shipped it is
+one verb with flags, because the three did the same lookup and differed only in what they printed.
+`power` and `consensus` are new since the specification was written.
+
+## 15. The layer that says what a score is worth
+
+Sections 1–14 describe the architecture that computes a score. This one describes the layer that says how much that score is worth. It is deliberately a *layer*: nothing below
+changed, no score moved, and every new artefact is reported rather than applied.
+
+### 15.1 New modules
+
+| Module | What it holds |
+|---|---|
+| `falconage.uncertainty` | `technical_se`, `interval`, `conformal_interval`, `icc_from_replicates`, and the loaders for the two calibration tables |
+| `falconage.core.tissue` | the specimen alias table, families, and the published discordance between them |
+| `falconage.core.preanalytical` | the recognised `obs` fields, their thresholds, and the manifest block |
+| `falconage.preprocess.batch` | `fit_batch_reference`, `apply_batch_reference`, `BatchReference` |
+| `falconage.models.ops.DERIVATIVE` | an analytic derivative per transform, and an explicit refusal for the four that destroy the information |
+| `python/tools/` | the three derivation scripts for the shipped data artefacts |
+
+### 15.2 New registry artefacts
+
+Each is derived by a script in `python/tools/`, digest-checked, and carries its provenance into
+the run manifest. None can be regenerated in CI, two need the 586 MB corpus, one needs a 72 MB
+published spreadsheet, so CI checks that the shipped files parse and cover what they claim
+instead, and the local `--check` catches staleness before a commit.
+
+| File | Rows | Source | Built by |
+|---|---:|---|---|
+| `probe_icc.csv.gz` | 283,860 | ADNI duplicates, EPIC v1, CC BY 4.0 | `build_probe_icc.py` |
+| `platform_bias.csv` | 30 | this corpus, masked and rescored | `build_platform_bias.py` |
+| `conformal.csv` | 48 | healthy controls in this corpus | `build_conformal.py` |
+| `evidence.yaml` | 18 | multi-clock comparison studies | hand-curated, DOI enforced at load |
+
+### 15.3 Where the checks fire
+
+The registry already declared three properties that scoring enforced. Two more were added late, and they
+use the same shape, a declared property of the clock, checked in `score()`, refusing when the
+substitution is a category error and warning when it is an offset.
+
+| Declared | Refuses when |
+|---|---|
+| `scale_type` → `LEGAL_OPS` | an operation is undefined for the output's scale |
+| coverage / coefficient mass | too much of the model is absent |
+| `availability` tier | the coefficients are not distributable |
+| `requires_cohort` | a cohort-centred clock is given one sample |
+| **`tissue_policy`** | a clock is scored off a tissue with no counterpart, or on cell-free DNA |
+| **`age_years_relative`** | the absolute acceleration convention is asked of a clock whose origin moves between cohorts |
+
+The last one also fixed a latent gap rather than only adding a rule.
+`LEGAL_OPS` has listed `acceleration` and `residual` as separate entries since
+v1.0, but `acceleration()` checked `"acceleration"` whatever convention was
+asked for, so the distinction in the data model was never read. It is now:
+`absolute` and `both` need `acceleration`, `residual` and `within_group` need
+`residual`.
+
+### 15.4 Figure inventory, updated
+
+Twenty-six figure types, four of them new:
+
+| Figure | Answers |
+|---|---|
+| `reliability_forest` | which of these clocks can be trusted to move |
+| `score_interval` | which two samples are actually distinguishable |
+| `platform_bias` | what this array costs each clock, in years |
+| `consensus_plot` | did the difference hold up across clocks, or is it one clock |
+
+`save_all()` takes `se=`, `conformal=` and `consensus=` and emits them when given; `test/run_all.py`
+computes all three per dataset, so the gallery figures come from real public data rather than a
+synthetic demonstration.
+
+### 15.5 What did not change
+
+No score. The earlier numbers are bit-identical for any dataset whose clocks were legal to
+score in the first place, the two integration tests that changed did so because they were
+scoring placenta clocks on cord blood and buccal clocks on adult blood, and those results were
+wrong before the check existed rather than different after it.

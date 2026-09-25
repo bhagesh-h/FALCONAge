@@ -1,5 +1,374 @@
 {
-"amended": {},
+"amended": {
+"040a0d3b09ed6152": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"14. [Open questions]()"
+]
+},
+"09e5d433074b873d": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [References]()"
+]
+},
+"13e576f8699c863f": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"17. [The frontier, and what FALCONAge does not yet compute]()"
+]
+},
+"17ab4c1d5fd5225b": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [B - tAge transcriptomic clock registry (60 models)]()"
+]
+},
+"1da0713a56ee6fe0": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"10. [Plots]()"
+]
+},
+"1f2800eb37ed9c92": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"11. [Benchmarking and validation]()"
+]
+},
+"21f3bd88694197ae": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"12. [CI/CD and publishing]()"
+]
+},
+"34d30c9707743f54": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"13. [Prior implementations]()"
+]
+},
+"352eef63db6f4235": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"23. [Building a clock of your own]()"
+]
+},
+"3e2d916afd94d1f1": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"1. [Scope, decisions and repository layout]()"
+]
+},
+"42bf7d4dfd9e2cd1": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"6. [Preprocessing, imputation, missing features]()"
+]
+},
+"43e37f3b8a529786": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"22. [Structure above the single probe]()"
+]
+},
+"5b7cbe934a50dbc5": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"4. [Algorithms, the complete operation catalogue]()"
+]
+},
+"69f18daa6c29e635": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"9. [Docker]()"
+]
+},
+"6d74763e7238fa6b": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"2. [Core engine]()"
+]
+},
+"6fccaab9a17e58cb": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"15. [Design blueprint]()"
+]
+},
+"7051640e34e0c912": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"21. [Genetic variation under the probe]()"
+]
+},
+"72706afaa6c6ee48": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"14. [GPU computing]()"
+]
+},
+"74d9e0324499fd70": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"8. [R package]()"
+]
+},
+"775199d41531687f": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"10. [Testing]()"
+]
+},
+"801bdceeda456b65": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"16. [Failure modes]()"
+]
+},
+"87e1f97897396d89": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"3. [Measurement chemistry, per omics layer]()"
+]
+},
+"8a98ecdc2df6dd5d": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"4. [Algorithm families with full math]()"
+]
+},
+"8c54122bfdecfdb0": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"19. [Uncertainty, specimen and platform]()"
+]
+},
+"8dc21b6630043eb9": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"11. [Documentation]()"
+]
+},
+"9180cfb7a05e6ff4": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [C - ComputAgeBench benchmark studies (65 datasets, blood/saliva/buccal)]()"
+]
+},
+"926222b2becf70cb": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"13. [Build order]()"
+]
+},
+"947e26b3ff6f56f0": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"1. [Definitions and framing]()"
+]
+},
+"9de3c2e8baae7676": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"5. [Exact published formulas and constants]()"
+]
+},
+"a0fb9fae5a2c032d": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"9. [Downstream statistics on an aging score]()"
+]
+},
+"aa24f05ca81cf748": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"12. [Existing software landscape]()"
+]
+},
+"ad5d4dd049635b49": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"5. [Download module]()"
+]
+},
+"be9c965b4737430f": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"3. [Clock registry]()"
+]
+},
+"bf1ca413d37ff460": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [D - organAging organ protein panels]()"
+]
+},
+"c746955c8a5d1190": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"8. [Output types and units]()"
+]
+},
+"c8fd598245c83c2a": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"18. [Datasets, registries, reference resources]()"
+]
+},
+"ce3037f50ca46367": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"15. [The layer that says what a score is worth]()"
+]
+},
+"cfff5fb661c50c33": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [A - Full pyaging clock registry (173 clocks)]()"
+]
+},
+"d321ff49eb324918": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"7. [The clock catalogue]()"
+]
+},
+"db99228da575acff": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [E - Preprocess and postprocess operation inventory]()"
+]
+},
+"e092c9c9ea483f02": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"6. [Preprocess module]()"
+]
+},
+"e192ba2f091221b6": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"2. [Biology of aging that the scores encode]()"
+]
+},
+"e21ad7fc8d0a02d5": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"20. [From raw arrays to betas]()"
+]
+},
+"e2d990adf216ab5e": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"7. [Scoring, analysis, plots, report]()"
+]
+},
+"f5cbdf6bfb51439b": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"Contents"
+]
+},
+"fca7ccee7ea0dd81": {
+"reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
+"was": [
+"science.qmd",
+"",
+"- [F - Reproducing the four reference computations by hand]()"
+]
+}
+},
 "blocks": {
 "000ef8cc86862711": [
 "science.qmd",

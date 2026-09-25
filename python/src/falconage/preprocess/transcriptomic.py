@@ -29,7 +29,7 @@ for the same library. A clock fitted on one and scored on another is being asked
 about a different quantity at every gene.
 
 Reference: the tAge pipeline (Meyer & Schumacher and successors), summarised in
-docs/science.qmd.
+docs/methods/algorithms.qmd (4.18).
 """
 
 from __future__ import annotations

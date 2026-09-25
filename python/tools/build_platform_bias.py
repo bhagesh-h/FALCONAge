@@ -174,7 +174,7 @@ def render() -> tuple[str, dict]:
               "filtering -- not the manifest's ideal.\n")
     buf.write(f"# datasets: {n_datasets}; bootstrap resamples: {N_BOOT}; "
               f"seed: {SEED}\n")
-    buf.write("# Reported, never applied. See docs/science.qmd.\n")
+    buf.write("# Reported, never applied. See docs/analysis/uncertainty.qmd.\n")
     tab.to_csv(buf, index=False, lineterminator="\n")
 
     worst = tab.reindex(tab["median_shift"].abs().sort_values(ascending=False).index)

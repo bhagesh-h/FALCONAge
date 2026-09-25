@@ -1,0 +1,30 @@
+---
+title: "18. Datasets, registries, reference resources"
+---
+
+**Benchmark and training data**
+- `computage/computage_bench` on Hugging Face - 10,404 benchmark samples / 65 studies and
+  7,419 training samples / 46 studies, parquet + TSV metadata.
+- `lucascamillomd/pyaging-data` on Hugging Face, clock weights, reference vectors, Ensembl gene
+  annotation, example datasets per modality.
+- GEO series listed in [ComputAge BenchBSB_table.csv](https://github.com/ComputationalAgingLab/ComputAge).
+- GSE54848 - OSKM reprogramming timecourse used in the pyaging figure.
+- NHANES III and NHANES IV - shipped as `.rda` in BioAge with a codebook.
+- UK Biobank, Framingham Heart Study, Generation Scotland, MESA, Health and Retirement Study,
+  Dunedin Study, Tabula Muris Senis, GTEx.
+
+**Gene and biomarker resources**
+- Open Genes (2,402 genes), GenAge, AnAge (the mammalian clock lifespan lookup), CellAge, CSGene,
+  AgeFactDB, Aging Atlas, GO aging terms, Digital Ageing Atlas, AGEMAP.
+
+**Reference matrices**
+- `sesame_450k_median.csv` - NA-fill medians.
+- `450K_reinius_12_reference.csv`, `EPIC_salas_18_reference.csv` - deconvolution signatures.
+- `biolearn_averages_450k.csv` - alternative fill vector.
+- `DunedinPACE_Gold_Means.csv` - the 20,000-probe gold standard.
+
+**Model registries**
+- pyaging `clock_metadata.json` (173 clocks) + `evidence_ledger.jsonl` (894 KB of per-field
+  provenance) + `controlled_vocabulary.json` + `validate_metadata.py`.
+- tAge `clocks_metadata.csv` (60 models) + Zenodo record 18763485.
+- ComputAge `model_definitions` + `library.yaml` (GEO dataset parsers).

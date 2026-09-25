@@ -157,7 +157,7 @@ class NeuralClock:
     activation, no dropout at inference, no batch norm state to get wrong.
 
     THE ONE ARCHITECTURE HERE WHERE A GPU EARNS ITS TRANSFER. A linear clock is
-    a single dot product over a few thousand features, and ``docs/gpu.md``
+    a single dot product over a few thousand features, and ``docs/dev/gpu.qmd``
     measures the card losing to the CPU on those by up to 4.6x because moving
     the matrix costs more than multiplying it. A network is a chain of dense
     layers with real depth: AltumAge is 20,318 inputs, so the arithmetic per

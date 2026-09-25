@@ -5,7 +5,7 @@
 # Probe sets are read off real arrays in the corpus, so they reflect what a user
 # with that platform has after ordinary filtering -- not the manifest's ideal.
 # datasets: 5; bootstrap resamples: 2000; seed: 20260809
-# Reported, never applied. See docs/science.qmd.
+# Reported, never applied. See docs/analysis/uncertainty.qmd.
 clock,platform,unit,n_samples,probes_retained,probes_total,median_shift,iqr,ci_lo,ci_hi,max_abs_shift
 dnamphenoage,EPICv1,years,109,511,513,-0.1112,0.326,-0.2073,-0.0282,0.7129
 dnamtl,EPICv1,kilobases,109,134,140,0.0353,0.016,0.0327,0.0375,0.0732

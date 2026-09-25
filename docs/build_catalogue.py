@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate ``docs/clocks.qmd`` -- the clock catalogue -- from the registry.
+"""Generate ``docs/clocks/catalogue.qmd`` -- the clock catalogue -- from the registry.
 
 WHY THIS IS GENERATED RATHER THAN EXECUTED AT RENDER TIME. The page began as a
 Quarto document with a live ``{python}`` chunk that queried the registry. That
@@ -20,7 +20,7 @@ describe a catalogue different from the one that scores.
 
 Usage
 -----
-    python docs/build_catalogue.py           # write docs/clocks.qmd
+    python docs/build_catalogue.py           # write docs/clocks/catalogue.qmd
     python docs/build_catalogue.py --check   # fail if it is stale (for CI)
 """
 
@@ -33,9 +33,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-TARGET = HERE / "clocks.qmd"
+TARGET = HERE / "clocks" / "catalogue.qmd"
 
-# The scale-type table on the About page. Same source of truth, different page,
+# The scale-type table on the "What a score means" page. Same source of truth, different page,
 # so it lives here rather than in build_docs.py, which never imports falconage.
 #
 # It is generated for the same reason the catalogue is: it was hand-written
@@ -43,7 +43,7 @@ TARGET = HERE / "clocks.qmd"
 # registry has clocks reported in days and in months on that scale -- and a
 # table that quietly disagrees with the code it documents is worse than no
 # table, because a reader has no way to tell which one lied.
-INDEX = HERE / "index.qmd"
+INDEX = HERE / "clocks" / "meaning.qmd"
 SCALE_BEGIN = "<!-- BEGIN GENERATED: scales -->"
 SCALE_END = "<!-- END GENERATED: scales -->"
 
@@ -88,6 +88,8 @@ TIER = {
 HEAD = """---
 title: "Clock catalogue"
 subtitle: "All {n}, generated from the registry that scores them"
+aliases:
+  - ../clocks.html
 ---
 
 {banner}
@@ -102,7 +104,7 @@ on a `pace_ratio` clock is refused rather than computed.
 
 **{n} clocks**, registry schema `{schema}`.
 
-![What separates the three availability groups, and what a traced coefficient source means](images/tiers-and-provenance.png)
+![What separates the three availability groups, and what a traced coefficient source means](../images/tiers-and-provenance.png)
 
 Availability is about provenance, not about quality. A `bundled` clock has a
 coefficient file whose origin was followed back to the paper or its supplement
@@ -270,7 +272,7 @@ def scale_table() -> str:
 
 
 
-GUIDE = HERE / "guide" / "clocks.qmd"
+GUIDE = HERE / "clocks" / "choosing.qmd"
 QUESTION_BEGIN = "<!-- BEGIN GENERATED: by-question -->"
 QUESTION_END = "<!-- END GENERATED: by-question -->"
 TIERS_BEGIN = "<!-- BEGIN GENERATED: tiers -->"
@@ -345,7 +347,7 @@ def question_table() -> str:
     out += ["",
             f"Every one of the {len(list(reg))} catalogued clocks appears above, routed by "
             "its declared `predicts` field. The full table with paper links is the "
-            "[clock catalogue](../clocks.qmd).",
+            "[clock catalogue](catalogue.qmd).",
             "", QUESTION_END]
     return "\n".join(out)
 
@@ -427,31 +429,31 @@ def guide_scale_table() -> str:
 
 
 def render_guide() -> str:
-    """guide/clocks.qmd with every generated block replaced."""
+    """clocks/choosing.qmd with every generated block replaced."""
     text = GUIDE.read_text(encoding="utf-8")
     for begin, end, body in ((QUESTION_BEGIN, QUESTION_END, question_table()),
                              (GSCALE_BEGIN, GSCALE_END, guide_scale_table()),
                              (TIERS_BEGIN, TIERS_END, tier_table())):
         start, stop = text.find(begin), text.find(end)
         if start == -1 or stop == -1:
-            raise SystemExit(f"docs/guide/clocks.qmd has no {begin} block")
+            raise SystemExit(f"docs/clocks/choosing.qmd has no {begin} block")
         text = text[:start] + body + text[stop + len(end):]
     return text
 
 
 def render_index() -> str:
-    """docs/index.qmd with the scale block replaced."""
+    """docs/clocks/meaning.qmd with the scale block replaced."""
     text = INDEX.read_text(encoding="utf-8")
     start, end = text.find(SCALE_BEGIN), text.find(SCALE_END)
     if start == -1 or end == -1:
-        raise SystemExit(f"docs/index.qmd has no {SCALE_BEGIN} block")
+        raise SystemExit(f"docs/clocks/meaning.qmd has no {SCALE_BEGIN} block")
     return text[:start] + scale_table() + text[end + len(SCALE_END):]
 
 
-# The known-discrepancy table in science.qmd §15.2. Hand-written, it listed
+# The known-discrepancy table (science §15.2, now methods/failure-modes.qmd). Hand-written, it listed
 # eleven clocks when the registry carried notes for twenty-two, while the page
 # said the list was generated from the registry. Now it is.
-SCIENCE = HERE / "science.qmd"
+SCIENCE = HERE / "methods" / "failure-modes.qmd"
 DISC_BEGIN = "<!-- BEGIN GENERATED: discrepancies -->"
 DISC_END = "<!-- END GENERATED: discrepancies -->"
 
@@ -477,11 +479,11 @@ def discrepancy_table() -> str:
 
 
 def render_science() -> str:
-    """docs/science.qmd with the discrepancy block replaced."""
+    """docs/methods/failure-modes.qmd with the discrepancy block replaced."""
     text = SCIENCE.read_text(encoding="utf-8")
     start, end = text.find(DISC_BEGIN), text.find(DISC_END)
     if start == -1 or end == -1:
-        raise SystemExit(f"docs/science.qmd has no {DISC_BEGIN} block")
+        raise SystemExit(f"docs/methods/failure-modes.qmd has no {DISC_BEGIN} block")
     return text[:start] + discrepancy_table() + text[end + len(DISC_END):]
 
 
@@ -505,7 +507,7 @@ def main(argv=None) -> int:
     # page that exists to help people find clocks. Reported, not swallowed.
     stray = unrouted_predicts()
     if stray:
-        print("predicts values not routed to any question on guide/clocks.qmd:")
+        print("predicts values not routed to any question on clocks/choosing.qmd:")
         for k, ids in sorted(stray.items()):
             print(f"  {k!r}: {len(ids)} clock(s), e.g. {ids[:3]}")
         print("  add them to QUESTIONS in python/src/falconage/registry/questions.py")
@@ -519,8 +521,8 @@ def main(argv=None) -> int:
             print(", ".join(str(p.relative_to(ROOT)) for p in stale)
                   + " is stale; run docs/build_catalogue.py")
             return 1
-        print("docs/clocks.qmd, docs/index.qmd, docs/guide/clocks.qmd and "
-              "docs/science.qmd are current")
+        print("docs/clocks/catalogue.qmd, meaning.qmd, choosing.qmd and "
+              "docs/methods/failure-modes.qmd are current")
         return 0
 
     for p, want in pairs:

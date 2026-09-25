@@ -1,0 +1,86 @@
+---
+title: "Other software"
+---
+
+## 12. Existing software landscape
+
+### 12.1 Python
+
+| Package | Scope | GPU | Notes |
+|---|---|---|---|
+| **pyaging** | 173 clocks, 5 data types, 5 species | Yes. PyTorch, CUDA auto-detect, optional CuPy | The most complete. Weights on Hugging Face `lucascamillomd/pyaging-data`, one `.pt` per clock. AnnData-native. |
+| **biolearn** | 39 biomarkers + data library (GEO/NHANES/Framingham) | No | The consortium's reference implementation; strongest on data harmonisation. |
+| **computage** | Benchmarking + de novo clock training (KDM, PLS) | No | The AA1/AA2 methodology and the 10,404-sample benchmark set. |
+| **organage** | Oh 2023 organ proteomic clocks (SomaScan) | No | |
+| **spatial-aging-clock** | 18 mouse brain cell-type spatial clocks | No | SquidPy-based. |
+| **scAge** | Single-cell methylation age | No | |
+| **CpGPT** | Foundation model, imputation + fine-tuned heads | Yes | |
+| **racpy** | RNAAgeCalc port | No | |
+
+### 12.2 R
+
+| Package | Scope | Notes |
+|---|---|---|
+| **methylclock** (Bioconductor) | Chronological clocks, gestational clocks, DNAmTL, PhenoAge | Limited scope but well-maintained. |
+| **methylCIPHER** (HigginsChenLab) | PC clocks, SystemsAge, CausalAge, DunedinPACE and many more | The broadest R clock library. |
+| **dnaMethyAge** | Common clocks with a tidy interface | |
+| **BioAge** (dayoonkwon) | KDM, PhenoAge, homeostatic dysregulation on NHANES III/IV | The reference clinical-chemistry implementation, with plotting and survival tables. |
+| **MEAT** (Bioconductor) | Muscle epigenetic age test | |
+| **MammalMethylClock** | Mammalian clock construction and application; SeSaMe normalisation, filtering, annotation, age/sex/species predictors; 11K+ samples, 59 tissues, 185 species, 19 orders | |
+| **CorticalClock** | Brain cortex DNAm age | |
+| **EpiMitClocks** | epiTOC1/2/3, epiCMIT, stemTOC, HypoClock | The authoritative mitotic clock source. |
+| **tAge** (Gladyshev-Lab) | 60 transcriptomic clocks; calls Python through reticulate | MGB Open Access License, non-commercial. |
+| **scImmuAging** | 5 PBMC cell-type clocks | |
+| **RNAAgeCalc** (Bioconductor) | GTEx transcriptomic age | |
+
+### 12.3 Web tools and databases
+
+- **ClockBase** (clockbase.org) - 11 clock models reprocessed over >300,000 GEO samples, with an
+  R package and interactive analysis.
+- **TACO** (app.gladyshevlab.org/TACO). Transcriptomic Age Calculator Online; the reference
+  application whose behaviour tAge mirrors.
+- **DNA Methylation Age Calculator** (dnamage.clockfoundation.org). Horvath, SkinBlood, GrimAge.
+- **Open Genes** - 2,402 age-related genes from >1,700 publications, 6 study types, 12 criteria,
+  API + download.
+- **Aging Atlas**, **AGEMAP**, **Digital Ageing Atlas**, **Human Ageing Genomic Resources**
+  (GenAge, AnAge, LongevityMap, DrugAge, GenDR), **JenAge**.
+- **aging.ai** - blood-biomarker DNN age.
+- **Longevity World Cup** - open-source PhenoAge calculator and leaderboard.
+
+### 12.4 The gap this project fills
+
+No package today does all of: (a) methylation *and* transcriptomics *and* proteomics *and*
+clinical chemistry in one API; (b) Python *and* R with identical numerics; (c) GPU acceleration
+beyond pyaging's methylation focus; (d) built-in benchmarking against ComputAgeBench-style AAC
+data; (e) reliability-aware reporting. pyaging is closest on (a) and (c); computage owns (d);
+methylCIPHER and BioAge own the R side.
+
+## 13. Prior implementations
+Sixteen public codebases were read against the papers while this package was written. They are
+listed because a citation to a paper says what a method *is*, and a citation to an implementation
+says what its authors actually *did*, and where the two disagree, which they do in eleven
+documented cases: the disagreement is itself the finding.
+
+None of it is vendored. Every clock architecture in FALCONAge is written from its published
+description. What these settled was the question a paper cannot answer on its own, when the text
+is ambiguous, which reading did the authors implement, together with the coefficient sets whose
+provenance could be traced back to a primary source.
+
+| Project | Origin | Language | What it settles |
+|---|---|---|---|
+| [pyaging](https://github.com/lucascamillomd/pyaging) | lucascamillomd | Python | The broadest existing clock registry (173 entries with curated metadata and an evidence ledger), the model base classes, the preprocess and postprocess transform set, the AnnData contract, weight distribution through Hugging Face, GPU dispatch. |
+| [ComputAge](https://github.com/ComputationalAgingLab/ComputAge) | ComputationalAgingLab | Python | AA1/AA2 benchmarking, the 65-study AAC dataset table, sesame imputation vector, `LinearMethylationModel` / `GrimAgeModel`, de novo KDM and PLS estimators, biolearn-derived model definitions. |
+| [computational_aging_course](https://github.com/ComputationalAgingLab/computational_aging_course) | ComputationalAgingLab | Jupyter Book | Teaching-grade chapters on aging biology (12 hallmarks), aging clocks, methylomics, survival analysis, complex systems and resilience. |
+| [BioAge](https://github.com/dayoonkwon/BioAge) | dayoonkwon | R | KDM, PhenoAge (original and modified), homeostatic dysregulation, NHANES III/IV data, plotting and survival/health/SES tables. Its correction to the PhenoAge 0.090165 constant is the reading FALCONAge follows. |
+| [tAge](https://github.com/Gladyshev-Lab/tAge) | Gladyshev-Lab | R + Python | The 2026 Nature transcriptomic clocks, full preprocessing chain, YuGene, ortholog mapping, pseudobulk, outlier removal, relative/differential clock semantics, unit discipline for mortality vs chronological. |
+| [organAging](https://github.com/ludgergoeminne/organAging) | ludgergoeminne | R + Python | Organ-specific plasma proteomic clocks (Cell Metabolism 2025), GTEx 4× fold-change organ definitions, Cox elastic net and Weibull AFT training code, log-hazard → years Gompertz conversion, ~50 plotting scripts. |
+| [SpatialAgingClock](https://github.com/sunericd/SpatialAgingClock) | sunericd | Python | Spatial smoothing, cell-type-specific LASSO clocks, within-animal age acceleration, cell proximity effect analysis (Nature 2025). |
+| [scImmuAging](https://github.com/CiiM-Bioinformatics-group/scImmuAging) | CiiM-Bioinformatics-group | R | PBMC cell-type clocks from 1,081 donors aged 18–97 (Nat Aging 2025); pseudocell construction; LASSO/RF/PointNet training scripts. |
+| [SCALE](https://github.com/ChengLiLab/SCALE) | ChengLiLab | R | Literature-informed aging gene sets, detection-frequency-weighted z-score, single-cell entropy, four correlation measures (Pearson/dcor/MIC/nlcor). |
+| [AgingClock](https://github.com/Meyer-DH/AgingClock) | Meyer-DH | Python | BiT age binarisation, the truncated-Gaussian second correction, lifespan fold-change with error propagation, v2 coefficients. |
+| [DNAm-based-age-predictor](https://github.com/qzhang314/DNAm-based-age-predictor) | qzhang314 | R | Zhang 2019 EN (514 probes) and BLUP (319,607 probes) coefficients and the exact per-sample standardisation. |
+| [mcp-phenoage-clock](https://github.com/199-mcp/mcp-phenoage-clock) | 199-mcp | TypeScript | A clean, validated PhenoAge implementation with reference ranges, input bounds, mortality clamping, and interpretation strings. Good template for user-facing validation. |
+| [phenotypic-age-calc](https://github.com/KyteProject/phenotypic-age-calc) | KyteProject | Python | Minimal PhenoAge with explicit unit conversions. |
+| [Biological-Aging-and-PRS-for-Mortality-Prediction](https://github.com/shayanmostafaei/Biological-Aging-and-PRS-for-Mortality-Prediction) | shayanmostafaei | R | Multi-cohort mortality analysis design: TwinGene n = 9,617 (16.7 y median follow-up) discovery, UK Biobank n = 179,504 (11.83 y) validation; PhenoAge, KDM, HD, frailty index, telomere length, mvAge PRS; Cox + ROC + SuperLearner + subgroup + interaction analyses. |
+| [Aging_clock](https://github.com/mdozmorov/Aging_clock) | mdozmorov | Markdown + data | Curated literature index with clock CpG data (Levine 2018, Petkovich 2017, Wang 2017, Yang 2016 epiTOC) and Horvath's original R tutorial. |
+| [Ageing-analysis-using-R](https://github.com/SWAROOP006/Ageing-analysis-using-R) | SWAROOP006 | R | Telomere repeat (TTAGGG and variants) detection across 28 genomes with seqinr. Peripheral to clock work. |

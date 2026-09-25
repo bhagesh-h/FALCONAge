@@ -1,0 +1,141 @@
+---
+title: "Age acceleration"
+---
+
+## Age acceleration
+The three conventions disagree by several years on the same data, and papers frequently do not say
+which they used.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.acceleration(res, method="absolute")      # predicted - chronological
+fa.acceleration(res, method="residual")      # residual of predicted on chronological
+fa.acceleration(res, method="both")          # both, as <clock>_absolute / <clock>_residual
+fa.acceleration(res, method="within_group", group="dataset")
+```
+
+### R
+
+```r
+acceleration(res, method = "absolute")
+acceleration(res, method = "residual")
+acceleration(res, method = "both")
+acceleration(res, method = "within_group", group = "dataset")
+```
+
+:::
+
+Absolute is interpretable in years and carries the clock's own bias: a clock five years high on
+everybody gives everybody five years of acceleration. Residual removes that bias, and removes any
+real cohort-wide effect with it. Within-group is what the AA2 benchmark needs: it asks whether
+cases accelerate relative to *their own* controls. `"both"` returns the first two side by side,
+suffixed, for when you would otherwise have to pick without knowing which the comparison paper
+used.
+
+### Adjusting for cell composition
+
+Blood cell composition changes with age, and with most other things that happen to a person. In
+more than 10,000 blood samples, immune composition was significantly associated with age
+acceleration for **every one** of six widely used clocks, so an unadjusted acceleration is
+measuring two things and reporting one number.
+
+The proportions needed to separate them are usually already in the result, computed by the
+deconvolution clocks in the same run:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.cell_composition(res)                        # the proportions, as covariates
+fa.acceleration(res, adjust="cell_composition") # net of them
+fa.acceleration(res, adjust=["cd8t", "mono"])   # or measured counts from obs
+```
+
+### R
+
+```r
+cell_composition(res)
+acceleration(res, adjust = "cell_composition")
+acceleration(res, adjust = c("cd8t", "mono"))
+```
+
+:::
+
+An adjusted acceleration is a different quantity from an unadjusted one, so the returned frame
+records which covariates went in. Comparing the two as though they were the same measurement is
+the error this is designed to make visible.
+
+Ask for acceleration on a pace-of-aging clock and it refuses:
+
+::: {.falcon-output}
+```
+Error: 'acceleration' is not defined for dunedinpoam38, whose output is
+  pace_ratio (biological years per chronological year).
+  A pace of aging is already a rate; subtracting chronological age from it is
+  a units error, not a conservative choice.
+```
+:::
+
+That refusal is the point. A wrong number in a column of numbers is invisible.
+
+## 9. Downstream statistics on an aging score
+
+### 9.1 Association with chronological age
+
+Pearson r, Spearman ρ, MAE, MedAE, RMSE, and the regression slope of BA on CA. The slope is the
+diagnostic: penalised regression compresses predictions toward the training mean, so slopes < 1
+are normal and produce the well-documented systematic underestimation in older subjects. Report
+the slope, not just r.
+
+### 9.2 Mortality
+
+Cox proportional hazards with the standardised score plus CA and sex as covariates:
+
+```r
+coxph(Surv(time, status) ~ scale(BA_advance) + age + gender, data)
+```
+
+Report the HR per SD with 95% CI. BioAge standardises the advance within sex so the effect size
+means "one sex-specific SD of biological age advancement"
+([BioAge table_surv.R](https://github.com/dayoonkwon/BioAge)). Observed HRs from BioAge's NHANES IV
+tables run 1.21–1.61 per SD across measures and subgroups, with KDM advance, PhenoAge advance and
+homeostatic dysregulation broadly comparable
+([BioAge README](https://github.com/dayoonkwon/BioAge)).
+
+Additional model families worth supporting: time-dependent ROC/AUC, Harrell's C-index, competing
+risks (Fine–Gray), and SuperLearner ensembles with out-of-fold predictions (the
+TwinGene/UK Biobank pipeline uses 10-fold CV, optionally repeated across seeds).
+
+### 9.3 Morbidity and phenotype
+
+Logistic or Poisson models for prevalent and incident disease; multimorbidity counts; frailty
+index; intrinsic capacity; grip strength and gait speed; cognitive scores. Interaction tests for
+BA × (BMI, sex, smoking, education) are standard in the epidemiological literature.
+
+### 9.4 Group comparison and intervention response
+
+The ComputAgeBench formulation, which is the cleanest published statement of the problem
+([ComputAge benchmarking.py:339–397](https://github.com/ComputationalAgingLab/ComputAge)):
+
+- **AA2** - is the age acceleration in an aging-accelerating condition (AAC) cohort greater than
+  in healthy controls from the same study? One-sided Welch's t-test if Δ is assumed normal, else
+  one-sided Mann–Whitney U.
+- **AA1** - is the age acceleration in an AAC cohort greater than zero, with no control group?
+  One-sided one-sample t-test, else one-sided Wilcoxon signed-rank.
+- Benjamini–Hochberg FDR correction is applied **per model across datasets**, then thresholded at
+  0.05.
+
+For paired intervention designs, use paired tests on within-subject deltas and report both the
+absolute change and the change relative to the measurement's own ICC.
+
+### 9.5 Reliability
+
+Intraclass correlation coefficient on technical replicates (same DNA, two arrays) and on
+biological replicates (same person, short interval). Pool across studies with Fisher-Z. The
+TranslAGE 2025 result is the one to remember: **technical reproducibility does not predict
+biological reliability**, and PCGrimAge was the only clock reaching ICC > 0.75 for biological
+reliability. A tool should surface each clock's published ICC next to its prediction.

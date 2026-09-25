@@ -1,0 +1,212 @@
+---
+title: "Failure modes and the frontier"
+---
+
+## 15.2 Where the paper and the coefficients disagree
+
+<!-- BEGIN GENERATED: discrepancies -->
+
+22 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coefficients and the implementations in circulation disagree. Each is raised as a warning at score time.
+
+| Clock | The disagreement |
+|:---------|:----------------------------|
+| `bocklandt` | The paper describes a 2-CpG model; the coefficient set in circulation carries 1. Which probe was dropped is not documented upstream, so this is not the published model. |
+| `bohlin` | The paper reports 96 CpGs; the coefficient set in circulation carries 251. Scores here will match other packages and not the figures printed in the paper. |
+| `cvdwesterman` | The paper reports 1,305 CpGs; the coefficient set in circulation carries 235. Expect disagreement with any value quoted from the paper. |
+| `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, `mccartneytotalcholesterol`, `mccartneytotalhdlratio`, `mccartneywhr` | The paper defines this predictor as a weighted sum of beta values and applies no link function; the ROC analysis it reports dichotomises the phenotype, not the score. Packages that pass the sum through a sigmoid report a different number. The scale is relative_score, whose legal operations are correlate and rank, and a sigmoid is monotone, so no permitted result changes either way. |
+| `phenoage` | Two constants circulate in the divisor of the Gompertz inversion: 0.090165, printed in Levine 2018 Supplement 1, and 0.09165, printed in Liu et al. 2018 (PLoS Med). FALCONAge uses 0.090165, the value BioAge corrected to in April 2026. Code still using 0.09165 differs by several years on the same input. |
+| `phenoage` | Levine 2018 Table 1 prints alkaline phosphatase as 0.0019; Liu et al. 2018 print 0.00188, and BioAge carries the fit at full precision (0.001868778, every weight rounding to Table 1). FALCONAge uses Table 1 as printed, a mean 0.074 years above the full-precision fit on NHANES III; phenoage(df, coefficients='bioage') uses BioAge's. |
+| `phenoage` | BioAge enters CRP as log(1 + CRP), its lncrp, where the paper uses log(CRP). On NHANES III that puts BioAge's phenoage0 a mean 1.50 years above the paper's formula (SD 0.45, more at low CRP; n = 8,924). FALCONAge follows the paper; phenoage(df, crp_transform='log1p', coefficients='bioage') reproduces phenoage0 exactly. |
+| `senchronoage`, `sencultureage`, `senmortalityage` | The upstream README's feature count disagrees with the coefficient object it ships. The registry follows the coefficient file, because that is what scores. |
+| `weidner` | The third site is a substitution. The paper's gamma is not cg17861230 but an unnamed CpG upstream of it, measured by pyrosequencing and better correlated with age; no array id was ever published for it. Every array implementation of this clock, including this one, puts cg17861230 in its place, and gamma carries 164.7 of the model against 26.4 and 23.7 for the two genuine probes. Treat the result as the published model evaluated on a near neighbour. |
+| `yingadaptage`, `yingdamage` | Scored across three healthy cohorts in the FALCONAge corpus, this clock's median offset against chronological age swings 162 years between datasets while Horvath2013's swings 15; DamAge and AdaptAge move as near mirror images (r = -0.975) and the swing in their sum is only 33, so the cause is one dataset-level shift amplified by their opposing intercepts of +543.43 and -511.97 rather than a fault in either. The slope against age is sound (0.967 pooled for DamAge). The scale is therefore age_years_relative: the residual and group differences are defined, predicted-minus-chronological is not. |
+| `yingadaptage` | The paper reports 1,000 CpGs; the coefficient set carries 999. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
+| `yingcausage` | The paper reports 586 CpGs; the coefficient set carries 585. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
+| `yingdamage` | The paper reports 1,090 CpGs; the coefficient set carries 1,089. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
+| `zhangmortality` | The paper defines this as an integer count of markers past quartile thresholds; the implementations in circulation compute a continuous weighted sum. They are different statistics, and the continuous form has no published cut-points, which is why its scale_type is relative_score rather than a count. |
+
+<!-- END GENERATED: discrepancies -->
+
+The table is generated from the registry by `docs/build_catalogue.py`: `reg.get(id).known_discrepancies`
+returns the full text, and `res.manifest["warnings"]` carries whichever of them fired on your run.
+The Ying clocks additionally carry a measured cohort-offset note, which is why they sit on
+`age_years_relative` rather than `age_years`, §19.3.1.
+
+## 16. Failure modes
+**Units.** PhenoAge in SI vs conventional units gives different answers with the same
+biomarker draw. Albumin g/L vs g/dL is a 10× error; creatinine µmol/L vs mg/dL is ~88×; CRP mg/L
+vs mg/dL is 10× inside a log. Force explicit units at the API boundary and refuse to guess.
+
+**The 0.090165 constant.** Some published code uses 0.09165. BioAge fixed this in April 2026.
+Check any inherited implementation.
+
+**EPIC v2 suffixes.** Aggregate before scoring or every clock sees zero features.
+
+**Dropping DunedinPACE background probes.** The 19,827 non-scoring probes define the quantile
+mapping. Subsetting to the 173 scoring CpGs produces a plausible-looking wrong number.
+
+**Zero-filling missing methylation features.** β = 0 means fully unmethylated. Use reference
+values. pyaging warns; make it an error above a configurable missingness threshold.
+
+**Mixing generations in a composite.** Averaging Horvath (chronological) with GrimAge (mortality)
+produces a number with no interpretation. Composite only within generation, after z-scoring.
+
+**Subtracting CA from a rate clock.** DunedinPACE is not an age.
+
+**Multiplying a mortality clock by species maximum lifespan.** tAge guards this with a registry
+flag precisely because it is an easy mistake.
+
+**Per-sample vs per-feature scaling.** Zhang z-scores across probes *within* a sample; AltumAge
+scales each feature by training median/std *across* samples; tAge's `scale_eset` is column-wise,
+i.e. per sample. Getting the axis wrong is silent.
+
+**Regression dilution.** All penalised clocks compress toward the training mean, so BA is biased
+low in the old and high in the young, and the naive `BA − CA` correlates with CA. Report the RAA
+residual too.
+
+**Cell composition confounding.** Second-generation and single-tissue clocks partly read cell
+proportion. Run deconvolution alongside and either adjust or report both.
+
+**Cell type dominates age in single cells.** scEpiAge found cell-type effect > age effect. Always
+model within cell type.
+
+**Batch and array position.** Chip position and DNA extraction protocol move clock values by
+years. PC clocks and SystemsAge are the mitigations; randomising sample layout is the prevention.
+
+**Technical ICC is not biological ICC.** A clock can be perfectly reproducible on a re-run of the
+same DNA and still be unstable across two blood draws a week apart.
+
+**Age-range extrapolation.** Models trained on adults 20–70 do not extrapolate; gestational and
+paediatric clocks are separate for a reason. Enforce the registry `population` field.
+
+**`torch.load(weights_only=False)`.** Arbitrary code execution from a downloaded file. Move to
+safetensors.
+
+**Sex encoding.** GrimAge takes `Female` as 1/0; ComputAge maps unknown sex to 0.5, which is a
+silent half-male half-female fudge. Make unknown sex an explicit user decision.
+
+**Intercept placement.** Some packages put the clock intercept in the transform lambda, others in
+the linear layer bias. Normalise at import or double-count.
+
+**FP32 on PC clocks.** The 78,464-dimensional centring and rotation is ill-conditioned; validate
+before defaulting to FP32.
+
+**Sample size for HD.** The Mahalanobis covariance needs more reference samples than biomarkers,
+well-conditioned. BioAge warns on single-row inputs; a real tool should check the condition number.
+
+## 17. The frontier, and what FALCONAge does not yet compute
+
+Reviewed to August 2026. This section exists because a tool that silently omits half a field reads
+as though the field ends where it does. Each item states the science, the blocker, and whether the
+blocker is technical or legal.
+
+### 17.1 Array normalisation, and what it corrects
+
+FALCONAge takes a beta matrix. It does not produce one from raw intensities, and the chain it
+skips exists to correct specific instrument artefacts rather than to tidy data.
+
+An Infinium array carries two probe chemistries. **Type I** uses two beads per CpG read in one
+colour channel, which leaves the other channel at that address carrying no designed signal -- the
+**out-of-band** readings. **Type II** uses one bead, methylated in green and unmethylated in red,
+and covers roughly 84% of probes from 450K onward. The two designs have different beta
+distributions, so a raw array is bimodal for reasons that are chemistry rather than biology.
+
+| Step | What it removes | How |
+|---|---|---|
+| **noob** | background fluorescence, cross-channel bleed | normal-exponential deconvolution using the out-of-band Type I readings as the background distribution -- the background estimate comes free from probes never meant to fluoresce in that channel |
+| **dye bias** | red/green intensity difference | quantile-matching the channels on Type I probes measured in both |
+| **pOOBAH** | measurements indistinguishable from background | detection p-value from the empirical out-of-band distribution; failures are masked to NA, not deleted |
+| **BMIQ** | the Type I/Type II design difference | three-state beta mixture fitted to Type II, Type I quantile-mapped onto it within each state |
+| **probe masks** | probes untrustworthy anywhere | cross-reactive probes, probes overlapping common SNPs at the interrogated base, sex chromosomes |
+
+The order is load-bearing -- noob, dye bias, pOOBAH, then BMIQ -- and it matters because **clock
+coefficients were fitted on the output of a particular chain**. Applying Horvath's weights to raw
+betas is not a smaller version of the right answer; it is the right weights on the wrong scale.
+
+Until this ships, normalise with [sesame](https://bioconductor.org/packages/sesame/) or
+[minfi](https://bioconductor.org/packages/minfi/) and bring the beta matrix here.
+
+### 17.2 Cross-platform harmonisation
+
+Probe content changed across 27K, 450K, EPIC v1 and EPIC v2. EPIC v2 both dropped probes earlier
+clocks depend on and renamed others with replicate suffixes. FALCONAge handles the suffixes and
+*measures* the damage from the drops, by count and by coefficient mass. It cannot yet repair them.
+
+`mLiftOver` is the published answer, and it is four things rather than an ID lookup: probe-ID
+conversion, replicate management, optional imputation with a confidence filter, and -- the part
+that cannot be reconstructed -- a mapping table carrying empirical evidence of whether each
+probe's cross-platform mapping is reliable. Those tables are measured on paired samples and
+distributed through Bioconductor's ExperimentHub, so this is blocked on data rather than effort.
+
+Two mitigations are complementary: principal-component clocks absorb probe loss because a missing
+probe perturbs a component instead of deleting a term, which is why EPIC v2 disrupts the
+first-generation clocks and barely moves the PC ones.
+
+### 17.3 Proteomic organ clocks
+
+If a protein is enriched at least fourfold in one organ relative to all others, its plasma level
+proxies that organ's state -- so one blood draw supports an age estimate per organ. Ten organ
+clocks plus an organismal one were trained in UK Biobank (n = 43,616) and validated in China
+(n = 3,977) and the USA (n = 800) at cross-cohort r = 0.98 and 0.93, with brain age most strongly
+linked to mortality.
+
+Two properties matter for anyone implementing this. **Olink NPX is log2 and relative already**, so
+re-logging it is an error and comparing across panel versions without bridging is another. And
+these clocks are **z-scored against a training cohort, not against your own samples** -- using
+your cohort's mean silently recentres everyone to zero acceleration, the same class of mistake as
+filling an absent probe with zero. About half the ageing predictors in Olink-based clocks are
+absent from SomaScan-based ones, so the platforms are not interchangeable.
+
+### 17.4 Transcriptomic clocks
+
+Six clocks from two normalisations (YuGene-diff, Scaling-diff) and three targets (chronological
+age, normalised age, mortality), trained as multi-species multi-tissue elastic nets over more than
+11,000 transcriptomes.
+
+The chain is: filter low-count genes, map to one-to-one orthologues only, RLE-normalise, log10,
+per-sample z-score or YuGene, then **median-centre across all samples within each dataset**.
+
+That last step is why these are not simply another modality. A transcriptomic clock is **undefined
+for a single sample in isolation** -- the centring is a property of the cohort. An implementation
+has to refuse a one-sample run rather than warn about it.
+
+Accuracy runs 5-7 years MAE against methylation's 3-5. The honest reading is that they answer a
+different question, not that they are worse.
+
+### 17.5 Methylation foundation models
+
+**CpGPT** (pretrained on 2,000+ datasets, 150,000+ samples) and **MethylGPT** (226,555 profiles
+from 5,281 datasets) are transformers over CpG sites taking sequence, position and epigenetic
+context, so they can reason about a site they have not seen on an array.
+
+The interesting capability is not another age predictor. It is **zero-shot imputation and
+cross-array conversion**, which attacks EPIC v2 probe loss, platform harmonisation and single-cell
+sparsity at once. CpGPT placed second for age and first for methylation-based mortality in the
+Biomarkers of Aging Challenge, and its attention weights give per-sample interpretability --
+which sites drove *this* prediction.
+
+This would also be the first model here where a GPU is the right default. Everything currently
+shipped is a dot product over a few thousand features, and [GPU support](../dev/gpu.qmd) measures CUDA as
+*slower* for exactly that reason; a transformer inverts the arithmetic.
+
+### 17.6 Single-cell
+
+Single-cell methylation is binary and sparse -- a site is covered or not, methylated or not -- so
+a linear clock cannot be applied directly. **scAge** answers with a per-cell maximum likelihood
+over the covered subset, closer in spirit to conditioning on coverage than to taking a dot
+product. On the transcriptomic side **scAgeClock** reaches about 2 years MAE for the best cell
+types using gated multi-head attention, and single-cell profiles are pooled to pseudobulk before a
+bulk transcriptomic clock is applied.
+
+### 17.7 Reliability, and why it governs everything above
+
+Technical and biological reliability come apart. Nearly every clock is technically excellent --
+the same sample assayed twice agrees closely -- while biological ICCs, the same person sampled
+again days later, are substantially lower, with no clear relationship between the two. **GrimAge2
+and DunedinPACE are among the most biologically fragile**, and they are the two most often used to
+claim an intervention worked.
+
+The registry carries both figures where a source exists and `None` where none does, because an
+unpublished ICC is not a good ICC. The Biomarkers of Aging Consortium's own stated bottleneck is
+not the models but the absence of standard procedures for collecting specimens and applying
+biomarkers.

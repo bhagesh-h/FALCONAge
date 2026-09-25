@@ -72,163 +72,6 @@ say what else it cannot do.
 error in the same people). Cell-free DNA on any array clock. Age acceleration on a pace-of-aging
 clock. A cohort-centred clock given one sample. Each refusal names the measurement behind it.
 
-## Installation
-Docker is the supported path. One image carries Python, R, the CLI and all 43 bundled weight files at
-pinned versions, so the same input gives the same numbers on your machine and on a reviewer's.
-Both images are published on [Docker Hub](https://hub.docker.com/r/bhagesh/falconage) and built
-from the Dockerfiles in this repository. Two commands from nothing to a proven install:
-
-```bash
-docker pull bhagesh/falconage:1.0.0-cpu
-docker run --rm bhagesh/falconage:1.0.0-cpu python -m pytest /opt/falconage/src/python/tests -q
-```
-
-The second line proves it by running the 462-test suite inside the image, against the source it
-was built from. To build the same image yourself instead of pulling it:
-
-```bash
-git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
-docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
-```
-
-On Windows PowerShell write `"${PWD}"`. Open a session with
-`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python`, or `... R`, and
-every example below works unchanged.
-
-[Getting started](guide/FALCONAge.qmd) walks the same ground one command at a time, including
-fetching real public data, the GPU image, and a **native pip / `remotes::install_github`
-install** for anyone who already manages their own environment.
-
-## Quick start
-::: {.panel-tabset}
-
-### Python
-
-```python
-import falconage as fa
-
-data = fa.prepare(fa.read_betas("betas.csv"))
-res  = fa.score(data, clocks="compatible")
-
-res.summary()
-fa.acceleration(res, method="both")
-fa.plot.ba_vs_ca(res, "horvath2013")
-fa.report.write_report(res, "report.html")
-```
-
-### R
-
-```r
-library(FALCONAge)
-
-d   <- prepare(read_betas("betas.csv"))
-res <- score(d, clocks = "compatible")
-
-summary(res)
-acceleration(res, method = "both")
-plot_ba_vs_ca(res, "horvath2013")
-report(res, "report.html")
-```
-
-:::
-
-Both produce the same numbers, because both run the same code. The R package delegates all
-arithmetic to the Python core through reticulate, and the R suite asserts equality at tolerance
-exactly zero rather than approximate agreement.
-
-## The clock catalogue
-175 clocks, in three availability groups. Availability is about redistribution rights, not about
-whether the algorithm works: every architecture is implemented and tested whatever the group.
-
-| Availability | n | What you do |
-|---|---:|---|
-| `bundled` | 46 | Nothing. Forty-three ship a weights file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
-| `untraced` | 89 | Catalogued, but no primary source for the numbers has been established yet, so nothing is bundled. |
-| `licensed` | 40 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are research-use-only. |
-
-```python
-fa.registry.load().filter(availability="bundled")
-```
-
-## Training targets, and what a score means
-
-![Three quantities that all get called "biological age", and the units that keep them apart](images/three-quantities.png)
-
-Chronological age is elapsed time, and it is known without measuring anything. Biological age is
-an estimate of how worn a body is for that elapsed time. Pace of aging is a rate, years of wear
-per year of calendar time, and it is the only one of the three that a single sample cannot
-establish on its own: the Dunedin measure was fitted against two decades of repeated
-biomarker readings. Because the three carry different units, none of them converts into another,
-which is why a registry entry declares a `scale_type` and not only a unit.
-
-What a clock's output *means* is set by the outcome it was regressed on. Six families are in
-common use, and they are not variants of one quantity:
-
-- **Chronological-age clocks** (Horvath 2013 [[5]](references.qmd#ref-5), Hannum 2013 [[4]](references.qmd#ref-4)) are fitted to calendar age. Their error
-  bars are prediction error against a known truth.
-- **Mortality- and morbidity-trained clocks** (PhenoAge [[8]](references.qmd#ref-8), GrimAge [[11]](references.qmd#ref-11)) are fitted to a survival-weighted
-  composite and then rescaled into years. The unit is years; the target was never age.
-- **Pace-of-aging clocks** (DunedinPACE [[15]](references.qmd#ref-15)) are fitted to the *rate of change* in organ-system
-  biomarkers tracked longitudinally. Belsky and colleagues draw the distinction directly:
-
-  > [Pace-of-aging measures capture] the rate of deterioration in system integrity occurring over a
-  > fixed time interval, whereas epigenetic clocks estimate the progress of aging up to a
-  > cross-section in time.
-  >
-  > [Belsky et al., *eLife* 2022](https://doi.org/10.7554/eLife.73420)
-
-- **Mitotic clocks** (epiTOC2 [[20]](references.qmd#ref-20), StemTOC) estimate cumulative stem-cell divisions. The quantity is a
-  count, not elapsed time.
-- **Causality-enriched clocks** (CausAge, DamAge, AdaptAge) restrict features to CpGs with
-  Mendelian-randomisation support, separating damaging from adaptive change
-  ([Ying et al., *Nature Aging* 2024](https://doi.org/10.1038/s43587-023-00557-0), [[19]](references.qmd#ref-19)).
-- **Deconvolution models** return cell-type proportions, which are a composition and must sum to
-  one.
-
-Reporting all six as "biological age" discards the information needed to interpret any of them.
-
-## Scale types and permitted operations
-
-![Six of the nine scales, and the four operations most often applied to them without checking](images/scale-types-and-legal-operations.png)
-
-Reading down the acceleration column is the shortest statement of the problem. Only an age in
-years with a fixed origin admits it. A pace is already a rate, a division count is not elapsed
-time, and a log hazard is not even on an additive scale, so subtracting a chronological age from
-any of them produces a number with no units behind it. The matrix drawn here is the same one the
-code enforces, in `LEGAL_OPS`.
-
-Every registry entry declares a `scale_type` alongside its unit, platform, species and the tissue
-its coefficients were fitted in. That field decides which downstream operations FALCONAge will
-perform:
-
-<!-- BEGIN GENERATED: scales -->
-
-| `scale_type` | n | What the number is | Units in the registry | Operations permitted |
-|---|---:|---|---|---|
-| `age_years` | 77 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
-| `relative_score` | 54 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
-| `proportion` | 18 | A composition. The estimates are fractions of a whole and are constrained to sum to one. | proportion | compositional, correlate, difference, mean |
-| `divisions` | 10 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
-| `gestational_weeks` | 8 | An age, before birth. | weeks, days, units per week | acceleration, correlate, difference, mean, residual |
-| `telomere_kb` | 2 | An estimated physical length. | kilobases, base pairs | acceleration, correlate, difference, mean |
-| `pace_ratio` | 2 | A rate: how much biological ageing per year of calendar time, at the moment of sampling. | biological years per chronological year | correlate, difference, mean, rank |
-| `mortality_log_hazard` | 2 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, unitless | correlate, hazard ratio, mean, rank |
-| `age_years_relative` | 2 | An age in years with a slope near one against chronological age, but no fixed origin: the offset moves between cohorts. The residual and group differences are defined; predicted minus chronological is not. | years | correlate, difference, mean, residual |
-
-<!-- END GENERATED: scales -->
-
-Age acceleration is the residual of predicted age on chronological age. It is defined when the
-prediction is in years and undefined when it is a rate, so asking for it on DunedinPACE is an
-error with a message, not a number:
-
-```
-IllegalOperationError: 'acceleration' is not defined for dunedinpace, whose output is
-pace_ratio (biological years per chronological year).
-  Legal here: correlate, difference, mean, rank.
-  A pace of aging is already a rate; subtracting chronological age from it is a units
-  error, not a conservative choice.
-```
-
 ## Scope and limitations
 
 What the tool is for, what it declines to do, and what it cannot do yet. Three
@@ -240,7 +83,7 @@ The reason, rather than the disclaimer. Reliability varies sharply between clock
 reproducibility and biological stability are separate properties that do not track together: a
 clock can be highly repeatable on split samples and still move with a meal or a night's sleep. So
 a score that survives replication is not thereby measuring a stable trait, and the two failures
-need different evidence to rule out. [The science of aging clocks](science.qmd) sets out, clock by
+need different evidence to rule out. [The science of aging clocks](methods/index.qmd) sets out, clock by
 clock, which is established and which is contested.
 
 ### Out-of-scope use
@@ -268,14 +111,14 @@ Each of these is a silent wrong answer somewhere else, so each is a hard failure
   `probe_loss()` reports both before you score anything.
 - **Claim coverage means validity.** High coverage says the probes are present. It says nothing
   about whether coefficients fitted in one tissue, species or population transfer to yours; that
-  judgement stays with you, and [Choosing a clock](guide/clocks.qmd) lays out the grounds for it.
+  judgement stays with you, and [Choosing a clock](clocks/choosing.qmd) lays out the grounds for it.
 - **Let a paper-versus-implementation disagreement pass silently.** Eleven clocks in the
   catalogue are scored from coefficients that differ from what their paper describes: a feature
   count, a changed statistic, a constant. Each carries the note, and it is raised as a warning at
   score time, not left on a documentation page.
 
 ### Known limitations
-Said here rather than left to be inferred. [The science page](science.qmd) §19 and §20 cover each
+Said here rather than left to be inferred. [The science page](methods/index.qmd) §19 and §20 cover each
 in full, with the algorithms and the reason each is or is not blocked.
 
 - **It does not repair cross-platform probe loss.** It measures it twice over: by count, by
@@ -300,12 +143,12 @@ probe masks), the raw-IDAT path, single-cell scoring, and the transcriptomic per
 refusal.
 
 ## Further reading
-- [Getting started](guide/FALCONAge.qmd), install, score, interpret, in both languages.
-- [Choosing a clock](guide/clocks.qmd), by the question you asked, by what the scale permits, and
+- [Getting started](start/quickstart.qmd), install, score, interpret, in both languages.
+- [Choosing a clock](clocks/choosing.qmd), by the question you asked, by what the scale permits, and
   by whether the coefficients transfer to your data at all.
-- [Clock catalogue](clocks.qmd), all 175, searchable.
+- [Clock catalogue](clocks/catalogue.qmd), all 175, searchable.
 - [Python reference](reference/index.qmd) · [R reference](r/index.html)
-- [GPU support](gpu.md), what was verified on real hardware, and why `device="auto"` is CPU.
+- [GPU support](dev/gpu.qmd), what was verified on real hardware, and why `device="auto"` is CPU.
 
 The whole site is also downloadable as PDF or markdown; see the **Download** menu.
 

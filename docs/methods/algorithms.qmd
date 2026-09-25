@@ -1,0 +1,521 @@
+---
+title: "4. Algorithm families with full math"
+---
+
+## 4.1 Penalised linear regression, the field's default
+
+Objective for elastic net over samples i and features j:
+
+```
+min_β  (1/2n) Σ_i (y_i − β₀ − Σ_j x_ij β_j)²  +  λ [ (1−α)/2 · Σ_j β_j²  +  α · Σ_j |β_j| ]
+```
+
+α = 1 is LASSO, α = 0 is ridge. Horvath used α = 0.5. Application at inference is a dot product:
+
+```
+score = β₀ + Σ_j β_j x_j
+```
+
+then a clock-specific output transform (§5). Of the 173 clocks in pyaging's registry, 64 are
+elastic net, 20 LASSO, 5 plain linear regression, 1 ridge, 1 BLUP.
+
+**BLUP** (Zhang 2019) treats all 319,607 probes as random effects with a common variance,
+`β = (X'X + λI)⁻¹X'y` in the mixed-model sense. Requires the full probe set, so it degrades less
+than elastic net when many probes are missing, and Zhang's own script says so explicitly
+([DNAm-based-age-predictor pred.R](https://github.com/qzhang314/DNAm-based-age-predictor)). Crucially, both Zhang models
+**z-score within each sample across probes** before the dot product:
+
+```r
+dataNona.norm <- apply(dataNona, 1, scale)   # per-individual scaling, probes x individuals
+```
+
+## 4.2 PC clocks
+
+Higgins-Chen 2022. Instead of regressing age on individual CpGs, regress on the top principal
+components of a large CpG block (78,464 probes for most PC clocks, 125,175 for SystemsAge). This
+averages away probe-level technical noise and raises test-retest ICC dramatically.
+
+```
+score = ((x − μ) W) β + β₀
+```
+
+where μ is the training centre vector, W the p × k rotation (1,933 PCs for PCGrimAge), β the
+regression weights on PCs. Implemented as `PCLinearModel`
+([pyaging _base_models.py:72](https://github.com/lucascamillomd/pyaging)). The storage
+cost is the rotation matrix - 78,464 × k floats, which is why PC clocks are the memory-heavy
+members of any registry.
+
+## 4.3 Survival models
+
+**Cox proportional hazards.** `h(t|x) = h₀(t) exp(x'β)`. The linear predictor `x'β` is a
+log-hazard, unbounded, not in years. FALCONAge fits it by Newton–Raphson on the partial likelihood with
+Breslow's handling of tied event times, where the risk set at a time includes every subject still
+followed at that time, tied subjects included, and matches R's `survival::coxph(ties = "breslow")`
+to six decimals in its tests. Follow-up recorded in whole months, as NHANES is, makes ties the
+usual case rather than the exception; FALCONAge 1.0.0 left tied subjects out of each other's risk
+sets and was 1.1% off R on such data. `cox_hazard()` reports the hazard ratio per unit of the
+score, per year for an age clock. GrimAge, GrimAge2, CpGPTGrimAge3, SenMortalityAge and the
+organAging mortality models all output this.
+
+**Cox → years.** GrimAge standardises the Cox score against training-set moments then rescales
+to the training age distribution:
+
+```
+years = ((cox − cox_mean) / cox_std) × age_std + age_mean
+```
+
+GrimAge v1: cox_mean 13.20127, cox_std 1.086805, age_mean 59.63951, age_std 9.049608.
+GrimAge2: cox_mean 15.370829484122, cox_std 1.09534876966487, age_mean 66.0943807965085,
+age_std 9.05974444998421
+([pyaging _models.py:1683,1769](https://github.com/lucascamillomd/pyaging)).
+
+**Gompertz mortality → years.** The PhenoAge route (§5.1) and the organAging route. organAging's
+published human Gompertz fit on the log scale: intercept −9.94613787413831,
+slope 0.0897860500778604, mean cohort age 57.29426 y. Convert a relative log-hazard `r` to years:
+
+```
+avg_r      = intercept + slope × mean_age            # = −4.801912
+years      = (−avg_r + r) / slope − intercept
+```
+
+**Accelerated failure time.** organAging also fits `WeibullAFTFitter(penalizer=0.01)` (lifelines)
+for time-to-death models ([organAging clock_utils.py](https://github.com/ludgergoeminne/organAging)).
+
+**Cox elastic net.** `CoxnetSurvivalAnalysis(alpha_min_ratio="auto", n_alphas=50)` from
+scikit-survival, grid-searched over `l1_ratio ∈ {0.5, 1.0}` with 3-fold CV - organAging's
+mortality models.
+
+## 4.4 Klemera–Doubal method (KDM)
+
+The most statistically principled of the clinical-chemistry methods. Fit one univariate
+regression of each biomarker on age, then invert them all jointly with precision weights.
+
+For biomarker j: `x_j = q_j + k_j · CA + ε_j`, with residual SD `s_j` and R² `r_j`.
+
+```
+BA_E = Σ_j (x_j − q_j)(k_j / s_j²)  /  Σ_j (k_j / s_j)²
+```
+
+KDM corrects `BA_E` toward CA using the residual variance:
+
+```
+BA = [ Σ_j (x_j − q_j)(k_j/s_j²) + CA / s_BA² ]  /  [ Σ_j (k_j/s_j)² + 1/s_BA² ]
+```
+
+`s_BA²` is estimated as `s² − s_r` where `s²` is the observed variance of `(BA_E − CA)` and
+
+```
+r_char = Σ_j |(k_j/s_j)√r_j| / Σ_j |k_j/s_j|
+s_r    = ((1 − r_char²)/r_char²) × ((age_max − age_min)² / (12 m))
+```
+
+with m the number of biomarkers. Verbatim in
+[BioAge kdm_calc.R](https://github.com/dayoonkwon/BioAge). BioAge trains separately by sex on NHANES III
+aged 30–75, non-pregnant, and projects into NHANES IV. Samples with more than 2 missing
+biomarkers are set to NA. Output columns: `kdm`, `kdm_advance = kdm − age`.
+
+**How FALCONAge follows it.** `fa.models.fit_kdm` and `fa.models.clinical.kdm` reproduce the
+`kdm0` column BioAge ships with its NHANES data: on NHANES III to 0.0007 years mean absolute
+difference (maximum 0.007 years, n = 9,583), and projected into NHANES IV to 0.0007 years (maximum
+0.005 years, n = 8,243). Three details carry that agreement. Each biomarker is regressed on the
+rows where that biomarker is present; `s_j` is the residual SD with divisor n − 1, as BioAge's
+`get_effs` takes it; and `s_BA²` is estimated on the reference rows that carry every biomarker, then
+reused when projecting into another cohort. That last choice follows the shipped `kdm0` rather than
+today's `kdm_calc.R`, which also averages over partially observed rows and reproduces `kdm0` only to
+r = 0.94. The shipped `kdm0` is complete-case (every row with a value carries all nine markers);
+`kdm(..., max_missing=0)` reproduces it exactly, including which rows are NA, and the default
+`max_missing=2` is the rule in today's code. FALCONAge 1.0.0 took the square root of the
+correlation in `r_char`, where the formula takes the square root of R², and was 1.77 years out on
+the same rows. The regression test runs on a fixture of those NHANES III rows
+(`python/tests/data/`). `fa.models.clinical.validate_panel(reference, full, reduced)` asks
+whether a reduced panel is still the same clock: both are fitted on the same reference rows, and
+their agreement and mortality hazard ratios are reported, the latter in BioAge's `table_surv`
+form (advance standardised within sex, Cox with age and sex, HR per SD). On NHANES III, a
+nine-marker panel against the twelve-marker one gives r = 0.978 for biological age, r = 0.895 for
+advance, and HR per SD of 1.353 against 1.349. `fa.models.clinical.kdm_bioage(df)` scores a cohort on the `kdm0` scale
+from a packaged fit of those rows (`registry/data/kdm_bioage_nhanes3.json`, built by
+`python/tools/build_kdm_bioage.py`), which is what most NHANES papers mean by KDM biological age.
+It takes BioAge's column names and units: FEV1 in mL, SBP in mmHg, total cholesterol in mg/dL,
+HbA1c in %, albumin in g/dL, creatinine in mg/dL, `lncrp` = ln(1 + CRP in mg/dL), ALP in U/L,
+BUN in mg/dL.
+
+ComputAge also ships a *de novo* KDM estimator
+([ComputAge deage/kdm.py](https://github.com/ComputationalAgingLab/ComputAge)) with forward feature selection,
+LASSO preselection, 10-fold CV, RSE weighting, and stability testing, useful as a template for
+letting users fit their own KDM on arbitrary biomarker panels.
+
+## 4.5 Homeostatic dysregulation (HD)
+
+Mahalanobis distance from a young reference cohort. Standardise both the reference and target
+matrices using the reference means and SDs, then
+
+```
+HD_i = sqrt( (x_i − μ_ref)' Σ_ref⁻¹ (x_i − μ_ref) )
+```
+
+Reported both raw (`hd`, scaled by its own SD) and logged (`hd_log = log(HD)/sd(log HD)`).
+Both divisors are the scored cohort's own spread, so BioAge's values are not comparable between
+cohorts. FALCONAge's `hd()` returns the unscaled distance, which is comparable between cohorts
+scored against one reference, and `fa.models.clinical.bioage_hd_scale()` gives BioAge's two forms
+for comparison.
+The reference must be young (typically 20–30), non-pregnant, and within clinically normal
+biomarker windows; train separately by sex.
+[BioAge hd_calc.R](https://github.com/dayoonkwon/BioAge). Unlike KDM and PhenoAge, HD has no age units,
+it is a dimensionless distance, and it does *not* need to be residualised against CA the same way.
+
+## 4.6 Mitotic / replicative clocks
+
+- **epiTOC1** - plain mean β over 385 "ground-state hypomethylated" Polycomb-target CpGs.
+  Missing sites encoded as −1 and excluded from the mean
+  ([pyaging _models.py:1988](https://github.com/lucascamillomd/pyaging)).
+- **epiTOC2** - an explicit stem-cell division model. Given per-CpG methylation-transmission
+  rate δ_c and ground-state β₀_c:
+
+  ```
+  tnsc = (2/k) Σ_c (β_c − β₀_c) / (δ_c (1 − β₀_c))
+  ```
+
+  k CpGs (163 for epiTOC2, 170 for epiTOC3). Units: estimated cell divisions per stem cell.
+  [pyaging _models.py:2008](https://github.com/lucascamillomd/pyaging).
+  The sum and k run over the sites the data carries, as in the authors' own code
+  ([EpiMitClocks](https://github.com/aet21/EpiMitClocks), `colMeans` over the matched rows) and in
+  dnaMethyAge. FALCONAge matches both to a relative 1e-9 on a test matrix with sites absent and
+  values missing (`python/tests/data/SOURCE.md`). The authors also return a simplified estimate
+  with every β₀ set to 0 (`tnsc2`), which dnaMethyAge reports under `simple_mode = TRUE`. It is
+  not a rescaling of the full one: on 858 EPIC v1 blood samples it was a median 1.22 times
+  larger. FALCONAge returns the full estimate, so a comparison has to state which one the other
+  package reported.
+- **stemTOC** - 0.95 quantile of β over 371 (or 629 in-vitro) CpGs rather than the mean, which
+  makes it robust to cell-type dilution.
+- **HypoClock** - mean β over 678 solo-WCGW hypomethylating sites, returned as `1 − mean`.
+- **epiCMIT-hyper / epiCMIT-hypo** - mean over 184 hypermethylating and 1,164 hypomethylating
+  B-cell CpGs.
+- **RepliTali** - elastic net on 87 EPIC CpGs predicting population doublings in cultured cells;
+  `RepliTaliNorm` is its 218-CpG upstream normaliser exposed separately.
+
+## 4.7 GrimAge architecture
+
+Two-stage. Stage 1: eight (v1) or ten (v2) independent elastic nets predict plasma protein
+concentrations and smoking pack-years from methylation. Stage 2: a Cox model on those DNAm
+surrogates plus age and sex.
+
+v1 components: PACKYRS, ADM (adrenomedullin), B2M, CystatinC, GDF15, Leptin, PAI-1, TIMP-1.
+v2 adds logCRP and logA1C. Feature counts (pyaging registry): ADM 187, B2M 92, CystatinC 88,
+GDF15 138, Leptin 187, logA1C 87, logCRP 132, PACKYRS 173, PAI-1 211, TIMP-1 43; the composite
+model touches 1,032 CpGs plus age and female indicator.
+
+Forward pass ([pyaging _models.py:1656](https://github.com/lucascamillomd/pyaging)),
+concat order matters and is fixed:
+`[GDF15, B2M, CystatinC, TIMP1, ADM, PAI1, Leptin, PACKYRS, (LogCRP, A1C), Age, Female]`.
+
+**PCGrimAge** inserts a PCA step: centre 78,464 CpGs, rotate to 1,933 PCs, append Female and Age,
+then run eight PC-based sub-clocks and the Cox layer.
+
+**CpGPTGrimAge3 / CpGPTPCGrimAge3** (2024) replace most sub-clocks with CpGPT-derived protein
+proxies. Required inputs: age, seven GrimAge2 proxies (`grimage2timp1`, `grimage2packyrs`,
+`grimage2logcrp`, `grimage2adm`, `grimage2leptin`, `grimage2gdf15`, `grimage2pai1`) and 16 CpGPT
+protein proxies (`cpgpt_s100a9`, `tnfrsf13c`, `tgfb1`, `tek`, `ccl14`, `tnfsf15`, `lilrb2`,
+`tnf`, `chit1`, `postn`, `il34`, `pdcd1`, `cst3`, `cxcl2`, `gzma`, `il5`). 24 features total for
+the non-PC variant, 31 for the PC variant (which rotates 30 → 29 PCs). Trained on Framingham
+Heart Study whole blood, Illumina 450K, mortality endpoint (author clarification recorded in
+[pyaging audit_report.md](https://github.com/lucascamillomd/pyaging)).
+
+## 4.8 DunedinPACE and DunedinPoAm
+
+**DunedinPoAm38** (2020) - 46 CpGs, elastic net on the 12-year, 3-timepoint Pace of Aging from
+the Dunedin cohort. In-sample r = 0.6.
+
+**DunedinPACE** (2022) - 173 scoring CpGs, elastic net on the 20-year, 4-timepoint Pace of Aging;
+CpGs restricted to probes with test-retest ICC > 0.4 (n = 81,239 candidates). In-sample r = 0.78.
+The published algorithm quantile-normalises the sample against a **gold-standard mean vector**
+before scoring. pyaging implements the official 20,000-probe panel: 173 scoring CpGs plus 19,827
+background probes used only to define the sample's rank distribution
+([pyaging _models.py:238](https://github.com/lucascamillomd/pyaging)):
+
+```python
+sorted_gold = sort(reference_values)                       # length 20000
+q_idx       = linspace(0, len(sorted_gold)-1, x.shape[1])  # rank → gold quantile map
+for each sample row:
+    normalized[argsort(row)] = sorted_gold[q_idx]
+return normalized[:, scoring_indices]
+```
+
+This is a per-sample rank transform, so **the background probes must be present** - dropping them
+silently changes the answer.
+
+## 4.9 Mammalian universal clocks
+
+Three variants, all elastic net on the HorvathMammalMethylChip40, each with a different age
+parameterisation and a species lookup table (AnAge: gestation time, average age at sexual
+maturity, maximum lifespan).
+
+- **Clock 1** - predicts `log(age + 2)`; inverse `age = exp(ŷ) − 2`.
+- **Clock 2** (relative age), predicts a log-log-transformed relative age. Inverse:
+
+  ```
+  rel   = exp(−exp(−ŷ))
+  age   = rel × (max_age + gestation) − gestation
+  ```
+
+- **Clock 3** (log-linear age relative to maturity), with
+  `m̂ = 5 (gestation / maturity)^0.38`:
+
+  ```
+  ŷ ≥ 0 : age = m̂ (maturity + gestation)(ŷ + 1) − gestation
+  ŷ < 0 : age = m̂ (maturity + gestation) exp(ŷ) − gestation
+  ```
+
+Species is passed as a one-hot block appended to the CpG vector (1,756 species for clock-2
+variants, 1,707 for clock-3 variants); the model splits the input tensor by these widths
+([pyaging _models.py:513–771](https://github.com/lucascamillomd/pyaging)). Also in this
+family: MammalianLifespan (predicts species maximum lifespan, `exp` link) and MammalianFemale
+(sex classifier, sigmoid).
+
+## 4.10 Deconvolution as a model
+
+Reference-based, constrained. Given a signature matrix S (cell types × CpGs) and a sample β
+vector, solve for proportions p with a non-negativity and sum-to-one constraint. pyaging's
+implementation uses the pseudo-inverse followed by a **Euclidean projection onto the probability
+simplex** ([pyaging _models.py:1269](https://github.com/lucascamillomd/pyaging)):
+
+```python
+p_raw = x @ pinv(S).T
+sorted_v = sort(p_raw, descending)
+cssv     = cumsum(sorted_v)
+rho      = max{ i : sorted_v[i] − (cssv[i] − 1)/(i+1) > 0 }
+theta    = (cssv[rho] − 1) / (rho + 1)
+p        = clamp(p_raw − theta, min=0)
+```
+
+This is exact, differentiable almost everywhere, and vectorises across a batch, a good pattern
+for a GPU tool. 6-cell (600 CpGs, Salas/Reinius) and 12-cell (240 CpGs, Salas EPIC) libraries.
+
+## 4.11 Binarisation clocks
+
+Two independent lines converged on the same idea: with sparse count data, the *identity* of
+expressed genes carries more robust age signal than their levels.
+
+- **BiT age** (*C. elegans*, Meyer & Schumacher 2021). Per sample: mask zeros, compute the median
+  of non-zero CPMs, set gene = 1 if CPM > median else 0. Score = Σ (binary × elastic-net coef)
+  + intercept. Intercept 103.54631743289005 for *C. elegans* (hours); 59.626 for human
+  fibroblasts. 576 predictor genes.
+  [AgingClock biological_age_prediction.py](https://github.com/Meyer-DH/AgingClock).
+- **CellBiAge** (mouse brain single cell, Yu et al., *Cell Reports* 42:113500, Dec 2023). Pipeline:
+  log-normalise → CCA batch integration → scale (mean 0, SD 1 per gene) → **binarise at 0**
+  (scaled value > 0 → 1). Feature space: top 2,000 highly variable genes (HVGs beat highly
+  expressed genes decisively; 1,413 shared between train/test batches in the hypothalamus data).
+  The mean threshold beat BiT age's median threshold on their test data.
+
+CellBiAge numbers worth carrying into a benchmark suite. Metric is AUPRC (test sets are
+class-imbalanced), models are elastic-net logistic regression, random forest, gradient boosting,
+SVM, XGBoost and an MLP, tuned with GridSearchCV / KerasTuner under group CV:
+
+| Setting | Before binarisation | After |
+|---|---|---|
+| Hypothalamus, ElasticNet | 0.60 | 0.94 |
+| Hypothalamus, all five models | ~0.65 | ~0.96 |
+| SVZ control, MLP and ELN | 0.67 | 0.90 |
+| Train/test batch swapped | - | 0.94 |
+| Top 80 genes only | - | ~0.95 |
+| Top 40 genes only | - | 0.90 |
+
+Data: female C57BL/6 hypothalamus snRNA-seq, 40,064 nuclei, 3 vs 24 months, two batches on
+different chemistry (10x v3 + NovaSeq for train, v2 + HiSeq for test); male SVZ scRNA-seq, 79,123
+cells, 15 animals, 6 vs 23 months, sedentary vs 5 weeks voluntary wheel running. Exercise
+significantly reduced predicted-aged probability in young-animal neuroblasts (p = 0.027) and
+activated NSC/NPCs (p = 0.031); no effect in aged animals or in the all-cell pooled analysis.
+Only 4 genes (*Nes*, *Ly6a*, *Slc5a4b*, *B230312C02Rik*) were shared among the top 200 features
+across all cell types. CellBiAge slightly outperformed the Buckley 2023 bootstrap clock on the
+three shared cell types while avoiding the 100-pseudo-cell bootstrap.
+
+## 4.12 Rank-based transcriptomic clocks
+
+Pasta and REG (2025) fill NaNs with the global median, then rank-normalise **within each sample**
+with average ranks for ties, then apply a ridge-logistic (Pasta) or ridge (REG) linear layer over
+8,113 genes. Pasta's output transform is `x·scale + offset·scale`; REG's is `x + intercept`.
+Rank normalisation makes the model invariant to any monotone per-sample transformation, which is
+why these clocks work across RNA-seq and microarray without re-normalising.
+[pyaging _models.py:1037–1189](https://github.com/lucascamillomd/pyaging).
+
+## 4.13 Spatial single-cell clocks
+
+Sun et al., *Nature* 638:160–171 (2025). Per cell type (18 brain cell types), a LASSO model with
+5-fold CV over 20 alphas, fitted on spatially smoothed expression.
+
+**SpatialSmooth.** Build a spatial graph per animal (fixed k = 20 neighbours, binary adjacency S),
+then iterate to convergence:
+
+```
+X_{t+1} = (1 − α) X₀ + α S X_t ,   α = 0.8, max_iter = 30, tol = 1e-2
+```
+
+This is label propagation applied to expression. Missing genes are imputed with per-gene training
+means (or SpaGE, which projects from a reference scRNA-seq atlas via shared principal vectors).
+Age acceleration is defined **within animal and cell type**, as prediction minus the mean
+prediction for that (animal, cell type) pair, which cancels the animal-level batch and calendar
+age. The package also computes **cell proximity effects**: for each effector cell type, split
+target cells into "near" and "far" sets by distance cutoff (optionally a ring of given width),
+then t-test the age acceleration difference. Outputs a data frame with `Near Cell`,
+`AgeAccel Cell`, cutoff multiplier `n`, `t`, `p`, `Aging Effect`, `Near Freq`, `Near Num`.
+
+## 4.14 Single-cell methylation clocks
+
+- **scAge** (Trapp 2021, Python). Uses the bulk CpG–age linear relationships as priors and
+  computes, for each cell, the age maximising the product of per-CpG likelihoods given the binary
+  methylation call. Handles arbitrary, non-overlapping CpG coverage per cell.
+- **scEpiAge** (Bonder 2024, *Nat Commun* 15:7567). Inverts the regression: predicts methylation
+  *from* age, so cells need not share CpGs. Mouse blood 10–101 weeks; DNAm-age distribution is
+  wider than technical noise predicts, and CD4+/CD8+ T cells read younger than B cells. Cell-type
+  effect exceeds age effect, a warning for any single-cell aging score.
+
+## 4.15 Deep learning
+
+- **AltumAge** (2022) - MLP over 20,318 CpGs shared across 27K/450K/EPIC. Architecture from
+  [pyaging _base_models.py:89](https://github.com/lucascamillomd/pyaging):
+  BatchNorm(20318) → Linear(20318,32) → SELU → [BatchNorm(32) → Linear(32,32) → SELU] × 4 →
+  BatchNorm(32) → Linear(32,1). BatchNorm eps 0.001, momentum 0.99 (Keras defaults, preserved on
+  port). Preprocessing is a **robust scale**: `(x − median) / std` with training-set statistics.
+- **CpGPT** (Camillo 2024), transformer pretrained on >1,500 datasets, >100,000 samples. Encodes
+  sequence context, genomic position and epigenetic state per CpG; imputes and reconstructs
+  genome-wide profiles from partial input; transfers across platforms, tissues, mammalian species
+  and single-cell data. Fine-tuned heads give SOTA mortality and chronological-age prediction.
+  Code: github.com/lucascamillomd/CpGPT.
+- **GraphAge** (PNAS Nexus 2025) - GNN over a CpG regulatory graph; interprets which CpG
+  interactions matter and how their importance shifts with age.
+- **DeepStrataAge** (npj Aging 2026) - DNN on 12,234 CpGs, MAE 1.89 y across >20,000 blood
+  methylomes, with SHAP attributions revealing sex-specific "epigenetic waves".
+- **EpInflammAge** - epigenetic + inflammatory markers, MAE ~7 y, r = 0.85 in healthy controls.
+- **XAI-AGE** - pathway-structured network giving pathway-level activity as an interpretable
+  intermediate.
+- **PointNet** - used by scImmuAging alongside LASSO and random forest for PBMC cell-type clocks.
+
+## 4.16 SystemsAge
+
+Nature Aging, September 2025 (Higgins-Chen & Levine). One blood methylome → 11 system-specific
+ages plus a composite. Forward pass
+([pyaging _models.py:2617](https://github.com/lucascamillomd/pyaging)):
+
+1. Centre 125,175 CpGs and rotate to DNAm PCs.
+2. Project PCs onto a `system_vector` to obtain system components.
+3. Per system, a linear module over its component indices → 11 system scores.
+4. Separately, a PC → predicted-age model, with a quadratic polynomial correction
+   `a + b·ŷ + c·ŷ²`, then divide by 12 (months → years).
+5. Concatenate the 11 system scores with predicted age; for the composite, run a second PCA-based
+   model over that 12-vector.
+6. Affine calibration per output: `((raw − c₀)/c₁) × c₃ + c₂`, then `/12`.
+
+Systems: Blood, Brain, Inflammation, Heart, Hormone, Immune, Kidney, Liver, Metabolic, Lung,
+MusculoSkeletal (indices 0–10 in the pyaging classes), with index −1 for the composite.
+Benchmarking by Sehgal et al. found SystemsAge held the highest technical reliability across
+array positions and DNA extraction protocols among 18 clocks.
+
+## 4.17 Ensembling and stacking
+
+- **EnsembleAgeStatic / EnsembleAgeStaticTop** (mouse, 2025), elastic net over 288 / 431 CpGs
+  designed to be responsive to lifespan-modulating interventions.
+- **EnsembleAgeHumanMouse** - 100 CpGs on the mammalian array, cross-species relative age.
+- **StackAge** (2026), ensemble over UK Biobank plasma proteomics + metabolomics, n = 30,376;
+  improves risk prediction for 12 chronic diseases over single-omic clocks.
+- **DNAmFitAge** - a Klemera–Doubal composite over four DNAm-predicted fitness measures. It fits
+  sex-specific models. The four inputs are standardised with published slopes and intercepts
+  ([pyaging _models.py:1875](https://github.com/lucascamillomd/pyaging)):
+
+  | Input | Female (offset, slope) | Male (offset, slope) |
+  |---|---|---|
+  | VO2max | 46.825091, −0.13620215 | 49.836389, −0.141862925 |
+  | Grip | 39.857718, −0.22074456 | 57.514016, −0.253179827 |
+  | Gait | 2.508547, −0.01245682 | 2.349080, −0.009380061 |
+  | GrimAge | 7.978487, 0.80928530 | 9.549733, 0.835120557 |
+
+  Each is transformed `(value − offset)/slope`, then a sex-specific KDM layer produces the age.
+
+## 4.18 tAge, relative transcriptomic clocks
+
+Tyshkovskiy et al., *Nature* 654:173–188 (2026), from >11,000 transcriptomes across >25 tissues in
+mouse, rat, macaque and human. 60 distributed models: {EN, BR} × {Chronological, Mortality,
+Normalized age} × {Mouse, Multispecies, Rodents} × {Multi-Tissue, Brain, Kidney, Liver,
+Skeletal Muscle} × {Scaled, YuGene}.
+
+Preprocessing chain
+([tAge preprocessing.R](https://github.com/Gladyshev-Lab/tAge)):
+
+1. `filter_genes` - keep genes with count ≥ 10 in ≥ 20% of samples.
+2. `map_genes` - to mouse Entrez space via ortholog tables.
+3. `RLE_normalization` - `sweep(counts, 2, libsize × calcNormFactors(RLE), "/") × 1e7`.
+4. `log_transform` - `log10(x + 1)`.
+5. `scale_eset` - **column-wise** z-score, i.e. per sample across genes.
+6. `YuGene` - per sample: shift to non-negative, sort descending, cumulative proportion,
+   carry forward for ties, value = `1 − cumprop`. A non-parametric rank/uniformisation.
+7. `.align_to_gene_list` - reorder to the reference gene list, pad missing genes with **NA**
+   (not zero) so the model's own `SimpleImputer` fills them with training medians.
+8. `control_subtraction` - subtract the per-gene median of a reference group, or of all samples
+   when no reference is given. **All distributed clocks are relative (`_diff`) models; centring
+   is never skipped.**
+
+Output units, from the clock registry
+([tAge clocks_metadata.csv](https://github.com/Gladyshev-Lab/tAge)):
+
+| Outcome | Units | Rescaled by max lifespan? |
+|---|---|---|
+| Chronological | years (human) / months (rodents) | Yes - × species max lifespan |
+| Mortality | log10(hazard ratio) | No |
+| Normalized age | fraction of max lifespan | No |
+
+Species maximum-lifespan factors: human 122.5, mouse 48, rat 50.4, monkey 39
+([tage_predict.py](https://github.com/Gladyshev-Lab/tAge)). Mortality clocks must never
+be multiplied by these, a mistake the registry flag `lifespan_scaled` exists to prevent.
+
+The paper's biology: genes for senescence, inflammation and apoptosis go up with age across
+species and cell types; wound healing, differentiation and ECM synthesis go down. CDKN1A and
+LGALS3 are universal markers whose protein levels also track mortality and multimorbidity in UK
+Biobank. Modules (inflammation, energy production, ECM organisation) get their own clocks so an
+intervention's primary axis of action can be read off.
+
+## 4.19 SCALE - literature-informed single-cell aging score
+
+Mao et al. A weighted, expression-detection-frequency-scaled z-score over a curated aging gene
+set ([4_SCALE_score.R](https://github.com/ChengLiLab/SCALE)):
+
+```r
+weights = c(rep(1,50), rep(-1,50)) *
+          rowSums(counts[aging_genes,] > 0) / ncol(counts)   # detection frequency
+z       = t(scale(t(logdata[aging_genes,])))                  # gene-wise z across cells
+score   = t(z) %*% weights
+```
+
+The 50 up / 50 down genes per tissue come from glmnet selection over a union of curated aging
+resources: GenAge, CSGene, AgeFactDB, Aging Atlas, GO:aging, GO:CellAge, plus manual curation.
+Applied to Tabula Muris Senis across 20+ tissues. Validated against single-cell entropy and
+somatic mutation accumulation, and against transcriptomic and methylation clocks in muscle stem
+cells, Alzheimer's, and heterochronic parabiosis. Correlation with age is assessed four ways:
+Pearson, distance correlation (`energy::dcor`), MIC (`minerva`), and nonlinear correlation
+(`nlcor`), a good template for reporting monotone-but-nonlinear age relationships.
+
+## 4.20 Transform reference table
+
+Every clock's output transform, extracted from
+[pyaging _postprocessing.py](https://github.com/lucascamillomd/pyaging) and
+[pyaging _models.py](https://github.com/lucascamillomd/pyaging):
+
+| Name | Formula | Used by |
+|---|---|---|
+| identity | `y` | most elastic-net clocks |
+| `anti_log_linear` (Horvath) | `y<0 : 21·eʸ − 1` ; `y≥0 : 21·y + 20` | Horvath2013, SkinAndBlood, PedBE, Han, PCHorvath2013, PCSkinAndBlood, IntrinClock, CorticalClock, Pipek×3 |
+| Horvath with adult_age 48 → years | same with 49/48, then `/12` | Wu (children) |
+| `anti_logp2` | `eʸ − 2` | Mammalian1 |
+| `anti_log` | `eʸ` | MammalianLifespan |
+| `anti_log_log` | `e^(−e^(−y))` | Mammalian2 relative-age step |
+| `mortality_to_phenoage` | see §5.1 | PhenoAge |
+| `cox_to_years` | `((y−cox_mean)/cox_std)·age_std + age_mean` | GrimAge, GrimAge2, CpGPTGrimAge3, CpGPTPCGrimAge3 |
+| `petkovichblood` | `age = ((y + 1.712)/0.1666)^(1/0.4185) / 30.5` | Petkovich (mouse, months) |
+| `stubbsmultitissue` | `age = (exp(0.1207y² + 1.2424y + 2.5440) − 3) × 7/30.5` | Stubbs (mouse, months) |
+| `days_to_months` | `y / 30.5` | Meer |
+| `days_to_weeks` | `y / 7` | Bohlin, EPICGA |
+| `sigmoid` | `1/(1+e^(−y))` | McCartney BMI/education/cholesterol/body-fat, MammalianFemale, CVDWesterman, ADBahadoSingh |
+| `one_minus` | `1 − y` | HypoClock |
+| `add_constant` | `y + c` | REG, Lin (+12.2169841), PhenoAgeV1 in ComputAge (+60.664), YingCausAge (+86.80816381), YingDamAge (+543.4315887), YingAdaptAge (−511.9742762) |
+| `scale_and_shift` | `y·s + o·s` | Pasta, PastaMouse |
+
+Note the intercept convention differs between packages: ComputAge/biolearn carry the intercept in
+the `transform` lambda, pyaging bakes it into the `nn.Linear` bias. A merged tool must pick one
+and normalise on import.

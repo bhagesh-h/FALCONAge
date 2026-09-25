@@ -28,7 +28,7 @@ tolerance zero in CI rather than approximately.
 | | What ships today |
 |---|---|
 | **Clocks catalogued** | 175. **46 score offline**: 43 ship a weights file, 3 are formulas with none to ship. 40 are `licensed`, implemented but awaiting a file you supply; 89 are `untraced`, with no primary coefficient source established |
-| **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, ComputAgeBench studies, RRBS, nanopore bedMethyl, targeted panels, clinical chemistry, Olink NPX, SomaScan RFU, bulk RNA-seq counts. [How to load each](https://bhagesh-h.github.io/FALCONAge/guide/loading.html) |
+| **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, ComputAgeBench studies, RRBS, nanopore bedMethyl, targeted panels, clinical chemistry, Olink NPX, SomaScan RFU, bulk RNA-seq counts. [How to load each](https://bhagesh-h.github.io/FALCONAge/data/loading.html) |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
 | **Tested** | 457 Python tests and 52 R tests passing, 5 skipped, including the R-to-Python conformance pass at tolerance zero |
@@ -37,8 +37,8 @@ Every clock algorithm is implemented from its published description; no clock im
 imported from another package. Coefficients are fitted data rather than a procedure, and 40 clocks
 have coefficients that are research-use-only. Those ship as tested scaffolds and take a file you
 supply.
-→ [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) ·
-[Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html)
+→ [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks/catalogue.html) ·
+[Choosing a clock](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html)
 
 ## Installation
 
@@ -77,9 +77,9 @@ Write `report`, not `falconage report`.
 
 On Windows PowerShell write `"${PWD}"`; on `cmd.exe`, `"%cd%"`. For GPU, pull
 `bhagesh/falconage:1.0.0-cuda` and add `--gpus all`. Measured, CUDA is
-[slower than CPU](docs/gpu.md) for the linear clocks that ship today.
+[slower than CPU](docs/dev/gpu.qmd) for the linear clocks that ship today.
 
-→ [Step-by-step Docker walkthrough](https://bhagesh-h.github.io/FALCONAge/guide/FALCONAge.html),
+→ [Step-by-step Docker walkthrough](https://bhagesh-h.github.io/FALCONAge/start/quickstart.html),
 written for someone who has not used a terminal.
 
 <details>
@@ -170,7 +170,7 @@ it set. And every clock that disagrees with its own paper carries the
 discrepancy as a warning at score time: Weidner's third CpG is a substitution
 the paper did not make, and it says so on every run.
 
-→ [The science, §19](https://bhagesh-h.github.io/FALCONAge/science.html)
+→ [The science, §19](https://bhagesh-h.github.io/FALCONAge/methods/index.html)
 
 ## Release highlights
 
@@ -194,8 +194,8 @@ the paper did not make, and it says so on every run.
 - Conformal prediction intervals, `power()`, `consensus()`, probe masks, BMIQ, `AggregationClock`,
   `NeuralClock`, `scAge`, proteomic and transcriptomic chains.
 
-→ [CHANGELOG](CHANGELOG.md) · [Architecture §15](https://bhagesh-h.github.io/FALCONAge/architecture.html)
-· [Beyond the clock score](https://bhagesh-h.github.io/FALCONAge/beyond-clocks.html)
+→ [CHANGELOG](CHANGELOG.md) · [Architecture §15](https://bhagesh-h.github.io/FALCONAge/dev/index.html)
+· [Beyond the clock score](https://bhagesh-h.github.io/FALCONAge/analysis/beyond.html)
 
 ## Known limitations
 
@@ -213,7 +213,7 @@ the paper did not make, and it says so on every run.
 ## Figures
 
 26 figure types, generated from the public corpus rather than drawn by hand.
-→ [**Figure gallery**](https://bhagesh-h.github.io/FALCONAge/gallery.html)
+→ [**Figure gallery**](https://bhagesh-h.github.io/FALCONAge/analysis/figures.html)
 
 ![Every clock, every pooled study, one figure](test/output_figures/gallery/clock_atlas.png)
 
@@ -276,7 +276,7 @@ Every run writes a manifest: package and registry versions, the SHA-256 of every
 the array manifest that decoded the IDATs, the reliability table behind the intervals, the device
 and floating-point precision, the imputation policy, and every warning raised.
 
-→ [Reproducibility](https://bhagesh-h.github.io/FALCONAge/architecture.html) ·
+→ [Reproducibility](https://bhagesh-h.github.io/FALCONAge/dev/index.html) ·
 [test/README.md](test/README.md), the benchmark corpus and how to read each output
 
 ## Documentation
@@ -284,14 +284,14 @@ and floating-point precision, the imputation policy, and every warning raised.
 | Page | What is on it |
 |---|---|
 | [About](https://bhagesh-h.github.io/FALCONAge/) | What a clock is, what this computes, what it refuses |
-| [Getting started](https://bhagesh-h.github.io/FALCONAge/guide/FALCONAge.html) | Docker first, then Python and R; score, interpret, reproduce |
-| [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/guide/clocks.html) | All 175 routed by the question they answer |
-| [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html) | Every clock with its scale, tissue, platform and paper |
-| [The science](https://bhagesh-h.github.io/FALCONAge/science.html) | The algorithms, the failure modes, the citations, the genetics under the probe, and how to fit a clock of your own |
-| [Architecture](https://bhagesh-h.github.io/FALCONAge/architecture.html) | Which file computes what, and why |
-| [Figure gallery](https://bhagesh-h.github.io/FALCONAge/gallery.html) | Every figure type with its interpretation |
+| [Getting started](https://bhagesh-h.github.io/FALCONAge/start/quickstart.html) | Docker first, then Python and R; score, interpret, reproduce |
+| [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html) | All 175 routed by the question they answer |
+| [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks/catalogue.html) | Every clock with its scale, tissue, platform and paper |
+| [The science](https://bhagesh-h.github.io/FALCONAge/methods/index.html) | The algorithms, the failure modes, the citations, the genetics under the probe, and how to fit a clock of your own |
+| [Architecture](https://bhagesh-h.github.io/FALCONAge/dev/index.html) | Which file computes what, and why |
+| [Figure gallery](https://bhagesh-h.github.io/FALCONAge/analysis/figures.html) | Every figure type with its interpretation |
 | [Python](https://bhagesh-h.github.io/FALCONAge/reference/) · [R](https://bhagesh-h.github.io/FALCONAge/r/reference/) | Full API references |
-| [GPU](docs/gpu.md) | Measured, including where CUDA is *slower* |
+| [GPU](docs/dev/gpu.qmd) | Measured, including where CUDA is *slower* |
 | [Docker Hub](https://hub.docker.com/r/bhagesh/falconage) | `bhagesh/falconage:1.0.0-cpu` and `:1.0.0-cuda`, built from the Dockerfiles here |
 | [Claude skill](.claude/skills/falconage/) | Drive all of the above from Claude; CI-checked against the running package |
 | [test/README.md](test/README.md) | Every published number and the command that regenerates it |

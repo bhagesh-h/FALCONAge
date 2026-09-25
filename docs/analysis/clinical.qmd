@@ -1,0 +1,80 @@
+---
+title: "Clinical chemistry and survival"
+---
+
+## Clinical chemistry
+```r
+d <- read_clinical("nhanes.csv", units = list(
+  albumin = "g/L", creatinine = "umol/L", glucose = "mmol/L", crp = "mg/dL",
+  lymphocyte_percent = "%", mean_cell_volume = "fL",
+  red_cell_distribution_width = "%", alkaline_phosphatase = "U/L",
+  white_blood_cell_count = "10^3/uL", age = "years"))
+
+score(d, clocks = "phenoage")
+```
+
+Units are required and never guessed. Albumin at 4.2 is g/dL and albumin at 42 is g/L; both are
+clinically normal, and PhenoAge fitted on one returns nonsense for the other. No range check can
+separate them, so the only correct behaviour is to ask.
+
+KDM and homeostatic dysregulation have no fixed coefficients at all: they are defined relative to
+a reference cohort:
+
+```r
+ref <- fit_kdm(nhanes3, markers = markers)
+score(d, clocks = "kdm", reference = ref)
+```
+
+## Survival and association
+Two figures that most aging-clock papers carry, and that need the analysis functions above.
+
+### Survival
+::: {.panel-tabset}
+
+#### Python
+
+```python
+fa.cox_hazard(res, time_col="time", event_col="status")      # HR per unit (per year for an age clock)
+fa.plot.kaplan_meier(res, "horvath2013",
+                     time_col="time", event_col="status")    # the figure
+```
+
+#### R
+
+```r
+cox_hazard(res, time_col = "time", event_col = "status")
+plot_kaplan_meier(res, "horvath2013", time_col = "time", event_col = "status")
+```
+
+:::
+
+The curves compare the fastest-ageing tenth with the slowest, not two halves. The middle of the
+acceleration distribution is where a clock discriminates least, so a median split dilutes the
+comparison; the tails are the published convention. The log-rank p is in the subtitle.
+
+If the curves cross: the hazards are not proportional and the single hazard ratio beside them is
+an average over a period during which the ordering changed. That is worth saying in a caption
+rather than leaving for a reader to notice.
+
+### Association
+::: {.panel-tabset}
+
+#### Python
+
+```python
+assoc = fa.associate(res, "crp", covariates=("age", "sex"))
+fa.plot.volcano(assoc, fdr=0.05)
+```
+
+#### R
+
+```r
+assoc <- associate(res, "crp", covariates = c("age", "sex"))
+plot_volcano(assoc, fdr = 0.05)
+```
+
+:::
+
+The dashed line is the Benjamini-Hochberg threshold at the stated FDR, read off the `q` column
+rather than recomputed. This matters more than it looks: across a few hundred tests a raw 0.05
+admits roughly one in twenty of the nulls, and drawing that line instead labels them significant.

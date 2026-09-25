@@ -1,0 +1,129 @@
+---
+title: "Getting started"
+subtitle: "Install, score, interpret, in both languages"
+aliases:
+  - ../guide/FALCONAge.html
+---
+
+FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data against a
+catalogue of 161 published aging clocks. The numerical work happens in one Python core; the R
+package calls it through reticulate, so an R result and a Python result are the same bits rather
+than two implementations that agree approximately.
+
+::: {.callout-tip title="How to read this page"}
+Blocks with a **copy button** are things to run. Blocks tagged **Output** are what you should see
+back. Reading them is the point; pasting one into a terminal only produces an error.
+
+```bash
+this is a command: copy it
+```
+
+::: {.falcon-output}
+```
+this is what it printed
+```
+:::
+:::
+
+## Quick start
+::: {.panel-tabset}
+
+### Python
+
+```python
+import falconage as fa
+
+data = fa.prepare(fa.read_betas("betas.csv"))
+res  = fa.score(data, clocks="compatible")
+
+res.summary()
+fa.acceleration(res, method="both")
+fa.plot.ba_vs_ca(res, "horvath2013")
+fa.report.write_report(res, "report.html")
+```
+
+### R
+
+```r
+library(FALCONAge)
+
+d   <- prepare(read_betas("betas.csv"))
+res <- score(d, clocks = "compatible")
+
+summary(res)
+acceleration(res, method = "both")
+plot_ba_vs_ca(res, "horvath2013")
+report(res, "report.html")
+```
+
+:::
+
+Both produce the same numbers, because both run the same code. The R package delegates all
+arithmetic to the Python core through reticulate, and the R suite asserts equality at tolerance
+exactly zero rather than approximate agreement.
+
+## Scoring
+
+Every Python and R snippet from here on runs unchanged in three places: inside the Docker image
+(`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python`, or `... R`), in a
+native install, or in the CLI-free path below. Only the way you open the session differs.
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+d   = fa.prepare(fa.read_betas("betas.csv"))
+res = fa.score(d, clocks="compatible")
+
+res.summary()
+res.scores               # samples x clocks
+res.long()               # one row per sample per clock, with the scale
+res.coverage             # per-clock feature coverage and skip reasons
+res.manifest             # versions, device, SHA-256 of every coefficient file
+```
+
+### R
+
+```r
+d   <- prepare(read_betas("betas.csv"))
+res <- score(d, clocks = "compatible")
+
+summary(res)
+as.data.frame(res)                  # samples x clocks
+as.data.frame(res, form = "long")   # one row per sample per clock, with the scale
+coverage(res)                       # per-clock feature coverage and skip reasons
+manifest(res)                       # versions, device, and every coefficient checksum
+```
+
+:::
+
+`clocks = "compatible"` scores what this dataset can support and reports the rest as skipped with
+a reason. Naming clocks explicitly is different: then every one must work, because an explicit
+request should never be dropped quietly.
+
+## Interpreting the result
+The scale, the unit, which arithmetic is permitted, both coverage measures, the published
+reliability where one exists, and any documented disagreement between the clock's paper and the
+coefficients in circulation, all on the object rather than only on this website:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+res.interpretation()
+```
+
+### R
+
+```r
+interpretation(res)
+```
+
+:::
+
+`technical_icc` and `biological_icc` are separate columns because they measure different things
+and do not track together: the same sample assayed twice, versus the same person sampled again a
+few days later. A clock can be excellent on the first and poor on the second, and the clocks most
+used to claim an intervention worked are where that gap is widest.

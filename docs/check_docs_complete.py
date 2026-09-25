@@ -53,10 +53,14 @@ def main() -> int:
     problems: list[str] = []
 
     index = (ROOT / "docs" / "index.qmd").read_text(encoding="utf-8").lower()
-    arch = (ROOT / "docs" / "architecture.qmd").read_text(encoding="utf-8")
-    cat = (ROOT / "docs" / "clocks.qmd").read_text(encoding="utf-8")
-    guide = (ROOT / "docs" / "guide" / "FALCONAge.qmd").read_text(encoding="utf-8")
-    choose = ROOT / "docs" / "guide" / "clocks.qmd"
+    arch = (ROOT / "docs" / "dev" / "index.qmd").read_text(encoding="utf-8")
+    ops = (ROOT / "docs" / "dev" / "operations.qmd").read_text(encoding="utf-8")
+    cat = (ROOT / "docs" / "clocks" / "catalogue.qmd").read_text(encoding="utf-8")
+    # The user-facing chapters, where a reader copies commands from.
+    guide = "\n".join(p.read_text(encoding="utf-8") for part in
+                      ("start", "data", "clocks", "analysis")
+                      for p in sorted((ROOT / "docs" / part).glob("*.qmd")))
+    choose = ROOT / "docs" / "clocks" / "choosing.qmd"
     r_readme = ROOT / "r" / "README.md"
 
     # 1 -- the landing page names what the package can read.
@@ -80,22 +84,22 @@ def main() -> int:
     unlinked = set(rows) - set(linked) - set(declared)
     if unlinked:
         problems.append(
-            f"{len(unlinked)} clock(s) in docs/clocks.qmd carry no paper link "
+            f"{len(unlinked)} clock(s) in docs/clocks/catalogue.qmd carry no paper link "
             f"and do not declare the absence: {sorted(unlinked)[:8]}")
     if set(rows) != all_ids:
         problems.append(
-            f"docs/clocks.qmd lists {len(rows)} clocks, the registry has {len(all_ids)}")
+            f"docs/clocks/catalogue.qmd lists {len(rows)} clocks, the registry has {len(all_ids)}")
 
     # 3 -- the architecture page describes the version that ships.
     if f"**Current as of v{fa.__version__}.**" not in arch:
         problems.append(
-            f"docs/architecture.qmd does not declare itself current as of "
+            f"docs/dev/index.qmd does not declare itself current as of "
             f"v{fa.__version__}; it is the page most likely to describe a past release")
 
     # 4 -- outputs are marked as outputs, never pasted into a command fence.
     if "::: {.falcon-output}" not in guide:
         problems.append(
-            "docs/guide/FALCONAge.qmd has no .falcon-output block; command output "
+            "the user chapters have no .falcon-output block; command output "
             "belongs in one so a reader does not paste it into a terminal")
     for fence in re.findall(r"```(?:bash|sh)\n(.*?)```", guide, re.S):
         has_cmd = re.search(r"^\s*(docker|falconage|pip|git|Rscript|python)", fence, re.M)
@@ -103,7 +107,7 @@ def main() -> int:
                             fence, re.M)
         if has_cmd and has_out:
             problems.append(
-                "a bash fence in docs/guide/FALCONAge.qmd mixes commands with their "
+                "a bash fence in the user chapters mixes commands with their "
                 f"output: {fence.strip().splitlines()[0][:60]!r}")
 
     # 5 -- every catalogued clock is routed by the question it answers.
@@ -112,7 +116,7 @@ def main() -> int:
     hidden = sum(int(m) for m in re.findall(r"and (\d+) more", block))
     if named and (len(named) + hidden) != len(all_ids):
         problems.append(
-            f"docs/guide/clocks.qmd routes {len(named) + hidden} clocks, the "
+            f"docs/clocks/choosing.qmd routes {len(named) + hidden} clocks, the "
             f"registry has {len(all_ids)}. A clock nobody can find is a clock "
             "nobody can use.")
 
@@ -133,14 +137,14 @@ def main() -> int:
             wrong = sorted(i for i in ids if reg.get(i).availability != group)
             if wrong:
                 problems.append(
-                    f"docs/guide/clocks.qmd lists {wrong[:4]} under {group!r}, "
+                    f"docs/clocks/choosing.qmd lists {wrong[:4]} under {group!r}, "
                     "which is not their availability")
             more = re.search(r"and (\d+) more", cells[col])
             counted[group] += len(ids) + (int(more.group(1)) if more else 0)
     n_bundled = sum(1 for c in reg if c.availability == "bundled")
     if block and counted["bundled"] != n_bundled:
         problems.append(
-            f"docs/guide/clocks.qmd shows {counted['bundled']} clocks ready to score; "
+            f"docs/clocks/choosing.qmd shows {counted['bundled']} clocks ready to score; "
             f"the registry has {n_bundled} bundled")
 
     # 6 -- the availability column is a letter, and should be sized like one.
@@ -148,7 +152,7 @@ def main() -> int:
     sep = next((ln for ln in tier.splitlines()
                 if "-" in ln and set(ln.strip()) <= set("|:- ")), None)
     if sep is None:
-        problems.append("docs/guide/clocks.qmd tier table has no separator row")
+        problems.append("docs/clocks/choosing.qmd tier table has no separator row")
     else:
         widths = [len(c.strip()) for c in sep.strip().strip("|").split("|")]
         share = widths[0] / sum(widths)
@@ -245,12 +249,12 @@ def main() -> int:
 
     # 9 -- the GPU page's coverage table agrees with the code.
     #
-    # docs/gpu.md tells a reader which model classes `device="cuda"` reaches.
+    # docs/dev/gpu.qmd tells a reader which model classes `device="cuda"` reaches.
     # For a year it implied all of them, and three shipping clocks plus two
     # architectures ignored the device entirely. That was invisible because
     # nothing tied the sentence to the classes. The declaration is one attribute
     # now, so the page can be checked against it rather than reviewed.
-    gpu_md = (ROOT / "docs" / "gpu.md").read_text(encoding="utf-8")
+    gpu_md = (ROOT / "docs" / "dev" / "gpu.qmd").read_text(encoding="utf-8")
     classes = {"LinearClock": fa.models.LinearClock,
                "PCLinearClock": fa.models.PCLinearClock,
                "AggregationClock": fa.models.AggregationClock,
@@ -261,13 +265,13 @@ def main() -> int:
                     if ln.startswith(f"| `{name}`")), None)
         if row is None:
             problems.append(
-                f"docs/gpu.md has no coverage row for {name}. A model class a "
+                f"docs/dev/gpu.qmd has no coverage row for {name}. A model class a "
                 "reader cannot look up is one they will assume uses the device.")
             continue
         says_no = "**no" in row.lower()
         if says_no != bool(getattr(cls, "CPU_ONLY", False)):
             problems.append(
-                f"docs/gpu.md says {name} "
+                f"docs/dev/gpu.qmd says {name} "
                 f"{'declines' if says_no else 'reaches'} the device; the class "
                 f"says {'CPU_ONLY' if not says_no else 'it uses the spec'}.")
 
@@ -283,16 +287,16 @@ def main() -> int:
     # specification table's rows begin "|". That prefix is the whole
     # discrimination, and it is why the two can share a section safely.
     on_disk = {p.name for p in (ROOT / ".github" / "workflows").glob("*.y*ml")}
-    note = arch.split("### 12.1 Workflows")[1].split("### 12.2")[0]
+    note = ops.split("### 12.1 Workflows")[1].split("### 12.2")[0]
     claimed = set(re.findall(r"^> \| `([A-Za-z0-9_-]+\.ya?ml)` \|", note, re.M))
     if not claimed:
         problems.append(
-            "docs/architecture.qmd 12.1 has no note listing the workflows that "
+            "docs/dev/operations.qmd 12.1 has no note listing the workflows that "
             "actually ship. The table under it is the design, and it specifies "
             "more than exists.")
     elif claimed != on_disk:
         problems.append(
-            f"docs/architecture.qmd 12.1 says these workflows ship: "
+            f"docs/dev/operations.qmd 12.1 says these workflows ship: "
             f"{sorted(claimed)}; .github/workflows holds {sorted(on_disk)}.")
 
     # 11 -- pulling the published image is offered before building it.
@@ -321,8 +325,7 @@ def main() -> int:
             "check did not run.")
 
     for rel in tracked:
-        if rel.startswith(("docs/reference/", "docs/r/", "docs/_site/")) \
-                or rel == "docs/architecture.qmd":
+        if rel.startswith(("docs/reference/", "docs/r/", "docs/_site/", "docs/dev/")):
             continue
         lines = (ROOT / rel).read_text(encoding="utf-8",
                                        errors="ignore").splitlines()

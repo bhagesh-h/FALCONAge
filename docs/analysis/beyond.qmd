@@ -3,13 +3,15 @@ title: "Beyond the clock score"
 subtitle: "Reading an aging methylome without predicting an age"
 toc: true
 toc-depth: 3
+aliases:
+  - ../beyond-clocks.html
 ---
 
 Every clock in the catalogue models the *mean* beta at a set of sites and returns one number.
 That is not the only thing a methylation matrix can be asked, and on the field's own evidence it
 may not be the most informative thing.
 
-Tong et al. [[65]](references.qmd#ref-65) quantified how much of a clock is entropy rather than
+Tong et al. [[65]](../references.qmd#ref-65) quantified how much of a clock is entropy rather than
 biology: roughly 66 to 75 per cent of Horvath2013's accuracy against chronological age is
 reproducible by a purely stochastic model of methylation change, about 90 per cent for Zhang, and
 about 63 per cent for PhenoAge. The gradient is the interesting part. The more accurately a clock
@@ -76,7 +78,7 @@ invert a group difference.
 
 ### Which sites actually widen
 
-The barometer of Mei et al. [[70]](references.qmd#ref-70) is defined over "cytosines whose variance
+The barometer of Mei et al. [[70]](../references.qmd#ref-70) is defined over "cytosines whose variance
 rises with age", and that clause is the whole statistic. Summed over every site instead, the sum
 is dominated by sites that are merely variable, most of which have nothing to do with age.
 
@@ -131,7 +133,7 @@ full weight; ten thousand clones average it to nothing.
 This is why the effect is invisible to composition adjustment: $f$ can be identical between two
 donors while $N_{\text{eff}}$ differs thousand-fold, and every published blood clock sees only $f$.
 
-The myeloid version of the question is settled. Nachun et al. [[71]](references.qmd#ref-71)
+The myeloid version of the question is settled. Nachun et al. [[71]](../references.qmd#ref-71)
 measured clonal hematopoiesis against six clocks and found 1.31 years of acceleration on GrimAge
 to 3.08 on extrinsic EEAA. The lymphoid analogue has not been asked.
 
@@ -199,11 +201,11 @@ A clock is a weight vector over CpGs, and two questions about that vector need n
 **Is this clock exposed to genotype?** If a clock CpG is under strong meQTL control and the allele
 frequency at that variant differs between ancestral populations, a systematic difference in clock
 output between ancestry groups follows from genotype frequency alone, with no difference in aging.
-Cruz-Gonzalez et al. [[75]](references.qmd#ref-75) established that the major clocks lose accuracy in
+Cruz-Gonzalez et al. [[75]](../references.qmd#ref-75) established that the major clocks lose accuracy in
 admixed individuals; whether the size of that loss tracks each clock's meQTL exposure is open, and
 half of that measurement is a property of the coefficients.
 
-**Is this clock regulatory?** Patel et al. [[76]](references.qmd#ref-76) report that most CpGs used
+**Is this clock regulatory?** Patel et al. [[76]](../references.qmd#ref-76) report that most CpGs used
 by established clocks do *not* overlap known transcription factor binding sites. Reproducing that
 against any annotation class is the same computation with a different list.
 
@@ -237,7 +239,7 @@ bare `cg` probe ids.
 A published ICC answers "how reproducible is this clock across a cohort". Someone asking "has my
 number moved" needs a different quantity, and the gap between the two is why clock ICCs in the
 literature read as reassuring while replicate disagreement of up to nine years is also true
-[[68]](references.qmd#ref-68).
+[[68]](../references.qmd#ref-68).
 
 `fa.variance_components` separates them, given repeated measurement:
 
@@ -277,7 +279,7 @@ and rounding it to zero disguises both.
 
 ## Mosaic ages within a tissue
 
-`fa.models.single_cell.scage` gives an age per cell [[28]](references.qmd#ref-28). A bulk clock already reports the
+`fa.models.single_cell.scage` gives an age per cell [[28]](../references.qmd#ref-28). A bulk clock already reports the
 mean, so the quantity worth having is the *shape* of the distribution underneath it: a tissue whose
 cells are uniformly middle-aged and one holding a mixture of young and very old cells have the same
 bulk methylation and, plausibly, very different biology.

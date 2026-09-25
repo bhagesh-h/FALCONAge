@@ -63,9 +63,16 @@ DEFAULT_OUT = HERE / "_site" / "downloads"
 # The API reference is a lookup table, and a lookup table wants search, which
 # is what the website gives it. What is worth having on a plane is the
 # narrative: what the thing is, how to use it, how to choose a clock, and the
-# two long-form documents. Seven pages, all hand-written, all stable.
-FRONT = ["index.qmd", "guide/FALCONAge.qmd", "guide/clocks.qmd", "clocks.qmd",
-         "gpu.md", "science.qmd", "architecture.qmd", "references.qmd"]
+# methods and the developer notes: the book spine, less the API reference.
+def front() -> list[str]:
+    """Every chapter of the site's book spine, in order, less the API reference.
+
+    Read from reference-groups.yml, the file the sidebar is generated from, so
+    the manual binds the same chapters in the same order as the site shows.
+    """
+    spec = yaml.safe_load(GROUPS.read_text(encoding="utf-8"))
+    return [ch["file"] for part in spec["book"] for ch in part["chapters"]
+            if ch.get("file") and not ch["file"].startswith("reference/")]
 
 FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.S)
 # `[text](#anchor)` -> `text`. Every page carries a hand-written contents list
@@ -75,15 +82,16 @@ FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.S)
 # contents, so the per-page ones are redundant anyway.
 ANCHOR_LINK = re.compile(r"\[([^\]\[]*)\]\(#[^)]*\)")
 
-#: `![caption](../images/x.png)` in a page that lives in docs/guide/.
+#: `![caption](../images/x.png)` or `../figures/...` in a page that lives in a
+#: subfolder of docs/ (start/, data/, clocks/, analysis/, methods/, dev/).
 #:
 #: The combined document is written to docs/ and rendered from there, so every
 #: chapter's relative paths are read from one directory up from where they were
-#: written. A figure on a guide page points at `../images/`, which from docs/
+#: written. A figure on such a page points at `../images/`, which from docs/
 #: resolves outside the project and silently drops out of the PDF: Typst prints
 #: the alt text where the picture should be and the build still succeeds, so
 #: nothing fails and the figure is simply missing.
-GUIDE_IMAGE = re.compile(r"(!\[[^\]]*\]\()\.\./(images/)")
+GUIDE_IMAGE = re.compile(r"(!\[[^\]]*\]\()\.\./((?:images|figures)/)")
 
 #: `[[7]](references.qmd#ref-7)` -> `[7]`.
 #:
@@ -495,10 +503,11 @@ def combine(*, soften: bool = True) -> Path:
     name silently stops matching.
     """
     site = yaml.safe_load(GROUPS.read_text(encoding="utf-8"))["site"]
-    chapters = [c for c in FRONT if (HERE / c).exists()]
+    listed = front()
+    chapters = [c for c in listed if (HERE / c).exists()]
     if len(chapters) < 2:
         raise RuntimeError(
-            "nothing to bind: none of " + ", ".join(FRONT) + " were found. "
+            "nothing to bind: none of " + ", ".join(listed) + " were found. "
             "Run this from the repository, not from a partial checkout.")
 
     parts = [

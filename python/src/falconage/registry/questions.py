@@ -3,7 +3,7 @@
 A reader arrives with a question ("who is at risk of dying sooner?"), not a
 clock name, and the registry answers it from each clock's declared `predicts`
 field. Two places need the same answer: the routing table on
-``docs/guide/clocks.qmd``, and the message a user sees when a licensed clock
+``docs/clocks/choosing.qmd``, and the message a user sees when a licensed clock
 cannot be scored, which names the bundled clocks that answer the same question
 instead. They share this module so they cannot disagree.
 

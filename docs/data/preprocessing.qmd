@@ -1,0 +1,163 @@
+---
+title: "Preprocessing, imputation and coverage"
+---
+
+## 6. Preprocessing, imputation, missing features
+
+### 6.1 The canonical input contract
+
+Rows = samples, columns = features. This is the pyaging convention and it should be the new
+tool's too. Feature names must be the exact identifiers the clock coefficients use:
+`cg00000029` for human methylation, Ensembl or Entrez for expression, UniProt/Olink assay names
+for proteins.
+
+pyaging wraps this in AnnData: `adata.X` is the feature matrix, `adata.obs` holds sample metadata
+and later the predictions, `adata.uns` holds per-clock metadata and missingness diagnostics,
+`adata.obsm["X_<clock>"]` is the transient per-clock feature slice
+([pyaging _pred.py](https://github.com/lucascamillomd/pyaging)).
+
+### 6.2 EPIC v2 probe aggregation
+
+EPIC v2 column names look like `cg00000029_TC21`. Split on `_`, group by CpG prefix, and average
+duplicated probes before anything else
+([pyaging `epicv2_probe_aggregation`](https://github.com/lucascamillomd/pyaging)).
+Skipping this means every EPIC v2 clock silently sees zero overlapping features.
+
+### 6.3 Two distinct imputation stages
+
+**Stage 1 - dataset-level, before the clock.** `df_to_adata(imputer_strategy=...)` with `mean`,
+`median`, `constant` (0), or `knn` (default). KNN is expensive on wide matrices and is the first
+thing to move to GPU.
+
+**Stage 2 - clock-level, for features the dataset does not contain at all.** pyaging preallocates
+the clock's feature matrix, fills present features by index lookup, and fills absent features with
+the model's `reference_values` (typically the training-set mean or a gold-standard median) or with
+zero if no reference vector was shipped
+([pyaging `check_features_in_adata`](https://github.com/lucascamillomd/pyaging)). It
+records `adata.uns["<clock>_percent_na"]` and `adata.uns["<clock>_missing_features"]`, and raises
+if 100% of features are missing.
+
+Filling with zero in β space means "fully unmethylated", which is biologically wrong for most
+sites, always ship a reference vector.
+
+**Third stage in tAge**: pad missing genes with NA and let the model's own sklearn
+`SimpleImputer` insert training medians. This is the cleanest of the three because the imputation
+statistic travels with the model.
+
+**What FALCONAge does, and what the R packages do.** For a linear clock FALCONAge fills an absent
+feature with the mean of the clock's observed features over the whole dataset: one constant, the
+same for every absent feature and every sample (`models/linear.py`). `imputation="reference"`
+replaces it with a per-feature value wherever a reference is supplied. The mitotic mean,
+percentile and transmission clocks (epiTOC1/2/3, HypoClock, EPICmitHyper/Hypo, stemTOC,
+stemTOCvitro) are the exception: their published statistic is taken over the sites present, so
+FALCONAge leaves absent sites out and records `imputation: "excluded"`. methylclock 1.16.0 leaves
+absent CpGs out of the sum (`predAge` in `R/internals.R`), which is a fill of 0. dnaMethyAge 0.2.0
+fills each one with its per-probe mean from the package's `golden_ref` table (`meanImputation`,
+called from `methyAge`). Each policy adds the same amount to every sample, so on one dataset the
+packages differ by a constant
+
+```
+Δ = Σ_{j absent} w_j (f_j − g_j)
+```
+
+where `w_j` is the coefficient and `f_j`, `g_j` are the two fills. For Horvath's clocks the
+constant is multiplied by 21 above the adult age of 20, where the anti-log transform is linear.
+
+Measured on 858 EPIC v1 whole-blood samples from one cohort, on QC-filtered betas, FALCONAge minus
+each package:
+
+| Clock | Absent CpGs | vs methylclock 1.16.0 | vs dnaMethyAge 0.2.0 | After matching the fill |
+|---|---:|---:|---:|---:|
+| DNAm PhenoAge | 13 | −0.50 y | −2.87 y | 0.0000 y |
+| Horvath 2013 | 27 | −8.61 y | −6.86 y | 0.0000 y |
+| Hannum | 9 | +11.57 y | −1.39 y | 0.0000 y |
+| Skin & Blood | 12 | −2.01 y | not run | 0.0000 y |
+
+With the absent CpGs filled as the other package fills them, FALCONAge reproduces every sample's
+score from each package it was compared with, to four decimal places. The coefficients and intercepts agree (DNAm
+PhenoAge's 60.664 is in all three), and the whole offset is the fill. The same betas can therefore
+put Hannum ages 13 years apart in two established packages with no disagreement about the clock.
+The offsets belong to a dataset's missing CpGs, not to the clocks, so the registry does not carry
+them as per-clock discrepancies. The coverage record (`res.coverage[clock_id]`) gives the number
+of values filled (`n_imputed`) and the method (`imputation`). Neither 0 nor a pooled mean is a published value for a CpG, which is why a
+per-CpG reference from each clock's own training data is the better fill.
+
+**Horvath's normalisation is optional in his own code, and the packages default differently.**
+Horvath 2013 supplied a calibration step (Additional file 24, `BMIQcalibration`): each sample's
+betas over 21,368 probes are mapped onto the distribution of `goldstandard2`, the per-probe means
+in Additional file 22 ([Genome Biology, CC BY 2.0](https://doi.org/10.1186/gb-2013-14-10-r115)),
+after absent probes are set to those means. dnaMethyAge 0.2.0 runs it by default for
+`HorvathS2013` (`simple_mode = TRUE` skips it), methylclock 1.16.0 does not (`normalize = FALSE`),
+and FALCONAge does not offer it yet. Run unmodified on 120 of the same EPIC v1 blood samples, it
+lowered Horvath 2013 age by a mean 1.87 years (SD 1.15 across samples, −4.6 to +3.3) and left the
+correlation with chronological age at 0.89; raw and normalised ages correlated at 0.9993. The step
+moves the level and barely the ranking, so a comparison across packages has to say whether it
+ran.
+
+### 6.4 Imputation options used for benchmarking
+
+ComputAge exposes three and treats the choice as part of the model config
+([ComputAge benchmarking.py:323](https://github.com/ComputationalAgingLab/ComputAge)):
+
+- `none` - reindex and fill 0.
+- `sesame_450k` - fill with the sesame 450K per-probe median.
+- `average` - fill with the column mean of the current dataset (0 if the column is empty).
+
+Reporting the imputation method alongside a score is not optional; it changes the answer.
+
+### 6.5 Preprocessing steps that live inside a model
+
+These are per-clock and must run *after* feature selection, not before:
+
+| Step | Clocks |
+|---|---|
+| robust scale `(x − median)/std` | AltumAge, CpGPTGrimAge3 |
+| standard scale `(x − mean)/std` | CpGPTPCGrimAge3 |
+| per-sample z-score across features | ZhangEN, ZhangBLUP |
+| quantile normalise to gold standard | DunedinPACE, Stubbs |
+| quantile normalise then scale | Stubbs |
+| TPM by feature length then log1p | OcampoATAC1/2 |
+| binarise at per-row non-zero median | BiTAge |
+| median-fill then per-sample average rank | Pasta, PastaMouse, REG |
+| mean over non-missing (−1 sentinel) | epiTOC1, HypoClock, epiCMIT |
+| 0.95 quantile over non-missing | stemTOC, stemTOCvitro |
+| nan → 0 | epiTOC2, epiTOC3 |
+| autosomal z-score | XChrom, YChrom |
+| NaN → reference value | ~90 clocks (the `LinearReferenceClock` base) |
+
+## Platform coverage
+Worth running once on an array you have not used before. It reports, per clock, how many features
+are present **and** how much of the model's weight they carry. Two different numbers, and the
+second is the one that catches EPIC v2 probe loss:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.probe_loss(d, clocks="scoreable")
+```
+
+### R
+
+```r
+probe_loss(d, clocks = "scoreable")
+```
+
+:::
+
+::: {.falcon-output}
+```
+                tier  n_features  n_present  coverage  mass_coverage  bias_years  heaviest_absent
+horvath2013        A         353        340    0.9632         0.6117         NaN  cg16867657 (14.1%), ...
+hannum             A          71         64    0.9014         0.8830       -7.69  cg22454769 (3.1%), ...
+```
+:::
+
+`bias_years` is filled in when the platform is one the shift has been measured on; see
+[what probe loss costs](../analysis/uncertainty.qmd#probe-loss-priced). `NaN` there means *not measured*, never
+*no bias*.
+
+A clock at 96% feature coverage and 61% weight coverage has kept nearly all its probes and lost
+the ones that matter. The scoring floor applies to both measures, so this run would be refused
+with a message naming the heaviest absent probes rather than returning a confident number.

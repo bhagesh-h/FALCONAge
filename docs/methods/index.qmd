@@ -1,0 +1,93 @@
+---
+title: "The science of aging clocks"
+subtitle: "What the field knows, and what FALCONAge implements from it"
+aliases:
+  - ../science.html
+---
+
+Every number FALCONAge returns comes from somebody's paper. This is the record of which paper,
+what it actually says, and where the published description and the circulating implementation
+disagree, which they do in eleven documented cases.
+
+It covers what an aging score *is*, the chemistry and biology behind each input layer, every
+algorithm family with its equations, the exact transformations and constants published clocks
+use, the output types and their units, the figures the field reads, and the benchmarking
+machinery used to judge a clock. It runs to the state of the field in 2026.
+
+Read it as the substrate rather than as the manual. [Architecture](../dev/index.qmd) says which
+file computes what; this says why that is the right computation, and it is the document to check
+before trusting a number. Where a section describes something FALCONAge does not implement, it
+says so, the catalogue here is deliberately wider than v1.0, because the point of writing the
+field down is to know what is missing.
+
+
+## 1. Definitions and framing
+
+### 1.1 The three quantities
+
+- **Chronological age (CA)** - time since birth. Years for humans, months or days for rodents,
+  hours for *C. elegans*.
+- **Biological age (BA)** - the output of a model that maps molecular or clinical features to a
+  number on an age-like scale. In practice BA is whatever a fitted model predicts; its meaning
+  comes entirely from what the model was trained on.
+- **Age acceleration (AA)** - the residual. Two conventions, and they are not interchangeable:
+  - **Absolute age acceleration (AAA)**, also called delta: `Δ = BA − CA`. This is what
+    ComputAgeBench tests ([ComputAge benchmarking.py:355](https://github.com/ComputationalAgingLab/ComputAge)).
+  - **Relative age acceleration (RAA)**: residual of `lm(BA ~ CA)` in the analysis sample. This
+    removes the systematic regression-to-the-mean bias that all penalised regressions carry.
+    Used by the TwinGene/UKB pipeline as `BA_res = residuals(lm(BA ~ age))`
+    ([Biological-Aging-and-PRS README](https://github.com/shayanmostafaei/Biological-Aging-and-PRS-for-Mortality-Prediction)).
+  - A third convention, used by spatial single-cell clocks, replaces CA with the per-animal
+    per-cell-type mean prediction, so acceleration is measured within an animal rather than
+    against the calendar
+    ([SpatialAgingClock deploy.py `get_age_acceleration`](https://github.com/sunericd/SpatialAgingClock)).
+
+- **Pace of aging** - a rate, not a level. Units are biological years per chronological year.
+  DunedinPACE and DunedinPoAm are the two published examples; both are centred near 1.0.
+
+### 1.2 Clock generations
+
+This taxonomy governs everything downstream, what the score means, whether it responds to
+interventions, and how it must be validated.
+
+| Generation | Training target | Examples | Behaviour |
+|---|---|---|---|
+| First | Chronological age | Horvath 2013, Hannum, Lin, Zhang EN/BLUP, AltumAge, PedBE, SkinAndBlood | High age correlation, weak or absent mortality signal. Zhang BLUP has RMSE ≈ 2.0 y yet its acceleration no longer predicts mortality, the "oracle paradox". |
+| Second | Mortality or a composite phenotype | PhenoAge, DNAmPhenoAge, GrimAge, GrimAge2, CpGPTGrimAge3, SystemsAge, OMICmAge | Lower CA accuracy, much stronger mortality/morbidity association. |
+| Third ("pace") | Longitudinal rate of change across many organ systems | DunedinPoAm38, DunedinPACE | Rate, responds fastest to interventions. |
+| Causal | CA, but with features filtered by Mendelian-randomisation evidence of causality | YingCausAge, YingDamAge, YingAdaptAge | Separates damaging from adaptive/protective methylation. |
+| Mitotic | Stem-cell division count / replicative history | epiTOC1, epiTOC2, epiTOC3, stemTOC, HypoClock, epiCMIT-hyper/hypo, RepliTali, MiAge | Cancer risk, proliferative history. |
+| System- and organ-specific | Mortality or CA, restricted to organ-enriched features | SystemsAge (11 systems), organAging (24 organ protein panels), MEAT (muscle), CorticalClock (brain), scImmuAging (5 PBMC cell types) | Reveals within-person heterogeneity. |
+| Foundation-model | Self-supervised pretraining, then fine-tuned | CpGPT, methylGPT | Cross-platform imputation, SOTA mortality prediction. |
+
+### 1.3 Biomarker validation taxonomy (Biomarkers of Aging Consortium)
+
+Moqri et al. classify aging biomarkers as **predictive** (associates with future outcomes),
+**responsive** (moves under an intervention), and **biological** (has a mechanistic, causal
+claim). A clock that is only predictive is a risk score; only responsive is a surrogate
+endpoint; a biological biomarker needs causal evidence. The consortium's Biolearn library and
+the 2024–25 open competition (chronological age, mortality, multimorbidity; >$200k prizes)
+operationalise this. Any new tool should record which of the three claims each clock supports.
+
+### 1.4 Why this matters commercially and scientifically
+
+The geroscience hypothesis holds that aging is the dominant risk factor common to cancer,
+cardiovascular disease, T2D, Alzheimer's and Parkinson's, so slowing aging delays all of them.
+A validated surrogate endpoint shortens trials that would otherwise need decades of mortality
+follow-up. TAME (metformin) has raised ~$11M of $40M over seven years with a six-year observation
+window; a responsive clock is the alternative
+([computational_aging_course/ml/aging_clocks.md](https://github.com/ComputationalAgingLab/computational_aging_course)).
+
+Butler's criteria for a usable aging biomarker: changes with age; predicts mortality better than
+CA alone; predicts early-stage age-related disease; minimally invasive. Moskalev adds:
+sensitive early, predictable in a practical time window, robust.
+
+## References
+
+The bibliography moved to [its own page](../references.qmd), where it is numbered
+once and cited by number from every page of this site. It reads the same in the
+PDF, where it is bound as the last chapter.
+
+Citations in this document are the bracketed numbers, for example
+[[5]](../references.qmd#ref-5) for Horvath 2013. The numbering is global, so a
+source keeps its number wherever it appears.
