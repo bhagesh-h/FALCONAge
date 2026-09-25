@@ -50,9 +50,8 @@
   flex-direction: column;
 }
 #quarto-sidebar .sidebar-header { order: -2; }        // title, when Quarto emits one
-#quarto-sidebar .quarto-sidebar-header { order: -1; } // blurb and cite
-// The book spine sits under both, and takes the slack so the footer stays at
-// the bottom of a short page instead of floating under the last chapter.
+// The book spine takes the slack so the footer stays at the bottom of a short
+// page instead of floating under the last chapter.
 #quarto-sidebar .sidebar-menu-container { order: 0; flex: 1 1 auto; }
 
 // THE SPINE ITSELF.
@@ -117,12 +116,6 @@
   color: $falcon-accent;
 }
 
-#quarto-sidebar .quarto-sidebar-header {
-  padding: 0.25rem 0 0.5rem;
-  font-size: 0.86rem;
-  line-height: 1.45;
-}
-
 // THE MARK SITS BESIDE THE PAGE TITLE, NOT IN THE HEADER BAR.
 //
 // A logo in the navbar is chrome: it belongs to the site, repeats on every
@@ -176,48 +169,6 @@
 // context, or the float stops shortening the lines of the heading beside it.
 #quarto-document-content { display: block; }
 #title-block-header.quarto-title-block { display: block; }
-
-// One line, doing the job the navbar cannot: saying what this is.
-.falcon-blurb {
-  margin: 0 0 1rem;
-  font-size: 0.86rem;
-  line-height: 1.45;
-  opacity: 0.88;
-}
-
-.falcon-cite-title {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.6;
-  margin-bottom: 0.45rem;
-}
-
-// There is no rule hiding the citation text, because there is no citation text
-// in the sidebar to hide. It travels base64 in the button's data-copy
-// attribute -- see _b64() in build_docs.py for why. The readable version is on
-// the landing page.
-.falcon-cite-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-.falcon-copy {
-  font-size: 0.7rem;
-  padding: 0.25rem 0.6rem;
-  color: $falcon-accent;
-  background: transparent;
-  border: 1px solid $falcon-hairline;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
-}
-.falcon-copy:hover { background: $falcon-wash; }
-.falcon-copy.copied {
-  color: $falcon-invert;
-  background: $falcon-brand;
-  border-color: $falcon-brand;
-}
 
 // Separated by space, not by a rule. The pages already carry enough horizontal
 // lines from heading styling, and a second stacked near it reads as a mistake.
@@ -377,8 +328,7 @@ main video {
 //
 // This site declares a navbar and a docked sidebar. On a wide screen they have
 // different jobs -- the navbar carries the mark, the site name and the search;
-// the sidebar carries the one-line description, the citation buttons and the
-// book spine -- and both fit.
+// the sidebar carries the book spine -- and both fit.
 //
 // Below the sidebar breakpoint Quarto collapses each of them behind its own
 // control, and the result was two hamburgers side by side in the header, each
@@ -397,7 +347,7 @@ main video {
 // menu carries the identical list, generated from the same `book:` block, and
 // the rule below hides that menu above this breakpoint so the two are never on
 // screen together. The mark is unaffected, being in the navbar; the citation
-// buttons are on the About page, one tap away.
+// is on the home page.
 @media (max-width: 991.98px) {
   #quarto-sidebar,
   #quarto-sidebar-glass,
@@ -443,12 +393,6 @@ main video {
   // screen. Hiding the sidebar is the whole change; the layout was never the
   // problem.
 
-  // The citation buttons are on the About page at this width, in the article
-  // body rather than the sidebar. Give them a tap target.
-  .falcon-copy {
-    padding: 0.4rem 0.7rem;
-    font-size: 0.78rem;
-  }
 }
 
 // Phone proper. Quarto's default article padding costs a fifth of a 320 px

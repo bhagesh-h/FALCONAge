@@ -5,6 +5,14 @@
 
 ## Added
 
+- **A quieter site.** The sidebar carried a one-line description and two
+  citation buttons on every page; it now carries the book spine and nothing
+  else. The description is the home page's subtitle and the citation stays in
+  the home page's citation section, so nothing was removed, only repeated. The
+  copy script and the stylesheet rules that served them are gone. Measured
+  before and after at 320, 360, 390, 768 and 1280 px: one contents list, one
+  search box and no overflow at every width.
+
 - **An optional report of the whole run, ordered by step.** `falconage report
   --quarto`, `fa.report.run_report(..., quarto=True)` and `run_report(...,
   quarto = TRUE)` in R write `falconage_report.qmd`, in which every file of the
@@ -166,6 +174,12 @@
   makes the single-file HTML report reproducible rather than ad hoc.
 
 ## Fixed
+
+- **Horvath's age transform rendered as overlapping text.** The row break in
+  the science page's two-case formula was written `\[4pt]` for `\\[4pt]`, so
+  the cases ran into each other; at 320 px the two columns also overlapped.
+  The branches are now two short displays with their conditions in the prose,
+  and the site's responsive check is clean at every width for the first time.
 
 - **Per-clock figures lost their reading notes in the Quarto report.** Notes
   were looked up by the file's exact stem, so `ba_vs_ca_hannum` and every other

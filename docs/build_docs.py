@@ -20,7 +20,6 @@ Usage
 from __future__ import annotations
 
 import argparse
-import base64
 import shutil
 import sys
 from pathlib import Path
@@ -101,21 +100,6 @@ def bibtex(spec: dict) -> str:
     ])
 
 
-def _b64(text: str) -> str:
-    """Base64 for a data- attribute.
-
-    The citation used to live in hidden <pre> elements the copy handler read by
-    id. Pandoc parses the sidebar `header:` as markdown, and a multi-line raw
-    HTML block with a boolean `hidden` attribute made it stop parsing partway
-    through -- the rendered page kept the title and silently dropped both <pre>
-    tags AND the buttons after them. Nothing errored; the block was just short.
-    That is why this is now one line with no hidden elements, no boolean
-    attributes and no newlines inside a tag: there is nothing left for the
-    markdown reader to trip on.
-    """
-    return base64.b64encode(text.encode("utf-8")).decode("ascii")
-
-
 def _chapter(ch: dict) -> dict:
     """One sidebar or menu entry. `href` for the pkgdown tree, `file` otherwise.
 
@@ -155,44 +139,6 @@ def _navbar_contents(spec: dict) -> list[dict]:
         out.append({"text": part["part"]})
         out.extend(_chapter(ch) for ch in part["chapters"])
     return out
-
-
-def sidebar_header(spec: dict) -> str:
-    """Logo, one line on what this is, and a citation you can paste.
-
-    WHY THERE IS NO NAVIGATION HERE. The first version repeated the navbar down
-    the left column, which is two copies of the same menu on a screen wide
-    enough to show both and no help on one that is not. The right-hand "On this
-    page" list already handles movement within a page. So the column carries
-    what the navbar cannot: what the tool is, and how to cite it.
-
-    WHY THE CITATION IS INLINE RATHER THAN A LINK. A link to CITATION.cff is a
-    file to open, parse and reformat. What a reader wants is the two strings
-    they are actually going to paste -- APA into a manuscript, BibTeX into a
-    .bib -- with a button that puts them on the clipboard.
-    """
-    site = spec["site"]
-    # No <img> here. An earlier version emitted one to control the order, and
-    # `src="logo.png"` is relative to the page: correct at the site root and a
-    # 404 on everything under guide/ and reference/, which is most of the site.
-    # Quarto's own `logo:` key rewrites the path per page depth -- ./logo.png,
-    # ../logo.png -- so the key does the job and CSS `order` puts the block
-    # above this text. Ordering is a layout problem; it should be solved in the
-    # stylesheet, not by hand-writing an image tag with a broken path.
-    #
-    # The citation text is in the DOM but hidden: the reader wants the button,
-    # not two reference formats taking up a screen of a narrow column, and the
-    # copy handler needs something to read.
-    return (
-        f'<p class="falcon-blurb">{" ".join(site["description"].split())}</p>\n'
-        '<div class="falcon-cite">'
-        '<div class="falcon-cite-title">Cite FALCONAge</div>'
-        '<div class="falcon-cite-buttons">'
-        f'<button class="falcon-copy" data-copy="{_b64(apa(spec))}">Copy APA</button>'
-        f'<button class="falcon-copy" data-copy="{_b64(bibtex(spec))}">Copy BibTeX</button>'
-        '</div>'
-        '</div>'
-    )
 
 
 def quarto_yaml(spec: dict) -> str:
@@ -295,7 +241,11 @@ def quarto_yaml(spec: dict) -> str:
                 # One mark on the page, not two. The stylesheet no longer hides
                 # the navbar's copy above 992px, because there is nothing left
                 # for it to collide with.
-                "header": sidebar_header(spec),
+                #
+                # NO HEADER EITHER. It carried the one-line description and two
+                # citation buttons on every page; the description is the home
+                # page's subtitle and the citation is in the home page's
+                # generated block, so the column is the spine and nothing else.
                 # Parts start closed and the one holding the current page
                 # opens. Fifteen chapters under five headings is a wall when it
                 # is all open at once, and a reader on the GPU page does not
@@ -341,12 +291,10 @@ def quarto_yaml(spec: dict) -> str:
             "toc": True,
             "code-copy": True,
             "code-overflow": "wrap",
-            # The copy buttons on the sidebar citation. Quarto's own code-copy
-            # only decorates code blocks in the article body.
-            # cite-copy: the sidebar citation buttons. table-scroll: wraps every
-            # article table in a scroll container, which has to be a parent of
-            # the table and which Pandoc does not emit.
-            "include-after-body": ["cite-copy.html", "table-scroll.html"],
+            # table-scroll wraps every article table in a scroll container,
+            # which has to be a parent of the table and which Pandoc does not
+            # emit.
+            "include-after-body": ["table-scroll.html"],
             # Both languages appear in the same tabset on every guide page, so
             # a reader picking "R" once keeps R selected across the whole site.
             "code-annotations": "hover",

@@ -226,7 +226,7 @@ def main() -> int:
         # committed exactly that way. Two .html files here are genuinely source
         # -- the include-after-body fragments -- so the check is a subtraction
         # rather than a blanket ban.
-        SOURCE_HTML = {"docs/cite-copy.html", "docs/table-scroll.html"}
+        SOURCE_HTML = {"docs/table-scroll.html"}
         try:
             listed = subprocess.run(
                 ["git", "ls-files", "--", "docs/*.html", "docs/guide/*.html"],
