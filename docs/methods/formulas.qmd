@@ -86,8 +86,8 @@ and `dnamphenoage` (methylation).
 
 ### 5.2 pyaging generalised PhenoAge postprocess
 
-The torch implementation with λ = 0.0192
-([pyaging _models.py:1456](https://github.com/lucascamillomd/pyaging)):
+The torch implementation with λ = 0.0192 (pyaging's `PhenoAge.postprocess` in
+[`src/pyaging/models/_models.py`](https://github.com/lucascamillomd/pyaging), commit `e7267e9`):
 
 ```
 mortality = 1 − exp( −exp(x) · (exp(120λ) − 1) / λ )
@@ -139,9 +139,23 @@ Put the unconverted numbers into the same weights and xb is 8.36, m is 1, and th
 **Horvath output transform.** A raw linear score of −0.5 becomes
 `21·exp(−0.5) − 1 = 11.74` years; a score of 1.2 becomes `21·1.2 + 20 = 45.2` years.
 
-**GrimAge2 Cox → years.** A Cox linear predictor of 16.0 becomes
+**GrimAge2 Cox → years**, with the constants of pyaging's `GrimAge2.postprocess` (FALCONAge ships
+GrimAge2 as a licensed scaffold, so these are not its numbers to publish). A Cox linear predictor
+of 16.0 becomes
 `((16.0 − 15.370829484122)/1.09534876966487) × 9.05974444998421 + 66.0943807965085 = 71.30` years.
 
-**tAge chronological, mouse.** A model output of 0.35 (fraction of maximum lifespan) becomes
+**tAge chronological, mouse.** The chronological clocks predict age divided by the species'
+maximum recorded lifespan, and the mortality clocks predict log10 of the expected mortality rate
+([Tyshkovskiy et al., Nature 2026](https://doi.org/10.1038/s41586-026-10542-3)); the mouse's
+maximum recorded lifespan is 4 years in AnAge. A model output of 0.35 (fraction of maximum
+lifespan) becomes
 `0.35 × 48 = 16.8` months. The same 0.35 from a mortality clock stays as
 `log10(HR) = 0.35`, i.e. HR ≈ 2.24 - never 16.8 anything.
+
+**Checked against the sources (2026-09-25).** 5.1 against Levine et al. 2018, Table 1,
+Supplementary Table S1 and Supplement 1, and BioAge's `phenoage_calc.R`; 5.2 and the GrimAge2
+constants against pyaging at commit `e7267e9`; 5.3 against `src/biological_age_correction.py` and
+`src/lifespan_prediction_with_error_propagation.py` in Meyer-DH/AgingClock; 5.4 against Zhang et
+al. 2019 (the 2.04-year RMSE and the absent mortality association in both Lothian cohorts) and
+their `pred.R`; the Horvath transform against dnaMethyAge's `HorvathS2013_transform`; the tAge
+scales against Tyshkovskiy et al. 2026 and the AnAge entry for *Mus musculus*.

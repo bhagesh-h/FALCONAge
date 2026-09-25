@@ -208,7 +208,9 @@ own `registry_version` so a coefficient correction can be pinned independently o
   sections were numbered 20.x and 21.x under sections 19 and 20, which the
   text citing them did not follow; they are 19.x and 20.x. The engine page
   marks the weight-caching rules for untraced clocks as specified and not
-  built.
+  built. The formulas page was read against each of its sources and records
+  which, and when; its pyaging citation named a line that had moved, and its
+  GrimAge2 and tAge examples cited nothing.
 
 - **The responsive check read hidden table columns as overlapping text.**
   A wide table scrolls inside its wrapper, and the check measured the columns

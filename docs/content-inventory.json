@@ -96,6 +96,14 @@
 "20.1 The point estimate problem"
 ]
 },
+"2faf8cd5fd9b1cd0": {
+"reason": "Item 28: formulas page checked against its sources; the pyaging citation moved from a stale line number to the method and commit, and the GrimAge2 and tAge worked examples now cite where their constants and scales come from.",
+"was": [
+"science.qmd",
+"5.2 pyaging generalised PhenoAge postprocess",
+"The torch implementation with \u03bb = 0.0192 ([pyaging _models.py:1456]()):"
+]
+},
 "32b4a23f588f4efe": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
@@ -432,6 +440,14 @@
 "5. [Exact published formulas and constants]()"
 ]
 },
+"9eb60ef451d7378c": {
+"reason": "Item 28: formulas page checked against its sources; the pyaging citation moved from a stale line number to the method and commit, and the GrimAge2 and tAge worked examples now cite where their constants and scales come from.",
+"was": [
+"science.qmd",
+"Appendix F - Reproducing the four reference computations by hand",
+"**tAge chronological, mouse.** A model output of 0.35 (fraction of maximum lifespan) becom"
+]
+},
 "a04d21e03328a505": {
 "reason": "Item 28: the DESCRIPTION quoted on the R package page brought to the real file's 175 clocks; the discrepancy table's intro now reads '22 of the 175 catalogued clocks', so its count is not read as the catalogue's total.",
 "was": [
@@ -598,6 +614,14 @@
 "science.qmd",
 "20.3 Prediction error is a different, larger question",
 "20.3 Prediction error is a different, larger question"
+]
+},
+"eade6ef05eb70c35": {
+"reason": "Item 28: formulas page checked against its sources; the pyaging citation moved from a stale line number to the method and commit, and the GrimAge2 and tAge worked examples now cite where their constants and scales come from.",
+"was": [
+"science.qmd",
+"Appendix F - Reproducing the four reference computations by hand",
+"**GrimAge2 Cox \u2192 years.** A Cox linear predictor of 16.0 becomes `((16.0 \u2212 15.370829484122"
 ]
 },
 "f09868d754e6c013": {
