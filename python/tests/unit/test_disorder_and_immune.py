@@ -421,6 +421,23 @@ def test_replicates_needed_is_infinite_when_state_dominates():
     assert np.isinf(vc.replicates_needed(0.9).loc["clockA"])
 
 
+def test_one_draw_per_visit_combines_state_and_technical():
+    """Visits without replicates, the usual longitudinal design, and the call the
+    skill shows. The technical term has no degrees of freedom, so the within-person
+    variance is reported whole rather than the call failing as though nobody had
+    been measured twice."""
+    res = _balanced(n_subjects=200, n_occasions=3, n_reps=1, trait=9.0, state=4.0,
+                    tech=1.0, seed=5)
+    vc = fa.variance_components(res, subject_col="subject", occasion_col="occasion")
+    row = vc.table.loc["clockA"]
+    assert np.isnan(row["var_tech"])
+    assert row["var_state"] == pytest.approx(5.0, rel=0.25)      # state + technical
+    assert row["icc"] == pytest.approx(9 / 14, rel=0.2)
+    assert "combined" in vc.design["within_person"]
+    one_way = fa.variance_components(res, subject_col="subject").table.loc["clockA"]
+    assert row["icc"] == pytest.approx(one_way["icc"], rel=1e-12)
+
+
 def test_variance_components_refuses_two_subjects():
     res = _balanced(n_subjects=2)
     with pytest.raises(VarianceError, match="fewer than three people"):

@@ -38,8 +38,17 @@ __all__ = [
 #: Clocks* singles out as the case where the PC version changes the answer. A
 #: check that skips its most important case reads exactly like a check that
 #: passed.
+#: The PC clocks Higgins-Chen et al. 2022 retrained, by the clock each one
+#: replaces. Nothing else has a high-reliability version: deriving one by
+#: prefixing "pc" named clocks that do not exist (pccellpopage) and asked the
+#: verdict to wait for them.
 PC_COUNTERPART = {
+    "horvath2013": "pchorvath2013",
+    "skinandblood": "pcskinandblood",
+    "hannum": "pchannum",
     "dnamphenoage": "pcphenoage",
+    "dnamtl": "pcdnamtl",
+    "grimage": "pcgrimage",
 }
 
 
@@ -51,9 +60,7 @@ def pc_counterpart(clock_id: str) -> str | None:
     clocks are ``licensed``, and five of them are registered from the authors'
     own file with ``fa.registry.load().import_pc_clocks(path)``.
     """
-    if clock_id.startswith("pc"):
-        return None
-    return PC_COUNTERPART.get(clock_id, f"pc{clock_id}")
+    return PC_COUNTERPART.get(clock_id)
 
 
 def _check_legal(registry, clock_id: str, op: str) -> None:
@@ -1799,8 +1806,9 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
                f"false positive (PMC11526921) -- {counts}")
     elif not outcome:
         verdict = "unsupported"
-        why = ("only age-trained clocks moved; the effects that replicate show "
-               f"up in outcome-trained clocks too -- {counts}")
+        why = ("only age-trained clocks moved, and no clock trained on an outcome "
+               "(mortality, pace of aging, disease) did; an effect that replicates "
+               f"moves those as well -- {counts}")
     elif len(gens) < min_generations:
         verdict, why = "inconclusive", (
             f"significant clocks span {len(gens)} generation(s), "

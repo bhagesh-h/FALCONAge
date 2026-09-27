@@ -361,12 +361,18 @@ def _probe_se(result, data, reg, cid: str, table: pd.Series):
     var_present = s2 * (1.0 - icc)
     per_cell = np.where(imputed, s2[None, :], var_present[None, :])
 
-    raw_var = (per_cell * (w ** 2)[None, :]).sum(axis=1)
+    # Each sample's score is linear in the features it uses, but for the
+    # summary-statistic clocks the weight is not the stored one: a mean over n
+    # present CpGs weights each by 1/n, and a percentile depends on two order
+    # statistics only. Propagating the stored weights (1.0 per probe) made the
+    # SE of epiTOC1 and its kin 20 to 190 times too large.
+    weff, raw = _effective_weights(reg, cid, w, x, observed)
+    per_cell = np.where(weff == 0.0, 0.0, per_cell)
+    raw_var = (per_cell * weff ** 2).sum(axis=1)
 
     # Delta method through the postprocess chain, evaluated at each sample's
     # own raw score -- anti_log_linear's slope differs by a factor of e^x below
     # zero, so a single slope for the cohort would be wrong for anyone young.
-    raw = x @ w
     _, slope = ops.chain_derivative(raw, reg.get(cid).postprocess, ops.POSTPROCESS)
     se = np.sqrt(np.maximum(raw_var, 0.0)) * np.abs(np.asarray(slope, dtype=np.float64))
 
@@ -379,6 +385,53 @@ def _probe_se(result, data, reg, cid: str, table: pd.Series):
         "n_features_imputed_mean": round(float(imputed.sum(axis=1).mean()), 2),
         "median_se": round(float(np.median(se)), 4),
     }
+
+
+def _effective_weights(reg, cid: str, w: np.ndarray, x: np.ndarray, observed: np.ndarray):
+    """Per-sample weights of each feature in the raw score, and the raw score.
+
+    Linear clocks use their coefficients, the same for every sample. The mean
+    and transmission-model clocks average over the CpGs a sample carries, as
+    their scoring does, so each present CpG weighs 1/n (times 2w for the
+    transmission model) and an absent one nothing. A percentile is the linear
+    interpolation between two order statistics, so only those two carry
+    weight: the delta method's local derivative of a sample quantile.
+    """
+    from ..models.aggregation import is_aggregation, parse_statistic
+    from ..models.division import DivisionClock, is_division_model
+
+    c = reg.get(cid)
+    n_s, n_f = observed.shape
+    present = np.isfinite(observed)
+    n_present = np.maximum(present.sum(axis=1), 1)
+    if is_division_model(c):
+        m = DivisionClock.from_registry(reg, cid)
+        weff = np.where(present, 2.0 * m.coefficients[None, :] / n_present[:, None], 0.0)
+        raw = 2.0 * np.nanmean((observed - m.ground_state[None, :]) * m.coefficients[None, :], axis=1)
+        return weff, raw
+    if is_aggregation(c):
+        stat, q = parse_statistic(c.model_type)
+        if stat == "mean":
+            return (np.where(present, 1.0 / n_present[:, None], 0.0),
+                    np.nanmean(observed, axis=1))
+        if stat == "weighted_mean":
+            a = np.abs(w)
+            weff = np.broadcast_to(a / a.sum(), (n_s, n_f)).copy()
+            return weff, x @ (a / a.sum())
+        if stat == "quantile":
+            weff = np.zeros((n_s, n_f))
+            raw = np.nanquantile(observed, q, axis=1)
+            for i in range(n_s):
+                idx = np.flatnonzero(present[i])
+                order = idx[np.argsort(observed[i, idx], kind="stable")]
+                h = (len(order) - 1) * q
+                lo = int(np.floor(h))
+                frac = h - lo
+                weff[i, order[lo]] += 1.0 - frac
+                if frac > 0 and lo + 1 < len(order):
+                    weff[i, order[lo + 1]] += frac
+            return weff, raw
+    return np.broadcast_to(w, (n_s, n_f)), x @ w
 
 
 def _clock_se(result, clock, cid: str):

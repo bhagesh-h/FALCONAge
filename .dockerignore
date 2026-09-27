@@ -42,6 +42,7 @@
 # them at /opt/testdata so the fetcher image runs without a mounted checkout.
 test/data/**
 test/output/**
+test/conformance/out/**
 !test/data/datasets.yaml
 !test/data/fetch_test_data.py
 !test/data/fetch_test_data.R

@@ -30,9 +30,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 # One layer per package, so a failure in one does not rebuild the others.
 RUN Rscript -e 'install.packages(c("remotes", "BiocManager"), repos = "https://cloud.r-project.org")'
-RUN Rscript -e 'BiocManager::install(c("methylclock", "methylclockData"), ask = FALSE, update = FALSE); stopifnot(requireNamespace("methylclock"))'
-RUN Rscript -e 'remotes::install_github("yiluyucheng/dnaMethyAge@0d40c9bb02c7d9a4d91ce01d150a9c0b12edf1f4", upgrade = "never"); stopifnot(requireNamespace("dnaMethyAge"))'
-RUN Rscript -e 'remotes::install_github("HigginsChenLab/methylCIPHER@bfe5d02817e7dd5e923e8bf96528d5bfd52e1636", upgrade = "never"); stopifnot(requireNamespace("methylCIPHER"))'
+RUN Rscript -e 'BiocManager::install(c("methylclock", "methylclockData"), ask = FALSE, update = FALSE)'
+RUN Rscript -e 'remotes::install_github("yiluyucheng/dnaMethyAge@0d40c9bb02c7d9a4d91ce01d150a9c0b12edf1f4", upgrade = "never")'
+RUN Rscript -e 'remotes::install_github("HigginsChenLab/methylCIPHER@bfe5d02817e7dd5e923e8bf96528d5bfd52e1636", upgrade = "never")'
 # biolearn 0.9.1 imports seaborn, torch and lifelines without declaring them (GPy only lazily).
 RUN python -m venv /opt/biolearn \
  && /opt/biolearn/bin/pip install --no-cache-dir biolearn==0.9.1 seaborn lifelines \

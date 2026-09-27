@@ -269,6 +269,10 @@ vc.table                      # var_trait, var_state, var_tech, icc, icc_age_adj
 vc.replicates_needed(0.9)     # per occasion, to reach ICC 0.9
 ```
 
+With one draw per visit and no technical replicates, which is the usual longitudinal design, day-to-day
+change and assay noise cannot be told apart: `var_state` then holds both, `var_tech` is NaN,
+`icc` is the test-retest reliability across visits, and `vc.design["within_person"]` says so.
+
 `replicates_needed` returns `inf` where no number of replicates gets there, and that is the
 informative case rather than an error. Replicates average away the *technical* term only, so a
 clock whose day-to-day within-person variance already exceeds the budget cannot be rescued by

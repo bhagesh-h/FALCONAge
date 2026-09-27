@@ -113,6 +113,25 @@ own `registry_version` so a coefficient correction can be pinned independently o
   retrieved by script; its intercept is now its coefficient table's
   -2.09734933574694 rather than the rounded -2.1, and it stays marked
   untraced, the only bundled clock that is.
+- **The probe-level technical SE of the summary-statistic clocks was 20 to 190
+  times too large.** epiTOC1-3, HypoClock, epiCMIT and stemTOC average (or take a
+  percentile over) the CpGs a sample carries, and `technical_se` propagated the
+  stored probe-list weight of 1.0 instead of each CpG's weight in the score:
+  1/n for a mean, 2w/n for the transmission models, and the two interpolated
+  order statistics for a percentile. The implied cohort reliability for epiTOC1
+  had come out at -1,884; it is now between 0 and 1.
+- **`pc_counterpart()` invented clocks.** It prefixed "pc" to any id, so the
+  consensus verdict waited on partners such as `pccellpopage`. It now names only
+  the six PC clocks Higgins-Chen et al. 2022 retrained (Horvath 2013, skin and
+  blood, Hannum, PhenoAge, DNAmTL, GrimAge), and None for every other clock.
+- **The "only age-trained clocks moved" verdict contradicted itself.** It now
+  says that no outcome-trained clock moved, and that an effect that replicates
+  moves those as well.
+- **`variance_components(occasion_col=...)` failed on one draw per visit**, the
+  usual longitudinal design and the call the skill shows, saying that no clock
+  had repeated observations. Without replicates the technical term cannot be
+  estimated; the call now returns the two-level split, with state and technical
+  variance together in `var_state`, `var_tech` NaN, and the design saying so.
 - **`consensus()` no longer fails on a clock whose scores do not vary.** Such
   a clock carries no information about a difference; it is left out, named in
   `left_out` and counted in the verdict. Before, the mixed design stopped with

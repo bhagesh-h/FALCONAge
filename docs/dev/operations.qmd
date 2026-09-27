@@ -6,8 +6,9 @@ title: "Docker, testing, documentation and CI"
 
 Two images from one Dockerfile family, following the cyRAVEN pattern in
 its `inst/scripts/Dockerfile`: pinned base, dependency
-layer copied before source, dependencies read from the declaration rather than a second list, and
-a build-time smoke test so a broken image fails at build instead of an hour into an analysis.
+layer copied before source, and dependencies read from the declaration rather than a second list.
+The images carry no build-time checks, to keep them light; the test suite runs in the image on
+demand (`python -m pytest /opt/falconage/src/python/tests`).
 
 ### 9.1 Images
 
@@ -115,25 +116,13 @@ RUN pip install --no-cache-dir --no-deps /opt/falconage/src/python \
 # rather than trying to build an environment inside a read-only container.
 ENV RETICULATE_PYTHON=/usr/local/bin/python
 
-# ---- build-time verification -----------------------------------------------
-# A broken image fails HERE, not an hour into someone's analysis. This exercises
-# the CLI parser, the registry load, the R bridge and every import both sides
-# need.
-RUN falconage --version \
- && falconage clocks list --limit 5 \
- && falconage config \
- && Rscript -e "library(FALCONAge); stopifnot(falconage_available()); print(falconage_config())" \
- && python -c "import falconage; print(falconage.__version__, len(falconage.registry.load().list()))"
-
 VOLUME ["/results", "/opt/falconage/cache"]
 WORKDIR /work
 ENTRYPOINT ["/opt/falconage/entrypoint.sh"]
 CMD ["--help"]
 ```
 
-`Dockerfile.cuda` differs only in the base image, the torch index URL, and a build-time
-`torch.cuda.is_available()` check that is allowed to report `False` at build (there is no GPU on
-the builder) but prints the compiled CUDA version so a mismatch is visible.
+`Dockerfile.cuda` differs only in the base image and the torch index URL.
 
 ### 9.3 entrypoint.sh
 

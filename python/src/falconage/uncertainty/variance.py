@@ -116,6 +116,11 @@ def variance_components(result, *, subject_col: str,
         every repeat is a technical replicate of one draw: the state term is
         then not identifiable and comes back NaN rather than being folded
         silently into one of its neighbours, and ``icc`` becomes ICC(1,1).
+        With one observation per occasion (visits without replicates) the
+        technical term is not identifiable instead: ``var_state`` then holds
+        the state and technical variance together, ``var_tech`` is NaN, ``icc``
+        is the test-retest reliability across occasions, and ``design`` says
+        so.
     """
     obs = result.obs
     if subject_col not in obs.columns:
@@ -139,6 +144,24 @@ def variance_components(result, *, subject_col: str,
                 "  Drop occasion_col to get the two-way split, or supply data "
                 "with more than one draw per person.")
     else:
+        occ = pd.Series(subj.to_numpy(), index=subj.index)
+
+    # One draw per visit and no replicates is the usual longitudinal design, and
+    # it cannot separate day-to-day change from assay noise: each occasion is a
+    # single observation, so the technical stratum has no degrees of freedom.
+    # It still answers the question such a study asks, how much of the spread is
+    # between people and how much is within them, so it is fitted as the
+    # two-level split with the within-person variance reported as state and
+    # technical together, rather than refused for want of replicates.
+    combined = nested and int(occ.value_counts().max()) == 1
+    if combined:
+        from ..core.logging import get_logger
+
+        get_logger(__name__).warning(
+            "one observation per occasion: state and technical variance cannot be "
+            "separated without replicates, so var_state holds both and var_tech is "
+            "NaN; icc is the between-occasion (test-retest) reliability")
+        nested = False
         occ = pd.Series(subj.to_numpy(), index=subj.index)
 
     cols = list(result.scores.columns) if clocks is None else [
@@ -173,6 +196,8 @@ def variance_components(result, *, subject_col: str,
                     comp["icc_age_adjusted"] = adj["icc"]
 
         comp["n_observations"] = float(ok.sum())
+        if combined:
+            comp["var_state"], comp["var_tech"] = comp["var_tech"], np.nan
         rows[cid] = comp
 
     if not rows:
@@ -189,6 +214,9 @@ def variance_components(result, *, subject_col: str,
         "n_observations": int(len(subj)),
         "nested": nested,
         "age_adjusted": age is not None,
+        "within_person": ("state and technical combined in var_state: one "
+                          "observation per occasion, no replicates") if combined
+                         else "separated" if nested else "technical only",
     }
     return VarianceComponents(table=table.sort_values("icc", ascending=False),
                               design=design)

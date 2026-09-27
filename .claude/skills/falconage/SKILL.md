@@ -96,7 +96,8 @@ mistake to avoid: a standard deviation needs more than one observation. Use `dri
 
 `variance_components` returns both `icc` and `icc_age_adjusted`. Quote the adjusted one for any
 individual-level claim: a raw ICC on a cohort spanning decades mostly reports that the clock
-tracks age, which was never in question.
+tracks age, which was never in question. With one draw per visit and no technical replicates,
+`var_state` holds day-to-day and assay variance together and `var_tech` is NaN; `design` says so.
 
 R is the same verbs in the same image: `docker run --rm -it -v "$PWD:/work" -w /work
 bhagesh/falconage:1.0.0-cpu R`, then `prepare()`, `score()`, `interpretation()`. Both languages call one

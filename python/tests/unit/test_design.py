@@ -260,6 +260,15 @@ def test_every_pc_counterpart_is_a_real_clock(base, expect):
     assert expect in reg, f"{expect} is not in the registry"
 
 
+def test_a_clock_without_a_pc_version_has_no_counterpart():
+    """Prefixing 'pc' invented partners such as pccellpopage."""
+    reg = fa.registry.load()
+    for c in reg:
+        pc = fa.analysis.pc_counterpart(c.id)
+        assert pc is None or pc in reg, f"{c.id} -> {pc}, which is not a clock"
+    assert fa.analysis.pc_counterpart("cellpopage") is None
+
+
 def test_a_pc_clock_has_no_counterpart_of_its_own():
     """Otherwise the pairing recurses into pcpchorvath2013."""
     assert fa.analysis.pc_counterpart("pchorvath2013") is None

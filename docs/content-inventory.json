@@ -776,6 +776,14 @@
 "``` python/src/falconage/ \u251c\u2500\u2500 core/ backend.py config.py container.py errors.py \u2502 logging."
 ]
 },
+"60fade7bf0482b48": {
+"reason": "Build-time smoke tests removed from the Dockerfiles at the user's request (keep the images light); the operations page says so.",
+"was": [
+"architecture.qmd",
+"9. Docker",
+"Two images from one Dockerfile family, following the cyRAVEN pattern in its `inst/scripts/"
+]
+},
 "6167d4745d9e4192": {
 "reason": "Five single-model PC clocks reclassified untraced to licensed with an import path from the authors' file; totals 52 bundled, 66 untraced, 57 licensed",
 "was": [
@@ -822,6 +830,14 @@
 "architecture.qmd",
 "8.6 DESCRIPTION",
 "``` Package: FALCONAge Title: Multiomic Biological Age and Aging Clock Scoring Version: 1."
+]
+},
+"68b7d3abc562f3ad": {
+"reason": "Build-time smoke tests removed from the Dockerfiles at the user's request (keep the images light); the operations page says so.",
+"was": [
+"architecture.qmd",
+"9.2 Dockerfile.cpu, annotated",
+"`Dockerfile.cuda` differs only in the base image, the torch index URL, and a build-time `t"
 ]
 },
 "68d7a7f789964d9d": {
@@ -1494,6 +1510,14 @@
 "beyond-clocks.qmd",
 "",
 "This page covers the three things FALCONAge computes that are not clocks: the disorder rea"
+]
+},
+"a64ce46e162ddf23": {
+"reason": "Build-time smoke tests removed from the Dockerfiles at the user's request (keep the images light); the operations page says so.",
+"was": [
+"architecture.qmd",
+"9.2 Dockerfile.cpu, annotated",
+"```dockerfile # =========================================================================="
 ]
 },
 "a8203671e170d1a1": {
