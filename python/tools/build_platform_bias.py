@@ -21,6 +21,14 @@ and the per-clock summary is the median shift with a bootstrap interval. A clock
 whose rotation spreads weight thinly -- the PC clocks -- should come out near
 zero; a sparse elastic-net clock that lost a heavy probe should not.
 
+An absent probe is filled as ``score()`` fills it, from the clock's reference
+values. The blood reference for 22 clocks is itself a mean over healthy
+controls in this corpus, some of them in the datasets scored here, so each
+dataset is scored against that reference rebuilt without it
+(``build_references.blood(..., exclude=)``): no sample is filled from its own
+values. Scored in-sample instead, hannum's EPICv2 shift read -0.40 years
+rather than +1.03.
+
 The result is *reported*, never applied. An automatic offset would be a second
 number nobody can trace, which is the failure the coefficient digests exist to
 prevent.
@@ -36,6 +44,7 @@ from __future__ import annotations
 import argparse
 import io
 import sys
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -118,7 +127,6 @@ def _boot_median(x: np.ndarray, rng) -> tuple[float, float]:
 def render() -> tuple[str, dict]:
     import falconage as fa
 
-    rng = np.random.default_rng(SEED)
     probes = platform_probe_sets()
     if "450K" not in probes:
         raise SystemExit("no 450K dataset in the corpus; cannot build the table")
@@ -126,11 +134,18 @@ def render() -> tuple[str, dict]:
     # when only the target platform's probes survive", so it is never a target.
     targets = {k: v for k, v in probes.items() if k != "450K"}
 
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from build_references import blood_parts, left_out
+
+    base = fa.registry.load()
+    parts = blood_parts(base)
+
     per_clock: dict[tuple[str, str], list[float]] = {}
     n_datasets = 0
     for name, d in reference_datasets():
         n_datasets += 1
-        full = fa.score(d, clocks="compatible", min_coverage=0.0)
+        view = left_out(base, parts, name)
+        full = fa.score(d, clocks="compatible", min_coverage=0.0, registry=view)
         for plat, keep in targets.items():
             shared = [c for c in d.X.columns if str(c) in keep]
             if len(shared) < 1000:
@@ -138,7 +153,7 @@ def render() -> tuple[str, dict]:
             masked = fa.FalconData(X=d.X[shared], obs=d.obs,
                                    modality=d.modality, platform=plat)
             got = fa.score(masked, clocks=list(full.scores.columns),
-                           min_coverage=0.0)
+                           min_coverage=0.0, registry=view)
             for cid in got.scores.columns:
                 if cid not in full.scores.columns:
                     continue
@@ -149,7 +164,10 @@ def render() -> tuple[str, dict]:
     rows = []
     for (cid, plat), vals in sorted(per_clock.items()):
         v = np.asarray(vals, dtype=float)
-        lo, hi = _boot_median(v, rng)
+        # One stream per row, keyed on the row's own name, so a row's interval
+        # does not move when a clock is added to or removed from the catalogue.
+        key = zlib.crc32(f"{cid}|{plat}".encode())
+        lo, hi = _boot_median(v, np.random.default_rng([SEED, key]))
         c = reg.get(cid)
         kept = len(set(reg.feature_ids(cid)) & probes[plat])
         rows.append({
@@ -172,8 +190,10 @@ def render() -> tuple[str, dict]:
     buf.write("# Probe sets are read off real arrays in the corpus, so they "
               "reflect what a user\n# with that platform has after ordinary "
               "filtering -- not the manifest's ideal.\n")
+    buf.write("# Absent probes are filled from each clock's reference values; the\n"
+              "# corpus blood reference is rebuilt without the dataset being scored.\n")
     buf.write(f"# datasets: {n_datasets}; bootstrap resamples: {N_BOOT}; "
-              f"seed: {SEED}\n")
+              f"seed: {SEED}, per row with crc32(clock|platform)\n")
     buf.write("# Reported, never applied. See docs/analysis/uncertainty.qmd.\n")
     tab.to_csv(buf, index=False, lineterminator="\n")
 

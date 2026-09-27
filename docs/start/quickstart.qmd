@@ -5,8 +5,9 @@ aliases:
   - ../guide/FALCONAge.html
 ---
 
-FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data against a
-catalogue of 175 published aging clocks. The numerical work happens in one Python core; the R
+FALCONAge scores DNA methylation, clinical chemistry and NMR metabolomics data against a catalogue
+of 178 published aging clocks. It also reads and normalises proteomic and transcriptomic data, and
+`fa.fit_clock` fits a clock to them, but the catalogue holds no published clock for either yet. The numerical work happens in one Python core; the R
 package calls it through reticulate, so an R result and a Python result are the same bits rather
 than two implementations that agree approximately.
 
@@ -79,7 +80,7 @@ res = fa.score(d, clocks="compatible")
 res.summary()
 res.scores               # samples x clocks
 res.long()               # one row per sample per clock, with the scale
-res.coverage             # per-clock feature coverage and skip reasons
+res.qc()                 # per-clock feature coverage and skip reasons
 res.manifest             # versions, device, SHA-256 of every coefficient file
 ```
 

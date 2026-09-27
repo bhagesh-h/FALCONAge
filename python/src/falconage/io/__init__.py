@@ -23,7 +23,7 @@ __all__ = [
     "computage_bench_meta", "detect_platform", "list_computage_bench",
     "read", "read_bedmethyl", "read_bedmethyl_dir",
     "read_betas", "read_clinical", "read_computage_bench", "read_idat_pair",
-    "read_panel",
+    "read_nightingale", "read_panel",
     "read_rrbs", "read_rrbs_dir", "read_series_matrix", "write_results",
 ]
 
@@ -79,6 +79,57 @@ def read_clinical(path: str | Path, *, units: dict[str, str] | None = None,
     return FalconData(X=df, obs=df[obs_cols].copy() if obs_cols else pd.DataFrame(index=df.index),
                       modality="clinical_chemistry", units=_units(units, path))
 
+
+
+def read_nightingale(path: str | Path, *, index_col: int | str = 0,
+                     sheet: str | int | None = None) -> FalconData:
+    """Read a Nightingale Health NMR export (CSV, TSV or Excel) for MetaboAge and
+    MetaboHealth.
+
+    Column names are translated to the BBMRI-NL names the scores were fitted
+    with, by MiMIR's table (``metabo_names_translator``, GPL-3), the way MiMIR's
+    ``find_BBMRI_names`` does it: lower-cased, and translated only when exactly
+    one entry lists the name, so ``UnSat`` in a 2016 export becomes ``unsatdeg``.
+    A name the table does not know is kept as it is and listed in
+    ``obs.attrs["untranslated"]`` rather than guessed. Non-numeric columns and
+    ``age``/``sex`` go to ``obs``.
+    """
+    from ..registry.registry import DATA_DIR
+
+    p = Path(path)
+    if p.suffix.lower() in (".xlsx", ".xls"):
+        df = pd.read_excel(p, sheet_name=sheet or 0, index_col=index_col)
+    else:
+        sep = "\t" if p.name.lower().endswith((".tsv", ".txt", ".tsv.gz")) else ","
+        df = pd.read_csv(p, sep=sep, index_col=index_col)
+
+    table = pd.read_csv(DATA_DIR / "metabolomics" / "nmr_names.csv")
+    lookup: dict[str, list[str]] = {}
+    for bbmri, alts in zip(table["bbmri"], table["alternatives"].fillna("")):
+        for a in str(alts).split("|"):
+            lookup.setdefault(a.strip().lower(), []).append(bbmri)
+    known = set(table["bbmri"])
+
+    obs_cols = [c for c in df.columns if str(c).lower() in ("age", "sex", "gender")
+                or not pd.api.types.is_numeric_dtype(df[c])]
+    rename, untranslated = {}, []
+    for c in df.columns:
+        if c in obs_cols:
+            continue
+        key = str(c).strip().lower()
+        hits = lookup.get(key, [])
+        if len(hits) == 1:
+            rename[c] = hits[0]
+        elif key in known:
+            rename[c] = key
+        else:
+            untranslated.append(str(c))
+    X = df.drop(columns=obs_cols).rename(columns=rename)
+    obs = df[obs_cols].copy() if obs_cols else pd.DataFrame(index=df.index)
+    obs.columns = [str(c).lower() if str(c).lower() in ("age", "sex", "gender") else c
+                   for c in obs.columns]
+    obs.attrs["untranslated"] = untranslated
+    return FalconData(X=X.astype(float), obs=obs, modality="metabolomics_nmr")
 
 def read(path: str | Path, **kw) -> FalconData:
     """Dispatch on the filename. Convenience, not magic -- it says what it chose."""

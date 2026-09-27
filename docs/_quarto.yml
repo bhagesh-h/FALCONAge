@@ -254,6 +254,7 @@ quartodoc:
     - preprocess.read_olink
     - preprocess.read_somascan
     - preprocess.read_counts
+    - read_nightingale
     - FalconData
   - title: Raw arrays
     desc: IDAT to scoreable betas, which at first meant leaving FALCONAge for sesame or minfi
@@ -292,6 +293,7 @@ quartodoc:
     - preprocess.rle_normalise
     - preprocess.yugene
     - preprocess.median_centre
+    - preprocess.horvath_normalise
   - title: Uncertainty
     desc: 'How much of a score is the assay, and how far it is likely to be from the truth.
       Two different questions with two different answers, kept apart on purpose: technical
@@ -322,7 +324,7 @@ quartodoc:
     - combine
     - FalconResult
   - title: The clock catalogue
-    desc: '175 clocks in three availability groups: 46 bundled, 89 untraced and 40 licensed
+    desc: '178 clocks in three availability groups: 69 bundled, 52 untraced and 57 licensed
       scaffolds whose coefficients are research-use-only or have no public source FALCONAge
       may redistribute. The registry says which, why, and which bundled clocks answer the
       same question.'
@@ -343,6 +345,8 @@ quartodoc:
     - agreement
     - icc
     - run_benchmark
+    - leave_one_marker_out
+    - fit_clock
   - title: Clinical references
     desc: 'KDM and homeostatic dysregulation have no fixed coefficients: both are defined
       relative to a reference cohort, and the manifest records which.'
@@ -350,6 +354,7 @@ quartodoc:
     - models.fit_kdm
     - models.fit_hd
     - models.clinical.phenoage
+    - blood_count_ratios
   - title: Model architectures
     desc: Not every clock is a dot product. Six summarise a probe set with a mean or a percentile;
       the principal-component and neural families need a weight file no licence permits redistributing;

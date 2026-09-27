@@ -170,6 +170,9 @@ class NeuralClock:
     weights: NeuralWeights
     scale: tuple[np.ndarray, np.ndarray] | None = None   # per-feature (mean, sd)
     notes: list[str] = field(default_factory=list)
+    #: Fill values for absent features (registry ``reference_values``). For
+    #: AltumAge, the published scaler's centre, so an absent CpG scales to 0.
+    reference: dict[str, float] | None = None
 
     def _activate(self, x, xp):
         """Apply the activation through the backend handle.
@@ -201,7 +204,8 @@ class NeuralClock:
 
     def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
-        al = align(data, self.weights.features, imputation=imputation)
+        al = align(data, self.weights.features, imputation=imputation,
+                   reference=self.reference)
         if al.coverage < min_coverage:
             raise FeatureCoverageError(
                 f"{self.clock.id}: {al.coverage:.1%} of its "
@@ -254,7 +258,8 @@ class NeuralClock:
                     clock_id, f"{clock_id}: the registry declares {path.name} "
                               "and it is missing from the installed package")
             weights = read_neural_weights(path)
-            return cls(clock=c, weights=weights)
+            return cls(clock=c, weights=weights,
+                       reference=registry.reference_values(clock_id))
         raise WeightsUnavailableError(
             clock_id,
             f"{clock_id} is a neural clock and no weights ship with FALCONAge.\n"

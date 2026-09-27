@@ -16,13 +16,13 @@ min_β  (1/2n) Σ_i (y_i − β₀ − Σ_j x_ij β_j)²  +  λ [ (1−α)/2 · 
 score = β₀ + Σ_j β_j x_j
 ```
 
-then a clock-specific output transform (§5). Of the 173 clocks in pyaging's registry, 64 are
-elastic net, 20 LASSO, 5 plain linear regression, 1 ridge, 1 BLUP.
+then a clock-specific output transform (§5). Of the 177 clocks in pyaging's registry at commit
+e7267e9, 66 are elastic net, 18 LASSO, 5 ordinary linear regression, 1 ridge and 1 BLUP.
 
 **BLUP** (Zhang 2019) treats all 319,607 probes as random effects with a common variance,
-`β = (X'X + λI)⁻¹X'y` in the mixed-model sense. Requires the full probe set, so it degrades less
-than elastic net when many probes are missing, and Zhang's own script says so explicitly
-([DNAm-based-age-predictor pred.R](https://github.com/qzhang314/DNAm-based-age-predictor)). Crucially, both Zhang models
+`β = (X'X + λI)⁻¹X'y` in the mixed-model sense. It spreads small weights over all 319,607 probes, so it
+degrades less than elastic net when many probes are missing, as Zhang's script notes (line 91,
+[DNAm-based-age-predictor pred.R](https://github.com/qzhang314/DNAm-based-age-predictor)). Crucially, both Zhang models
 **z-score within each sample across probes** before the dot product:
 
 ```r
@@ -54,8 +54,9 @@ followed at that time, tied subjects included, and matches R's `survival::coxph(
 to six decimals in its tests. Follow-up recorded in whole months, as NHANES is, makes ties the
 usual case rather than the exception; FALCONAge 1.0.0 left tied subjects out of each other's risk
 sets and was 1.1% off R on such data. `cox_hazard()` reports the hazard ratio per unit of the
-score, per year for an age clock. GrimAge, GrimAge2, CpGPTGrimAge3, SenMortalityAge and the
-organAging mortality models all output this.
+score, per year for an age clock. SenMortalityAge and organAging's mortality models report this
+linear predictor; GrimAge, GrimAge2 and CpGPTGrimAge3 compute it internally and rescale it to
+years, as below.
 
 **Cox → years.** GrimAge standardises the Cox score against training-set moments then rescales
 to the training age distribution:
@@ -75,8 +76,12 @@ slope 0.0897860500778604, mean cohort age 57.29426 y. Convert a relative log-haz
 
 ```
 avg_r      = intercept + slope × mean_age            # = −4.801912
-years      = (−avg_r + r) / slope − intercept
+years      = (avg_r + r − intercept) / slope
 ```
+
+That inverts the Gompertz model as stated. organAging's README (commit 5147b03, line 100) writes
+`(−avg_r + r) / slope − intercept`, which returns 63.4 rather than the cohort mean of 57.29 years at
+`r = 0`; a comparison with README-converted values has to say which expression it used.
 
 **Accelerated failure time.** organAging also fits `WeibullAFTFitter(penalizer=0.01)` (lifelines)
 for time-to-death models ([organAging clock_utils.py](https://github.com/ludgergoeminne/organAging)).
@@ -188,7 +193,7 @@ it is a dimensionless distance, and it does *not* need to be residualised agains
 - **stemTOC** - 0.95 quantile of β over 371 (or 629 in-vitro) CpGs rather than the mean, which
   makes it robust to cell-type dilution.
 - **HypoClock** - mean β over 678 solo-WCGW hypomethylating sites, returned as `1 − mean`.
-- **epiCMIT-hyper / epiCMIT-hypo** - mean over 184 hypermethylating and 1,164 hypomethylating
+- **epiCMIT-hyper / epiCMIT-hypo**: the mean over 184 hypermethylating, and one minus the mean over 1,164 hypomethylating,
   B-cell CpGs.
 - **RepliTali** - elastic net on 87 EPIC CpGs predicting population doublings in cultured cells;
   `RepliTaliNorm` is its 218-CpG upstream normaliser exposed separately.
@@ -273,10 +278,20 @@ family: MammalianLifespan (predicts species maximum lifespan, `exp` link) and Ma
 
 ## 4.10 Deconvolution as a model
 
-Reference-based, constrained. Given a signature matrix S (cell types × CpGs) and a sample β
-vector, solve for proportions p with a non-negativity and sum-to-one constraint. pyaging's
-implementation uses the pseudo-inverse followed by a **Euclidean projection onto the probability
-simplex** ([pyaging _models.py:1269](https://github.com/lucascamillomd/pyaging)):
+Reference-based, constrained. Given a reference table X (CpGs × cell types) of sorted-cell mean
+methylation and a sample's betas y, the proportions p minimise ‖Xp − y‖² with p ≥ 0
+([Houseman et al. 2012](https://doi.org/10.1186/1471-2105-13-86)). FALCONAge solves it as the
+authors' FlowSorted.Blood.EPIC does in `projectCellType_CP`, with the arguments its documentation
+gives for a beta matrix (`nonnegative = TRUE, lessThanOne = FALSE`): per sample, over the CpGs that
+sample observes, rounded to four decimals. With non-negativity the only constraint, the problem
+is non-negative least squares, whose solution is unique, and `scipy.optimize.nnls` returns it.
+The proportions are not forced to sum to one; the sum is how much of the sample the reference
+explains. On 858 whole-blood EPIC samples from one cohort, the six proportions equal minfi's
+`estimateCellCounts2` output for every sample and cell type, to the four decimals it reports.
+
+pyaging solves a different problem: an unconstrained fit through the pseudo-inverse, then a
+**Euclidean projection onto the probability simplex**
+([pyaging _models.py:1269](https://github.com/lucascamillomd/pyaging)):
 
 ```python
 p_raw = x @ pinv(S).T
@@ -287,8 +302,16 @@ theta    = (cssv[rho] − 1) / (rho + 1)
 p        = clamp(p_raw − theta, min=0)
 ```
 
-This is exact, differentiable almost everywhere, and vectorises across a batch, a good pattern
-for a GPU tool. 6-cell (600 CpGs, Salas/Reinius) and 12-cell (240 CpGs, Salas EPIC) libraries.
+It vectorises across a batch, but it is not the constrained fit: the projection forces the sum
+to one and is taken in the geometry of p rather than of the least-squares problem. On the same
+858 samples and the same reference it adds 0.0058 to every cell type on average (at most
+0.0099), the 3.6% the reference leaves unexplained spread evenly, which is a relative 11% for B
+cells at a mean of 0.053. pyaging's libraries are its own 600-CpG 6-cell and 240-CpG 12-cell
+selections. FALCONAge ships the published IDOL libraries of
+[Salas et al. 2018](https://doi.org/10.1186/s13059-018-1448-7), 450 CpGs on EPIC and 350 on 450K
+(FlowSorted.Blood.EPIC, GPL-3). The 12-cell IDOL-Ext library
+([Salas et al. 2022](https://doi.org/10.1038/s41467-021-27864-7)) is under a Dartmouth
+research-use licence, so those entries are `licensed` and read a table the user registers.
 
 ## 4.11 Binarisation clocks
 
@@ -374,8 +397,9 @@ then t-test the age acceleration difference. Outputs a data frame with `Near Cel
   [pyaging _base_models.py:89](https://github.com/lucascamillomd/pyaging):
   BatchNorm(20318) → Linear(20318,32) → SELU → [BatchNorm(32) → Linear(32,32) → SELU] × 4 →
   BatchNorm(32) → Linear(32,1). BatchNorm eps 0.001, momentum 0.99 (Keras defaults, preserved on
-  port). Preprocessing is a **robust scale**: `(x − median) / std` with training-set statistics.
-- **CpGPT** (Camillo 2024), transformer pretrained on >1,500 datasets, >100,000 samples. Encodes
+  port). Preprocessing is scikit-learn's **RobustScaler**, `(x − median) / IQR` with the training set's median and
+  interquartile range; pyaging stores the IQR under the name `std`.
+- **CpGPT** (de Lima Camillo et al., bioRxiv 2024.10.24.619766), a transformer pretrained on more than 2,000 datasets and over 150,000 samples. Encodes
   sequence context, genomic position and epigenetic state per CpG; imputes and reconstructs
   genome-wide profiles from partial input; transfers across platforms, tissues, mammalian species
   and single-cell data. Fine-tuned heads give SOTA mortality and chronological-age prediction.
@@ -391,7 +415,7 @@ then t-test the age acceleration difference. Outputs a data frame with `Near Cel
 
 ## 4.16 SystemsAge
 
-Nature Aging, September 2025 (Higgins-Chen & Levine). One blood methylome → 11 system-specific
+Sehgal et al., *Nature Aging* 5:1880-1896 (2025). One blood methylome → 11 system-specific
 ages plus a composite. Forward pass
 ([pyaging _models.py:2617](https://github.com/lucascamillomd/pyaging)):
 
@@ -406,8 +430,9 @@ ages plus a composite. Forward pass
 
 Systems: Blood, Brain, Inflammation, Heart, Hormone, Immune, Kidney, Liver, Metabolic, Lung,
 MusculoSkeletal (indices 0–10 in the pyaging classes), with index −1 for the composite.
-Benchmarking by Sehgal et al. found SystemsAge held the highest technical reliability across
-array positions and DNA extraction protocols among 18 clocks.
+In a reliability study of 18 clocks (Sehgal et al., bioRxiv 2025.10.13.682176), the PC-based clocks,
+PCGrimAge and SystemsAge in particular, stayed technically reliable across slide positions and DNA
+extraction protocols.
 
 ## 4.17 Ensembling and stacking
 
@@ -461,7 +486,7 @@ Output units, from the clock registry
 | Mortality | log10(hazard ratio) | No |
 | Normalized age | fraction of max lifespan | No |
 
-Species maximum-lifespan factors: human 122.5, mouse 48, rat 50.4, monkey 39
+Species maximum-lifespan factors in tAge 87352dd: human 122 and monkey 39 (years), mouse 48 and rat 45.6 (months)
 ([tage_predict.py](https://github.com/Gladyshev-Lab/tAge)). Mortality clocks must never
 be multiplied by these, a mistake the registry flag `lifespan_scaled` exists to prevent.
 
@@ -511,8 +536,8 @@ Every clock's output transform, extracted from
 | `stubbsmultitissue` | `age = (exp(0.1207y² + 1.2424y + 2.5440) − 3) × 7/30.5` | Stubbs (mouse, months) |
 | `days_to_months` | `y / 30.5` | Meer |
 | `days_to_weeks` | `y / 7` | Bohlin, EPICGA |
-| `sigmoid` | `1/(1+e^(−y))` | McCartney BMI/education/cholesterol/body-fat, MammalianFemale, CVDWesterman, ADBahadoSingh |
-| `one_minus` | `1 − y` | HypoClock |
+| `sigmoid` | `1/(1+e^(−y))` | MammalianFemale, CVDWesterman, ADBahadoSingh; pyaging also applies it to the McCartney predictors, which the paper defines without a link and FALCONAge scores as the plain weighted sum (§15.2) |
+| `one_minus` | `1 − y` | HypoClock, epiCMIT-hypo |
 | `add_constant` | `y + c` | REG, Lin (+12.2169841), PhenoAgeV1 in ComputAge (+60.664), YingCausAge (+86.80816381), YingDamAge (+543.4315887), YingAdaptAge (−511.9742762) |
 | `scale_and_shift` | `y·s + o·s` | Pasta, PastaMouse |
 

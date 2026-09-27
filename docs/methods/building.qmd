@@ -40,7 +40,7 @@ ten missing values. That produced the 353 sites.
 Rerun the same fit with a slightly different $\lambda$, a different fold split,
 or a different subset of samples, and a different CpG set comes out with almost
 identical accuracy. The correlated groups are interchangeable to the optimiser.
-This is the mechanism behind the eleven discrepancies in section 15, and it is
+This is one mechanism behind the discrepancies listed in section 15.2, and it is
 why two faithful implementations of the same clock can disagree on membership.
 :::
 
@@ -96,14 +96,14 @@ blood data (GSE40279, 656 samples, 473,035 CpGs, 10-fold cross-validation,
 
 Two rows there are worth sitting with. A single CpG in ELOVL2 reaches R² = 0.73,
 so most of what a 353-CpG clock knows about chronological age is available from
-a handful of sites. And an unfiltered elastic net over all 450,000 probes was
+a handful of sites. And an unfiltered elastic net over all 473,035 probes was
 beaten by five selection strategies, which is the opposite of the usual
 intuition: past a point the extra probes contribute noise rather than signal.
 
 ## 23.5 Two metrics that disagree, and both are needed
 
 $$
-\text{MAE} = \operatorname{median}_i\left|\hat{y}_i - y_i\right|, \qquad r = \operatorname{corr}(\hat{y}, y)
+\text{MedAE} = \operatorname{median}_i\left|\hat{y}_i - y_i\right|, \qquad r = \operatorname{corr}(\hat{y}, y)
 $$
 
 Correlation is inflated by a wide age range and says nothing about bias. Median
@@ -117,7 +117,7 @@ shrinks coefficients toward zero, which compresses predictions toward the
 training mean, so the old read young and the young read old. That is regression
 to the mean, a property of the estimator rather than a defect of the cohort, and
 it leaves the residual correlated with age unless the slope is corrected. It is
-why section 19 residualises before comparing anything.
+why [age acceleration](../analysis/acceleration.qmd) is a residual on chronological age.
 
 ## 23.6 The step that gets skipped
 
@@ -135,3 +135,18 @@ together and in the order they apply. A clock published without its postprocess
 is the commonest source of the disagreements in section 15, because the next
 implementer has to guess whether an anti-log was already applied, and a
 plausible wrong guess produces plausible wrong ages.
+
+## 23.8 Fitting one here
+
+`fa.fit_clock(data, target="age")` fits an elastic net to one cohort and reports only
+predictions made out of fold: the cohort is split into outer folds, lambda is chosen by
+cross-validation inside each training part, and each held-out fold is predicted by a model that
+saw neither its samples nor their role in choosing lambda. The estimator is glmnet's for a
+gaussian outcome, including its internal scaling of the outcome, its lambda grid and
+`cv.glmnet`'s `lambda.1se` or `lambda.min`. It reproduces glmnet 5.1's path to within 1e-6 and
+chooses exactly the lambdas that `cv.glmnet`'s rules give on glmnet's own fold fits; `cv.glmnet`'s
+returned lambdas can differ slightly, because its internal fold fits differ from direct `glmnet`
+calls by about 1e-4 in MSE. A missing value is filled with its feature's mean in the training part it
+falls in. The model fitted on everyone is returned for new samples, and its accuracy is the
+out-of-fold one, not its fit. The result is a model of this cohort and is labelled as one.
+

@@ -17,8 +17,9 @@ reproducible by a purely stochastic model of methylation change, about 90 per ce
 about 63 per cent for PhenoAge. The gradient is the interesting part. The more accurately a clock
 predicts chronological age, the more of it is drift.
 
-This page covers the three things FALCONAge computes that are not clocks: the disorder readouts,
-repertoire structure, and where a clock's coefficient mass sits. None of them returns an age, none
+This page covers five things FALCONAge computes that are not clocks: the disorder readouts,
+repertoire structure, where a clock's coefficient mass sits, reliability components, and mosaic
+ages within a tissue. None of them returns an age, none
 is gated by `scale_type`, and none is comparable between datasets processed differently.
 
 ## Disorder: entropy, drift and the barometer
@@ -174,10 +175,10 @@ sim = fa.simulate_clonality(
 res = fa.score(sim, clocks="compatible")
 ```
 
-`reference` is sorted-cell mean beta, features by cell type. It is **not bundled**: every
-deconvolution model in the registry is catalogued as `untraced`, carrying real metadata but no
-coefficients, so the reference has to be supplied. `FlowSorted.Blood.EPIC` on Bioconductor is the
-usual source.
+`reference` is sorted-cell mean beta, features by cell type. The six-cell IDOL library that the
+bundled deconvolution entries use (FlowSorted.Blood.EPIC, GPL-3) is one such table:
+`fa.registry.load().deconvolution_table("deconvolutebloodepicbcell", "EPICv1")` returns it, 450
+CpGs by six cell types.
 
 ::: {.callout-note}
 ## What the simulation returns on the test corpus

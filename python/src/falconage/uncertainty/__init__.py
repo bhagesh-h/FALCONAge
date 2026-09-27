@@ -330,7 +330,7 @@ def _probe_se(result, data, reg, cid: str, table: pd.Series):
     w = np.asarray(coefs, dtype=np.float64)
 
     al = align(data, feats, imputation=result.manifest.config.get("imputation", "reference"),
-               coefficients=w)
+               reference=reg.reference_values(cid), coefficients=w)
     x = al.matrix                                  # samples x features, imputed
     observed = data.X.reindex(columns=feats).to_numpy(dtype=np.float64)
     imputed = np.isnan(observed)

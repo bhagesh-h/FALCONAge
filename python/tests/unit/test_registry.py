@@ -13,18 +13,24 @@ from falconage.registry.registry import AVAILABILITY, DATA_DIR, LEGAL_OPS
 
 
 def test_registry_size_and_availability(registry):
-    assert len(registry) == 175
+    assert len(registry) == 178
     tiers = {t: len(registry.filter(availability=t)) for t in AVAILABILITY}
-    assert sum(tiers.values()) == 175
-    assert tiers["licensed"] == 40, (
+    assert sum(tiers.values()) == 178
+    assert tiers["licensed"] == 57, (
         "28 scaffolds, plus the 12 biomarkers Figure 1c of the TranslAGE paper "
         "computes: the eight PC GrimAge sub-scores, SystemsAge's age-prediction "
-        "component, OMICmAge, DNAmEMRAge and RetroClock")
-    assert tiers["untraced"] == 89, (
-        "87, plus the two frailty clocks from the TranslAGE panel. eFRS "
-        "publishes its twenty CpGs and not their weights; FIAge has no paper "
-        "at all. Both are catalogued so the panel can be reproduced or its "
-        "gaps stated, rather than quietly omitted")
+        "component, OMICmAge, DNAmEMRAge and RetroClock; plus the twelve "
+        "IDOL-Ext cell types, whose reference is under a Dartmouth research-use "
+        "licence; plus the five single-model PC clocks, imported from the "
+        "authors' unlicensed data file")
+    assert tiers["untraced"] == 52, (
+        "87, plus the two frailty clocks from the TranslAGE panel, less the "
+        "eighteen deconvolution entries (six bundled with the IDOL library, "
+        "twelve licensed) and the five PC clocks now licensed, less the thirteen "
+        "traced from the BSD catalogues to their primary sources, less efrs, "
+        "which was dnamfili catalogued a second time. FIAge has no paper at all; "
+        "it is catalogued so the panel can be reproduced or its gap stated, "
+        "rather than quietly omitted")
 
 
 def test_the_retired_tier_letters_still_resolve(registry):
@@ -44,7 +50,7 @@ def test_every_entry_is_well_formed(registry):
         assert c.id and c.name
         assert c.scale_type in LEGAL_OPS, f"{c.id}: unknown scale {c.scale_type}"
         assert c.availability in AVAILABILITY, f"{c.id}: {c.availability}"
-        assert c.data_type in ("dna_methylation", "clinical_chemistry")
+        assert c.data_type in ("dna_methylation", "clinical_chemistry", "metabolomics_nmr")
         assert c.generation in ("first", "second", "pace", "causal", "mitotic",
                                 "system", "other")
 
@@ -75,10 +81,12 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest == c.coefficient_source.sha256, f"{c.id}: digest drift"
         checked += 1
-    assert checked == 43, ("43 clocks ship weights: 22 linear sets, the seven "
+    assert checked == 63, ("63 clocks ship weights: 35 linear sets, the seven "
                            "mitotic probe lists, RepliTali, the two epiTOC "
-                           "transmission-model files, AltumAge's network, the "
-                           "cortical clock and the ten McCartney EpiScores")
+                           "transmission-model files, AltumAge's network, cAge's "
+                           "two models with squared terms, the cortical clock, the "
+                           "ten McCartney EpiScores and the six IDOL cell types, "
+                           "which share one table")
 
 
 def test_known_feature_counts(registry):
@@ -94,8 +102,23 @@ def test_horvath_came_from_the_paper_not_a_package(registry):
     honest about not being."""
     assert registry.get("horvath2013").coefficient_source.primary_source_traced
     assert registry.get("dnamphenoage").coefficient_source.primary_source_traced
-    assert not registry.get("hannum").coefficient_source.primary_source_traced
-    assert len(registry.untraced()) > 100
+    assert registry.get("hannum").coefficient_source.primary_source_traced
+    assert len(registry.untraced()) > 60
+
+
+def test_every_bundled_clock_but_pedbe_is_traced(registry):
+    """Each bundled coefficient file was compared with the paper's supplement or
+    the authors' code; PedBE's supplement could not be retrieved."""
+    untraced = {c.id for c in registry.untraced() if c.availability == "bundled"}
+    assert untraced == {"pedbe"}
+
+
+def test_intercepts_are_the_published_ones(registry):
+    adds = {cid: [p["value"] for p in registry.get(cid).postprocess if p.get("op") == "add"]
+            for cid in ("knight", "leecontrol", "leerobust", "leerefinedrobust", "dnamtl")}
+    assert adds == {"knight": [41.72579759], "leecontrol": [13.0618205],        # Knight 2016 AF3
+                    "leerobust": [24.99772133], "leerefinedrobust": [30.74966212],  # Lee 2019 ST1
+                    "dnamtl": [7.924780053]}                                     # Lu 2019 ST3
 
 
 def test_scaffold_clocks_refuse_and_say_why(registry):
@@ -264,7 +287,9 @@ def test_every_op_named_in_the_registry_is_dispatchable(registry):
 
     for c in registry:
         for step in c.preprocess:
-            assert step.get("op") in ops.PREPROCESS, f"{c.id}: preprocess {step}"
+            assert (step.get("op") in ops.PREPROCESS
+                    or step.get("op") in ops.DATASET_PREPROCESS
+                    or step.get("op") in ops.MODEL_STEPS), f"{c.id}: preprocess {step}"
         for step in c.postprocess:
             assert step.get("op") in ops.POSTPROCESS, f"{c.id}: postprocess {step}"
 
@@ -280,7 +305,8 @@ def test_a_clock_reported_in_days_does_not_claim_to_be_in_weeks(registry):
     from falconage.models import ops
 
     for cid in ("bohlin", "epicga"):
-        assert ops.describe_chain(registry.get(cid).postprocess) == "days_to_weeks()"
+        # the intercept, in days, comes first where the clock ships one
+        assert ops.describe_chain(registry.get(cid).postprocess).endswith("days_to_weeks()")
 
 
 # ---------------------------------------------------------------------------
@@ -288,8 +314,10 @@ def test_a_clock_reported_in_days_does_not_claim_to_be_in_weeks(registry):
 # ---------------------------------------------------------------------------
 
 def test_requires_cohort_defaults_off(registry):
-    """Every clock shipping today is per-sample; the flag must not change them."""
-    assert not any(c.requires_cohort for c in registry)
+    """Every clock shipping today is per-sample except MetaboHealth, whose
+    published model z-scores each measure within the cohort (Deelen et al.
+    2019, as MiMIR computes it); the flag must not change any other."""
+    assert {c.id for c in registry if c.requires_cohort} == {"metabohealth"}
     assert all(c.min_samples == 1 for c in registry)
 
 
@@ -521,11 +549,11 @@ def test_registry_version_agrees_with_the_package_constant():
 
 
 def test_the_registry_states_how_many_clocks_run(registry):
-    """"175 clocks" read alone is taken as 175 that score; the runnable count leads."""
+    """"178 clocks" read alone is taken as 178 that score; the runnable count leads."""
     text = repr(registry)
-    assert text.startswith(f"ClockRegistry {registry.version}: 46 of 175 clocks score offline")
-    assert "40 need a licensed coefficient file" in text
-    assert "89 have no traced coefficients" in text
+    assert text.startswith(f"ClockRegistry {registry.version}: 69 of 178 clocks score offline")
+    assert "57 need a licensed coefficient file" in text
+    assert "52 have no traced coefficients" in text
 
 
 @pytest.mark.parametrize("tier", ["A", "bundled"])
@@ -537,5 +565,5 @@ def test_cli_lists_clocks_by_availability_under_either_name(tier, capsys):
     out = capsys.readouterr().out
     assert "horvath2013" in out and "grimage2" not in out
     assert out.rstrip().endswith(
-        "46 clock(s): 46 score offline (bundled), 0 need a licensed coefficient file, "
+        "69 clock(s): 69 score offline (bundled), 0 need a licensed coefficient file, "
         "0 have no traced coefficients")

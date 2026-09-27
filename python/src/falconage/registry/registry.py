@@ -114,6 +114,39 @@ class CoefficientSource:
 
 
 @dataclass(frozen=True)
+class ReferenceSource:
+    """Per-CpG values a feature the data does not carry is filled with.
+
+    ``label`` is what a warning names; ``provenance`` is the full account, down
+    to the file and commit. Built by ``python/tools/build_references.py``.
+    """
+
+    file: str
+    sha256: str
+    label: str
+    provenance: str = ""
+
+
+@dataclass(frozen=True)
+class DeconvolutionTable:
+    """A reference methylation table (CpGs x cell types) and the arrays it is for."""
+
+    platforms: tuple[str, ...]
+    file: str
+    sha256: str
+
+
+@dataclass(frozen=True)
+class Deconvolution:
+    """A reference-based deconvolution entry: one cell type's column of a table
+    its sibling entries share. The first table is the primary one, and the one
+    whose CpGs ``feature_ids`` reports."""
+
+    cell_type: str
+    tables: tuple[DeconvolutionTable, ...]
+
+
+@dataclass(frozen=True)
 class Reliability:
     """How repeatable a clock is, split into the two things that word means.
 
@@ -204,6 +237,12 @@ class Clock:
     tissue_policy: str = "warn"
     known_discrepancies: tuple[str, ...] = ()
     reliability: Reliability = field(default_factory=Reliability)
+    #: What an absent feature is filled with. None means no reference exists
+    #: for this clock, and the fill falls back to the mean of its present
+    #: features, which every run that uses it reports.
+    reference_values: ReferenceSource | None = None
+    #: Set for the reference-based cell-type deconvolution entries.
+    deconvolution: Deconvolution | None = None
 
     @property
     def legal_operations(self) -> set[str]:
@@ -274,6 +313,11 @@ class ClockRegistry:
         self.path = path
         #: clock_id -> (path, sha256) supplied by the user for a licensed clock.
         self._local: dict[str, tuple[Path, str]] = {}
+        #: clock_id -> per-feature fill values supplied with a user's weights.
+        self._local_reference: dict[str, dict[str, float]] = {}
+        #: clock_id -> model parts beyond a weight vector, read from a user's
+        #: copy (DunedinPACE's background set and means).
+        self._local_extra: dict[str, dict] = {}
 
     # -- construction ------------------------------------------------------
     @classmethod
@@ -334,6 +378,8 @@ class ClockRegistry:
                     k: v for k, v in (e.get("reliability") or {}).items()
                     if k in ("technical_icc", "biological_icc", "source", "note")
                 }),
+                reference_values=_reference_source(e.get("reference_values")),
+                deconvolution=_deconvolution(e.get("deconvolution")),
             )
         return cls(clocks, version, p)
 
@@ -342,7 +388,7 @@ class ClockRegistry:
         return len(self._clocks)
 
     def __repr__(self) -> str:
-        # Runnable first: "175 clocks" alone reads as 175 that run.
+        # Runnable first: "178 clocks" alone reads as 178 that run.
         n = {a: sum(c.availability == a for c in self._clocks.values())
              for a in AVAILABILITY}
         return (f"ClockRegistry {self.version}: {n[BUNDLED]} of {len(self)} clocks score "
@@ -455,11 +501,23 @@ class ClockRegistry:
             raise RegistryError(
                 f"{p}: SHA-256 is {digest}, you asserted {sha256}")
 
+        if c.deconvolution is not None:
+            # A reference table, not a weight vector: feature_id plus one column
+            # per cell type, of which this entry reads its own.
+            table = _read_matrix(str(p))
+            if c.deconvolution.cell_type not in table.columns:
+                raise RegistryError(
+                    f"{p}: no {c.deconvolution.cell_type!r} column; {clock_id} "
+                    f"reads that one. Columns: {', '.join(table.columns)}")
+            self._local[clock_id] = (p, digest)
+            return digest
+
         feats, coefs = _read_coefficients(p)
         if len(feats) != len(set(feats)):
             raise RegistryError(f"{p}: duplicate feature ids")
         if not np.isfinite(coefs).all():
             raise RegistryError(f"{p}: contains non-finite coefficients")
+        feats, _, _ = _split_intercept(feats, coefs)
         if c.n_features and len(feats) != c.n_features:
             raise RegistryError(
                 f"{p}: {len(feats)} coefficients, but the registry declares "
@@ -468,6 +526,65 @@ class ClockRegistry:
             )
         self._local[clock_id] = (p, digest)
         return digest
+
+    def register_local_reference(self, clock_id: str, values) -> None:
+        """Fill values for the absent features of a clock whose weights the user
+        supplied, as the clock's authors publish them (a mapping or a two-column
+        ``feature_id,value`` file). Used exactly as a bundled reference is."""
+        if isinstance(values, (str, Path)):
+            values = dict(_read_reference(str(Path(values).expanduser())))
+        ref = {str(k): float(v) for k, v in dict(values).items()}
+        if not all(np.isfinite(list(ref.values()))):
+            raise RegistryError(f"{clock_id}: reference values must be finite")
+        self._local_reference[clock_id] = ref
+
+    def intercept(self, clock_id: str) -> float:
+        """The constant a coefficient file carries as an ``(Intercept)`` row.
+
+        None of the bundled files has one; their constants are ``add`` steps in
+        the registry. A file a user registers often does, and without this the
+        row would be aligned as a CpG the data lacks and filled.
+        """
+        c = self.get(clock_id)
+        if c.deconvolution is not None or not self.has_coefficient_vector(clock_id):
+            return 0.0
+        if clock_id in self._local:
+            feats, coefs = _read_coefficients(self._local[clock_id][0])
+        elif c.availability == BUNDLED and c.coefficient_source.file:
+            feats, coefs = _read_coefficients(DATA_DIR / c.coefficient_source.file)
+        else:
+            return 0.0
+        return _split_intercept(feats, coefs)[2]
+
+    def import_dunedinpace(self, path, out_dir=None) -> str:
+        """Register DunedinPACE from the authors' R package (installed, a source
+        checkout, or its ``sysdata.rda``).
+
+        See :func:`falconage.registry.pace_import.import_dunedinpace`.
+        """
+        from .pace_import import import_dunedinpace
+
+        return import_dunedinpace(self, path, out_dir=out_dir)
+
+    def pace_model(self, clock_id: str):
+        """The weights, background means and model means DunedinPACE scores with."""
+        from ..models.pace import PaceModel
+
+        if clock_id not in self._local_extra:
+            raise WeightsUnavailableError(clock_id, self.unavailable_message(clock_id))
+        extra = self._local_extra[clock_id]
+        feats, w = self.coefficients(clock_id)
+        return PaceModel(probes=list(feats), weights=w, intercept=self.intercept(clock_id),
+                         gold_means=extra["gold_means"], model_means=extra["model_means"])
+
+    def import_pc_clocks(self, path, out_dir=None) -> dict[str, str]:
+        """Register the PC clocks from the authors' ``CalcAllPCClocks.RData``.
+
+        See :func:`falconage.registry.pc_import.import_pc_clocks`.
+        """
+        from .pc_import import import_pc_clocks
+
+        return import_pc_clocks(self, path, out_dir=out_dir)
 
     def coefficients(self, clock_id: str) -> tuple[list[str], np.ndarray]:
         """Feature ids and coefficients, in the file's order.
@@ -480,8 +597,23 @@ class ClockRegistry:
         """
         c = self.get(clock_id)
 
+        if c.deconvolution is not None:
+            raise RegistryError(
+                f"{clock_id} is a deconvolution entry: its parameters are a "
+                "reference table of cell-type methylation, not one weight per "
+                "feature.\n  Use deconvolution_table("
+                f"{clock_id!r}) for the table and feature_ids({clock_id!r}) "
+                "for its CpGs.")
+
+        if _is_quadratic(c):
+            raise RegistryError(
+                f"{clock_id} has squared-CpG terms and two models (age and log age), "
+                "so there is no one weight per feature.\n  Use quadratic_model("
+                f"{clock_id!r}) for its terms and feature_ids({clock_id!r}) for its CpGs.")
+
         if clock_id in self._local:
-            return _read_coefficients(self._local[clock_id][0])
+            feats, coefs, _ = _split_intercept(*_read_coefficients(self._local[clock_id][0]))
+            return feats, coefs
 
         if c.availability == BUNDLED and c.coefficient_source.file:
             p = DATA_DIR / c.coefficient_source.file
@@ -601,6 +733,10 @@ class ClockRegistry:
         # order is the model: the columns have to arrive as they were trained.
         # It travels in the safetensors metadata rather than in a sidecar file,
         # so it cannot drift away from the weights it belongs to.
+        if self.get(clock_id).deconvolution is not None:
+            return tuple(self.deconvolution_table(clock_id).index)
+        if _is_quadratic(self.get(clock_id)):
+            return tuple(self.quadratic_model(clock_id)[0])
         src = self.get(clock_id).coefficient_source.file or ""
         if src.endswith(".safetensors") and clock_id not in self._local:
             try:
@@ -627,12 +763,51 @@ class ClockRegistry:
         False for a network, whose weights are layer matrices. The distinction
         matters to anything that squares a weight or sums the absolute weights:
         those operations are defined on a linear model and have no counterpart
-        in a five-layer network.
+        in a five-layer network. False too for a deconvolution entry, whose
+        parameters are a table of cell-type means.
         """
+        if self.get(clock_id).deconvolution is not None:
+            return False
+        if _is_quadratic(self.get(clock_id)):
+            return False
         if clock_id in self._local:
             return True
         src = self.get(clock_id).coefficient_source.file or ""
         return bool(src) and not src.endswith(".safetensors")
+
+    def quadratic_model(self, clock_id: str):
+        """A model with squared-CpG terms (cAge): base CpGs, a frame of their
+        linear and squared weights in each of its two models, and the two
+        intercepts. See :mod:`falconage.models.quadratic`."""
+        from ..models.quadratic import read_terms
+
+        c = self.get(clock_id)
+        if not _is_quadratic(c):
+            raise RegistryError(f"{clock_id} is not a model with quadratic terms")
+        return read_terms(DATA_DIR / c.coefficient_source.file)
+
+    def deconvolution_table(self, clock_id: str, platform: str | None = None,
+                            present=None) -> pd.DataFrame:
+        """The reference table (CpGs x cell types) a deconvolution entry reads.
+
+        The table declared for ``platform``; otherwise, when ``present`` (the
+        data's feature ids) is given, the one the data covers best; otherwise
+        the first. A table the user registered for a licensed entry wins.
+        """
+        c = self.get(clock_id)
+        if c.deconvolution is None:
+            raise RegistryError(f"{clock_id} is not a deconvolution entry")
+        if clock_id in self._local:
+            return _read_matrix(str(self._local[clock_id][0]))
+        if c.availability != BUNDLED or not c.deconvolution.tables:
+            raise WeightsUnavailableError(clock_id, self.unavailable_message(clock_id))
+        tables = c.deconvolution.tables
+        pick = next((t for t in tables if platform and platform in t.platforms), None)
+        if pick is None and present is not None:
+            have = set(map(str, present))
+            pick = max(tables, key=lambda t: len(have & set(
+                _read_matrix(str(DATA_DIR / t.file)).index)))
+        return _read_matrix(str(DATA_DIR / (pick or tables[0]).file))
 
     def weight_record(self, clock_id: str) -> dict[str, Any]:
         """What the run manifest records about this clock's coefficients."""
@@ -656,6 +831,22 @@ class ClockRegistry:
             "availability": c.availability, "data_type": c.data_type,
             "traced": c.coefficient_source.primary_source_traced,
         } for c in self._clocks.values()]).set_index("id").sort_index()
+
+    def reference_label(self, clock_id: str) -> str | None:
+        """What a warning calls the clock's reference values, or None."""
+        if clock_id in self._local_reference:
+            return "the reference values registered with its weights"
+        ref = self.get(clock_id).reference_values
+        return ref.label if ref is not None else None
+
+    def reference_values(self, clock_id: str) -> dict[str, float] | None:
+        """The clock's per-feature fill values, or None when it has none."""
+        if clock_id in self._local_reference:
+            return dict(self._local_reference[clock_id])
+        ref = self.get(clock_id).reference_values
+        if ref is None:
+            return None
+        return dict(_read_reference(str(DATA_DIR / ref.file)))
 
     def untraced(self) -> list[Clock]:
         """Clocks whose coefficients have no established primary source."""
@@ -687,6 +878,68 @@ def _read_coefficients(path: Path) -> tuple[list[str], np.ndarray]:
             feats.append(row[0].strip())
             vals.append(float(row[1]))
     return feats, np.asarray(vals, dtype=np.float64)
+
+
+def _is_quadratic(c) -> bool:
+    return "quadratic terms" in (c.model_type or "").lower()
+
+
+#: Row names a coefficient file may use for its constant.
+INTERCEPT_IDS = frozenset({"(intercept)", "intercept", "_intercept"})
+
+
+def _split_intercept(feats, coefs) -> tuple[list[str], np.ndarray, float]:
+    """Features and weights without the intercept rows, and their sum."""
+    keep = np.array([str(f).strip().lower() not in INTERCEPT_IDS for f in feats], dtype=bool)
+    coefs = np.asarray(coefs, dtype=np.float64)
+    return ([f for f, k in zip(feats, keep) if k], coefs[keep],
+            float(coefs[~keep].sum()) if (~keep).any() else 0.0)
+
+
+def _deconvolution(e: dict | None) -> Deconvolution | None:
+    if not e:
+        return None
+    return Deconvolution(
+        cell_type=e["cell_type"],
+        tables=tuple(DeconvolutionTable(platforms=_tuple(t.get("platforms")),
+                                        file=t["file"], sha256=t["sha256"])
+                     for t in e.get("tables") or ()))
+
+
+@functools.lru_cache(maxsize=8)
+def _read_matrix(path: str) -> pd.DataFrame:
+    """A ``feature_id,<cell type>,...`` table: one row per CpG, one column per
+    cell type, finite betas, no duplicate CpGs."""
+    df = pd.read_csv(path, index_col=0)
+    if df.index.name != "feature_id" or df.shape[1] < 2:
+        raise RegistryError(f"{path}: expected feature_id and at least two cell-type columns")
+    if df.index.has_duplicates:
+        raise RegistryError(f"{path}: duplicate feature ids")
+    if not np.isfinite(df.to_numpy(dtype=float)).all():
+        raise RegistryError(f"{path}: non-finite values")
+    return df.astype("float64")
+
+
+def _reference_source(e: dict | None) -> ReferenceSource | None:
+    if not e:
+        return None
+    return ReferenceSource(file=e["file"], sha256=e["sha256"], label=e["label"],
+                           provenance=e.get("provenance") or "")
+
+
+@functools.lru_cache(maxsize=16)
+def _read_reference(path: str) -> tuple[tuple[str, float], ...]:
+    """``feature_id,value[,n]`` rows, gzipped or not. One file serves many
+    clocks, so it is parsed once per process."""
+    import gzip
+
+    opener = gzip.open if path.endswith(".gz") else open
+    with opener(path, "rt", newline="", encoding="utf-8") as fh:
+        rdr = csv.reader(fh)
+        header = next(rdr, None)
+        if not header or [h.strip() for h in header[:2]] != ["feature_id", "value"]:
+            raise RegistryError(f"{path}: header is {header}, expected feature_id,value")
+        return tuple((row[0], float(row[1])) for row in rdr if row and row[0])
 
 
 @functools.lru_cache(maxsize=4)

@@ -17,7 +17,7 @@ register_local_weights(clock_id, path, sha256 = NULL)
 The file's SHA-256, invisibly.
 }
 \description{
-Forty clocks ship as scaffolds: the model, the feature list, the
+Fifty-seven clocks ship as scaffolds: the model, the feature list, the
 preprocess and postprocess chain, the expected shapes -- everything except
 the numbers, which are research-use-only or have no public source FALCONAge
 may redistribute. Once you hold a licensed file, this

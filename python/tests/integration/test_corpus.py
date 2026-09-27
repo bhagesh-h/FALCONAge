@@ -43,20 +43,32 @@ def test_epic_progeria_scores_every_tier_a_clock_the_specimen_allows(corpus):
     All ten were fitted in whole blood, so all ten are compatible here. The
     cortical clock arrived in the same batch and is NOT among them: it refuses
     blood, which is the check doing its job on a clock added the same day.
+
+    40 since the six IDOL cell-type proportions (Salas 2018) shipped; whole
+    blood is the specimen they were built to deconvolve.
+
+    41 since cAge (Bernabeu 2023), a whole-blood clock, shipped.
+
+    51 since ten clocks traced from the BSD catalogues shipped: IntrinClock,
+    the three stochastic clocks, eFRS, DNAmIC, DNAmStress and Barbu's
+    depression score are blood or multi-tissue; CellPopAge (fibroblasts) and
+    Kirby's prostate classifier score with a tissue warning. Mayne (placenta),
+    Bohlin (cord blood) and the Down syndrome score (neonatal blood spots) are
+    refused.
     """
     d = _bench(corpus, "GSE182991")
     assert d.n_samples == 27
     assert d.platform == "EPICv1"
 
     res = fa.score(d, clocks="compatible")
-    assert res.scores.shape[1] == 34
+    assert res.scores.shape[1] == 51
     assert res.scores.notna().all().all()
 
     off_tissue = {cid for cid, why in res.skipped.items() if "tissue_policy=refuse" in why}
     # Three placenta clocks, a cord-blood clock, a buccal clock, and the cortical
     # clock, which is post-mortem brain and has no peripheral counterpart.
     assert off_tissue == {"knight", "leecontrol", "leerobust", "leerefinedrobust",
-                          "pedbe", "corticalclock"}
+                          "pedbe", "corticalclock", "mayne", "bohlin", "downsyndrome"}
 
     # Horvath on blood spanning 0-41 should land in a human range, not a
     # transform-gone-wrong range.

@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1.7
+# =============================================================================
+# FALCONAge - conformance image: the other implementations, beside FALCONAge
+# =============================================================================
+#
+# test/conformance/ scores one public dataset with FALCONAge and with four other
+# packages that implement the same clocks, and fails on any difference that is
+# not explained. This image is where those packages live. Nothing from them is
+# copied into FALCONAge; they are installed here only to be compared against.
+#
+#   methylclock   Bioconductor (Pelegí-Sisó et al. 2021), for the Bioconductor
+#                 release that matches the base image's R
+#   dnaMethyAge   github.com/yiluyucheng/dnaMethyAge at 0d40c9b
+#   methylCIPHER  github.com/HigginsChenLab/methylCIPHER at bfe5d02 (BSD-3)
+#   biolearn      PyPI 0.9.1 (BSD), in its own virtualenv so that its pins
+#                 cannot change the pandas FALCONAge runs on
+#
+# BUILD, from the repository root, after the product image:
+#   docker build -f docker/Dockerfile.conformance -t falconage-conformance:1.0.0 .
+# RUN:
+#   docker run --rm -v "$PWD:/w" -w /w falconage-conformance:1.0.0 test/conformance/run.sh
+FROM bhagesh/falconage:1.0.0-cpu
+USER root
+# System libraries the R dependencies build against: nloptr (for lme4) needs
+# NLopt or CMake, igraph needs GLPK, the graphics stack needs fonts and images.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      cmake libnlopt-dev libglpk-dev libgsl-dev libfontconfig1-dev libfreetype6-dev \
+      libharfbuzz-dev libfribidi-dev libpng-dev libtiff5-dev libjpeg-dev libxml2-dev \
+      libcurl4-openssl-dev libssl-dev \
+ && rm -rf /var/lib/apt/lists/*
+# One layer per package, so a failure in one does not rebuild the others.
+RUN Rscript -e 'install.packages(c("remotes", "BiocManager"), repos = "https://cloud.r-project.org")'
+RUN Rscript -e 'BiocManager::install(c("methylclock", "methylclockData"), ask = FALSE, update = FALSE); stopifnot(requireNamespace("methylclock"))'
+RUN Rscript -e 'remotes::install_github("yiluyucheng/dnaMethyAge@0d40c9bb02c7d9a4d91ce01d150a9c0b12edf1f4", upgrade = "never"); stopifnot(requireNamespace("dnaMethyAge"))'
+RUN Rscript -e 'remotes::install_github("HigginsChenLab/methylCIPHER@bfe5d02817e7dd5e923e8bf96528d5bfd52e1636", upgrade = "never"); stopifnot(requireNamespace("methylCIPHER"))'
+# biolearn 0.9.1 imports seaborn, torch and lifelines without declaring them (GPy only lazily).
+RUN python -m venv /opt/biolearn \
+ && /opt/biolearn/bin/pip install --no-cache-dir biolearn==0.9.1 seaborn lifelines \
+ && /opt/biolearn/bin/pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu

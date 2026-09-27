@@ -94,9 +94,9 @@ Horvath's 15. The residual and group differences are defined; `predicted − chr
 
 | Availability | n | What it means |
 |---|---:|---|
-| `bundled` | 46 | Scores offline. 43 ship a coefficient file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| `untraced` | 89 | Catalogued, no traced coefficient source yet. Deliberately not copied out of another package, because that is how the field's paper-versus-implementation discrepancies spread. |
-| `licensed` | 40 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
+| `bundled` | 69 | Scores offline. 66 ship a coefficient or parameter file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
+| `untraced` | 52 | Catalogued, no traced coefficient source yet. Never copied out of another package unchecked: of the thirteen taken from catalogues and checked against the paper, three catalogue copies were wrong. |
+| `licensed` | 57 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
 
 Every architecture is implemented and tested whatever the group. The values were
 A, B and C until they were renamed to say what they mean; the letters are still

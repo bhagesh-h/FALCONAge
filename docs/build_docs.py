@@ -503,6 +503,8 @@ METHODS: dict[str, str] = {
     "FalconData.write_h5ad": "data.write_h5ad()",
     "FalconData.summary": "data.summary()",
     "registry.Clock.cite": "reg.get(id).cite()",
+    "registry.ClockRegistry.import_pc_clocks": "fa.registry.load().import_pc_clocks()",
+    "registry.ClockRegistry.import_dunedinpace": "fa.registry.load().import_dunedinpace()",
     "registry.ClockRegistry.compatible_with": "reg.compatible_with(data)",
 }
 

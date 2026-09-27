@@ -27,7 +27,7 @@ tolerance zero in CI rather than approximately.
 
 | | What ships today |
 |---|---|
-| **Clocks catalogued** | 175. **46 score offline**: 43 ship a weights file, 3 are formulas with none to ship. 40 are `licensed`, implemented but awaiting a file you supply; 89 are `untraced`, with no primary coefficient source established |
+| **Clocks catalogued** | 178. **69 score offline**: 66 ship a weights file, 3 are formulas with none to ship. 57 are `licensed`, implemented but awaiting a file you supply; 52 are `untraced`, with no primary coefficient source established |
 | **Inputs** | Raw Illumina IDATs (27K/450K/EPIC v1/v2), beta matrices, GEO series matrices, ComputAgeBench studies, RRBS, nanopore bedMethyl, targeted panels, clinical chemistry, Olink NPX, SomaScan RFU, bulk RNA-seq counts. [How to load each](https://bhagesh-h.github.io/FALCONAge/data/loading.html) |
 | **Normalisation** | pOOBAH detection, noob background correction, BMIQ, published probe masks |
 | **Uncertainty** | Technical standard error per score, distribution-free prediction intervals, sample-size calculation |
@@ -155,7 +155,7 @@ mechanism behind it, and each is enforced in code rather than documented as advi
 
 | Refused | Why, measured |
 |---|---|
-| Age acceleration on a pace, a division count, a log-hazard or a relative score | The subtraction is undefined for the scale. 23 of the 46 clocks that ship are on one of those scales, and a pace is already a rate |
+| Age acceleration on a pace, a division count, a log-hazard or a relative score | The subtraction is undefined for the scale. 29 of the 52 clocks that ship are on one of those scales, and a pace is already a rate |
 | `predicted − chronological` on DamAge/AdaptAge | Slope against age is 0.967, but the offset swings **162 years** between cohorts against Horvath's 15, so the difference is not a quantity |
 | A whole-blood clock on saliva | Saliva clock ages ran **3.83–16.46 years** above buffy coat in the same 91 people while still correlating at Spearman 0.45–0.69. Correlation is not agreement |
 | Any array clock on cell-free DNA | Not a tissue but a fragment population shed from many. 12 clocks refuse a specimen outright; 127 more warn |
@@ -205,7 +205,7 @@ the paper did not make, and it says so on every run.
 | Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
-| 89 untraced coefficient sources | A per-clock literature hunt; some have no public supplement |
+| 52 untraced coefficient sources | A per-clock literature hunt; some have no public supplement |
 | meQTL awareness at score time | A clock CpG under strong genetic control carries variance fixed at conception. `coefficient_mass()` now measures each clock's exposure against a meQTL list you supply, but the registry stores no meQTL status and no score is adjusted for it, so a number still cannot say which part of its spread is acquired |
 | Allele-specific methylation | A beta value averages both alleles, so an array cannot resolve it. Sequencing can; nothing here reads that |
 | Co-methylation modules | Probes are treated independently. Module-level testing is what makes an epigenome-wide scan tractable, and is not implemented |
@@ -263,7 +263,7 @@ reported as broken. 66 clocks are cross-referenced against
 checked against someone who is not us.
 
 **One column is deliberately absent.** Health status of the training cohort is not a registry
-field and is not recoverable from one: 5 of 175 entries mention it in free text. There is no
+field and is not recoverable from one: 4 of 178 entries mention it in free text. There is no
 "trained on healthy individuals" column, because the honest value for nearly every row would be
 *unstated*. `target_class == disease` identifies the five clocks fitted on a disease endpoint,
 which is the part that is knowable; for the rest, read the paper behind `verify_url`.
@@ -285,7 +285,7 @@ and floating-point precision, the imputation policy, and every warning raised.
 |---|---|
 | [About](https://bhagesh-h.github.io/FALCONAge/) | What a clock is, what this computes, what it refuses |
 | [Getting started](https://bhagesh-h.github.io/FALCONAge/start/quickstart.html) | Docker first, then Python and R; score, interpret, reproduce |
-| [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html) | All 175 routed by the question they answer |
+| [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html) | All 178 routed by the question they answer |
 | [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks/catalogue.html) | Every clock with its scale, tissue, platform and paper |
 | [The science](https://bhagesh-h.github.io/FALCONAge/methods/index.html) | The algorithms, the failure modes, the citations, the genetics under the probe, and how to fit a clock of your own |
 | [Architecture](https://bhagesh-h.github.io/FALCONAge/dev/index.html) | Which file computes what, and why |

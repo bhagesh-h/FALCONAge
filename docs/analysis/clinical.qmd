@@ -17,13 +17,50 @@ Units are required and never guessed. Albumin at 4.2 is g/dL and albumin at 42 i
 clinically normal, and PhenoAge fitted on one returns nonsense for the other. No range check can
 separate them, so the only correct behaviour is to ask.
 
-KDM and homeostatic dysregulation have no fixed coefficients at all: they are defined relative to
-a reference cohort:
+KDM and homeostatic dysregulation have no coefficients of their own: each is defined relative to a
+reference cohort. FALCONAge ships one such fit, BioAge's NHANES III KDM
+(`fa.models.clinical.kdm_bioage`); for any other reference, fit it:
 
 ```r
 ref <- fit_kdm(nhanes3, markers = markers)
 score(d, clocks = "kdm", reference = ref)
 ```
+
+### LinAge2
+
+LinAge2 (Fong et al. 2025) is trained on survival rather than age: examination, blood and urine
+inputs in NHANES variable names and units, three scores from health questionnaire items, and a Cox
+model on principal components, one per sex, returned as the age at which a model on age alone
+gives the same risk. The inputs are named as in the authors' codebook, with age and sex in `obs`:
+
+```python
+d = fa.FalconData(X=nhanes_style_inputs, obs=obs[["age", "sex"]], modality="clinical_chemistry")
+fa.score(d, clocks=["linage2"])
+```
+
+Cotinine (`LBXCOT`) in ng/mL is binned into the authors' four smoking categories. A missing lipid
+sets LDL to 0, as the authors' code does, and the result names the samples that happened to; any
+other missing input leaves that sample without a score. The parameters are what the authors'
+`linAge2.R` fits from the NHANES file it ships with, and FALCONAge reproduces its output to 5e-10
+years on the 2,344 subjects of their test wave.
+
+### Blood-count ratios
+
+```python
+fa.blood_count_ratios(cbc, units={"neutrophils": "10^9/L", "lymphocytes": "10^9/L",
+                                  "monocytes": "10^9/L", "platelets": "10^9/L"})
+```
+
+NLR, LMR, PLR and SII from a complete blood count. Units are declared, as everywhere; counts are
+converted to 10^9/L. Percentages give the two ratios that do not depend on the total (NLR, LMR) and
+not the two that involve platelets, and a zero lymphocyte count gives no ratio rather than infinity.
+
+### Which marker carries an association
+
+A composite clinical clock associated with an outcome does not say which of its markers carries
+the association. `fa.leave_one_marker_out(res, "kdm", data=d, reference=ref, test="outcome")`
+recomputes KDM, HD or PhenoAge without each marker in turn (KDM and HD are refitted; for PhenoAge
+the marker is held at the reference mean) and reports how far the score and the association moved.
 
 ## Survival and association
 Two figures that most aging-clock papers carry, and that need the analysis functions above.

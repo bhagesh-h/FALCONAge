@@ -25,7 +25,7 @@ import pandas as pd
 from .errors import DataError
 
 Modality = Literal["dna_methylation", "clinical_chemistry", "rrbs",
-                   "transcriptomics", "proteomics"]
+                   "transcriptomics", "proteomics", "metabolomics_nmr"]
 
 
 @dataclass

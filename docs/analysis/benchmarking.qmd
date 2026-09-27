@@ -78,7 +78,7 @@ AA1 trivially, so AA1 credit is discounted by how much of the clock's error is s
 positive bias ([ComputAge benchmarking.py:427](https://github.com/ComputationalAgingLab/ComputAge)).
 GrimAge2 leads AA1 but carries a large positive HC bias, which the formula penalises.
 
-**Running it.** `run_benchmark(models_config, experiment_prefix, output_folder)` where
+**Running it.** ComputAge's `run_benchmark(models_config, experiment_prefix, output_folder)`, not `fa.run_benchmark`, where
 `models_config` has an `in_library` dict (clock name → params, notably `imputation`) and a
 `new_models` dict (name → path to a pickled sklearn estimator with `feature_names_in_`). Outputs:
 AA2 and AA1 p-value CSVs, FDR-corrected boolean CSVs, MedAE CSV, bias CSV, four PDFs, and a
@@ -96,20 +96,19 @@ biolearn ([ComputAge definitions.py](https://github.com/ComputationalAgingLab/Co
 
 ### 11.3 TranslAGE - reliability validation
 
-bioRxiv 2025.10.16.682960. Computes ICCs from technical replicates and from repeated biological
-measures, pools them with Fisher-Z, and compares. Headline findings: technical reproducibility
-does not predict biological reliability; PCGrimAge is the only clock with biological ICC > 0.75.
-Sehgal et al.'s companion benchmark of 18 clocks found SystemsAge most technically reliable across
-array positions and DNA extraction protocols.
+TranslAGE (Borrus et al., bioRxiv 2025.10.16.682960) harmonises 179 blood methylation datasets and
+precomputes 41 biomarker scores. On it, Sehgal et al. (bioRxiv 2025.10.13.682176) measured technical
+and biological ICCs for 18 clocks, pooled with Fisher-Z: technical reproducibility did not predict
+biological reliability, PCGrimAge was the only clock with biological ICC > 0.75, and the PC-based
+clocks, PCGrimAge and SystemsAge in particular, stayed technically reliable across slide positions
+and DNA extraction protocols.
 
 ### 11.4 Intervention responsiveness
 
-From the 2026 Frontiers in Genetics review of interventions that lower next-generation clocks:
-GrimAge responded in 38.1% of interventions, DunedinPACE 36%, DNAm PhenoAge 33.3%. Rapamycin and
-senolytics showed no detectable effect. Specific effects: omega-3 alone −0.0022 units/year on
-DunedinPACE and −0.64 years on GrimAge2; omega-3 + vitamin D + exercise −0.32 years on
-PC PhenoAge additively. CALERIE (12% calorie restriction, 2 years) slowed DunedinPACE by 2–3%,
-the first RCT to move a methylation clock. Ordering: DunedinPACE responds fastest, GrimAge needs
+In CALERIE, two years of calorie restriction (about 12% below baseline intake in practice) slowed
+DunedinPACE by 2 to 3% against controls (Waziry et al., *Nature Aging* 2023,
+[doi:10.1038/s43587-022-00357-y](https://doi.org/10.1038/s43587-022-00357-y)), the first randomised
+trial to move a methylation clock. Ordering: DunedinPACE responds fastest, GrimAge needs
 longer or larger interventions, first-generation Horvath barely moves.
 
 ### 11.5 What a benchmarking module in the new tool should do

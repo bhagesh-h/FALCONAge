@@ -117,7 +117,7 @@ RUN python -m pip install --no-cache-dir --upgrade pip \
  && python -m pip install --no-cache-dir uv==0.8.17 \
  && cd /opt/falconage/python \
  && uv export --frozen --no-dev --no-emit-project \
-      --extra methylation --extra plot --extra anndata --extra cli \
+      --extra methylation --extra plot --extra anndata --extra cli --extra metabolomics \
       --format requirements-txt > /tmp/requirements.txt \
  && grep -v '^torch==' /tmp/requirements.txt > /tmp/requirements-nocuda.txt \
  && python -m pip install --no-cache-dir -r /tmp/requirements-nocuda.txt \

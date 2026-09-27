@@ -244,15 +244,15 @@ and a registry fix does not require a PyPI release.
 
 ### 3.2 Schema
 
-> **v1.0 stores this differently.** All 175 entries live in one file,
+> **v1.0 stores this differently.** All 178 entries live in one file,
 > `python/src/falconage/registry/data/clocks.yaml`, loaded into frozen dataclasses by
 > `registry/registry.py`. There is no `registry/` directory at the repository root, no file per
 > clock, and no pydantic.
 >
 > The per-clock tree below is the right shape for a registry that outside contributors edit
-> concurrently, one file per pull request, no merge conflicts. At 175 entries maintained by one
-> author it bought nothing and cost a directory walk on every import, plus 175 files to keep a
-> schema version in step across. The single file is 175 entries the loader validates in one pass,
+> concurrently, one file per pull request, no merge conflicts. At 178 entries maintained by one
+> author it bought nothing and cost a directory walk on every import, plus 178 files to keep a
+> schema version in step across. The single file is 178 entries the loader validates in one pass,
 > and it travels inside the wheel so a clock catalogue is never a download. Pydantic went the
 > same way: the fields are flat, the loader coerces and defaults them in about forty lines, and
 > a runtime dependency that exists to check a file the package itself ships is a dependency
@@ -460,7 +460,7 @@ is fetched, and what the user has to do.
 
 **As shipped in v1.0.0.** The registry names the tiers by what they mean: `bundled` (A),
 `untraced` (B) and `licensed` (C). The letters are still accepted by `filter`, `list_clocks` and
-`falconage clocks list --tier`. The counts are 46 bundled, 89 untraced and 40 licensed.
+`falconage clocks list --tier`. The counts are 69 bundled, 52 untraced and 57 licensed.
 Fetching on first use was not built: an untraced clock carries its metadata and no
 coefficients, and scoring it raises with the reason.
 

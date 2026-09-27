@@ -23,7 +23,7 @@ from ..core.errors import AnalysisError, IllegalOperationError
 __all__ = [
     "BenchmarkResult", "ConsensusReport", "PowerResult", "acceleration",
     "agreement", "associate", "consensus", "cox_hazard", "detectable_effect",
-    "icc", "pc_counterpart", "power", "run_benchmark",
+    "icc", "leave_one_marker_out", "pc_counterpart", "power", "run_benchmark",
 ]
 
 
@@ -47,9 +47,9 @@ def pc_counterpart(clock_id: str) -> str | None:
     """The high-reliability version of a clock, by id, or None if there is none.
 
     Naming only. It does not promise the counterpart is in the registry or that
-    it can be scored, because on a default install none of them can be: every
-    PC clock is catalogued as untraced or licensed, so the weights have to be
-    supplied with :func:`falconage.registry.register_local_weights`.
+    it can be scored, because on a default install none of them can be: the PC
+    clocks are ``licensed``, and five of them are registered from the authors'
+    own file with ``fa.registry.load().import_pc_clocks(path)``.
     """
     if clock_id.startswith("pc"):
         return None
@@ -117,8 +117,9 @@ def _regress_out(y: pd.Series, design: pd.DataFrame, ok: pd.Series) -> pd.Series
 
 def acceleration(result, *, age_col: str = "age", method: str = "residual",
                  group: str | None = None, clocks: Sequence[str] | None = None,
-                 adjust: str | Sequence[str] | None = None) -> pd.DataFrame:
-    """Age acceleration, in whichever of the three conventions you mean.
+                 adjust: str | Sequence[str] | None = None, reference=None,
+                 match: Sequence[str] = ("age", "sex")) -> pd.DataFrame:
+    """Age acceleration, in whichever convention you mean.
 
     Parameters
     ----------
@@ -156,12 +157,69 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
             ``group``. What the AA2 benchmark needs: it asks whether cases
             accelerate relative to *their own* controls, not relative to a line
             fitted through both.
+        ``"reference"``
+            Residual from a line fitted in another population, ``reference``,
+            and applied unchanged to this one: ``score - (a + b * age)`` with
+            ``a`` and ``b`` estimated on the reference only, separately within
+            each level of the categorical ``match`` columns. It answers "how
+            does this person compare with people of the same age and sex in
+            the reference", which the within-cohort residual cannot, because
+            that residual is centred on this cohort and so absorbs any effect
+            the whole cohort shares.
+    reference
+        For ``method="reference"``: a scored
+        :class:`~falconage.score.FalconResult` for the reference population,
+        scored with the same fitted model (for KDM, the same fitted
+        :class:`~falconage.models.clinical.KDMReference` passed to
+        :func:`~falconage.score.score` for both). It must carry every clock
+        asked for and every ``match`` column in its ``obs``.
+    match
+        For ``method="reference"``: the ``obs`` columns the comparison is
+        matched on. ``age_col`` must be one of them; it is the regressor. Every
+        other entry (usually ``"sex"``) is categorical, and the line is fitted
+        separately within each of its levels. Levels are compared as text,
+        ignoring case and a trailing ``.0``, so ``"F"`` matches ``"f"`` but
+        not ``"female"`` or ``2``: recode one side first.
+
+    Raises
+    ------
+    IllegalOperationError
+        When a clock's scale does not admit the convention asked for.
+        ``"absolute"``, ``"both"`` and ``"reference"`` need the scale to admit
+        ``acceleration``, because each compares this cohort's scores with a
+        zero point set somewhere else.
+    AnalysisError
+        With ``method="reference"``: no reference given, a clock or a
+        ``match`` column absent from it, a level of a ``match`` column in this
+        result that the reference lacks, fewer than three usable reference
+        samples in a stratum, or a study age outside the ages the reference
+        covers in that stratum (the range is reported; the line is never
+        extrapolated).
 
     Notes
     -----
     Which one a paper used is often not stated, and they disagree by several
     years on the same data. The convention is recorded in the returned frame's
     ``method`` attribute so a downstream reader does not have to guess.
+
+    WHY A REFERENCE POPULATION. A clock fitted by regression regresses toward
+    the mean age of its training population: it over-predicts the young and
+    under-predicts the old, and a KDM projected from a reference inherits the
+    same pull. In an older cohort ``predicted - chronological`` is then
+    negative for most people whatever their health, and the within-cohort
+    residual removes that bias only by centring the cohort on itself. Brain-age
+    work documents the same bias (Smith et al. 2019, NeuroImage 200:528-539,
+    doi:10.1016/j.neuroimage.2019.06.017) and corrects it with a regression of
+    the prediction on age whose parameters can be estimated in a training or
+    reference sample and applied unchanged to new data (de Lange and Cole
+    2020, NeuroImage: Clinical 26:102229, doi:10.1016/j.nicl.2020.102229).
+    ``"reference"`` is that regression, fitted in the reference and taken as a
+    residual so that it is on the same footing as ``"residual"`` above.
+
+    With ``method="reference"`` the frame's ``attrs["reference_fit"]`` lists,
+    per clock and stratum, the reference sample size, its age range, the
+    fitted intercept and slope and the residual SD, so the comparison can be
+    audited without the reference in hand.
     """
     if age_col not in result.obs.columns:
         raise AnalysisError(
@@ -180,7 +238,11 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
     # hand and therefore does not. LEGAL_OPS has listed the two separately since
     # v1.0 -- nothing read the distinction, which is why a clock whose intercept
     # moves 162 years between cohorts could still be handed to `absolute`.
-    needed = "acceleration" if method in ("absolute", "both") else "residual"
+    # `reference` asks for the stricter of the two. Its line is fitted in
+    # another dataset, so it carries that dataset's origin into this one, which
+    # is exactly what a scale without a fixed origin (age_years_relative) or
+    # without an age axis at all cannot support.
+    needed = "acceleration" if method in ("absolute", "both", "reference") else "residual"
     if clocks:
         cols = list(clocks)
         for cid in cols:
@@ -203,9 +265,11 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
         if method != "residual":
             raise AnalysisError(
                 f"adjust= needs method='residual'; got {method!r}.\n"
-                "  'absolute' is a subtraction with no regression to extend, and "
+                "  'absolute' is a subtraction with no regression to extend, "
                 "'within_group' fits inside each stratum where a composition "
-                "term is usually rank-deficient.")
+                "term is usually rank-deficient, and 'reference' fits in another "
+                "population, which would need the same covariates measured the "
+                "same way there.")
         if adjust == "cell_composition":
             extra = cell_composition(result)
             if extra.empty:
@@ -232,6 +296,12 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
         constant = [c for c in extra.columns if extra[c].nunique(dropna=True) < 2]
         if constant:
             extra = extra.drop(columns=constant)
+
+    if method == "reference":
+        # Branches before the loop below because its sample-size floor is on
+        # this cohort, and here the line is fitted elsewhere: one study sample
+        # can be compared with a reference as well as a thousand can.
+        return _reference_acceleration(result, reference, cols, age, age_col, match)
 
     out: dict[str, pd.Series] = {}
     for cid in cols:
@@ -275,8 +345,8 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
             out[cid] = res
         else:
             raise AnalysisError(
-                "method must be 'absolute', 'residual', 'both' or 'within_group'; "
-                f"got {method!r}")
+                "method must be 'absolute', 'residual', 'both', 'within_group' or "
+                f"'reference'; got {method!r}")
 
     df = pd.DataFrame(out, index=result.scores.index)
     df.attrs["method"] = method
@@ -290,6 +360,151 @@ def acceleration(result, *, age_col: str = "age", method: str = "residual",
 def _residual(y: pd.Series, age: pd.Series, ok: pd.Series) -> pd.Series:
     slope, intercept = np.polyfit(age[ok].to_numpy(float), y[ok].to_numpy(float), 1)
     return y - (slope * age + intercept)
+
+
+def _level(v) -> str | None:
+    """A categorical value as comparable text: 'F', 'f' and ' f ' agree, 2 and 2.0 agree."""
+    if v is None or (not isinstance(v, str) and pd.isna(v)):
+        return None
+    s = str(v).strip().lower().removesuffix(".0")
+    return s if s and s not in ("nan", "none", "<na>") else None
+
+
+def _strata(obs: pd.DataFrame, cols: Sequence[str]) -> pd.Series:
+    """One label per sample naming its stratum, or None where any column is missing."""
+    if not cols:
+        return pd.Series("all", index=obs.index, dtype=object)
+    columns = [[_level(v) for v in obs[c].tolist()] for c in cols]
+    labels = [None if any(v is None for v in vals)
+              else ", ".join(f"{c}={v}" for c, v in zip(cols, vals))
+              for vals in zip(*columns)]
+    return pd.Series(labels, index=obs.index, dtype=object)
+
+
+def _reference_acceleration(result, reference, cols: list[str], age: pd.Series,
+                            age_col: str, match) -> pd.DataFrame:
+    """``method="reference"`` of :func:`acceleration`; see its docstring."""
+    if reference is None or not hasattr(reference, "scores") or not hasattr(reference, "obs"):
+        raise AnalysisError(
+            "method='reference' needs reference=, a scored FalconResult for the "
+            "reference population.\n"
+            "  Score the reference with the same clocks and, for KDM, the same "
+            "fitted reference object:\n"
+            "  ref_res = fa.score(reference_data, clocks=[...], reference=fitted)")
+    match = [match] if isinstance(match, str) else list(match)
+    if age_col not in match:
+        raise AnalysisError(
+            f"match={match} does not include {age_col!r}.\n"
+            "  Age is the regressor of the reference line, so it is always matched; "
+            f"pass match=({age_col!r}, ...). Without it the comparison is the "
+            "absolute convention measured against someone else's mean.")
+    strata = [m for m in match if m != age_col]
+
+    for name, obs in (("this result", result.obs), ("the reference", reference.obs)):
+        missing = [m for m in match if m not in obs.columns]
+        if missing:
+            raise AnalysisError(
+                f"{name} has no {', '.join(repr(m) for m in missing)} column in obs, "
+                f"and method='reference' matches on {match}.\n"
+                f"  obs has: {', '.join(map(str, obs.columns)) or '(nothing)'}")
+    absent = [c for c in cols if c not in reference.scores.columns]
+    if absent:
+        have = [c for c in cols if c in reference.scores.columns]
+        raise AnalysisError(
+            f"the reference was not scored on {', '.join(absent)}.\n"
+            "  A reference comparison needs the same clock, fitted the same way, in "
+            "both populations. Score the reference on it, or pass clocks="
+            f"{have} to compare only the clocks both carry.")
+
+    # Two runs that recorded different coefficient digests for a clock did not
+    # score it with the same model, and their difference would be the model's.
+    for cid in cols:
+        a = (getattr(result.manifest, "weights", {}) or {}).get(cid, {}).get("sha256")
+        b = (getattr(reference.manifest, "weights", {}) or {}).get(cid, {}).get("sha256")
+        if a and b and a != b:
+            raise AnalysisError(
+                f"{cid}: this result and the reference were scored with different "
+                f"coefficients (sha256 {a[:12]} against {b[:12]}), so their "
+                "difference would measure the two models rather than the two "
+                "populations.")
+
+    ref_age = pd.to_numeric(reference.obs[age_col], errors="coerce")
+    key = _strata(result.obs, strata)
+    ref_key = _strata(reference.obs, strata)
+
+    out: dict[str, pd.Series] = {}
+    fits: list[dict] = []
+    for cid in cols:
+        y = pd.to_numeric(result.scores[cid], errors="coerce")
+        yr = pd.to_numeric(reference.scores[cid], errors="coerce").reindex(reference.obs.index)
+        ok = age.notna() & y.notna() & key.notna()
+        ok_ref = ref_age.notna() & yr.notna() & ref_key.notna()
+
+        levels = list(dict.fromkeys(key[ok]))
+        have = set(ref_key[ok_ref])
+        lacking = [lv for lv in levels if lv not in have]
+        if lacking:
+            raise AnalysisError(
+                f"{cid}: the reference has no scored sample with "
+                f"{'; '.join(lacking)}.\n"
+                f"  Reference strata: {'; '.join(sorted(have)) or '(none)'}.\n"
+                "  Levels are compared as text ignoring case, so a reference coded "
+                "1/2 and a study coded M/F do not meet: recode one side first.")
+
+        # One line per stratum rather than one line with sex as a covariate.
+        # A covariate forces the same age slope on both sexes and moves only
+        # the intercept; fitting separately lets the slope differ, which costs
+        # nothing when it does not. It is the convention of the clinical clocks
+        # this is mostly used with: BioAge fits KDM separately by sex (Kwon and
+        # Belsky 2021, GeroScience 43:2795-2808), and validate_panel and
+        # kdm_bioage in falconage.models.clinical follow it. It is also how 'within_group'
+        # above treats a stratum, so the two conventions differ only in whose
+        # data the line comes from. The cost is a reference large enough in
+        # every stratum, which the n_reference column of attrs makes visible.
+        res = pd.Series(np.nan, index=y.index)
+        for lv in levels:
+            rsel = ok_ref & (ref_key == lv)
+            ssel = ok & (key == lv)
+            n_ref = int(rsel.sum())
+            if n_ref < 3:
+                raise AnalysisError(
+                    f"{cid}: {n_ref} usable reference sample(s) with {lv}; a line "
+                    "needs at least 3.")
+            lo, hi = float(ref_age[rsel].min()), float(ref_age[rsel].max())
+            s_age = age[ssel]
+            outside = (s_age < lo) | (s_age > hi)
+            if outside.any():
+                raise AnalysisError(
+                    f"{cid}: {int(outside.sum())} sample(s) with {lv} are aged "
+                    f"{float(s_age[outside].min()):.4g} to {float(s_age[outside].max()):.4g}, "
+                    f"outside the reference's {lo:.4g} to {hi:.4g} for the same "
+                    "stratum.\n"
+                    "  A line fitted in the reference describes only the ages it saw, "
+                    "and this refuses rather than extrapolate it. Restrict the study "
+                    "to that range, or use a reference that covers it.")
+            # np.polyfit, as _residual fits the within-cohort line, so that
+            # 'reference' and 'residual' differ only in where the line was fitted.
+            slope, intercept = np.polyfit(ref_age[rsel].to_numpy(float),
+                                          yr[rsel].to_numpy(float), 1)
+            fitted_ref = slope * ref_age[rsel] + intercept
+            res[ssel] = y[ssel] - (slope * age[ssel] + intercept)
+            fits.append({
+                "clock": cid, "stratum": lv, "n_reference": n_ref,
+                "n_study": int(ssel.sum()), "age_min": lo, "age_max": hi,
+                "intercept": float(intercept), "slope": float(slope),
+                # ddof=2: two parameters were estimated from these points.
+                "resid_sd": float(np.std(yr[rsel] - fitted_ref, ddof=2)),
+            })
+        out[cid] = res
+
+    df = pd.DataFrame(out, index=result.scores.index)
+    df.attrs["method"] = "reference"
+    df.attrs["adjusted_for"] = []
+    df.attrs["match"] = match
+    # Records rather than a DataFrame: pandas compares attrs when frames are
+    # concatenated, and a DataFrame inside attrs makes that comparison raise.
+    df.attrs["reference_fit"] = fits
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -306,17 +521,33 @@ def associate(result, outcome: str, *, covariates: Sequence[str] = ("age", "sex"
     """
     if outcome not in result.obs.columns:
         raise AnalysisError(f"no {outcome!r} column in obs")
+    if not pd.api.types.is_numeric_dtype(result.obs[outcome]):
+        raise AnalysisError(
+            f"{outcome!r} is not numeric; code it (for example 0/1) before an OLS "
+            "association, rather than have every value read as missing")
     y = pd.to_numeric(result.obs[outcome], errors="coerce")
     cols = list(clocks) if clocks else list(result.scores.columns)
 
+    # A text covariate becomes one indicator per level after the first. Codes
+    # would make a three-level factor an ordinal number and code a missing
+    # value as -1; and on pandas 3 text is dtype "str", not object, so the old
+    # object test sent sex through to_numeric and dropped every row.
+    cov_frame = pd.DataFrame(index=result.obs.index)
+    for cov in covariates:
+        if cov not in result.obs.columns:
+            continue
+        v = result.obs[cov]
+        if pd.api.types.is_numeric_dtype(v):
+            cov_frame[cov] = pd.to_numeric(v, errors="coerce")
+        else:
+            dummies = pd.get_dummies(v.astype("object"), prefix=cov, drop_first=True,
+                                     dtype=float)
+            dummies[v.isna().to_numpy()] = np.nan
+            cov_frame = cov_frame.join(dummies)
+
     rows = []
     for cid in cols:
-        design = pd.DataFrame({"score": result.scores[cid]})
-        for cov in covariates:
-            if cov in result.obs.columns:
-                v = result.obs[cov]
-                design[cov] = pd.to_numeric(v, errors="coerce") if v.dtype != object \
-                    else pd.Categorical(v).codes
+        design = pd.DataFrame({"score": result.scores[cid]}).join(cov_frame)
         d = design.join(y.rename("_y")).dropna()
         if len(d) < len(design.columns) + 3:
             rows.append({"clock": cid, "n": len(d), "beta": np.nan, "se": np.nan,
@@ -456,6 +687,416 @@ def _bh(p: np.ndarray) -> np.ndarray:
     out[order] = np.clip(ranked, 0, 1)
     q[ok] = out
     return q
+
+
+# ---------------------------------------------------------------------------
+# which marker carries an association
+# ---------------------------------------------------------------------------
+#: Label of the baseline row of :func:`leave_one_marker_out`: nothing removed.
+FULL_PANEL = "(none)"
+
+
+def _marker_frame(x, what: str) -> pd.DataFrame:
+    """Markers as one table: a DataFrame as given, a FalconData as X joined to obs.
+
+    The join is the one :class:`~falconage.models.clinical.ClinicalClock` makes
+    before scoring, so a column found in both keeps the value from ``X``.
+    """
+    if isinstance(x, pd.DataFrame):
+        return x
+    if hasattr(x, "X") and hasattr(x, "obs"):
+        return x.X.join(x.obs, how="left", rsuffix="_obs")
+    raise AnalysisError(f"{what}= must be a FalconData or a DataFrame of markers, "
+                        f"not {type(x).__name__}")
+
+
+def _numeric_covariates(obs: pd.DataFrame, covariates: Sequence[str]
+                        ) -> tuple[pd.DataFrame, list[str]]:
+    """Covariates as numbers :func:`associate` can use: text becomes indicators.
+
+    One 0/1 column per level after the first, missing where the value is.
+    Needed because on pandas 3 a text column has dtype ``str`` rather than
+    ``object``, and :func:`associate` then reads ``sex`` through
+    ``to_numeric`` as all-missing and drops every row. Indicators rather than
+    integer codes, so a covariate with three levels is not treated as a dose.
+    """
+    obs = obs.copy()
+    out: list[str] = []
+    for cov in covariates:
+        if cov not in obs.columns or pd.api.types.is_numeric_dtype(obs[cov]):
+            out.append(cov)
+            continue
+        lv = pd.Series([_level(v) for v in obs[cov].tolist()], index=obs.index, dtype=object)
+        for level in sorted(set(lv.dropna()))[1:]:
+            name = f"{cov}[{level}]"
+            obs[name] = (lv == level).astype(float).where(lv.notna())
+            out.append(name)
+    return obs, out
+
+
+def leave_one_marker_out(result, clock: str, *, data, reference,
+                         markers: Sequence[str] | None = None,
+                         test: str | None = None,
+                         covariates: Sequence[str] = ("age", "sex"),
+                         age_col: str = "age",
+                         sex_col: str | None = None) -> pd.DataFrame:
+    """Recompute a clinical clock without each marker in turn, and say what moved.
+
+    A composite clock associated with an outcome does not say which of its
+    markers carries the association. A KDM built on nine markers can owe most
+    of an association to one of them, and reporting it as "biological aging"
+    then says more than the data do.
+    This removes one marker at a time, recomputes the clock, and reports how
+    far the score moved and, with ``test=``, how much of the association went
+    with the marker.
+
+    Parameters
+    ----------
+    result
+        The scored :class:`~falconage.score.FalconResult`. Its ``clock``
+        column is the baseline, and its ``obs`` supplies ``test`` and the
+        covariates.
+    clock
+        ``phenoage``, ``kdm`` or ``hd``, or any clock the registry computes
+        with one of those three formulas.
+    data
+        The marker data the result was scored from, as a
+        :class:`~falconage.core.FalconData` or a DataFrame indexed by sample.
+        A result holds scores, not markers, so they are passed again.
+    reference
+        The reference population's markers, as a FalconData or a DataFrame.
+        For KDM and HD, the rows the scoring reference was fitted on (the
+        frame passed to ``fit_kdm`` or ``fit_hd``), because removing a marker
+        means refitting on what remains. For PhenoAge, the population whose
+        marker means a removed marker is held at; see Notes.
+    markers
+        For KDM and HD, the panel the scoring reference was fitted on, in any
+        order; required, because neither clock has a fixed panel. For
+        PhenoAge the panel is fixed at Levine's nine biomarkers, and this
+        chooses which of them to remove (all nine by default).
+    test
+        A column of ``result.obs``. When given, each version of the clock is
+        tested against it with :func:`associate`: ordinary least squares of
+        ``test`` on the score and ``covariates``.
+    covariates
+        Passed to :func:`associate`, with text columns (``sex``) entered as
+        one indicator per level after the first. Adjusting for age makes the
+        tested quantity the age-independent part of the score, the same thing
+        an acceleration residual isolates.
+    sex_col
+        KDM and HD only: fit the reference separately within each level of
+        this column (present in both ``data`` and ``reference``) and score
+        each sample against its own level's fit, as
+        :func:`~falconage.models.clinical.validate_panel` and BioAge do. Leave
+        it ``None`` when the result was scored with one pooled reference.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per removed marker, after a first row ``"(none)"`` for the
+        full panel, with columns:
+
+        ``n``
+            Samples scored by both the full and the reduced clock.
+        ``r_spearman``
+            Rank correlation of the reduced clock with the full one.
+        ``mean_change``, ``mean_abs_change``
+            Mean and mean absolute of ``reduced - full``, in the clock's unit.
+            Only where the scale admits a ``difference``; NaN for HD, whose
+            Mahalanobis distance shrinks when a dimension is removed whatever
+            that dimension carried, so its raw change measures the panel size.
+        ``n_test``, ``beta``, ``se``, ``p``
+            With ``test=``: the association from :func:`associate`, ``beta``
+            in units of ``test`` per unit of the clock.
+        ``partial_r``
+            With ``test=``: the partial correlation of ``test`` with the score
+            given the covariates, ``t / sqrt(t^2 + df)`` from the same fit, the
+            t test of a regression coefficient being also the test of the
+            corresponding partial correlation (Cohen, Cohen, West and Aiken
+            2003, *Applied Multiple Regression/Correlation Analysis for the
+            Behavioral Sciences*, 3rd ed.). Scale-free, so the full and
+            reduced clocks, whose spreads differ, compare directly.
+        ``attenuation``
+            With ``test=``: ``1 - partial_r / partial_r(full panel)``, the
+            share of the full panel's association lost without the marker. 1
+            means the marker carried all of it; below 0, what remains carries
+            the association more cleanly without it. Read it only when the
+            full panel's association is itself clearly non-zero.
+
+        Rows after the first are sorted by ``attenuation`` (largest first)
+        with ``test=``, and otherwise by ``r_spearman`` (smallest first), so
+        the marker that matters most is on top either way. ``attrs`` records
+        the clock, how a marker was removed, the values PhenoAge's markers
+        were held at, and the test and covariates.
+
+    Raises
+    ------
+    AnalysisError
+        For a clock that is not one of the three clinical formulas, a missing
+        ``reference``, ``markers`` (KDM, HD), marker or ``test`` column, a
+        panel too small to lose a marker (KDM needs two, HD three), or when
+        recomputing the full panel from ``data`` and ``reference`` does not
+        reproduce the scores in ``result``: the decomposition would then
+        describe some other clock.
+
+    Notes
+    -----
+    **KDM and HD are refitted.** Neither has fixed weights: KDM's come from
+    per-marker regressions on age in the reference, HD's from its covariance,
+    so the clock without a marker is the clock fitted without it, by
+    :func:`~falconage.models.clinical.fit_kdm` or
+    :func:`~falconage.models.clinical.fit_hd` exactly as the full one was.
+    For KDM that also re-estimates ``r_char``, ``s_R`` and ``s_BA^2`` on the
+    smaller panel, as :func:`~falconage.models.clinical.validate_panel` does.
+    This is leave-one-covariate-out, refitting without the variable (Lei et
+    al. 2018, J Am Stat Assoc 113:1094-1111,
+    doi:10.1080/01621459.2017.1307116).
+
+    **PhenoAge is not refitted.** Its weights are Levine's (2018), fitted on
+    NHANES III mortality, and refitting them on a user's reference would
+    produce a different clock that happens to share a name. A marker is
+    removed instead by holding it at its mean in ``reference``; for CRP, the
+    mean of ``log(CRP)``, since that is the quantity its weight multiplies,
+    which is the geometric mean of CRP. This is well defined because
+    PhenoAge is an affine function of its linear predictor ``xb``: the
+    Gompertz inversion gives ``-log(1 - M) = exp(xb) (exp(120 gamma) - 1) /
+    gamma``, so ``PhenoAge = const + xb / 0.090165``. Holding marker ``j`` at
+    ``c_j`` therefore moves each person by exactly
+    ``-beta_j (x_j - c_j) / 0.090165`` years, whatever the other markers are.
+    That is the marker's additive contribution against the reference as
+    baseline, the attribution a linear model gives each input (Strumbelj and
+    Kononenko 2014, Knowl Inf Syst 41:647-665, doi:10.1007/s10115-013-0679-x;
+    Lundberg and Lee 2017, NeurIPS, the linear case of SHAP). Which mean is
+    used moves every score by the same amount, so ``p`` and ``attenuation``
+    do not depend on it; ``mean_change`` does, and against a reference such
+    as NHANES III it says how much of the cohort's departure from that
+    population the marker accounts for. Passing this cohort's own markers as
+    ``reference`` holds each at the cohort mean and makes ``mean_change``
+    zero by construction.
+
+    **What it cannot say.** Refitting lets correlated markers take over from
+    the removed one, so two markers carrying the same signal can each show
+    little attenuation although together they carry all of it; holding a
+    PhenoAge marker fixed does not, because the other weights stay put. A
+    marker with high attenuation carries the association given the rest of
+    the panel, which is a statement about the clock, not a causal one about
+    the marker.
+    """
+    from types import SimpleNamespace
+
+    from ..models import clinical as clin
+
+    if clock not in result.scores.columns:
+        raise AnalysisError(
+            f"{clock!r} is not scored in this result; it has "
+            f"{', '.join(map(str, result.scores.columns))}")
+    c = result.registry.get(clock)
+    formula = c.formula
+    if formula not in ("phenoage", "kdm", "hd"):
+        raise AnalysisError(
+            f"leave_one_marker_out is defined for the clinical clocks (PhenoAge, "
+            f"KDM, HD); {clock} is a {c.model_type} {c.data_type} clock.\n"
+            "  For a clock with fixed coefficients over many features, "
+            "fa.coefficient_mass says where its weight sits.")
+    if test is not None and test not in result.obs.columns:
+        raise AnalysisError(
+            f"no {test!r} column in obs to test against.\n"
+            f"  obs has: {', '.join(map(str, result.obs.columns)) or '(nothing)'}")
+    if test is not None and not pd.api.types.is_numeric_dtype(result.obs[test]):
+        # associate() reads the outcome through to_numeric, so text becomes
+        # missing and every row of the table would be NaN without a word.
+        seen = list(dict.fromkeys(result.obs[test].dropna().astype(str)))[:4]
+        raise AnalysisError(
+            f"{test!r} is not numeric (values such as {', '.join(seen)}), and the "
+            "association is an ordinary least squares fit.\n"
+            "  Code it as a number first, 0/1 for a binary outcome, so that which "
+            "level counts as 1 is your choice rather than an alphabetical one.")
+    if data is None:
+        raise AnalysisError("data= is required: a result holds scores, not the markers "
+                            "they were computed from")
+    df = _marker_frame(data, "data")
+    absent_ids = result.scores.index.difference(df.index)
+    if len(absent_ids):
+        raise AnalysisError(
+            f"{len(absent_ids)} sample(s) of the result are not in data=, e.g. "
+            f"{', '.join(map(str, absent_ids[:3]))}; pass the data the result was "
+            "scored from")
+    df = df.loc[result.scores.index]
+    if reference is None:
+        raise AnalysisError(
+            f"{clock} needs reference=, the reference population's markers.\n"
+            + ("  PhenoAge's weights are fixed, so a marker is removed by holding it "
+               "at a constant; the reference supplies that constant (its mean). Pass "
+               "the population to compare against, or this cohort's own markers to "
+               "hold each at the cohort mean."
+               if formula == "phenoage" else
+               "  Removing a marker means refitting on the remaining ones, which "
+               f"needs the rows fit_{formula} was given."))
+    ref = _marker_frame(reference, "reference")
+    if isinstance(markers, str):
+        markers = [markers]
+
+    held: dict[str, float] = {}
+    if formula == "phenoage":
+        if sex_col is not None:
+            raise AnalysisError(
+                "sex_col= fits the reference by sex, which applies to the refitted "
+                "clocks (KDM, HD). PhenoAge is not refitted and holds each marker at "
+                "one reference mean; pass a reference of one sex to hold at that "
+                "sex's mean.")
+        panel = [m for m in clin.PHENOAGE_UNITS if m != "age"]
+        chosen = list(dict.fromkeys(markers)) if markers is not None else panel
+        unknown = [m for m in chosen if m not in panel]
+        if unknown:
+            raise AnalysisError(
+                f"PhenoAge has no marker {', '.join(map(repr, unknown))}; its nine "
+                f"are {', '.join(panel)}")
+        lacking = [m for m in chosen if m not in ref.columns]
+        if lacking:
+            raise AnalysisError(
+                f"the reference has no {', '.join(map(repr, lacking))} column, so "
+                "there is no mean to hold it at")
+        for m in chosen:
+            v = pd.to_numeric(ref[m], errors="coerce").dropna().to_numpy(dtype=float)
+            if v.size == 0:
+                raise AnalysisError(f"the reference has no value of {m!r} to average")
+            if m == "crp":
+                if (v <= 0).any():
+                    raise AnalysisError(
+                        "the reference has CRP values at or below zero; PhenoAge "
+                        "weights log(CRP), so its mean is taken on the log scale "
+                        "and needs every value positive")
+                held[m] = float(np.exp(np.mean(np.log(v))))
+            else:
+                held[m] = float(np.mean(v))
+
+        def recompute(drop: str | None) -> pd.Series:
+            x = df if drop is None else df.assign(**{drop: held[drop]})
+            return clin.phenoage(x)
+
+        how = "held at its mean in the reference (log scale for CRP)"
+    else:
+        if not markers:
+            raise AnalysisError(
+                f"{clock} has no fixed panel: pass markers=, the markers the "
+                f"reference given to fa.score was fitted on (fit_{formula}(df, markers)).")
+        chosen = list(dict.fromkeys(markers))
+        minimum = 3 if formula == "hd" else 2
+        if len(chosen) < minimum:
+            raise AnalysisError(
+                f"a {formula.upper()} panel of {len(chosen)} marker(s) cannot lose "
+                f"one; it needs at least {minimum}"
+                + (" (a covariance of one marker is a variance, and the distance "
+                   "a z-score)" if formula == "hd" else ""))
+        need = chosen + ([age_col] if formula == "kdm" else [])
+        for name, frame in (("data", df), ("the reference", ref)):
+            lacking = [m for m in need if m not in frame.columns]
+            if lacking:
+                raise AnalysisError(f"{name} has no {', '.join(map(repr, lacking))} column")
+
+        if sex_col is None:
+            key = pd.Series("all", index=df.index, dtype=object)
+            ref_key = pd.Series("all", index=ref.index, dtype=object)
+        else:
+            for name, frame in (("data", df), ("the reference", ref)):
+                if sex_col not in frame.columns:
+                    raise AnalysisError(f"{name} has no {sex_col!r} column to fit by")
+            key, ref_key = _strata(df, [sex_col]), _strata(ref, [sex_col])
+            lacking = sorted(set(key.dropna()) - set(ref_key.dropna()))
+            if lacking:
+                raise AnalysisError(
+                    f"the reference has no rows with {'; '.join(lacking)}. Levels are "
+                    "compared as text ignoring case; recode one side first.")
+        levels = list(dict.fromkeys(key.dropna()))
+
+        def recompute(drop: str | None) -> pd.Series:
+            ms = [m for m in chosen if m != drop]
+            out = pd.Series(np.nan, index=df.index, name=formula)
+            for lv in levels:
+                r, s = ref[ref_key == lv], df[key == lv]
+                if formula == "kdm":
+                    out[s.index] = clin.kdm(s, clin.fit_kdm(r, ms, age_col=age_col),
+                                            age_col=age_col)
+                else:
+                    out[s.index] = clin.hd(s, clin.fit_hd(r, ms))
+            return out
+
+        how = "refitted on the remaining markers"
+
+    # The baseline must be the clock the result holds. Recomputing it from
+    # what was passed and comparing is the only check that the reference and
+    # markers are the ones it was scored with; without it a mismatched
+    # reference would decompose a clock nobody reported.
+    full = recompute(None)
+    scored = pd.to_numeric(result.scores[clock], errors="coerce")
+    fin_s, fin_f = scored.notna(), full.notna()
+    gap = (scored - full).abs()[fin_s & fin_f]
+    tol = 1e-6 * max(1.0, float(scored.abs().max()))
+    if (fin_s != fin_f).any() or (len(gap) and float(gap.max()) > tol):
+        where = (f"largest difference {float(gap.max()):.4g} at {gap.idxmax()}"
+                 if len(gap) and float(gap.max()) > tol else
+                 f"{int((fin_s != fin_f).sum())} sample(s) scored by one and not the other")
+        raise AnalysisError(
+            f"recomputing {clock} from data= and reference= does not reproduce the "
+            f"scores in this result ({where}).\n"
+            "  The decomposition would describe a different clock. Pass the data the "
+            "result was scored from and the reference (and, for KDM and HD, the "
+            "markers and sex_col) it was scored with.")
+
+    reduced: dict[str, pd.Series] = {}
+    for m in chosen:
+        try:
+            reduced[m] = recompute(m)
+        except AnalysisError as exc:
+            raise AnalysisError(f"{clock} without {m!r}: {exc}") from exc
+
+    diffable = "difference" in c.legal_operations
+    rows = []
+    for name, s in [(FULL_PANEL, full), *reduced.items()]:
+        ok = full.notna() & s.notna()
+        d = (s - full)[ok]
+        rows.append({
+            "removed": name, "n": int(ok.sum()),
+            "r_spearman": (float(full[ok].corr(s[ok], method="spearman"))
+                           if ok.sum() > 2 else np.nan),
+            "mean_change": float(d.mean()) if diffable and len(d) else np.nan,
+            "mean_abs_change": float(d.abs().mean()) if diffable and len(d) else np.nan,
+        })
+    tab = pd.DataFrame(rows).set_index("removed")
+
+    if test is not None:
+        frame = pd.DataFrame({FULL_PANEL: full, **reduced})
+        obs, covs = _numeric_covariates(result.obs, covariates)
+        assoc = associate(SimpleNamespace(scores=frame, obs=obs), test,
+                          covariates=covs).reindex(tab.index)
+        # The partial correlation of the outcome with the score given the
+        # covariates, from the OLS t by r = t / sqrt(t^2 + df), df the
+        # residual degrees of freedom (intercept, score and each covariate
+        # present). It is compared rather than beta because it does not
+        # depend on the score's scale, and a clock without a marker has a
+        # different spread from the clock with it.
+        k = sum(cov in obs.columns for cov in covs)
+        dof = assoc["n"] - 2 - k
+        t = assoc["t"] if "t" in assoc.columns else pd.Series(np.nan, index=tab.index)
+        tab["n_test"] = assoc["n"]
+        tab["beta"] = assoc["beta"]
+        tab["se"] = assoc["se"]
+        tab["p"] = assoc["p"]
+        tab["partial_r"] = t / np.sqrt(t ** 2 + dof)
+        r0 = float(tab.at[FULL_PANEL, "partial_r"])
+        tab["attenuation"] = (1.0 - tab["partial_r"] / r0
+                              if np.isfinite(r0) and r0 != 0 else np.nan)
+
+    rest = tab.drop(index=FULL_PANEL)
+    rest = (rest.sort_values("attenuation", ascending=False) if test is not None
+            else rest.sort_values("r_spearman"))
+    tab = pd.concat([tab.loc[[FULL_PANEL]], rest])
+    tab.attrs.update({
+        "clock": clock, "formula": formula, "removal": how, "held_at": held,
+        "test": test, "covariates": list(covariates) if test is not None else [],
+        "sex_col": sex_col,
+    })
+    return tab
 
 
 # ---------------------------------------------------------------------------
@@ -890,6 +1531,10 @@ class ConsensusReport:
     n_tests: int
     alpha: float
     correction: str
+    design: str = "independent"
+    #: Clocks not tested, and why: a clock whose scores do not vary across
+    #: these samples carries no information about a difference between them.
+    left_out: dict = field(default_factory=dict)
 
     def summary(self) -> pd.DataFrame:
         return self.table
@@ -898,9 +1543,65 @@ class ConsensusReport:
         return f"ConsensusReport({self.verdict}: {self.why})"
 
 
+def _paired_test(y: pd.Series, g: pd.Series, s: pd.Series, ref: str, other: str) -> dict | None:
+    """Paired t on each person's change from ``ref`` to ``other``."""
+    wide = pd.DataFrame({"y": y, "g": g, "s": s}).dropna().pivot(
+        index="s", columns="g", values="y")
+    if ref not in wide or other not in wide:
+        return None
+    diff = (wide[other] - wide[ref]).dropna()
+    if len(diff) < 2:
+        return None
+    sd = float(diff.std(ddof=1))
+    t, p = stats.ttest_1samp(diff, 0.0)
+    return {"n_case": len(diff), "n_control": len(diff), "n_subjects": len(diff),
+            "delta": float(diff.mean()),
+            "cohens_dz": float(diff.mean() / sd) if sd > 0 else np.nan,
+            "t": float(t), "p": float(p), "df": len(diff) - 1,
+            # MDC95 = 1.96 * sqrt(2) * SEM, and a difference of two visits has
+            # variance 2 * SEM^2, so it is 1.96 times the SD of the differences.
+            "sem_within": sd / np.sqrt(2.0), "mdc95": 1.96 * sd}
+
+
+def _mixed_test(y: pd.Series, g: pd.Series, s: pd.Series, ref: str,
+                others: list[str]) -> dict | None:
+    """``y ~ visit + (1 | person)`` by REML; one contrast per non-reference level."""
+    from .mixed import fit_random_intercept
+
+    d = pd.DataFrame({"y": y, "g": g, "s": s}).dropna()
+    d = d[d["g"].isin([ref, *others])]
+    if d["s"].nunique() < 3 or not all((d["g"] == lv).any() for lv in [ref, *others]):
+        return None
+    X = np.column_stack([np.ones(len(d))] + [(d["g"] == lv).to_numpy(float) for lv in others])
+    try:
+        fit = fit_random_intercept(d["y"].to_numpy(float), X, d["s"].to_numpy())
+    except (ValueError, np.linalg.LinAlgError):
+        return None
+    idx = list(range(1, len(others) + 1))
+    try:
+        F, p, q, d2 = fit.wald(idx)
+    except np.linalg.LinAlgError:
+        return None
+    se = np.sqrt(np.diag(fit.cov))
+    row = {"n_case": int((d["g"] != ref).sum()), "n_control": int((d["g"] == ref).sum()),
+           "n_subjects": int(d["s"].nunique()), "p": p, "df": d2,
+           "sem_within": float(np.sqrt(fit.sigma2)),
+           "mdc95": float(1.96 * np.sqrt(2.0) * np.sqrt(fit.sigma2))}
+    for k, lv in zip(idx, others):
+        row[f"delta_{lv}"] = float(fit.beta[k])
+    if len(others) == 1:
+        row["delta"] = float(fit.beta[1])
+        row["t"] = float(fit.beta[1] / se[1])
+    else:
+        row["delta"] = max((row[f"delta_{lv}"] for lv in others), key=abs)
+        row["F"] = F
+    return row
+
+
 def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
               age_col: str = "age", min_generations: int = 2,
-              clocks: Sequence[str] | None = None) -> ConsensusReport:
+              clocks: Sequence[str] | None = None, design: str = "independent",
+              subject_col: str | None = None) -> ConsensusReport:
     """Does a group difference hold up across clocks, or is it one clock?
 
     Implements the decision rule from *When to Trust Epigenetic Clocks*
@@ -935,38 +1636,88 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     names each clock's principal-component version and ``partner_corroborates``
     says whether that version agreed, which is the paper's sharpest single
     diagnostic. It is ``None`` when the partner was not scored, and on a default
-    install that is every one of them: every PC clock in the registry is
-    catalogued as untraced or licensed, so their weights are not ours to ship.
+    install that is every one of them: the PC clocks are ``licensed``, since
+    the authors' data file carries no licence and is not ours to ship.
     ``why`` says so explicitly rather than omitting the clause, because a
     verdict that silently drops its strongest check reads like one that passed
-    it. Supply the weights with
-    :func:`falconage.registry.register_local_weights` to turn it on.
+    it. ``fa.registry.load().import_pc_clocks(path)`` registers five of them
+    from the authors' ``CalcAllPCClocks.RData`` and turns it on.
+
+    **Repeated measures.** ``design`` says how the samples relate:
+
+    ``"independent"``
+        Two groups of different people; Welch's t-test.
+    ``"paired"``
+        ``group_col`` holds two visits and ``subject_col`` the person; each
+        person's change is tested with a paired t-test. A person needs one
+        sample at each visit.
+    ``"mixed"``
+        ``group_col`` holds two or more visits: ``y ~ visit + (1 | person)``,
+        fitted by REML as nlme's ``lme`` does (:mod:`falconage.analysis.mixed`),
+        with Wald t or F on nlme's containment degrees of freedom. A person with
+        a missed visit still contributes. With more than two visits the test is
+        the joint one over every visit contrast, and each contrast is reported.
+
+    Both repeated designs add ``mdc95``, the minimum detectable change,
+    :math:`1.96\\sqrt{2}\\,SEM` with the SEM the within-person SD across these
+    visits (Weir 2005, doi:10.1519/15184.1), and ``below_mdc``: a group mean can
+    move significantly by less than any one person can be shown to have moved,
+    and ``why`` says how many significant clocks did. That SEM carries
+    day-to-day biology and assay noise together; :func:`technical_se` gives the
+    assay part alone, and :func:`variance_components` separates the two when the
+    design has technical replicates.
     """
     reg = result.registry
+    if design not in ("independent", "paired", "mixed"):
+        raise AnalysisError(f"design must be independent, paired or mixed, not {design!r}")
     if group_col not in result.obs.columns:
         raise AnalysisError(f"no {group_col!r} column in obs")
+    if design != "independent":
+        if subject_col is None or subject_col not in result.obs.columns:
+            raise AnalysisError(
+                f"design={design!r} needs subject_col, the column naming the person "
+                "each sample came from")
+        subj = result.obs[subject_col].astype(str)
     g = result.obs[group_col].astype(str)
     levels = [x for x in dict.fromkeys(g) if x and x.lower() not in ("nan", "none")]
-    if len(levels) != 2:
+    if len(levels) < 2 or (design != "mixed" and len(levels) != 2):
         raise AnalysisError(
-            f"{group_col!r} has {len(levels)} levels {levels[:4]}; consensus() "
-            "compares exactly two. Subset the result first.")
+            f"{group_col!r} has {len(levels)} levels {levels[:4]}; this design "
+            "compares exactly two (design='mixed' takes two or more). Subset the "
+            "result first.")
     ref = str(reference) if reference is not None else levels[0]
     if ref not in levels:
         raise AnalysisError(f"reference {ref!r} is not a level of {group_col!r}")
-    other = [x for x in levels if x != ref][0]
+    others = [x for x in levels if x != ref]
+    other = others[0]
+    if design == "paired" and pd.DataFrame({"s": subj, "g": g}).duplicated().any():
+        raise AnalysisError(
+            "some person has more than one sample at a visit; a paired test needs "
+            "one each. Average technical replicates first, or use design='mixed'.")
 
     use = list(clocks) if clocks else list(result.scores.columns)
     rows = []
+    left_out: dict[str, str] = {}
     for cid in use:
         c = reg.get(cid)
         y = result.scores[cid].astype(float)
+        if y.dropna().nunique() <= 1:
+            left_out[cid] = "the same score for every sample"
+            continue
         basis = "score"
         if "acceleration" in c.legal_operations and age_col in result.obs.columns:
             age = pd.to_numeric(result.obs[age_col], errors="coerce")
             ok = age.notna() & y.notna()
             if ok.sum() > 2:
                 y, basis = _residual(y, age, ok), "residual"
+        if design != "independent":
+            row = (_paired_test(y, g, subj, ref, other) if design == "paired"
+                   else _mixed_test(y, g, subj, ref, others))
+            if row is None:
+                continue
+            row["below_mdc"] = bool(abs(row["delta"]) < row["mdc95"])
+            rows.append({"clock": cid, "generation": c.generation, "basis": basis, **row})
+            continue
         a = y[(g == other).to_numpy()].dropna()
         b = y[(g == ref).to_numpy()].dropna()
         if len(a) < 2 or len(b) < 2:
@@ -982,7 +1733,9 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
         })
 
     if not rows:
-        raise AnalysisError("no clock had at least two samples in both groups")
+        raise AnalysisError(
+            "no clock had at least two samples in both groups" if design == "independent"
+            else "no clock had enough people measured at the compared visits")
 
     tab = pd.DataFrame(rows)
     n = len(tab)
@@ -1022,16 +1775,21 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     counts = (f"{len(strict)} of {n} clock(s) significant at Bonferroni "
               f"(alpha {alpha}), {int(tab['sig_bh'].sum())} at BH; "
               f"generations {sorted(gens) or 'none'}")
+    if design != "independent" and len(strict):
+        small = int(strict["below_mdc"].sum())
+        counts += (f"; {small} of the {len(strict)} significant mean change(s) are "
+                   "smaller than the minimum detectable change for one person "
+                   "(mdc95), so they describe the group and not any individual")
     if pc_checks:
         counts += "; " + "; ".join(pc_checks)
     if unpaired:
-        # Not a footnote. Every PC clock in the registry is untraced or
-        # licensed, so on a default install this check cannot run at all, and a
-        # verdict that quietly omitted it would read as though it had passed.
+        # Not a footnote. The PC clocks are licensed, so on a default install
+        # this check cannot run at all, and a verdict that quietly omitted it
+        # would read as though it had passed.
         counts += ("; high-reliability corroboration NOT checked for "
                    + ", ".join(unpaired)
-                   + " -- supply the weights with "
-                     "fa.registry.register_local_weights() to enable it")
+                   + " -- register the authors' PC clocks with "
+                     "fa.registry.load().import_pc_clocks(path) to enable it")
 
     if len(strict) == 0:
         verdict, why = "unsupported", f"nothing survives correction -- {counts}"
@@ -1050,5 +1808,9 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     else:
         verdict, why = "supported", counts
 
+    if left_out:
+        why += (f"; {len(left_out)} clock(s) left out because their scores did not "
+                f"vary: {', '.join(sorted(left_out))}")
     return ConsensusReport(verdict=verdict, why=why, table=tab.set_index("clock"),
-                           n_tests=n, alpha=alpha, correction="bonferroni+bh")
+                           n_tests=n, alpha=alpha, correction="bonferroni+bh",
+                           design=design, left_out=left_out)

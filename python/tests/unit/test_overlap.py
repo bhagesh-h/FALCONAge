@@ -215,7 +215,7 @@ def test_the_jaccard_blank_rule_says_it_is_not_zero(dictionary):
 
 
 def test_the_cohort_note_is_not_advertised_as_a_health_filter(dictionary):
-    """It is empty for 172 of 175 clocks. A reader who filters on it as though
+    """It is empty for 174 of 178 clocks. A reader who filters on it as though
     empty meant healthy gets a confident, wrong answer."""
     row = next(r for r in dictionary if r["column"] == "training_cohort_note")
     assert "NOT A HEALTH-STATUS COLUMN" in row["description"]

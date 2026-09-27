@@ -24,7 +24,7 @@ title: "18. Datasets, registries, reference resources"
 - `DunedinPACE_Gold_Means.csv` - the 20,000-probe gold standard.
 
 **Model registries**
-- pyaging `clock_metadata.json` (173 clocks) + `evidence_ledger.jsonl` (894 KB of per-field
+- pyaging `clock_metadata.json` (177 clocks at e7267e9) + `evidence_ledger.jsonl` (930 kB of per-field
   provenance) + `controlled_vocabulary.json` + `validate_metadata.py`.
 - tAge `clocks_metadata.csv` (60 models) + Zenodo record 18763485.
 - ComputAge `model_definitions` + `library.yaml` (GEO dataset parsers).

@@ -43,6 +43,13 @@ class Alignment:
     # The heaviest absent features, worst first, as (feature, |coef| share).
     # What a user needs to decide whether the gap matters.
     missing_mass: list[tuple[str, float]] = field(default_factory=list)
+    # Absent features filled from the clock's reference values, and absent
+    # features that had none and took the pooled mean of the present ones.
+    n_from_reference: int = 0
+    n_pooled: int = 0
+    # Share of the model's |coefficient| on the pooled-filled features, when
+    # align() was given coefficients.
+    pooled_mass: float | None = None
 
 
 def align(data, features: list[str], *, imputation: str = "reference",
@@ -53,11 +60,16 @@ def align(data, features: list[str], *, imputation: str = "reference",
     Parameters
     ----------
     imputation
-        ``"reference"`` fills an absent feature with the value the clock's
-        authors published for it, or the cohort's own column mean when no
-        published value exists. ``"mean"`` always uses the column mean.
+        ``"reference"`` fills a feature the data does not carry with the
+        clock's reference value (``reference``), and one the reference lacks
+        with the mean of the clock's present features. ``"mean"`` skips the
+        reference. Either way a missing value of a feature the data does carry
+        takes that feature's own cohort mean, as the published implementations
+        with a reference (DunedinPoAm38's PoAmProjector, CorticalClock.r) do.
         ``"none"`` refuses, leaving NaN, so the coverage check downstream fails
         loudly instead of returning a number.
+    reference
+        Feature id to fill value, from :meth:`ClockRegistry.reference_values`.
     coefficients
         The clock's weights, in ``features`` order. Supplying them adds
         ``mass_coverage`` to the result. Optional because alignment is also
@@ -122,12 +134,23 @@ def align(data, features: list[str], *, imputation: str = "reference",
             col_mean = np.nanmean(out, axis=0)
         overall = float(np.nanmean(out)) if np.isfinite(out).any() else 0.5
         fill = np.where(np.isnan(col_mean), overall, col_mean)
+        # The reference is for features the data does not carry. A feature it
+        # does carry keeps its own cohort mean for the odd missing value, which
+        # is closer to this cohort than any published constant.
+        from_ref = np.zeros(len(features), dtype=bool)
         if reference and imputation == "reference":
             for j, f in enumerate(features):
-                if f in reference:
+                if not present[j] and f in reference:
                     fill[j] = reference[f]
-            notes.append(f"{sum(f in (reference or {}) for f in features)} feature(s) "
-                         "filled from the clock's published reference values")
+                    from_ref[j] = True
+        pooled = ~present & ~from_ref
+        n_from_reference, n_pooled = int(from_ref.sum()), int(pooled.sum())
+        if n_from_reference:
+            notes.append(f"{n_from_reference} absent feature(s) filled from the "
+                         "clock's reference values")
+        if n_pooled:
+            notes.append(f"{n_pooled} absent feature(s) filled with the mean of "
+                         "the present ones")
         mask = np.isnan(out)
         n_imputed = int(mask.sum())
         # Read off the mask, not from a second X.reindex(). The frame has
@@ -139,8 +162,9 @@ def align(data, features: list[str], *, imputation: str = "reference",
 
     if imputation == "none":
         per_sample = np.isnan(out).sum(axis=1)
+        n_from_reference, n_pooled, pooled = 0, 0, np.zeros(len(features), dtype=bool)
 
-    mass_coverage, missing_mass = None, []
+    mass_coverage, missing_mass, pooled_mass = None, [], None
     if coefficients is not None:
         w = np.abs(np.asarray(coefficients, dtype=np.float64))
         total = float(w.sum())
@@ -148,6 +172,7 @@ def align(data, features: list[str], *, imputation: str = "reference",
         # legitimate degenerate case in tests; dividing by it is not.
         if total > 0:
             mass_coverage = float(w[present].sum()) / total
+            pooled_mass = float(w[pooled].sum()) / total
             absent = np.flatnonzero(~present)
             order = absent[np.argsort(-w[absent])]
             missing_mass = [(features[j], float(w[j]) / total)
@@ -156,7 +181,9 @@ def align(data, features: list[str], *, imputation: str = "reference",
     return Alignment(matrix=out, present=present, coverage=coverage,
                      n_imputed=n_imputed, imputation=imputation,
                      per_sample_missing=per_sample, notes=notes,
-                     mass_coverage=mass_coverage, missing_mass=missing_mass)
+                     mass_coverage=mass_coverage, missing_mass=missing_mass,
+                     n_from_reference=n_from_reference, n_pooled=n_pooled,
+                     pooled_mass=pooled_mass)
 
 
 
@@ -178,6 +205,15 @@ class LinearClock:
     clock: Clock
     features: list[str]
     coefficients: np.ndarray
+    #: The probe set a dataset-level step was fitted on (Zhang's 319,607), when
+    #: the clock has one. The data must carry ``min_coverage`` of it, or the
+    #: per-sample moments are a subset's and not the array's.
+    training_probes: tuple[str, ...] = ()
+    #: Fill values for absent features (registry ``reference_values``).
+    reference: dict[str, float] | None = None
+    #: A constant the coefficient file carried as an ``(Intercept)`` row. The
+    #: bundled files carry none; their constants are ``add`` steps.
+    intercept: float = 0.0
 
     def __post_init__(self) -> None:
         if len(self.features) != len(self.coefficients):
@@ -187,8 +223,17 @@ class LinearClock:
 
     def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
-        al = align(data, self.features, imputation=imputation,
-                   coefficients=self.coefficients)
+        steps = tuple(self.clock.preprocess)
+        whole = [s for s in steps if s.get("op") in ops.DATASET_PREPROCESS]
+        if whole:
+            # The step runs on the whole matrix, before alignment; absent
+            # features are then left out, which in standardised units is 0.
+            data = self._whole_dataset(data, whole, min_coverage)
+            al = align_present(data, self.features, coefficients=self.coefficients)
+            steps = tuple(s for s in steps if s.get("op") not in ops.DATASET_PREPROCESS)
+        else:
+            al = align(data, self.features, imputation=imputation,
+                       reference=self.reference, coefficients=self.coefficients)
 
         where = (f"  The dataset is {data.platform or 'an unknown platform'} and this "
                  f"clock was trained on {', '.join(self.clock.platform) or 'unknown'}.\n"
@@ -216,11 +261,11 @@ class LinearClock:
             )
 
         xp = spec.xp()
-        x = spec.asarray(al.matrix)
+        x = spec.asarray(np.nan_to_num(al.matrix, nan=0.0) if whole else al.matrix)
         w = spec.asarray(self.coefficients)
 
-        x = ops.apply_chain(x, self.clock.preprocess, ops.PREPROCESS, xp=xp)
-        raw = x @ w
+        x = ops.apply_chain(x, steps, ops.PREPROCESS, xp=xp)
+        raw = x @ w + self.intercept
         out = ops.apply_chain(raw, self.clock.postprocess, ops.POSTPROCESS, xp=xp)
 
         values = np.asarray(spec.tonumpy(out), dtype=np.float64).ravel()
@@ -230,7 +275,39 @@ class LinearClock:
     def from_registry(cls, registry, clock_id: str) -> LinearClock:
         c = registry.get(clock_id)
         feats, coefs = registry.coefficients(clock_id)
-        return cls(clock=c, features=list(feats), coefficients=coefs)
+        probes: tuple[str, ...] = ()
+        for step in c.preprocess:
+            if step.get("op") in ops.DATASET_PREPROCESS and step.get("training_probes"):
+                probes = tuple(registry.feature_ids(step["training_probes"]))
+        return cls(clock=c, features=list(feats), coefficients=coefs,
+                   training_probes=probes,
+                   reference=registry.reference_values(clock_id),
+                   intercept=registry.intercept(clock_id))
+
+    def _whole_dataset(self, data, steps, min_coverage: float):
+        """Run a dataset-level step and return the data it produces."""
+        from ..core.errors import ScoringError
+
+        if len(steps) != 1:
+            raise ScoringError(f"{self.clock.id}: one dataset-level step is supported, "
+                               f"not {len(steps)}")
+        step = dict(steps[0])
+        name = step.pop("op")
+        step.pop("training_probes", None)
+        if self.training_probes:
+            have = len(set(self.training_probes).intersection(data.X.columns))
+            share = have / len(self.training_probes)
+            if share < min_coverage:
+                raise FeatureCoverageError(
+                    f"{self.clock.id}: standardises each sample across the whole array, "
+                    f"as its authors' pred.R does, and the data carries {share:.1%} of "
+                    f"the {len(self.training_probes):,} probes the model was trained on "
+                    f"({data.X.shape[1]:,} probes in all), below the {min_coverage:.0%} "
+                    "floor.\n  A subset's per-sample mean and SD are not the array's, so "
+                    "the weights would meet values on a different scale. Score the full "
+                    "array, or lower min_coverage to accept the approximation.")
+        Z, _ = ops.DATASET_PREPROCESS[name](data.X, self.features, **step)
+        return replace(data, X=Z)
 
 
 @dataclass
@@ -262,10 +339,31 @@ def build(registry, clock_id: str):
     c = registry.get(clock_id)
     if c.availability == "licensed" and not registry.has_coefficients(clock_id):
         return ScaffoldClock(clock=c, registry=registry)
+    if c.formula in ("metaboage", "metabohealth"):
+        from .metabolomics import MetabolomicsClock
+
+        return MetabolomicsClock(clock=c)
     if c.formula:
         from .clinical import ClinicalClock
 
         return ClinicalClock(clock=c)
+    # DunedinPACE: every sample quantile-normalised to a 20,000-probe
+    # background before its 173 weights apply.
+    from .pace import PaceClock, is_pace
+
+    if is_pace(c):
+        return PaceClock.from_registry(registry, clock_id)
+    # cAge: CpGs and their squares, and a log-age model for the young.
+    from .quadratic import QuadraticClock, is_quadratic
+
+    if is_quadratic(c):
+        return QuadraticClock.from_registry(registry, clock_id)
+    # Reference-based deconvolution: a table of cell-type means and a
+    # constrained projection, not a weighted sum.
+    from .deconvolution import DeconvolutionClock, is_deconvolution
+
+    if is_deconvolution(c):
+        return DeconvolutionClock.from_registry(registry, clock_id)
     # Five entries summarise a probe set rather than weighting it -- a mean, a
     # 95th percentile, a weighted mean. They have no intercept and no fitted
     # slope, and at first they fell through to LinearClock and were refused

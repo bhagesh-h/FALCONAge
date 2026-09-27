@@ -60,8 +60,8 @@ GLOSS = {
                           "chronological is not.",
     "relative_score": "A score with no external unit. Comparable within a "
                       "cohort, meaningless as an absolute value.",
-    "proportion": "A composition. The estimates are fractions of a whole and "
-                  "are constrained to sum to one.",
+    "proportion": "A composition. The estimates are fractions of a whole, not "
+                  "forced to sum to one; the sum shows how much the reference explains.",
     "divisions": "A count of cell divisions, not elapsed time.",
     "gestational_weeks": "An age, before birth.",
     "telomere_kb": "An estimated physical length.",

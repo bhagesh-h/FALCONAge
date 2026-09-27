@@ -109,11 +109,11 @@ BioAge's `phenoage0` exactly.
 picking is the failure it exists to prevent. Report the verdict and the `why` string together.
 
 Its strongest check is usually off. The rule it implements requires that a clock's
-high-reliability principal-component version corroborates the finding, and **every PC clock in
-the registry is untraced or licensed, so none can be scored on a default install.** `why` says so
-in that case. Do not read a `supported` verdict as though the corroboration check had passed when
-the string says it was not run; the weights have to be supplied with
-`fa.registry.register_local_weights()` first.
+high-reliability principal-component version corroborates the finding, and **the PC clocks are
+licensed, so none can be scored on a default install.** `why` says so in that case. Do not read a
+`supported` verdict as though the corroboration check had passed when the string says it was not
+run; the PC clocks have to be imported from the authors' file first, with
+`fa.registry.load().import_pc_clocks(path)`.
 
 ## What FALCONAge does not do
 
@@ -123,7 +123,7 @@ the string says it was not run; the weights have to be supplied with
 | Dye-bias correction on by default | Ships opt-in. Moves the median beta by +0.10 to +0.12 on real IDATs, because the control probes are not in the fetchable manifest. |
 | Proteomic or transcriptomic **clocks** | Readers and preparation chains ship. No catalogue entry, because every published model in both families is licence-restricted. |
 | A foundation-model imputation backend | `NeuralClock` ships, safetensors only. CpGPT and MethylGPT as zero-shot probe imputation do not. |
-| Coefficients for 89 untraced clocks | A per-clock literature hunt; some have no public supplement. |
+| Coefficients for 52 untraced clocks | A per-clock literature hunt; some have no public supplement. |
 | Silent correction of anything | Batch reference, platform offset and interval are all *reported*. A score adjusted by an untraceable factor destroys the provenance that is the reason to use this package. |
 | Percentiles against an unnamed population | The same person reads as accelerated or decelerated depending on the comparator. |
 | Diagnostic thresholds | None exist in the literature. Nothing is coloured red above a cut-off. |

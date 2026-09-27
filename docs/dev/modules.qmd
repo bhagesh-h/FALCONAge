@@ -286,17 +286,21 @@ separate is what makes the missingness report meaningful.
 | Stage | Where | Options | Recorded as |
 |---|---|---|---|
 | Dataset-level | `preprocess.impute` | `none`, `mean`, `median`, `constant`, `knn` | `imputation.dataset` |
-| Clock-level | `score.features` | reference values from the registry; zero only when no reference exists | `imputation.clock` |
+| Clock-level | `models.linear.align` | the clock's `reference_values` for an absent feature; the mean of its present features where there is none; a present feature's own cohort mean for its missing values | `coverage[clock]`: `n_from_reference`, `n_pooled`, `reference` |
 | Model-internal | inside the clock | the model's own stored statistic | `imputation.model` |
 
 Dataset-level KNN is the expensive one and is GPU-accelerated when a device is available:
 `cuml.KNNImputer` when RAPIDS is installed, a chunked CuPy distance otherwise, sklearn on CPU.
 
-Clock-level filling uses `reference_values` from the registry. Filling a missing beta with zero
-means "fully unmethylated", which is biologically wrong for most sites, so a clock with no
-reference vector and missing features emits a warning naming the fraction affected. Above
-`max_missing`, default 0.30, scoring raises `ExcessiveMissingnessError` rather than returning a
-number nobody should use; `max_missing=1.0` restores the permissive behaviour deliberately.
+Clock-level filling uses `reference_values` from the registry, built by
+`python/tools/build_references.py`: the authors' published per-CpG values for Horvath 2013,
+DunedinPoAm38, CorticalClock and AltumAge, and a healthy adult whole-blood mean from the test
+corpus for 22 other blood clocks. Zero is never a fill: in beta space it means fully
+unmethylated. A feature the reference lacks, or any absent feature of a clock with no reference,
+takes the mean of the clock's present features, and the run warns (category `imputation`) with
+the count and the share of the model's |coefficient| involved. Below `min_coverage`, default
+0.8, of the features or of the coefficient mass, scoring raises `FeatureCoverageError` rather
+than returning a number nobody should use.
 
 ### 6.5 QC report
 
@@ -588,8 +592,9 @@ instead, and the local `--check` catches staleness before a commit.
 | File | Rows | Source | Built by |
 |---|---:|---|---|
 | `probe_icc.csv.gz` | 283,860 | ADNI duplicates, EPIC v1, CC BY 4.0 | `build_probe_icc.py` |
-| `platform_bias.csv` | 30 | this corpus, masked and rescored | `build_platform_bias.py` |
-| `conformal.csv` | 48 | healthy controls in this corpus | `build_conformal.py` |
+| `platform_bias.csv` | 86 | this corpus, masked and rescored | `build_platform_bias.py` |
+| `conformal.csv` | 54 | healthy adult whole-blood controls in this corpus | `build_conformal.py` |
+| `references/*.csv`, `*.csv.gz` | 29,149 in five files | the authors' published per-CpG values (Horvath 2013, DunedinPoAm38, CorticalClock, AltumAge); healthy adult whole blood in this corpus | `build_references.py` |
 | `evidence.yaml` | 18 | multi-clock comparison studies | hand-curated, DOI enforced at load |
 
 ### 15.3 Where the checks fire

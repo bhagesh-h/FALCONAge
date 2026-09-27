@@ -461,11 +461,13 @@ plots:
     title: "What probe loss costs, in years"
     subtitle: "{n} clocks · platforms: {platforms} · measured, not assumed"
     description: >-
-      Full 450K matrices masked down to each platform's probe set and rescored;
-      the bar is the median shift and the whisker a bootstrap interval. A bar at
-      zero is a clock that lost nothing. The long bars are sparse clocks whose
-      missing probes were the ones they lean on, which is why a correlation
-      check passes while the intercept moves. Reported, never subtracted.
+      Full 450K matrices masked down to each platform's probe set and rescored,
+      absent probes filled from each clock's reference values as score() fills
+      them; the bar is the median shift and the whisker a bootstrap interval. A
+      bar at zero is a clock that lost nothing. A long bar is a clock whose lost
+      probes carry weight no fill value stands in for, which is why a
+      correlation check passes while the intercept moves. Reported, never
+      subtracted.
     xlab: "median shift when scored on this platform (years)"
     ylab: ""
 

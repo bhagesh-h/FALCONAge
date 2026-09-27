@@ -3,7 +3,7 @@ title: "The Claude skill"
 ---
 
 The repository ships a [Claude](https://claude.com/claude-code) skill at
-`.claude/skills/falconage/`. It is four markdown files: the workflow above, the Docker command
+`.claude/skills/falconage/`. It is four markdown files: the workflow (`SKILL.md`), the Docker command
 set, the clock catalogue routed by the question each clock answers, and every refusal with the
 measurement behind it.
 

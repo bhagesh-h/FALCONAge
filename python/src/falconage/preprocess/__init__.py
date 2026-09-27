@@ -9,6 +9,7 @@ from ..core.container import FalconData
 from ..core.units import MARKERS, canonical_name, check_plausible, convert, require_units
 from .batch import BatchError, BatchReference, apply_batch_reference, fit_batch_reference
 from .bmiq import BetaMixture, bmiq, fit_beta_mixture
+from .horvath import horvath_normalise
 from .idat import RawSignal, dye_bias, idat_to_betas, noob, poobah, read_idat_dir
 from .manifest import cached_manifest_probes, fetch_manifest, load_manifest, manifest_record
 from .masks import apply_mask, load_mask, mask_report, masked_probes
@@ -27,7 +28,7 @@ from .transcriptomic import (median_centre, prepare_transcriptomic, read_counts,
 
 __all__ = [
     "BatchError", "BatchReference", "BetaMixture", "QCReport", "RawSignal",
-    "bmiq", "fit_beta_mixture",
+    "bmiq", "fit_beta_mixture", "horvath_normalise",
     "aggregate_replicate_probes",
     "apply_batch_reference", "apply_mask", "clip_betas", "dye_bias", "ensure_platform",
     "load_mask", "mask_report", "masked_probes",
@@ -251,7 +252,16 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
         if c.formula:
             continue
         try:
-            feats, coefs = reg.coefficients(cid)
+            if reg.has_coefficient_vector(cid):
+                feats, coefs = reg.coefficients(cid)
+            elif c.deconvolution is not None:
+                # The table the scoring would use on this array.
+                feats, coefs = list(reg.deconvolution_table(
+                    cid, data.platform, present=data.X.columns).index), None
+            else:
+                # A network: a probe order and no per-probe weight, so the
+                # count is reported and the weight columns stay empty.
+                feats, coefs = list(reg.feature_ids(cid)), None
         except Exception:
             # Tier B and C: the feature list itself is not available, so there
             # is nothing to align against. Say so rather than omitting the row,
@@ -264,7 +274,7 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
 
         al = align(data, list(feats), imputation="none", coefficients=coefs)
         bias = _load_platform_bias().get((cid, data.platform or ""), {})
-        if probes is not None:
+        if probes is not None and coefs is not None:
             n_qc, qc_mass, _ = qc_removed(feats, coefs, observed, probes)
         else:
             n_qc, qc_mass = None, np.nan

@@ -88,11 +88,31 @@ betas over 21,368 probes are mapped onto the distribution of `goldstandard2`, th
 in Additional file 22 ([Genome Biology, CC BY 2.0](https://doi.org/10.1186/gb-2013-14-10-r115)),
 after absent probes are set to those means. dnaMethyAge 0.2.0 runs it by default for
 `HorvathS2013` (`simple_mode = TRUE` skips it), methylclock 1.16.0 does not (`normalize = FALSE`),
-and FALCONAge does not offer it yet. Run unmodified on 120 of the same EPIC v1 blood samples, it
+and FALCONAge offers it as an opt-in step, `fa.preprocess.horvath_normalise()` (R:
+`horvath_normalise()`). Run unmodified on 120 of the same EPIC v1 blood samples, it
 lowered Horvath 2013 age by a mean 1.87 years (SD 1.15 across samples, −4.6 to +3.3) and left the
 correlation with chronological age at 0.89; raw and normalised ages correlated at 0.9993. The step
 moves the level and barely the ranking, so a comparison across packages has to say whether it
 ran.
+
+`horvath_normalise()` is a port of `BMIQcalibration`. The R code fits its beta mixtures on
+20,000 probes drawn by `set.seed(1); sample(...)` and stops its optimisers early (Nelder-Mead
+after 50 evaluations), so its result depends on the exact draw and the exact optimiser path; the
+port reproduces each piece as R computes it (the Mersenne-Twister draw, `optim`'s Nelder-Mead
+and BFGS, RPMM's `blc`, `density()`). Against the unmodified Additional file 24 it agrees to
+3e-10 in beta on a synthetic fixture and to 2e-8 years of Horvath age on the 120 samples above,
+reproducing the −1.87-year shift. Two arguments follow the code people actually ran:
+
+| Argument | Default | The other value |
+|---|---|---|
+| `absent` | `"drop"`: calibrate on the gold-standard probes the data carry, as Knight et al.'s published wrapper does | `"fill"`: set absent probes to their gold-standard value first |
+| `sample_kind` | `"Rejection"`: R 3.6.0 and later | `"Rounding"`: the draw of earlier R |
+
+With `sample_kind="Rounding"`, Knight et al.'s own test dataset gives 37.3665, 38.3463 and
+39.322 weeks against the 37.366, 38.346 and 39.324 their instructions state; the remaining 0.002
+is their k-nearest-neighbour imputation of 51 missing values. Only the 21,368 gold-standard probes
+are changed, and a missing value is set to its gold-standard value first, as Horvath's code does
+for a single sample; both counts are recorded in `uns["horvath_normalisation"]`.
 
 ### 6.4 Imputation options used for benchmarking
 
@@ -148,11 +168,15 @@ probe_loss(d, clocks = "scoreable")
 
 ::: {.falcon-output}
 ```
-                tier  n_features  n_present  coverage  mass_coverage  bias_years  heaviest_absent
-horvath2013        A         353        340    0.9632         0.6117         NaN  cg16867657 (14.1%), ...
-hannum             A          71         64    0.9014         0.8830       -7.69  cg22454769 (3.1%), ...
+                   tier  n_features  n_present  coverage  mass_coverage  bias_years          heaviest_absent
+horvath2013     bundled         353        339    0.9603         0.9715     -1.2570   cg11932564 (0.8%), ...
+hannum          bundled          71         64    0.9014         0.8994      1.0279   cg21139312 (2.7%), ...
+zhangmortality  bundled          10          9    0.9000         0.7687      0.0124  cg08362785 (23.1%), ...
 ```
 :::
+
+Three rows of the table for the EPIC v2 series in the test corpus (GSE330325). `zhangmortality`
+has nine of its ten CpGs, 90% by count, and the one it lacks carries 23% of its weight.
 
 `bias_years` is filled in when the platform is one the shift has been measured on; see
 [what probe loss costs](../analysis/uncertainty.qmd#probe-loss-priced). `NaN` there means *not measured*, never

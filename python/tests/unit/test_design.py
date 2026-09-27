@@ -208,7 +208,8 @@ def test_the_verdict_always_carries_its_counts(scored_arms):
     res = _shift(scored_arms, ["horvath2013"], 12.0)
     rep = fa.consensus(res, "arm", reference="ctrl")
     assert "of" in rep.why and "Bonferroni" in rep.why
-    assert rep.n_tests == res.scores.shape[1]
+    # a clock whose scores do not vary is left out, and named, rather than tested
+    assert rep.n_tests == res.scores.shape[1] - len(rep.left_out)
 
 
 def test_bonferroni_corrects_over_the_tests_actually_run(scored_arms):
@@ -265,14 +266,14 @@ def test_a_pc_clock_has_no_counterpart_of_its_own():
 
 
 def test_consensus_says_when_corroboration_could_not_be_checked(scored_arms):
-    """Every PC clock ships untraced or licensed, so on a default install the
-    paper's sharpest check cannot run. A verdict that dropped the clause in
-    silence would read exactly like one that had passed it."""
+    """Every PC clock is licensed, so on a default install the paper's sharpest
+    check cannot run. A verdict that dropped the clause in silence would read
+    exactly like one that had passed it, and the verdict names the remedy."""
     rep = fa.consensus(_shift(scored_arms, ["horvath2013"], 12.0), "arm",
                        reference="ctrl")
     assert "high-reliability corroboration NOT checked" in rep.why
     assert "pchorvath2013" in rep.why
-    assert "register_local_weights" in rep.why
+    assert "import_pc_clocks" in rep.why
 
 
 def test_the_partner_columns_are_present_and_empty_without_the_weights(scored_arms):

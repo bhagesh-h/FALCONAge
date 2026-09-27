@@ -13,10 +13,10 @@ Quick start
 
 What ships
 ----------
-175 catalogued clocks. 46 are ``bundled``: their coefficients live inside the
-wheel and they run offline. 40 are ``licensed`` scaffolds whose coefficients are
+178 catalogued clocks. 69 are ``bundled``: their coefficients live inside the
+wheel and they run offline. 57 are ``licensed`` scaffolds whose coefficients are
 research-use-only and are not ours to distribute (:mod:`falconage.registry`
-explains each one and names an open alternative). The remaining 89 are
+explains each one and names an open alternative). The remaining 52 are
 ``untraced`` -- catalogued with real metadata, awaiting a traced extractor for
 the numbers. ``fa.registry.load().filter(availability="bundled")`` is the list
 that works today.
@@ -49,7 +49,8 @@ from . import download as _download_mod  # noqa: F401  (module, not the verb)
 from . import score as _score_mod  # noqa: F401  (module, not the verb)
 from ._version import REGISTRY_VERSION, __version__
 from .analysis import (acceleration, agreement, associate, cell_composition, consensus,
-                       cox_hazard, detectable_effect, icc, power, run_benchmark)
+                       cox_hazard, detectable_effect, icc, leave_one_marker_out, power,
+                       run_benchmark)
 from .core import (
     FalconConfig,
     FalconData,
@@ -61,13 +62,15 @@ from .core import (
 )
 from .download import download, download_intervention, how_to_get, interventions
 from .io import (list_computage_bench, read, read_bedmethyl, read_bedmethyl_dir,
-                 read_betas, read_clinical, read_computage_bench, read_panel,
+                 read_betas, read_clinical, read_computage_bench, read_nightingale, read_panel,
                  read_rrbs_dir, read_series_matrix, write_results)
 from .preprocess import (apply_batch_reference, fit_batch_reference, idat_to_betas,
                          prepare, prepare_clinical, probe_loss, qc, read_idat_dir)
 from .disorder import drift, entropy, noise_barometer, variable_sites
 from .immune import repertoire_diversity, simulate_clonality
 from .models.single_cell import mosaic
+from .analysis.elasticnet import fit_clock
+from .models.clinical import blood_count_ratios
 from .registry import coefficient_mass
 from .score import FalconResult, combine, score
 from .uncertainty import (conformal_interval, icc_from_replicates, interval,
@@ -84,6 +87,7 @@ __all__ = [
     "describe", "disorder", "download", "download_intervention", "drift",
     "entropy", "how_to_get", "icc",
     "icc_from_replicates", "immune", "interval", "interventions", "io",
+    "blood_count_ratios", "fit_clock", "leave_one_marker_out",
     "list_computage_bench", "mosaic", "noise_barometer", "read_computage_bench",
     "repertoire_diversity", "simulate_clonality", "variable_sites",
     "variance_components",
@@ -91,7 +95,7 @@ __all__ = [
     "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_bedmethyl",
     "read_bedmethyl_dir", "read_betas",
     "report",
-    "read_clinical", "read_panel",
+    "read_clinical", "read_nightingale", "read_panel",
     "read_rrbs_dir", "read_series_matrix", "registry", "run_benchmark", "score",
     "technical_se", "uncertainty",
     "write_results",

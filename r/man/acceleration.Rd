@@ -6,11 +6,13 @@
 \usage{
 acceleration(
   x,
-  method = c("residual", "absolute", "within_group"),
+  method = c("residual", "absolute", "within_group", "both", "reference"),
   age_col = "age",
   group = NULL,
   clocks = NULL,
-  adjust = NULL
+  adjust = NULL,
+  reference = NULL,
+  match = c("age", "sex")
 )
 }
 \arguments{
@@ -26,7 +28,13 @@ removes any real cohort-wide effect. The field's default.
 
 \code{"within_group"} -- residual from a regression fitted separately within
 each level of \code{group}. What the AA2 benchmark needs: it asks whether cases
-accelerate relative to \emph{their own} controls.}
+accelerate relative to \emph{their own} controls.
+
+\code{"both"} -- \code{"absolute"} and \code{"residual"} side by side, suffixed.
+
+\code{"reference"} -- residual from a line fitted in another scored population,
+\code{reference}, within each level of the categorical \code{match} columns, and
+applied unchanged here. An age outside the reference's range is refused.}
 
 \item{age_col}{Column in the sample annotation holding chronological age.}
 
@@ -46,6 +54,13 @@ mix different" and reports both as one number.
 A character vector instead names columns of the sample annotation, for
 measured counts or anything else. Only available with
 \code{method = "residual"}.}
+
+\item{reference}{For \code{method = "reference"}: a \code{falcon_result} for the
+reference population, scored with the same clocks.}
+
+\item{match}{For \code{method = "reference"}: the annotation columns the
+comparison is matched on; \code{age_col} is the regressor and the others are
+categorical.}
 }
 \value{
 A data frame of samples by clocks.

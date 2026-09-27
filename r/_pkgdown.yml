@@ -61,6 +61,7 @@ reference:
     -- without it a v2 dataset overlaps almost nothing and the clocks score imputed values.'
   contents:
   - prepare
+  - horvath_normalise
   - qc
   - probe_loss
   - fit_batch_reference
@@ -94,7 +95,7 @@ reference:
   - write_results
   - as.data.frame.falcon_result
 - title: The clock catalogue
-  desc: '175 clocks in three availability groups: 46 bundled, 89 untraced and 40 licensed
+  desc: '178 clocks in three availability groups: 69 bundled, 52 untraced and 57 licensed
     scaffolds whose coefficients are research-use-only or have no public source FALCONAge
     may redistribute. The registry says which, why, and which bundled clocks answer the same
     question.'
@@ -104,6 +105,8 @@ reference:
   - cite_clock
   - compatible_clocks
   - register_local_weights
+  - import_pc_clocks
+  - import_dunedinpace
 - title: Analysis
   desc: Age acceleration in its three conventions, association and survival models, reliability,
     and the AA1/AA2 benchmark. Each is gated on the clock's scale type -- acceleration on

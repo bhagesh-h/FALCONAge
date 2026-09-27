@@ -4,7 +4,7 @@ Two kinds of data here. **Synthetic** fixtures are built from a fixed seed and
 are what the arithmetic is asserted against -- they let a test say "this exact
 number" rather than "something plausible". **Corpus** fixtures are the real
 public data in ``test/data``; they are skipped when it is absent, because a test
-suite that cannot run without a 586 MB download is a test suite nobody runs.
+suite that cannot run without a 767 MB download is a test suite nobody runs.
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ def registry():
 # stream for everything after. Two fixtures sharing one means the second one's
 # data depends on whether the first was ever built -- which depends on which
 # tests ran, which depends on what was skipped, which depends on whether the
-# 586 MB corpus is present. That is a fixture whose values differ between a
+# 767 MB corpus is present. That is a fixture whose values differ between a
 # developer's machine and CI while both claim the same seed, and the symptom is
 # a statistical assertion that passes locally and fails in CI with no diff to
 # look at.

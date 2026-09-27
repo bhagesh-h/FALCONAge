@@ -6,7 +6,7 @@ title: "Failure modes and the frontier"
 
 <!-- BEGIN GENERATED: discrepancies -->
 
-22 of the 175 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coefficients and the implementations in circulation disagree. Each is raised as a warning at score time.
+22 of the 178 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coefficients and the implementations in circulation disagree. Each is raised as a warning at score time.
 
 | Clock | The disagreement |
 |:---------|:----------------------------|
@@ -23,7 +23,7 @@ title: "Failure modes and the frontier"
 | `yingadaptage` | The paper reports 1,000 CpGs; the coefficient set carries 999. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
 | `yingcausage` | The paper reports 586 CpGs; the coefficient set carries 585. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
 | `yingdamage` | The paper reports 1,090 CpGs; the coefficient set carries 1,089. The same off-by-one appears in all three Ying clocks, consistent with the paper's total counting an intercept row as a feature. |
-| `zhangmortality` | The paper defines this as an integer count of markers past quartile thresholds; the implementations in circulation compute a continuous weighted sum. They are different statistics, and the continuous form has no published cut-points, which is why its scale_type is relative_score rather than a count. |
+| `zhangmortality` | The paper defines this as an integer count of markers past quartile thresholds; the implementations in circulation compute a continuous weighted sum. They are different statistics, and the continuous form has no published cut-points. FALCONAge scores the continuous sum of the LASSO Cox weights, a log hazard (scale_type mortality_log_hazard), not the count. |
 
 <!-- END GENERATED: discrepancies -->
 
@@ -35,29 +35,34 @@ The Ying clocks additionally carry a measured cohort-offset note, which is why t
 ## 16. Failure modes
 **Units.** PhenoAge in SI vs conventional units gives different answers with the same
 biomarker draw. Albumin g/L vs g/dL is a 10× error; creatinine µmol/L vs mg/dL is ~88×; CRP mg/L
-vs mg/dL is 10× inside a log. Force explicit units at the API boundary and refuse to guess.
+vs mg/dL is 10× inside a log. FALCONAge requires declared units when clinical data are read and
+refuses to guess them.
 
 **The 0.090165 constant.** Some published code uses 0.09165. BioAge fixed this in April 2026.
 Check any inherited implementation.
 
-**EPIC v2 suffixes.** Aggregate before scoring or every clock sees zero features.
+**EPIC v2 suffixes.** Aggregate before scoring or every clock sees zero features; `prepare()`
+does it by default.
 
 **Dropping DunedinPACE background probes.** The 19,827 non-scoring probes define the quantile
 mapping. Subsetting to the 173 scoring CpGs produces a plausible-looking wrong number.
 
 **Zero-filling missing methylation features.** β = 0 means fully unmethylated. Use reference
-values. pyaging warns; make it an error above a configurable missingness threshold.
+values. pyaging warns. FALCONAge fills an absent feature from the clock's reference value (the
+present features' mean, with a warning, where it has none) and refuses a clock below 80% of its
+features or of its coefficient mass (`min_coverage`).
 
 **Mixing generations in a composite.** Averaging Horvath (chronological) with GrimAge (mortality)
 produces a number with no interpretation. Composite only within generation, after z-scoring.
 
-**Subtracting CA from a rate clock.** DunedinPACE is not an age.
+**Subtracting CA from a rate clock.** DunedinPACE is not an age, and FALCONAge refuses the
+subtraction (`IllegalOperationError`).
 
 **Multiplying a mortality clock by species maximum lifespan.** tAge guards this with a registry
 flag precisely because it is an easy mistake.
 
 **Per-sample vs per-feature scaling.** Zhang z-scores across probes *within* a sample; AltumAge
-scales each feature by training median/std *across* samples; tAge's `scale_eset` is column-wise,
+scales each feature by the training median and interquartile range *across* samples; tAge's `scale_eset` is column-wise,
 i.e. per sample. Getting the axis wrong is silent.
 
 **Regression dilution.** All penalised clocks compress toward the training mean, so BA is biased
@@ -77,10 +82,11 @@ years. PC clocks and SystemsAge are the mitigations; randomising sample layout i
 same DNA and still be unstable across two blood draws a week apart.
 
 **Age-range extrapolation.** Models trained on adults 20–70 do not extrapolate; gestational and
-paediatric clocks are separate for a reason. Enforce the registry `population` field.
+paediatric clocks are separate for a reason. FALCONAge does not check the registry `population`
+field at scoring time; check it before scoring outside a clock's training age range.
 
-**`torch.load(weights_only=False)`.** Arbitrary code execution from a downloaded file. Move to
-safetensors.
+**`torch.load(weights_only=False)`.** Arbitrary code execution from a downloaded file. FALCONAge
+loads network weights from safetensors only.
 
 **Sex encoding.** GrimAge takes `Female` as 1/0; ComputAge maps unknown sex to 0.5, which is a
 silent half-male half-female fudge. Make unknown sex an explicit user decision.
@@ -92,7 +98,9 @@ the linear layer bias. Normalise at import or double-count.
 before defaulting to FP32.
 
 **Sample size for HD.** The Mahalanobis covariance needs more reference samples than biomarkers,
-well-conditioned. BioAge warns on single-row inputs; a real tool should check the condition number.
+well-conditioned. BioAge warns on single-row inputs. FALCONAge refuses a reference with fewer
+than five complete rows more than it has markers, and inverts the covariance with a
+pseudo-inverse, which tolerates near-collinear markers; it does not report the condition number.
 
 ## 17. The frontier, and what FALCONAge does not yet compute
 
@@ -102,13 +110,13 @@ blocker is technical or legal.
 
 ### 17.1 Array normalisation, and what it corrects
 
-FALCONAge takes a beta matrix. It does not produce one from raw intensities, and the chain it
-skips exists to correct specific instrument artefacts rather than to tidy data.
+FALCONAge reads raw IDATs (`fa.idat_to_betas`, `fa.read_idat_dir`) and runs the chain below; each
+step exists to correct a specific instrument artefact rather than to tidy data.
 
 An Infinium array carries two probe chemistries. **Type I** uses two beads per CpG read in one
 colour channel, which leaves the other channel at that address carrying no designed signal -- the
 **out-of-band** readings. **Type II** uses one bead, methylated in green and unmethylated in red,
-and covers roughly 84% of probes from 450K onward. The two designs have different beta
+and makes up 72% of 450K probes and 84% of EPIC v1 probes. The two designs have different beta
 distributions, so a raw array is bimodal for reasons that are chemistry rather than biology.
 
 | Step | What it removes | How |
@@ -119,18 +127,22 @@ distributions, so a raw array is bimodal for reasons that are chemistry rather t
 | **BMIQ** | the Type I/Type II design difference | three-state beta mixture fitted to Type II, Type I quantile-mapped onto it within each state |
 | **probe masks** | probes untrustworthy anywhere | cross-reactive probes, probes overlapping common SNPs at the interrogated base, sex chromosomes |
 
-The order is load-bearing -- noob, dye bias, pOOBAH, then BMIQ -- and it matters because **clock
+The order is load-bearing (pOOBAH on the raw out-of-band signal, then noob, then dye-bias correction,
+then BMIQ), and it matters because **clock
 coefficients were fitted on the output of a particular chain**. Applying Horvath's weights to raw
 betas is not a smaller version of the right answer; it is the right weights on the wrong scale.
 
-Until this ships, normalise with [sesame](https://bioconductor.org/packages/sesame/) or
-[minfi](https://bioconductor.org/packages/minfi/) and bring the beta matrix here.
+`fa.preprocess.bmiq` and `fa.preprocess.horvath_normalise` provide the last step; normalising with
+[sesame](https://bioconductor.org/packages/sesame/) or
+[minfi](https://bioconductor.org/packages/minfi/) and reading the beta matrix remains supported.
 
 ### 17.2 Cross-platform harmonisation
 
 Probe content changed across 27K, 450K, EPIC v1 and EPIC v2. EPIC v2 both dropped probes earlier
 clocks depend on and renamed others with replicate suffixes. FALCONAge handles the suffixes and
-*measures* the damage from the drops, by count and by coefficient mass. It cannot yet repair them.
+*measures* the damage from the drops, by count and by coefficient mass, and fills an absent probe
+from the clock's reference value, which recovers most of the shift for most clocks. It does not impute
+a dropped probe from its neighbours.
 
 `mLiftOver` is the published answer, and it is four things rather than an ID lookup: probe-ID
 conversion, replicate management, optional imputation with a confidence filter, and -- the part
@@ -138,7 +150,7 @@ that cannot be reconstructed -- a mapping table carrying empirical evidence of w
 probe's cross-platform mapping is reliable. Those tables are measured on paired samples and
 distributed through Bioconductor's ExperimentHub, so this is blocked on data rather than effort.
 
-Two mitigations are complementary: principal-component clocks absorb probe loss because a missing
+Principal-component clocks absorb probe loss because a missing
 probe perturbs a component instead of deleting a term, which is why EPIC v2 disrupts the
 first-generation clocks and barely moves the PC ones.
 
@@ -185,16 +197,18 @@ sparsity at once. CpGPT placed second for age and first for methylation-based mo
 Biomarkers of Aging Challenge, and its attention weights give per-sample interpretability --
 which sites drove *this* prediction.
 
-This would also be the first model here where a GPU is the right default. Everything currently
-shipped is a dot product over a few thousand features, and [GPU support](../dev/gpu.qmd) measures CUDA as
-*slower* for exactly that reason; a transformer inverts the arithmetic.
+This would also be the first model here where a GPU is the right default. Every bundled clock is
+either linear in its inputs or, for AltumAge, a small network, and the largest reads 319,607 CpGs;
+[GPU support](../dev/gpu.qmd) measures CUDA as *slower* for that reason. A transformer inverts the
+arithmetic.
 
 ### 17.6 Single-cell
 
 Single-cell methylation is binary and sparse -- a site is covered or not, methylated or not -- so
-a linear clock cannot be applied directly. **scAge** answers with a per-cell maximum likelihood
-over the covered subset, closer in spirit to conditioning on coverage than to taking a dot
-product. On the transcriptomic side **scAgeClock** reaches about 2 years MAE for the best cell
+a linear clock cannot be applied directly. FALCONAge implements **scAge**'s per-cell maximum
+likelihood over the covered subset (`fa.models.single_cell.scage`), closer in spirit to
+conditioning on coverage than to taking a dot product, and tests the spread of per-cell ages
+against estimation error (`fa.mosaic`); what remains outside it is the transcriptomic side. On the transcriptomic side **scAgeClock** reaches about 2 years MAE for the best cell
 types using gated multi-head attention, and single-cell profiles are pooled to pseudobulk before a
 bulk transcriptomic clock is applied.
 

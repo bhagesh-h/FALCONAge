@@ -4,18 +4,23 @@ subtitle: "Training targets, units and the operations each scale admits"
 ---
 
 ## The clock catalogue
-175 clocks, in three availability groups. Availability is about redistribution rights, not about
-whether the algorithm works: every architecture is implemented and tested whatever the group.
+178 clocks, in three availability groups. Availability is about redistribution rights, not about
+whether the algorithm works.
 
 | Availability | n | What you do |
 |---|---:|---|
-| `bundled` | 46 | Nothing. Forty-three ship a weights file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
-| `untraced` | 89 | Catalogued, but no primary source for the numbers has been established yet, so nothing is bundled. |
-| `licensed` | 40 | Obtain a coefficient file and register it. The architecture is implemented and tested; the numbers are research-use-only. |
+| `bundled` | 69 | Nothing. Sixty-six ship a weights file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
+| `untraced` | 52 | Catalogued, but no primary source for the numbers has been established yet, so nothing is bundled. |
+| `licensed` | 57 | Obtain a coefficient file and register it; the numbers are research-use-only. DunedinPACE and five PC clocks import from the authors' files and reproduce the authors' code; the composite architectures (GrimAge, PCGrimAge, SystemsAge) are not implemented yet. |
 
 ```python
 fa.registry.load().filter(availability="bundled")
 ```
+
+Two licensed families can be imported from the authors' own files, which then score exactly as
+the authors' code does: DunedinPACE from an installed DunedinPACE package, a source checkout or
+an `.rda` (`fa.registry.load().import_dunedinpace(path)`; R: `import_dunedinpace()`), and the PC
+clocks from `CalcAllPCClocks.RData` (`import_pc_clocks(path)`).
 
 ## Training targets, and what a score means
 
@@ -49,8 +54,8 @@ common use, and they are not variants of one quantity:
 - **Causality-enriched clocks** (CausAge, DamAge, AdaptAge) restrict features to CpGs with
   Mendelian-randomisation support, separating damaging from adaptive change
   ([Ying et al., *Nature Aging* 2024](https://doi.org/10.1038/s43587-023-00557-0), [[19]](../references.qmd#ref-19)).
-- **Deconvolution models** return cell-type proportions, which are a composition and must sum to
-  one.
+- **Deconvolution models** return cell-type proportions, a composition that is not forced to sum
+  to one; the sum shows how much of the sample the reference explains.
 
 Reporting all six as "biological age" discards the information needed to interpret any of them.
 
@@ -72,14 +77,14 @@ perform:
 
 | `scale_type` | n | What the number is | Units in the registry | Operations permitted |
 |---|---:|---|---|---|
-| `age_years` | 77 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
-| `relative_score` | 54 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
-| `proportion` | 18 | A composition. The estimates are fractions of a whole and are constrained to sum to one. | proportion | compositional, correlate, difference, mean |
+| `age_years` | 80 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
+| `relative_score` | 53 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
+| `proportion` | 18 | A composition. The estimates are fractions of a whole, not forced to sum to one; the sum shows how much the reference explains. | proportion | compositional, correlate, difference, mean |
 | `divisions` | 10 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
 | `gestational_weeks` | 8 | An age, before birth. | weeks, days, units per week | acceleration, correlate, difference, mean, residual |
+| `mortality_log_hazard` | 3 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, per cohort SD, log hazard, unitless | correlate, hazard ratio, mean, rank |
 | `telomere_kb` | 2 | An estimated physical length. | kilobases, base pairs | acceleration, correlate, difference, mean |
 | `pace_ratio` | 2 | A rate: how much biological ageing per year of calendar time, at the moment of sampling. | biological years per chronological year | correlate, difference, mean, rank |
-| `mortality_log_hazard` | 2 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, unitless | correlate, hazard ratio, mean, rank |
 | `age_years_relative` | 2 | An age in years with a slope near one against chronological age, but no fixed origin: the offset moves between cohorts. The residual and group differences are defined; predicted minus chronological is not. | years | correlate, difference, mean, residual |
 
 <!-- END GENERATED: scales -->
@@ -103,17 +108,17 @@ fields.
 
 ### 8.1 The output record
 
+`res.long()` returns one row per sample per clock:
+
 ```
-sample_id, clock_name, clock_version, value, unit, scale_type,
-chronological_age (if supplied), age_acceleration_absolute, age_acceleration_relative,
-percent_features_missing, missing_features, imputation_method,
-preprocess_applied, postprocess_applied, species, tissue, platform,
-research_only_flag, citation, doi
+sample_id, clock, value, unit, scale_type, generation, predicts, n_features,
+coverage, mass_coverage, n_imputed, availability, registry_version, falconage_version
 ```
 
-pyaging writes value into `adata.obs[clock]`, metadata into `adata.uns[f"{clock}_metadata"]`,
-missingness into `adata.uns[f"{clock}_percent_na"]` and `adata.uns[f"{clock}_missing_features"]`.
-That is close to the right shape; add explicit units and the two acceleration flavours.
+Acceleration is computed separately (`fa.acceleration`, with the convention recorded), the
+missing features and the fill used are in `res.coverage`, and the coefficient files' SHA-256,
+the device and the package versions are in `res.manifest`. pyaging writes the value into
+`adata.obs[clock]` and its metadata and missingness into `adata.uns`.
 
 ### 8.2 Scale types and what you may do with them
 
@@ -123,17 +128,17 @@ That is close to the right shape; add explicit units and the two acceleration fl
 | Age in months / days / hours | Petkovich, Stubbs (months), Meer (days), BiTAge (hours) | convert before comparing to human clocks |
 | Gestational age in weeks | Knight, Bohlin, Mayne, Lee, EPICGA | compare to ultrasound GA, not to adult clocks |
 | Rate (bio-y per chron-y) | DunedinPACE, DunedinPoAm38 | centred at 1; do **not** subtract CA |
-| Log hazard | SenMortalityAge, organAging mortality, raw Cox scores | exponentiate for HR; convert to years only with an explicit Gompertz assumption |
+| Log hazard | ZhangMortality, MetaboHealth, SenMortalityAge, organAging mortality, raw Cox scores | exponentiate for HR; convert to years only with an explicit Gompertz assumption |
 | log10(hazard ratio) | tAge mortality clocks | never multiply by species lifespan |
 | Probability | CVDWesterman, ADBahadoSingh, MammalianFemale | ROC/AUC, calibration |
 | Log odds | ProstateCancerKirby, SenCultureAge | logistic transform before interpretation |
-| Proportion | deconvolution clocks | sums to 1 across the cell-type family |
+| Proportion | deconvolution clocks | not forced to sum to 1; the sum is how much the reference explains |
 | Beta value | epiTOC1, stemTOC, HypoClock, Garagnani, Bocklandt | ordinal within a study; not comparable across platforms |
 | Cell divisions per stem cell | epiTOC2, epiTOC3 | |
 | Population doublings / passages | RepliTali, CellPopAge | |
-| Physical units | DNAmTL (kb), PCDNAmTL (bp), gait (m/s), grip (kg), VO2max (mL/kg/min) | compare to measured values |
+| Physical units | DNAmTL (kb), PCDNAmTL (bp) | compare to measured values |
 | Concentration | GrimAge2 sub-clocks (pg/mL), logCRP (ln mg/L), logA1C (ln %) | intermediate quantities, not ages |
-| Unitless score | ZhangMortality, DNAmFILi, DNAmIC, DNAmStress, ReedBMI, DownSyndrome | rank or z-score within cohort |
+| Unitless score | DNAmFILi, DNAmIC, DNAmStress, ReedBMI, DownSyndrome; the DNAmFitAge gait, grip and VO2max predictors | rank or z-score within cohort |
 | Relative age | EnsembleAgeHumanMouse, tAge normalized age | fraction of maximum lifespan |
 
 A clock in physical units can be checked against the range its source paper reports, and a
@@ -153,12 +158,16 @@ The intervals are wide on purpose: they catch a sign, unit or fill error, not an
 The pace interval did so on its first real run. Forced below its 80% coverage floor on one
 cohort's EPIC v1 betas, DunedinPoAm38 lost 11 of its 46 CpGs, 23% of its weight, and with those
 filled by the dataset's mean its median was 0.38. The authors' own `PoAmProjector` fills an
-absent probe with its Dunedin cohort mean, which gives 0.85 on the same data.
+absent probe with its Dunedin cohort mean, which gives 0.85 on the same data. FALCONAge now fills
+from those means too.
 
-### 8.3 Aggregate outputs a tool should offer
+### 8.3 Aggregate outputs
 
-- Per-sample × per-clock long table (tidy) and wide matrix.
-- Age-acceleration matrix (both AAA and RAA).
+FALCONAge returns the first, second and last of these; the composite score and the per-system
+profile are not built.
+
+- Per-sample × per-clock long table (`res.long()`) and wide matrix (`res.wide()`).
+- Age-acceleration matrix, absolute and residual (`fa.acceleration(res, method="both")`).
 - Composite score: z-score each clock within cohort, then average within generation class, and
   report the classes separately rather than mixing generations.
 - Per-system / per-organ profile (SystemsAge, organAging, tAge tissue clocks) with a radar or

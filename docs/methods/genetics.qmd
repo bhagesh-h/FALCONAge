@@ -21,9 +21,10 @@ signal a common variant can move.
 
 **A SNP at the interrogated base.** Single-base extension reads the variant
 rather than the methylation state, so the beta becomes a genotype readout. This
-is the population of probes the published masks remove, and it is why
-FALCONAge applies the Zhou masks rather than treating every probe as equally
-informative.
+is the population of probes the published masks remove. FALCONAge ships the
+Zhou masks (`fa.preprocess.mask_report`, `apply_mask`) but applies none
+automatically, because every clock was fitted on unmasked data; `mask_report`
+shows how much of each clock's coefficient mass a mask would remove.
 
 **A SNP under the probe body.** Hybridisation is weakened, intensity falls, and
 the beta drifts toward the middle of the range without any obvious signature of
@@ -67,14 +68,13 @@ reminder that array data is identifiable.
 
 A clock sums hundreds of weighted features, which makes it the same kind of
 object as a polygenic risk score, and methylation risk scores for individual
-traits are built the same way. The TranslAGE panel is largely made of them:
-1,694 of its 1,803 biomarkers are proxies for proteins, metabolites and clinical
-values rather than clocks.
+traits are built the same way: many published methylation biomarkers are proxies
+for proteins, metabolites and clinical values rather than clocks.
 
 The shared property matters more than the shared arithmetic. A combination score
 is robust where a single probe is noisy, and it is opaque in the same measure: a
 change in the total does not say which component moved. That is the argument for
-the subscore clocks in section 5.
+clocks that report their components separately, as SystemsAge does for eleven systems.
 
 ### 22.2 Co-methylation modules
 
@@ -96,6 +96,4 @@ regions involved. Imprinted loci are the familiar case and not the only one.
 
 Genome-wide tests for SNP by SNP effects on methylation find them, and find that
 they explain little variance. The practical reading is that additive models are
-not leaving much on the table at this level, which is consistent with the
-observation in section 4 that elastic net remains competitive with deep networks
-on this problem.
+not leaving much on the table at this level.

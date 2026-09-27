@@ -116,7 +116,7 @@ cite_clock <- function(clock_id, style = c("plain", "bibtex")) {
 
 #' Supply a coefficient file for a clock FALCONAge does not distribute
 #'
-#' Forty clocks ship as scaffolds: the model, the feature list, the
+#' Fifty-seven clocks ship as scaffolds: the model, the feature list, the
 #' preprocess and postprocess chain, the expected shapes -- everything except
 #' the numbers, which are research-use-only or have no public source FALCONAge
 #' may redistribute. Once you hold a licensed file, this
@@ -142,6 +142,60 @@ register_local_weights <- function(clock_id, path, sha256 = NULL) {
   reg <- py_do(fa()$registry$load())
   invisible(reticulate::py_to_r(py_do(
     reg$register_local_weights(clock_id, path.expand(path), or_none(sha256)))))
+}
+
+#' Register the PC clocks from the authors' data file
+#'
+#' The PC clocks (Higgins-Chen et al. 2022, Nature Aging 2:644) are scored in
+#' their authors' code from one file, `CalcAllPCClocks.RData`, which the
+#' PC-Clocks repository links on Yale Box and which carries no licence, so it is
+#' not distributed with FALCONAge. Given a downloaded copy, this registers
+#' PCHorvath 2013, PCSkinAndBlood, PCHannum, PCPhenoAge and PCDNAmTL, each
+#' collapsed exactly to one weight per CpG plus a constant, with the authors'
+#' fill values for CpGs the data lacks. It reproduces the authors'
+#' `run_calcPCClocks.R`. PCGrimAge is not imported: it needs a composite model.
+#'
+#' @param path The downloaded `CalcAllPCClocks.RData`.
+#' @param out_dir Where to write the extracted weights; by default a folder next
+#'   to `path`.
+#' @return The SHA-256 of each registered file, by clock, invisibly.
+#' @examples
+#' \dontrun{
+#' import_pc_clocks("~/PC-Clocks/CalcAllPCClocks.RData")
+#' score(d, clocks = c("horvath2013", "pchorvath2013"))
+#' }
+#' @export
+import_pc_clocks <- function(path, out_dir = NULL) {
+  reg <- py_do(fa()$registry$load())
+  invisible(reticulate::py_to_r(py_do(
+    reg$import_pc_clocks(path.expand(path), out_dir = or_none(out_dir)))))
+}
+
+#' Register DunedinPACE from the authors' R package
+#'
+#' DunedinPACE (Belsky et al. 2022, eLife 11:e73420) is research use only and is
+#' not distributed with FALCONAge. Given the authors' package, installed or as a
+#' source checkout, or its `R/sysdata.rda`, this reads the weights, the
+#' 20,000-probe background and its means, and registers the clock. Scoring then
+#' follows the package's `PACEProjector()`: quantile normalisation of every
+#' sample to the background, its missing-value rules, and its 0.8 coverage
+#' threshold (0.7 on EPIC v2).
+#'
+#' @param path The installed package directory, a source checkout, or
+#'   `sysdata.rda`.
+#' @param out_dir Where to write the extracted parameters; by default a cache
+#'   folder in the home directory.
+#' @return The SHA-256 of the registered weight file, invisibly.
+#' @examples
+#' \dontrun{
+#' import_dunedinpace(system.file(package = "DunedinPACE"))
+#' score(d, clocks = "dunedinpace")
+#' }
+#' @export
+import_dunedinpace <- function(path, out_dir = NULL) {
+  reg <- py_do(fa()$registry$load())
+  invisible(reticulate::py_to_r(py_do(
+    reg$import_dunedinpace(path.expand(path), out_dir = or_none(out_dir)))))
 }
 
 #' Which clocks this dataset can actually be scored on

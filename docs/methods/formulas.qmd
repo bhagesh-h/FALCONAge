@@ -117,6 +117,20 @@ probes that are NA across all individuals are dropped
 missing probes than EN. RMSE reported as 2.04 y, the most accurate chronological clock, and the
 one whose acceleration stopped predicting mortality.
 
+FALCONAge standardises over every probe the data carries, exactly as `pred.R` does, before the
+weights are applied, and leaves an absent model probe at 0 (the sample's own mean) as `pred.R`
+does by restricting the sum to the probes present. It refuses when the data carries less than
+`min_coverage` of the 319,607 probes the models were fitted on, because a subset's per-sample mean
+and SD are not the array's. On the authors' example (10 samples, all 485,512 probes of the 450K)
+it matches `pred.R` to 1e-13 years for the elastic net and 5e-12 for BLUP.
+
+The scope of that standardisation is the part implementations disagree on. pyaging (commit
+`e7267e9`) takes the row mean and SD over the model's own inputs, 514 probes for the elastic net.
+On the same 10 samples that places the elastic-net estimate 9.9 to 22.7 years below `pred.R`
+(mean 17.7), and its mean absolute error against chronological age rises from 4.7 to 21.3 years.
+The BLUP estimate moves by 0.6 to 2.0 years, because its model already spans 319,607 of the
+485,512 probes.
+
 ## Appendix F - Reproducing the four reference computations by hand
 
 Small worked checks to use as smoke tests while building.

@@ -40,7 +40,7 @@ groups:
              read_bedmethyl, read_bedmethyl_dir, read_panel,
              read_computage_bench, list_computage_bench,
              preprocess.read_olink, preprocess.read_somascan,
-             preprocess.read_counts,
+             preprocess.read_counts, read_nightingale,
              FalconData]
     r: [read_betas, read_series_matrix, read_clinical, read_rrbs_dir,
         falcon_data, obs, write_h5ad]
@@ -70,8 +70,8 @@ groups:
              preprocess.BatchReference,
              preprocess.prepare_proteomic, preprocess.prepare_transcriptomic,
              preprocess.rle_normalise, preprocess.yugene,
-             preprocess.median_centre]
-    r: [prepare, qc, probe_loss, fit_batch_reference, apply_batch_reference]
+             preprocess.median_centre, preprocess.horvath_normalise]
+    r: [prepare, horvath_normalise, qc, probe_loss, fit_batch_reference, apply_batch_reference]
 
   - title: Uncertainty
     desc: >-
@@ -101,14 +101,14 @@ groups:
 
   - title: The clock catalogue
     desc: >-
-      175 clocks in three availability groups: 46 bundled, 89 untraced and 40
+      178 clocks in three availability groups: 69 bundled, 52 untraced and 57
       licensed scaffolds whose coefficients are research-use-only or have no
       public source FALCONAge may redistribute. The registry says which, why,
       and which bundled clocks answer the same question.
     python: [registry.load, registry.ClockRegistry, registry.Clock,
              registry.register_local_weights]
     r: [list_clocks, clock_info, cite_clock, compatible_clocks,
-        register_local_weights]
+        register_local_weights, import_pc_clocks, import_dunedinpace]
 
   - title: Analysis
     desc: >-
@@ -117,7 +117,7 @@ groups:
       clock's scale type -- acceleration on a pace-of-aging clock is a units
       error, not a conservative choice.
     python: [acceleration, cell_composition, associate, cox_hazard, agreement,
-             icc, run_benchmark]
+             icc, run_benchmark, leave_one_marker_out, fit_clock]
     r: [acceleration, cell_composition, associate, cox_hazard, agreement,
         icc, run_benchmark]
 
@@ -125,7 +125,7 @@ groups:
     desc: >-
       KDM and homeostatic dysregulation have no fixed coefficients: both are
       defined relative to a reference cohort, and the manifest records which.
-    python: [models.fit_kdm, models.fit_hd, models.clinical.phenoage]
+    python: [models.fit_kdm, models.fit_hd, models.clinical.phenoage, blood_count_ratios]
     r: [fit_kdm, fit_hd]
 
   - title: Model architectures
@@ -244,6 +244,8 @@ pairs:
     - [list_clocks, registry.ClockRegistry]
     - [clock_info, registry.Clock]
     - [register_local_weights, registry.register_local_weights]
+    - [import_pc_clocks, registry.ClockRegistry.import_pc_clocks]
+    - [import_dunedinpace, registry.ClockRegistry.import_dunedinpace]
     - [cite_clock, registry.Clock.cite]
     - [compatible_clocks, registry.ClockRegistry.compatible_with]
   Analysis:
@@ -440,7 +442,7 @@ pages:
       interpretation the figure itself prints under its axes.
   - title: Clock catalogue
     file: clocks/catalogue.qmd
-    desc: All 175 entries, generated from the registry that scores them.
+    desc: All 178 entries, generated from the registry that scores them.
   - title: Beyond the clock score
     file: analysis/beyond.qmd
     desc: >-

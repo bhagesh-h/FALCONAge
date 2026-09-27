@@ -273,6 +273,23 @@ For SomaScan, `pp.read_somascan()` takes RFU and logs it by default, because eve
 published SomaScan aging model here was fitted on logged RFU and feeding it linear values
 is an order-of-magnitude error that looks like a plausible number.
 
+## NMR metabolomics
+
+A Nightingale Health export (CSV, TSV or Excel), samples down the rows:
+
+```python
+d = fa.read_nightingale("nightingale.xlsx")      # Excel needs the `metabolomics` extra (openpyxl)
+res = fa.score(d, clocks=["metaboage", "metabohealth"])
+```
+
+Column names are translated to the BBMRI-NL names the two scores were fitted with, by MiMIR's
+table and MiMIR's rule (lower-cased, and translated only when exactly one entry lists the name);
+a name the table does not know is kept and listed in `obs.attrs["untranslated"]` rather than
+guessed. MetaboAge (van den Akker et al. 2020) and MetaboHealth (Deelen et al. 2019) are scored as
+MiMIR scores them, its quality control included, and match it to 1e-9 and 1e-12. MetaboHealth
+z-scores each measure within the cohort, so a score depends on who else is in the file: it is
+marked `requires_cohort` and is not comparable between files scored separately.
+
 ## Bulk RNA-seq counts
 
 Genes down the rows, samples across, raw counts rather than TPM.

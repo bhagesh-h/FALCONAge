@@ -201,17 +201,30 @@ print.falcon_power <- function(x, ...) {
 #' operation for its scale, and on the raw score where it is not. A pace of
 #' aging has no residual to take.
 #'
+#' Repeated measurements on the same people take `design = "paired"` (two
+#' visits, a paired t-test on each person's change) or `design = "mixed"` (two
+#' or more visits, `y ~ visit + (1 | person)` by REML with nlme's containment
+#' degrees of freedom, so a person with a missed visit still counts). Both add
+#' `mdc95`, the minimum detectable change \eqn{1.96\sqrt{2}\,SEM} (Weir 2005,
+#' doi:10.1519/15184.1), and flag significant mean changes smaller than it.
+#'
 #' @param x A `falcon_result`.
-#' @param group_col Column with exactly two levels.
+#' @param group_col Column with exactly two levels, or with two or more visits
+#'   for `design = "mixed"`.
 #' @param reference Which level is the comparison group.
 #' @param alpha Significance level.
+#' @param design `"independent"` (Welch's t-test), `"paired"` or `"mixed"`.
+#' @param subject_col Column naming the person each sample came from; needed
+#'   by the paired and mixed designs.
 #' @return A list with `verdict` (`supported`, `unsupported`, `inconclusive`),
 #'   `why` -- which always carries the counts it was computed from -- and the
 #'   per-clock `table`.
 #' @export
-consensus <- function(x, group_col, reference = NULL, alpha = 0.05) {
+consensus <- function(x, group_col, reference = NULL, alpha = 0.05,
+                      design = "independent", subject_col = NULL) {
   out <- py_do(fa()$consensus(x$py, group_col, reference = or_none(reference),
-                              alpha = alpha))
+                              alpha = alpha, design = design,
+                              subject_col = or_none(subject_col)))
   structure(list(verdict = reticulate::py_to_r(out$verdict),
                  why = reticulate::py_to_r(out$why),
                  table = as_df(out$table),

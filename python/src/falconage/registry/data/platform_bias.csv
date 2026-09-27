@@ -4,36 +4,94 @@
 # the difference, per sample, in the clock's own unit.
 # Probe sets are read off real arrays in the corpus, so they reflect what a user
 # with that platform has after ordinary filtering -- not the manifest's ideal.
-# datasets: 5; bootstrap resamples: 2000; seed: 20260809
+# Absent probes are filled from each clock's reference values; the
+# corpus blood reference is rebuilt without the dataset being scored.
+# datasets: 8; bootstrap resamples: 2000; seed: 20260809, per row with crc32(clock|platform)
 # Reported, never applied. See docs/analysis/uncertainty.qmd.
 clock,platform,unit,n_samples,probes_retained,probes_total,median_shift,iqr,ci_lo,ci_hi,max_abs_shift
-dnamphenoage,EPICv1,years,109,511,513,-0.1112,0.326,-0.2073,-0.0282,0.7129
-dnamtl,EPICv1,kilobases,109,134,140,0.0353,0.016,0.0327,0.0375,0.0732
-dunedinpoam38,EPICv1,biological years per chronological year,109,44,46,0.0033,0.015,0.0,0.008,0.0509
-hannum,EPICv1,years,109,63,71,-5.2391,7.1366,-7.0232,-4.4825,13.3825
-horvath2013,EPICv1,years,109,333,353,-5.8046,1.8653,-6.0176,-5.3125,9.2495
-hrsinchphenoage,EPICv1,years,109,946,959,0.8168,0.332,0.7828,0.8718,1.3858
-lin,EPICv1,years,109,96,99,-8.9488,2.1699,-9.2819,-8.5449,11.8249
-skinandblood,EPICv1,years,109,385,391,1.9625,1.8001,1.5027,2.1279,3.2647
-vidalbralo,EPICv1,years,109,8,8,0.0,0.0,0.0,0.0,0.0
-yingadaptage,EPICv1,years,109,997,999,-0.0038,0.001,-0.004,-0.0036,0.0048
-yingcausage,EPICv1,years,109,413,585,-13.338,2.9667,-13.6946,-12.8925,18.9594
-yingdamage,EPICv1,years,109,1089,1089,0.0,0.0,0.0,0.0,0.0
-zhangblup,EPICv1,years,109,315834,319607,0.5675,0.237,0.5094,0.5894,0.969
-zhangen,EPICv1,years,109,511,514,0.787,0.3379,0.718,0.843,1.0122
-zhangmortality,EPICv1,unitless,109,8,10,0.4382,0.3838,0.353,0.4676,0.671
-dnamphenoage,EPICv2,years,109,494,513,4.2249,2.397,3.7381,4.4344,7.7406
-dnamtl,EPICv2,kilobases,109,106,140,-0.0744,0.0593,-0.0835,-0.0612,0.1608
-dunedinpoam38,EPICv2,biological years per chronological year,109,31,46,-0.294,0.3108,-0.3986,-0.203,0.6961
-hannum,EPICv2,years,109,64,71,-7.6852,8.4761,-8.972,-6.1498,16.1818
-horvath2013,EPICv2,years,109,339,353,-2.6164,1.8098,-2.8693,-2.0743,4.5316
-hrsinchphenoage,EPICv2,years,109,874,959,16.7457,3.8182,16.1931,17.2746,23.3618
-lin,EPICv2,years,109,96,99,-9.3694,2.1968,-9.646,-8.81,11.8957
-skinandblood,EPICv2,years,109,373,391,-0.8285,1.1585,-1.0815,-0.6764,4.7178
-vidalbralo,EPICv2,years,109,8,8,0.0,0.0,0.0,0.0,0.0
-yingadaptage,EPICv2,years,109,935,999,1.7092,2.435,1.192,2.0842,3.9785
-yingcausage,EPICv2,years,109,492,585,13.9051,2.7043,13.1195,14.3536,20.9886
-yingdamage,EPICv2,years,109,1009,1089,9.1664,5.8016,8.1587,9.9802,15.1212
-zhangblup,EPICv2,years,109,286843,319607,-0.2275,1.6045,-0.4955,0.4228,1.592
-zhangen,EPICv2,years,109,493,514,0.3709,0.4892,0.2346,0.5305,0.8436
-zhangmortality,EPICv2,unitless,109,9,10,-0.0202,0.7772,-0.197,0.0522,0.9155
+altumage,EPICv1,years,206,20239,20318,0.0078,0.0126,0.0067,0.0089,0.0494
+deconvolutebloodepicbcell,EPICv1,proportion,206,441,450,0.0208,0.0263,0.0163,0.0223,0.0752
+deconvolutebloodepiccd4tcell,EPICv1,proportion,206,441,450,0.0188,0.041,0.0145,0.0251,0.1227
+deconvolutebloodepiccd8tcell,EPICv1,proportion,206,441,450,-0.016,0.0367,-0.0205,-0.0116,0.0944
+deconvolutebloodepicmonocyte,EPICv1,proportion,206,441,450,-0.0339,0.0333,-0.0378,-0.0256,0.0862
+deconvolutebloodepicneutrophil,EPICv1,proportion,206,441,450,-0.0007,0.0121,-0.0026,0.0,0.0403
+deconvolutebloodepicnkcell,EPICv1,proportion,206,441,450,0.0001,0.0245,-0.0024,0.0031,0.0444
+dnamphenoage,EPICv1,years,206,511,513,-0.3078,0.6867,-0.4158,-0.2069,1.4542
+dnamtl,EPICv1,kilobases,206,134,140,0.0303,0.0394,0.0277,0.0333,0.0774
+dunedinpoam38,EPICv1,biological years per chronological year,206,44,46,-0.0085,0.0268,-0.0134,-0.0009,0.0581
+epicmithyper,EPICv1,proportion,206,174,184,-0.0014,0.0009,-0.0015,-0.0013,0.0044
+epicmithypo,EPICv1,proportion,206,1087,1164,0.0004,0.0006,0.0003,0.0005,0.0014
+epitoc1,EPICv1,beta value,206,352,385,0.0018,0.002,0.0015,0.0021,0.0058
+epitoc2,EPICv1,cell divisions per stem cell,206,150,163,62.6966,112.4187,44.5103,78.3733,287.6871
+epitoc3,EPICv1,cell divisions per stem cell,206,170,170,0.0,0.0,0.0,0.0,0.0
+hannum,EPICv1,years,206,63,71,-3.349,8.5925,-4.7841,-1.3078,11.1534
+horvath2013,EPICv1,years,206,333,353,-0.2977,2.6193,-0.8491,0.0037,5.5015
+hrsinchphenoage,EPICv1,years,206,946,959,1.4997,1.7198,1.3895,1.5691,2.3519
+hypoclock,EPICv1,beta value,206,641,678,0.0,0.0003,0.0,0.0001,0.001
+lin,EPICv1,years,206,96,99,-0.2571,2.3041,-0.6163,0.0274,4.038
+mccartneyalcohol,EPICv1,units per week,206,441,450,0.0238,0.0382,0.0166,0.0286,0.1786
+mccartneybmi,EPICv1,unitless,206,1092,1109,0.0583,0.0739,0.055,0.0607,0.0985
+mccartneybodyfat,EPICv1,unitless,206,954,968,0.2004,0.3568,0.1654,0.2737,0.725
+mccartneyeducation,EPICv1,unitless,206,369,373,0.2798,0.2998,0.2727,0.2862,0.3225
+mccartneyhdlcholesterol,EPICv1,unitless,206,730,737,-0.0291,0.0422,-0.0342,-0.0226,0.0747
+mccartneyldlcholesterol,EPICv1,unitless,206,231,233,0.0011,0.0701,0.0,0.0063,0.095
+mccartneysmoking,EPICv1,pack-years,206,230,233,0.0,0.0142,0.0,0.0,0.0272
+mccartneytotalcholesterol,EPICv1,unitless,206,203,204,0.0,0.0725,0.0,0.0,0.0832
+mccartneytotalhdlratio,EPICv1,ratio,206,407,412,0.1177,0.1285,0.1129,0.1234,0.1586
+mccartneywhr,EPICv1,ratio,206,223,226,-0.0459,0.0541,-0.0479,-0.04,0.0584
+meer,EPICv1,days,206,0,435,0.0,0.0,0.0,0.0,0.0
+replitali,EPICv1,population doublings,206,87,87,0.0,0.0,0.0,0.0,0.0
+skinandblood,EPICv1,years,206,385,391,0.6551,1.6274,0.1941,0.8757,2.5483
+stemtoc,EPICv1,beta value,206,370,371,0.0,0.0002,0.0,0.0001,0.0007
+stemtocvitro,EPICv1,beta value,206,623,629,0.0002,0.0005,0.0002,0.0003,0.0044
+vidalbralo,EPICv1,years,206,8,8,0.0,0.0,0.0,0.0,0.0
+weidner,EPICv1,years,206,3,3,0.0,0.0,0.0,0.0,0.0
+yingadaptage,EPICv1,years,206,997,999,-0.0003,0.0005,-0.0004,-0.0003,0.0012
+yingcausage,EPICv1,years,206,413,585,-3.4305,6.14,-3.9483,-3.0131,16.625
+yingdamage,EPICv1,years,206,1089,1089,0.0,0.0,0.0,0.0,0.0
+zhangblup,EPICv1,years,206,315834,319607,1.3562,1.0471,1.2267,1.4492,2.9213
+zhangen,EPICv1,years,206,511,514,1.6382,2.0707,1.4387,1.7794,3.0077
+zhangmortality,EPICv1,unitless,206,8,10,0.0922,0.5071,0.0616,0.1528,0.7133
+altumage,EPICv2,years,206,19517,20318,0.037,0.0847,0.0242,0.0472,0.2452
+deconvolutebloodepicbcell,EPICv2,proportion,206,419,450,0.0227,0.0286,0.0183,0.0254,0.0805
+deconvolutebloodepiccd4tcell,EPICv2,proportion,206,419,450,0.0242,0.0454,0.0197,0.0302,0.135
+deconvolutebloodepiccd8tcell,EPICv2,proportion,206,419,450,-0.0215,0.0388,-0.0248,-0.016,0.1032
+deconvolutebloodepicmonocyte,EPICv2,proportion,206,419,450,-0.031,0.0307,-0.0346,-0.0237,0.0841
+deconvolutebloodepicneutrophil,EPICv2,proportion,206,419,450,-0.0042,0.014,-0.0059,-0.0025,0.051
+deconvolutebloodepicnkcell,EPICv2,proportion,206,419,450,0.0007,0.0252,-0.0004,0.0042,0.0457
+dnamphenoage,EPICv2,years,206,494,513,-0.2894,2.5832,-0.6523,0.046,5.4165
+dnamtl,EPICv2,kilobases,206,106,140,0.0001,0.0671,-0.0062,0.0091,0.1537
+dunedinpoam38,EPICv2,biological years per chronological year,206,31,46,0.0402,0.232,0.0259,0.051,0.4257
+epicmithyper,EPICv2,proportion,206,167,184,0.0019,0.0016,0.0017,0.002,0.0041
+epicmithypo,EPICv2,proportion,206,1011,1164,-0.0006,0.0006,-0.0006,-0.0005,0.0017
+epitoc1,EPICv2,beta value,206,359,385,0.0017,0.0008,0.0016,0.0018,0.0039
+epitoc2,EPICv2,cell divisions per stem cell,206,158,163,43.9494,52.8711,38.2321,50.0154,139.1411
+epitoc3,EPICv2,cell divisions per stem cell,206,152,170,13.8663,47.3231,8.1453,18.6991,180.1714
+hannum,EPICv2,years,206,64,71,1.0279,3.388,0.6342,1.3294,15.4477
+horvath2013,EPICv2,years,206,339,353,-1.257,1.6045,-1.394,-1.0291,3.4182
+hrsinchphenoage,EPICv2,years,206,874,959,0.8818,4.9099,0.535,1.1263,7.4131
+hypoclock,EPICv2,beta value,206,573,678,-0.0007,0.001,-0.0008,-0.0005,0.0029
+lin,EPICv2,years,206,96,99,0.8428,1.5717,0.5494,0.9795,4.4872
+mccartneyalcohol,EPICv2,units per week,206,401,450,0.0289,0.5948,-0.0203,0.1004,0.7936
+mccartneybmi,EPICv2,unitless,206,1024,1109,0.0667,0.0894,0.0556,0.0736,0.1821
+mccartneybodyfat,EPICv2,unitless,206,884,968,1.1248,2.5135,0.8507,1.5016,5.0583
+mccartneyeducation,EPICv2,unitless,206,326,373,0.3227,0.404,0.2932,0.3501,1.2456
+mccartneyhdlcholesterol,EPICv2,unitless,206,676,737,-0.0079,0.2881,-0.0203,-0.0015,0.4639
+mccartneyldlcholesterol,EPICv2,unitless,206,218,233,-0.012,0.139,-0.0379,0.0008,0.2044
+mccartneysmoking,EPICv2,pack-years,206,208,233,0.0158,0.1942,0.0024,0.0308,0.3413
+mccartneytotalcholesterol,EPICv2,unitless,206,189,204,-0.015,0.2193,-0.0375,0.0024,0.3579
+mccartneytotalhdlratio,EPICv2,ratio,206,379,412,0.0173,0.1481,-0.0042,0.0427,0.2694
+mccartneywhr,EPICv2,ratio,206,210,226,-0.0,0.0165,-0.0006,0.0025,0.1147
+meer,EPICv2,days,206,0,435,0.0,0.0,0.0,0.0,0.0
+replitali,EPICv2,population doublings,206,84,87,7.0787,0.7175,7.0009,7.3283,7.9787
+skinandblood,EPICv2,years,206,373,391,0.5997,1.6393,0.4165,0.8319,2.8412
+stemtoc,EPICv2,beta value,206,332,371,-0.0033,0.0056,-0.0039,-0.0026,0.0237
+stemtocvitro,EPICv2,beta value,206,565,629,-0.003,0.0055,-0.0036,-0.0023,0.0185
+vidalbralo,EPICv2,years,206,8,8,0.0,0.0,0.0,0.0,0.0
+weidner,EPICv2,years,206,3,3,0.0,0.0,0.0,0.0,0.0
+yingadaptage,EPICv2,years,206,935,999,-0.2208,0.7496,-0.3302,-0.1137,2.6608
+yingcausage,EPICv2,years,206,492,585,-6.1172,8.8316,-6.588,-5.3272,15.9094
+yingdamage,EPICv2,years,206,1009,1089,0.6617,4.9114,0.3757,0.8833,12.6383
+zhangblup,EPICv2,years,206,286843,319607,-0.4553,3.2765,-1.1259,0.0397,4.5408
+zhangen,EPICv2,years,206,493,514,0.4912,1.3122,0.336,0.6071,2.9669
+zhangmortality,EPICv2,unitless,206,9,10,0.0124,0.2363,-0.0217,0.0288,0.6486

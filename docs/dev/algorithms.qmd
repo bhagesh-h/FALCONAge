@@ -20,12 +20,14 @@ why the registry stores the postprocess chain as declared data rather than
 burying it in each model class, and why the clocks whose packaged coefficients
 contradict their own paper carry the discrepancy as a warning at score time.
 
-> **v1.0 implements seven of the fifteen preprocess ops below and nine postprocess transforms**,
-> the ones the 23 scoring clocks reach for. The rest are specified and unbuilt, because each is
-> needed by exactly one clock family whose coefficients are not redistributable, and an op with
-> no reachable test vector is an op that is wrong in a way nobody will notice. They are kept here
-> because the vocabulary is the point: when a coefficient set does arrive, adding the clock stays
-> a registry edit.
+> **v1.0 implements seven of the fifteen preprocess ops below, one dataset-level op and 21
+> postprocess transforms**; 35 of the 69 bundled clocks declare at least one. The rest are not ops
+> here. A bundled clock that needs one does the step in its own model class (AltumAge's
+> per-feature scaler in `neural.py`, the mitotic statistics in `aggregation.py` and
+> `division.py`), and the others wait on coefficients that are licensed, not yet traced to a
+> primary source, or absent from the registry. An op with no reachable test vector is an op that
+> is wrong in a way nobody will notice. They are kept here because the vocabulary is the point:
+> when a coefficient set does arrive, adding the clock stays a registry edit.
 
 ## 4.1 Preprocess ops
 
@@ -46,8 +48,21 @@ def apply_chain(x, chain: Sequence[dict], table: dict, *, xp) -> Any:
 ```
 
 Shipped: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binarize`,
-`simplex_projection`. The full specified catalogue follows; the shipped seven cover the first,
-third, fifth, sixth, ninth and tenth rows in substance under more general names.
+`simplex_projection`. The full specified catalogue follows. Under more general names the shipped
+seven cover `identity`, `scale_median`, `scale_mean`, `quantile_normalize_gold`,
+`quantile_normalize_scale_gold` (as `quantile_normalize` then `scale`), `binarize_row_median` and
+`median_fill_rank`. `scale_row` is not `scale`, which applies statistics stored with the model; it
+is the dataset-level op below.
+
+One op runs on the dataset rather than on a clock's slice: `standardise_within_sample`, in
+`DATASET_PREPROCESS`, which the Zhang et al. 2019 elastic-net and BLUP predictors name in their
+chains. It needs every probe the data carries, so `LinearClock` runs it before alignment, from
+two passes over column blocks that never hold the standardised matrix, and refuses when the data
+holds less than `min_coverage` of the 319,607 probes the models were fitted on. The per-sample
+mean and SD of a subset are not the array's. It is the `scale_row` row of the table below, with
+the row statistics taken over the array as the authors' `pred.R` takes them, not over the model's
+inputs; [formulas §5.4](../methods/formulas.qmd#zhang-2019-predictors) gives what the narrower
+scope does to the elastic-net estimate.
 
 | Op | Computation | Stored params | Clocks |
 |---|---|---|---|
@@ -102,7 +117,8 @@ masking, then applied to all probes including the sex chromosomes ([the science 
 
 ## 4.2 Postprocess transforms
 
-`falconage/models/ops/postprocess.py`. Scalar in, scalar out, applied elementwise over the batch.
+`falconage/models/ops.py`, dispatched through `POSTPROCESS`. Scalar in, scalar out, applied
+elementwise over the batch.
 Constants come from [the science notes §4.20](../methods/index.qmd) and §5.
 
 | Op | Formula | Params | Clocks |
@@ -172,14 +188,15 @@ where the middle option runs `XChrom`/`YChrom` first and the last must be chosen
 
 | Class | Core computation | Clocks | v1.0 |
 |---|---|---|---|
-| `LinearClock` | `xW + b` | ~120 | **shipped** |
+| `LinearClock` | `xW + b` | 34 bundled | **shipped** |
 | `ClinicalClock` | PhenoAge / KDM / HD on tabular biomarkers | 3 | **shipped** |
-| `ScaffoldClock` | refuses, and says where the coefficients come from | the 40 `licensed` clocks | **shipped** |
-| `PCLinearClock` | `((x − μ)R)W + b` | PCHorvath2013, PCHannum, PCPhenoAge, PCSkinAndBlood, PCDNAmTL, PCGrimAge | specified |
+| `ScaffoldClock` | refuses, and says where the coefficients come from | the 57 `licensed` clocks | **shipped** |
+| `PCLinearClock` | `((x − μ)R)W + b` | PCHorvath2013, PCHannum, PCPhenoAge, PCSkinAndBlood, PCDNAmTL, PCGrimAge | implemented; no weights ship, so `build()` never reaches it |
 | `MultiStageCoxClock` | sub-linear-models → ordered concat with covariates → Cox layer | GrimAge, GrimAge2, CpGPTGrimAge3, CpGPTPCGrimAge3 | specified |
-| `NeuralClock` | arbitrary network from a registry-declared spec | AltumAge | specified |
-| `AggregationClock` | mean / quantile / transmission-model reduction | epiTOC1/2/3, stemTOC×2, HypoClock, epiCMIT×2 | specified |
-| `DeconvolutionClock` | pseudo-inverse → simplex projection → column select | 6-cell and 12-cell EPIC | specified |
+| `NeuralClock` | dense layers from a safetensors file | AltumAge | **shipped** |
+| `AggregationClock` | mean or 95th percentile over the sites present | epiTOC1, stemTOC×2, HypoClock, epiCMIT×2 | **shipped** |
+| `DivisionClock` | methylation transmission model, averaged over the sites present | epiTOC2, epiTOC3 | **shipped** |
+| `DeconvolutionClock` | per-sample non-negative least squares on a reference table (`projectCellType_CP`) → column select | 6-cell IDOL (EPIC, 450K); 12-cell IDOL-Ext with a registered table | **shipped** |
 | `CompositeClock` | multiple sub-clocks combined by a declared rule | SystemsAge ×12, DNAmFitAge | specified |
 | `SpeciesClock` | split CpG block from species one-hot, species-dependent inverse transform | Mammalian ×9 | specified |
 | `SexScoreClock` | autosomal z-score → sex-chromosome projection | XChrom, YChrom | specified |
@@ -238,22 +255,25 @@ PCA layer → affine calibration `((raw − c₀)/c₁)·c₃ + c₂` → `/12`.
 one weight file and differ only in `prediction_index` (0–10, or −1 for the composite), so the
 weights are loaded once and cached across the twelve.
 
-**7. Deconvolution** (`models/deconvolution.py`). Pseudo-inverse of the signature matrix, then
-exact Euclidean projection onto the probability simplex, then column selection. The projection is
-already batched in pyaging and that implementation is kept:
+**7. Deconvolution** (`models/deconvolution.py`). The design was pyaging's: pseudo-inverse of
+the signature matrix, then a Euclidean projection onto the probability simplex. What shipped is
+the authors' own, `projectCellType_CP` from FlowSorted.Blood.EPIC with `nonnegative = TRUE,
+lessThanOne = FALSE`: per sample, non-negative least squares over the CpGs it observes
+(`scipy.optimize.nnls`), rounded to four decimals, with no sum-to-one constraint. The simplex
+projection is a different estimator, and on real blood it moved every cell type by about 0.006
+([methods §4.10](../methods/algorithms.qmd#deconvolution-as-a-model) gives the comparison).
 
 ```python
-sorted_v, _ = torch.sort(p_raw, dim=1, descending=True)
-cssv = torch.cumsum(sorted_v, dim=1)
-inds = torch.arange(1, n + 1, device=..., dtype=...)
-rho = (sorted_v - (cssv - 1) / inds > 0).sum(dim=1) - 1
-theta = (cssv[torch.arange(B), rho] - 1) / (rho.to(dtype) + 1)
-p = torch.clamp(p_raw - theta.unsqueeze(1), min=0)
+table = registry.deconvolution_table(cid, data.platform, present=data.X.columns)
+al = align_present(data, list(table.index))            # absent CpGs left out, not filled
+props = project(al.matrix, table.to_numpy())           # samples x cell types
+return props[:, list(table.columns).index(cell_type)]
 ```
 
-The twelve 12-cell entries and six 6-cell entries share a weight file and differ by
-`cell_index`. A convenience wrapper `deconvolve(data, panel="epic_12cell")` returns all
-proportions as one frame, which is what users actually want.
+The six 6-cell entries share one table per array (EPIC, 450K legacy) and differ by
+`deconvolution.cell_type` in the registry; the twelve 12-cell entries read a table the user
+registers under its licence. `fa.cell_composition(result)` returns every proportion scored in a
+run as one frame.
 
 **8. epiTOC2 / epiTOC3.** `tnsc = (2/k) Σ_c (β_c − β₀_c) / (δ_c(1 − β₀_c))`, with per-CpG `δ` and
 `β₀` vectors stored as weights and a guard against `δ(1−β₀) == 0`.

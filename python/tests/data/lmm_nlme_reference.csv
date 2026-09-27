@@ -1,0 +1,20 @@
+"model","term","estimate","se","df","p"
+"y ~ visit","(Intercept)",53.1395789843532,1.04118961090352,49,3.83260473308457e-44
+"y ~ visit","visitv2",1.34804860546838,0.630417769281996,49,0.0375008093658642
+"y ~ visit","visitv3",-0.459343826420246,0.613538094807234,49,0.45762884924827
+"y ~ visit","sigma",2.23830300095095,NA,NA,NA
+"y ~ visit","tau",5.188563,NA,NA,NA
+"y ~ visit","logLik",-217.716876323973,NA,NA,NA
+"y ~ visit","F_visit",4.37211748383108,NA,NA,NA
+"y ~ visit","p_visit",0.0178995650868288,NA,NA,NA
+"y ~ visit","df_visit",49,NA,NA,NA
+"y ~ visit + sex","(Intercept)",53.24360081551,1.45353983268179,49,2.89791129579339e-37
+"y ~ visit + sex","visitv2",1.34506964223366,0.630516543049857,49,0.0379347084069013
+"y ~ visit + sex","visitv3",-0.462074349439032,0.613700252124877,49,0.455093318950828
+"y ~ visit + sex","sexM",-0.207804101688786,1.99895310155304,28,0.917944953891238
+"y ~ visit + sex","sigma",2.23831188644602,NA,NA,NA
+"y ~ visit + sex","tau",5.286105,NA,NA,NA
+"y ~ visit + sex","logLik",-216.108542045807,NA,NA,NA
+"y ~ visit + sex","F_visit",4.36093604221748,NA,NA,NA
+"y ~ visit + sex","p_visit",0.0180702417755345,NA,NA,NA
+"y ~ visit + sex","df_visit",49,NA,NA,NA

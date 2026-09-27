@@ -781,6 +781,10 @@ class ClinicalClock:
 
         if name == "phenoage":
             return phenoage(df), None
+        if name == "linage2":
+            from .linage2 import linage2
+
+            return linage2(df).rename(self.clock.id), None
         if ref is None:
             raise AnalysisError(
                 f"{self.clock.id} needs a reference cohort.\n"
@@ -798,3 +802,82 @@ class ClinicalClock:
         if name == "hd":
             return hd(df, ref), None
         raise AnalysisError(f"unknown clinical formula {name!r}")
+
+
+# ---------------------------------------------------------------------------
+# blood-count ratios
+# ---------------------------------------------------------------------------
+def blood_count_ratios(data, *, units: dict[str, str] | None = None,
+                       neutrophils: str = "neutrophils", lymphocytes: str = "lymphocytes",
+                       monocytes: str = "monocytes", platelets: str = "platelets") -> pd.DataFrame:
+    """NLR, PLR, LMR and SII from a complete blood count.
+
+    Not clocks: inflammation readouts that need a blood count and nothing else,
+    each a ratio of counts as its literature defines it:
+
+    ``nlr``  neutrophils / lymphocytes (Buonacera et al. 2022, Int J Mol Sci
+             23:3636, doi:10.3390/ijms23073636)
+    ``plr``  platelets / lymphocytes (Gasparyan et al. 2019, Ann Lab Med 39:345,
+             doi:10.3343/alm.2019.39.4.345)
+    ``lmr``  lymphocytes / monocytes (Stotz et al. 2014, Br J Cancer 110:435,
+             doi:10.1038/bjc.2013.785)
+    ``sii``  platelets x neutrophils / lymphocytes, in 10^9/L (Hu et al. 2014,
+             Clin Cancer Res 20:6212, doi:10.1158/1078-0432.CCR-14-0442)
+
+    Units are declared, as for every clinical input (``units=``, or the data's
+    own ``units``). NLR and LMR are the same whether both counts are absolute
+    or both are percentages of leukocytes, since the leukocyte count cancels;
+    PLR and SII need absolute counts. A ratio whose inputs are absent, or in
+    units that cannot give it, is left out and the reason is in ``attrs``.
+    """
+    from ..core.errors import UnitsNotDeclaredError
+    from ..core.units import convert
+
+    df = data.X if hasattr(data, "X") else data
+    declared = dict(getattr(data, "units", None) or {})
+    declared.update(units or {})
+
+    def count(col):
+        if col not in df.columns:
+            return None, None
+        u = declared.get(col)
+        if u is None:
+            raise UnitsNotDeclaredError(
+                f"no unit declared for {col!r}. Pass units={{{col!r}: '10^9/L'}} "
+                "(or '10^3/uL', 'cells/uL', '%'); a count is never assumed.")
+        v = pd.to_numeric(df[col], errors="coerce").astype(float)
+        if u == "%":
+            return v, "%"
+        return convert(v, u, "10^9/L"), "10^9/L"
+
+    n, nu = count(neutrophils)
+    ly, lu = count(lymphocytes)
+    mo, mu = count(monocytes)
+    pl, pu = count(platelets)
+    out = pd.DataFrame(index=df.index)
+    skipped: dict[str, str] = {}
+
+    def safe(a, b):
+        return a / b.where(b > 0)
+
+    for name, a, au, b, bu in (("nlr", n, nu, ly, lu), ("lmr", ly, lu, mo, mu)):
+        if a is None or b is None:
+            skipped[name] = "a count it needs is absent"
+        elif au != bu:
+            skipped[name] = f"its two counts are in different units ({au}, {bu})"
+        else:
+            out[name] = safe(a, b)
+    if pl is None or ly is None:
+        skipped["plr"] = "a count it needs is absent"
+    elif pu != "10^9/L" or lu != "10^9/L":
+        skipped["plr"] = "needs absolute platelet and lymphocyte counts"
+    else:
+        out["plr"] = safe(pl, ly)
+    if pl is None or ly is None or n is None:
+        skipped["sii"] = "a count it needs is absent"
+    elif {pu, lu, nu} != {"10^9/L"}:
+        skipped["sii"] = "needs absolute platelet, neutrophil and lymphocyte counts"
+    else:
+        out["sii"] = safe(pl * n, ly)
+    out.attrs["skipped"] = skipped
+    return out

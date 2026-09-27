@@ -4,16 +4,29 @@
 \alias{consensus}
 \title{Does a group difference hold up across clocks?}
 \usage{
-consensus(x, group_col, reference = NULL, alpha = 0.05)
+consensus(
+  x,
+  group_col,
+  reference = NULL,
+  alpha = 0.05,
+  design = "independent",
+  subject_col = NULL
+)
 }
 \arguments{
 \item{x}{A \code{falcon_result}.}
 
-\item{group_col}{Column with exactly two levels.}
+\item{group_col}{Column with exactly two levels, or with two or more visits
+for \code{design = "mixed"}.}
 
 \item{reference}{Which level is the comparison group.}
 
 \item{alpha}{Significance level.}
+
+\item{design}{\code{"independent"} (Welch's t-test), \code{"paired"} or \code{"mixed"}.}
+
+\item{subject_col}{Column naming the person each sample came from; needed
+by the paired and mixed designs.}
 }
 \value{
 A list with \code{verdict} (\code{supported}, \code{unsupported}, \code{inconclusive}),
@@ -33,4 +46,11 @@ significant clock after an intervention is likely a false positive.
 Each clock is tested on its acceleration residual where that is a legal
 operation for its scale, and on the raw score where it is not. A pace of
 aging has no residual to take.
+
+Repeated measurements on the same people take \code{design = "paired"} (two
+visits, a paired t-test on each person's change) or \code{design = "mixed"} (two
+or more visits, \code{y ~ visit + (1 | person)} by REML with nlme's containment
+degrees of freedom, so a person with a missed visit still counts). Both add
+\code{mdc95}, the minimum detectable change \eqn{1.96\sqrt{2}\,SEM} (Weir 2005,
+doi:10.1519/15184.1), and flag significant mean changes smaller than it.
 }

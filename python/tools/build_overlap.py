@@ -5,7 +5,7 @@ WHY THIS EXISTS. The registry answers "what is clock X" one clock at a time.
 The question people actually arrive with is the other way round: *which clocks
 were trained on the thing I have?* Whole blood from adults. Sorted monocytes.
 A mortality endpoint rather than chronological age. Answering that meant reading
-175 YAML entries, so it did not get answered and clocks got picked by fame
+178 YAML entries, so it did not get answered and clocks got picked by fame
 instead of by fit.
 
 This writes one row per clock with the training attributes normalised into
@@ -21,7 +21,7 @@ metadata, exact.
 
 *Feature overlap*: the literal shared biomarkers, meaning the CpGs or clinical
 markers two clocks actually have in common, as a Jaccard index. Only computable
-for the clocks that ship coefficient vectors, which is 43 of 175; the rest get
+for the clocks that ship coefficient vectors, which is 57 of 178; the rest get
 blank rather than zero, because "no shared features" and "we cannot see this
 clock's features" are different facts.
 
@@ -40,7 +40,7 @@ change in our output. Refresh them with ``--refresh``.
 
 WHAT IS NOT HERE, AND IT IS THE ONE PEOPLE ASK FOR FIRST. **Health status of
 the training cohort is not a registry field**, and it is not recoverable from
-one either: 5 of 175 entries mention health in free-text notes. There is
+one either: 4 of 178 entries mention health in free-text notes. There is
 therefore no "trained on healthy individuals" column, because the honest value
 for almost every row would be "unstated" and a column that is 97% unstated
 invites the reader to treat the other 3% as a sample. ``training_cohort_note``
@@ -216,6 +216,7 @@ CATALOGUE_ALIASES = {
     "epitoc1": ("EpiTOC1", "EpiToc"),
     "epitoc2": ("EpiTOC2", "EpiToc2"),
     "hrsinchphenoage": ("HRSInCHPhenoAge",),
+    "dnamfili": ("eFRS", "DNAmFI_Li"),
     "grimage": ("GrimAgeV1",),
     "grimage2": ("GrimAgeV2",),
 }
@@ -467,12 +468,12 @@ COLUMN_DOCS: dict[str, tuple[str, str, str]] = {
         "Registry free text where it says something about the health of the "
         "training cohort. Populated for a handful of clocks only. THIS IS NOT A "
         "HEALTH-STATUS COLUMN and must not be filtered as one: health status is "
-        "not a registry field, 5 of 175 entries mention it, and an empty cell "
+        "not a registry field, only a handful of entries mention it, and an empty cell "
         "here means nothing was written down, not that the cohort was healthy.",
         "registry: notes, filtered", "nothing recorded about cohort health"),
     "verify_url": (
         "Where to check this row. The clock's DOI where one exists, otherwise "
-        "the coefficient source. Populated for all 175 clocks.",
+        "the coefficient source. Populated for every clock.",
         "registry: doi, else coefficient_source.url", "never blank"),
     "verify_url_kind": (
         "Whether verify_url is a DOI or a coefficient source URL.",

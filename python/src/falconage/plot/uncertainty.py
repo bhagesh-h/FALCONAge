@@ -188,7 +188,9 @@ def platform_bias(*, clocks: Sequence[str] | None = None, top: int = 14):
             "platform_bias: no measurement table; run python/tools/build_platform_bias.py")
     rows = [{"clock": c, "platform": p, **v} for (c, p), v in tab.items()]
     d = pd.DataFrame(rows)
-    d = d[d["unit"].str.contains("year", case=False, na=False)]
+    # Exactly years. A substring match also took "pack-years" and "biological
+    # years per chronological year", a pace, and drew them on this axis.
+    d = d[d["unit"].str.strip().str.lower() == "years"]
     if clocks:
         d = d[d["clock"].isin(list(clocks))]
     if d.empty:

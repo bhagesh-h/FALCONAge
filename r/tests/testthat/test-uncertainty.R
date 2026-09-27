@@ -28,6 +28,8 @@ synthetic <- function(n = 24L) {
   dimnames(X) <- list(sprintf("S%03d", seq_len(n)), feats)
   falcon_data(X, obs = data.frame(age = age, tissue = "whole blood",
                                   arm = rep(c("ctrl", "treat"), length.out = n),
+                                  person = sprintf("P%02d", (seq_len(n) - 1L) %% (n %/% 2L)),
+                                  visit = rep(c("v1", "v2"), each = n %/% 2L),
                                   row.names = rownames(X)))
 }
 
@@ -82,6 +84,20 @@ test_that("consensus returns a verdict that carries its counts", {
   expect_true(cons$verdict %in% c("supported", "unsupported", "inconclusive"))
   expect_match(cons$why, "Bonferroni")
   expect_true(all(c("p", "q_bh", "p_bonferroni") %in% colnames(cons$table)))
+})
+
+test_that("a paired consensus is the Python one, bit for bit", {
+  skip_if_no_python()
+  d <- synthetic()
+  res <- score(d, clocks = c("horvath2013", "hannum", "dnamphenoage"), min_coverage = 0)
+  cons <- consensus(res, "visit", reference = "v1", design = "paired",
+                    subject_col = "person")
+  expect_true(all(c("mdc95", "below_mdc", "n_subjects") %in% colnames(cons$table)))
+  expect_true(all(cons$table$n_subjects == 12))
+  py <- reticulate::import("falconage")$consensus(
+    res$py, "visit", reference = "v1", design = "paired", subject_col = "person")
+  expect_identical(cons$table$p, py$table$p)
+  expect_error(consensus(res, "visit", design = "paired"), "subject_col")
 })
 
 test_that("a frozen batch reference leaves an earlier plate untouched", {

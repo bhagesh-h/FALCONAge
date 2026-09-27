@@ -101,6 +101,11 @@ clocks:
       provenance: "de Lima Camillo et al., rsinghlab/AltumAge (MIT): the published Keras model, its RobustScaler and its CpG order, folded into one safetensors file by python/tools/build_altumage_weights.py. Batch norm and the scaler are affine at inference, so the fold is exact and is checked against the unfolded chain at build time."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/altumage.csv.gz"
+      sha256: "45e5bb0c379d2b5fef3cad86b02753d3bcb52f292ebf246166162b1ae478c89c"
+      label: "AltumAge scaler centre (training median)"
+      provenance: "rsinghlab/AltumAge at e34fd1b, example_dependencies/scaler.pkl (MIT), RobustScaler.center_: the training median per CpG, so a feature filled with it scales to 0. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -153,24 +158,25 @@ clocks:
     scale_type: "gestational_weeks"
     model_type: "LASSO regression"
     population: "newborns"
-    n_features: null
+    n_features: 96
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Bohlin, J., Håberg, S. E., Magnus, P. et al. Prediction of gestational age based on genome-wide differentially methylated regions. Genome Biology 17, 207 (2016)."
     doi: "https://doi.org/10.1186/s13059-016-1063-4"
-    notes: "Official minimum-lambda variant of the Bohlin gestational-age LASSO: pyaging implements the 251-CpG lambda.min model and converts its day-scale output to weeks. The paper/package default one-standard-error variant uses 96 CpGs and has nearly identical predictive performance."
+    notes: "Gestational-age LASSO for cord blood, as the authors' predictGA package applies it by default: the one-standard-error model, 96 CpGs, fitted in days and returned here in weeks. The minimum-lambda model (251 CpGs) that biolearn, methylCIPHER and pyaging carry is the package's non-default option."
     known_discrepancies:
       - "The paper reports 96 CpGs; the coefficient set in circulation carries 251. Scores here
         will match other packages and not the figures printed in the paper."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/bohlin.csv"
+      sha256: "34bcd8d1911c6141b3cc89f37bd867e1632fb2f37c5f1679a3d57a0e976ef6fc"
+      provenance: "Bohlin et al. 2016's own R package predictGA (github.com/JonBohlin/predictGA, commit 242801d, GPL (>= 2), as the paper's availability statement gives it): the cv.glmnet object UL.mod.cv at lambda.1se, which predictGA() uses by default ('model performance is comparable to minimum lambda, therefore it is default'): 96 CpGs and the intercept 272.68274063649744, in days. The 73 CpGs of the paper's Additional file 1 Table S3 (ultrasound model) are all among them. biolearn and methylCIPHER carry the lambda.min model instead (251 CpGs, intercept 277.2421)."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess:
-      - op: "days_to_weeks"
+      - {op: "add", value: 272.68274063649744}
+      - {op: "days_to_weeks"}
 
   cabec:
     name: "cabec"
@@ -201,6 +207,40 @@ clocks:
     preprocess: []
     postprocess: []
 
+  cage:
+    name: "cage"
+    year: 2023
+    species: "Homo sapiens"
+    data_type: "dna_methylation"
+    generation: "first"
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
+    predicts: ["chronological age"]
+    training_target: ["chronological age"]
+    unit: ["years"]
+    scale_type: "age_years"
+    model_type: "elastic net regression with quadratic terms"
+    population: "adults"
+    n_features: 3225
+    requires_fp64: false
+    availability: "bundled"
+    citation: "Bernabeu, E., McCartney, D.L., Gadd, D.A. et al. Refining epigenetic prediction of chronological and biological age. Genome Medicine 15, 12 (2023)."
+    doi: "https://doi.org/10.1186/s13073-023-01161-y"
+    notes: "cAge: two elastic nets on beta values and the squares of some of them, trained on 18,413 Generation Scotland blood samples (EPIC, restricted to the 374,791 CpGs shared with 450K) in a leave-one-cohort-out framework; one on age (2,274 linear and 56 quadratic terms) and one on log(age) (1,931 and 55), the second replacing the first when the first predicts 20 years or younger. 3,225 distinct CpGs."
+    coefficient_source:
+      file: "coefficients/cage.csv"
+      sha256: "3062811536437687f7324844e62a963b23282551cd6740244a8c320aabf63419"
+      provenance: "Bernabeu et al. 2023, Genome Medicine, Additional file 4 (CC BY 4.0), Table S8 (age model, column coefficient) and Table S9 (log-age model, column log_coefficient), extracted by python/tools/build_cage.py from the workbook pinned by SHA-256. Checked against the authors' repository elenabernabeu/cage_bage (commit 301f414, no licence file, so nothing is taken from it): the same 2,330 and 1,986 terms; S9 identical, S8 rounded to 9 decimals in the paper (at most 4.2e-9 from the repository)."
+      primary_source_traced: true
+      redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock (the authors' training means are in their repository only, which carries no licence). Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
+    preprocess: []
+    postprocess: []
+
   cellpopage:
     name: "cellpopage"
     year: 2024
@@ -215,20 +255,21 @@ clocks:
     scale_type: "relative_score"
     model_type: "elastic net regression"
     population: "human cell cultures"
-    n_features: null
+    n_features: 42
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Lujan, Celia, et al. \"An expedited screening platform for the discovery of anti-ageing compounds in vitro and in vivo.\" Genome Medicine 16 (2024): 85."
     doi: "https://doi.org/10.1186/s13073-024-01349-w"
     notes: "CellPopAge is an elastic-net DNA-methylation clock using 42 selected CpGs to predict passage-based age of serially cultured adult primary human fibroblast populations and screen compounds that decelerate this measure."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/cellpopage.csv"
+      sha256: "872055792099852ade7a3aeb80189a6a5b9d51c0807fe7d2915e586b04eb37b0"
+      provenance: "The authors' release (github.com/ucl-medical-genomics/CellPopAge-epigenetic-clock, commit 7bce6e3, MIT): model/nbeta.npy, intercept 11.5267892697821 and 42 non-zero coefficients on the probes of model/probes.npy; the same 42 probes as Lujan et al. 2024 Additional file 2 Table S1, and identical to methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause). Their run_clock.py on their test_data/beta_test.csv is reproduced to 4e-15."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 11.5267892697821}
 
   compil6:
     name: "compil6"
@@ -287,6 +328,11 @@ clocks:
       provenance: "Shireby et al. 2020, Brain 143(12):3763-3775, Supplementary Table 3 (CC BY): 347 sites with regression coefficients, the count the paper states. The machine-readable copy bundled here is PredCorticalAge/CorticalClockCoefs.txt from the authors' own reference implementation, which is also where the intercept comes from: the supplement prints the weights, and CorticalClock.r prints the offset applied to their sum as 0.577682570446177."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/corticalclock.csv"
+      sha256: "cdd5e5cea074d4392705f88d5c19ff70621d489ed34c7d6d8eb07354f76a8b62"
+      label: "mean of 700 control cortical samples (authors' reference)"
+      provenance: "gemmashireby/CorticalClock at 80c3df1, PredCorticalAge/Ref_DNAm_brain_values.rdat: the values the authors' CorticalClock.r adds for probes the data lacks. The repository has no licence file; the coefficients bundled for this clock come from the same implementation. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 0.577682570446177}
@@ -424,26 +470,31 @@ clocks:
     species: "Homo sapiens"
     data_type: "dna_methylation"
     generation: "other"
-    tissue: ["purified blood leukocytes"]
-    platform: ["EPICv1"]
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
     predicts: ["B cell proportion"]
     training_target: ["cell-type-specific methylation contrast"]
     unit: ["proportion"]
     scale_type: "proportion"
     model_type: "reference-based constrained deconvolution"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Salas, L.A., Koestler, D.C., Butler, R.A. et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biology 19, 64 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1448-7"
-    notes: "Reference-based constrained deconvolution returning the B cell proportion from EPIC-array blood methylation. Pyaging uses the paper's automatic 600-CpG top-hypermethylated/top-hypomethylated reference, not the paper's preferred 450-CpG EPIC IDOL library."
+    notes: "The B cell proportion of a whole-blood sample, by reference-based deconvolution against the IDOL library of Salas et al. 2018: mean methylation of six immunomagnetically sorted leukocyte types at 450 EPIC CpGs (a 350-CpG legacy library on 450K). Projected as FlowSorted.Blood.EPIC's projectCellType_CP does with nonnegative = TRUE and lessThanOne = FALSE, its documented call for a beta matrix: non-negative, not forced to sum to one, rounded to four decimals. The authors recommend Noob-processed betas. Pyaging uses the paper's automatic 600-CpG reference instead of the IDOL library."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/idol_epic.csv"
+      sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"
+      provenance: "Salas et al. 2018 IDOL libraries as the authors ship them in FlowSorted.Blood.EPIC (GPL-3) at b837178: data/IDOLOptimizedCpGs.compTable.rda (EPIC, 450 CpGs) and IDOLOptimizedCpGs450klegacy.compTable.rda (450K, 350 CpGs). Extracted by python/tools/build_idol.py."
+      primary_source_traced: true
+      redistributable: true
+    deconvolution:
+      cell_type: "Bcell"
+      tables:
+        - {platforms: ["EPICv1", "EPICv2"], file: "coefficients/idol_epic.csv", sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"}
+        - {platforms: ["450K"], file: "coefficients/idol_450klegacy.csv", sha256: "fc92cbea315de51f3baf2e2b04974f260cadc4a3de7418771c07e1c052f32d8a"}
     preprocess: []
     postprocess: []
 
@@ -453,26 +504,31 @@ clocks:
     species: "Homo sapiens"
     data_type: "dna_methylation"
     generation: "other"
-    tissue: ["purified blood leukocytes"]
-    platform: ["EPICv1"]
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
     predicts: ["CD4+ T cell proportion"]
     training_target: ["cell-type-specific methylation contrast"]
     unit: ["proportion"]
     scale_type: "proportion"
     model_type: "reference-based constrained deconvolution"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Salas, L.A., Koestler, D.C., Butler, R.A. et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biology 19, 64 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1448-7"
-    notes: "Reference-based constrained deconvolution returning the CD4+ T cell proportion from EPIC-array blood methylation. Pyaging uses the paper's automatic 600-CpG top-hypermethylated/top-hypomethylated reference, not the paper's preferred 450-CpG EPIC IDOL library."
+    notes: "The CD4+ T cell proportion of a whole-blood sample, by reference-based deconvolution against the IDOL library of Salas et al. 2018: mean methylation of six immunomagnetically sorted leukocyte types at 450 EPIC CpGs (a 350-CpG legacy library on 450K). Projected as FlowSorted.Blood.EPIC's projectCellType_CP does with nonnegative = TRUE and lessThanOne = FALSE, its documented call for a beta matrix: non-negative, not forced to sum to one, rounded to four decimals. The authors recommend Noob-processed betas. Pyaging uses the paper's automatic 600-CpG reference instead of the IDOL library."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/idol_epic.csv"
+      sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"
+      provenance: "Salas et al. 2018 IDOL libraries as the authors ship them in FlowSorted.Blood.EPIC (GPL-3) at b837178: data/IDOLOptimizedCpGs.compTable.rda (EPIC, 450 CpGs) and IDOLOptimizedCpGs450klegacy.compTable.rda (450K, 350 CpGs). Extracted by python/tools/build_idol.py."
+      primary_source_traced: true
+      redistributable: true
+    deconvolution:
+      cell_type: "CD4T"
+      tables:
+        - {platforms: ["EPICv1", "EPICv2"], file: "coefficients/idol_epic.csv", sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"}
+        - {platforms: ["450K"], file: "coefficients/idol_450klegacy.csv", sha256: "fc92cbea315de51f3baf2e2b04974f260cadc4a3de7418771c07e1c052f32d8a"}
     preprocess: []
     postprocess: []
 
@@ -482,26 +538,31 @@ clocks:
     species: "Homo sapiens"
     data_type: "dna_methylation"
     generation: "other"
-    tissue: ["purified blood leukocytes"]
-    platform: ["EPICv1"]
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
     predicts: ["CD8+ T cell proportion"]
     training_target: ["cell-type-specific methylation contrast"]
     unit: ["proportion"]
     scale_type: "proportion"
     model_type: "reference-based constrained deconvolution"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Salas, L.A., Koestler, D.C., Butler, R.A. et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biology 19, 64 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1448-7"
-    notes: "Reference-based constrained deconvolution returning the CD8+ T cell proportion from EPIC-array blood methylation. Pyaging uses the paper's automatic 600-CpG top-hypermethylated/top-hypomethylated reference, not the paper's preferred 450-CpG EPIC IDOL library."
+    notes: "The CD8+ T cell proportion of a whole-blood sample, by reference-based deconvolution against the IDOL library of Salas et al. 2018: mean methylation of six immunomagnetically sorted leukocyte types at 450 EPIC CpGs (a 350-CpG legacy library on 450K). Projected as FlowSorted.Blood.EPIC's projectCellType_CP does with nonnegative = TRUE and lessThanOne = FALSE, its documented call for a beta matrix: non-negative, not forced to sum to one, rounded to four decimals. The authors recommend Noob-processed betas. Pyaging uses the paper's automatic 600-CpG reference instead of the IDOL library."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/idol_epic.csv"
+      sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"
+      provenance: "Salas et al. 2018 IDOL libraries as the authors ship them in FlowSorted.Blood.EPIC (GPL-3) at b837178: data/IDOLOptimizedCpGs.compTable.rda (EPIC, 450 CpGs) and IDOLOptimizedCpGs450klegacy.compTable.rda (450K, 350 CpGs). Extracted by python/tools/build_idol.py."
+      primary_source_traced: true
+      redistributable: true
+    deconvolution:
+      cell_type: "CD8T"
+      tables:
+        - {platforms: ["EPICv1", "EPICv2"], file: "coefficients/idol_epic.csv", sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"}
+        - {platforms: ["450K"], file: "coefficients/idol_450klegacy.csv", sha256: "fc92cbea315de51f3baf2e2b04974f260cadc4a3de7418771c07e1c052f32d8a"}
     preprocess: []
     postprocess: []
 
@@ -511,26 +572,31 @@ clocks:
     species: "Homo sapiens"
     data_type: "dna_methylation"
     generation: "other"
-    tissue: ["purified blood leukocytes"]
-    platform: ["EPICv1"]
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
     predicts: ["monocyte proportion"]
     training_target: ["cell-type-specific methylation contrast"]
     unit: ["proportion"]
     scale_type: "proportion"
     model_type: "reference-based constrained deconvolution"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Salas, L.A., Koestler, D.C., Butler, R.A. et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biology 19, 64 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1448-7"
-    notes: "Reference-based constrained deconvolution returning the monocyte proportion from EPIC-array blood methylation. Pyaging uses the paper's automatic 600-CpG top-hypermethylated/top-hypomethylated reference, not the paper's preferred 450-CpG EPIC IDOL library."
+    notes: "The monocyte proportion of a whole-blood sample, by reference-based deconvolution against the IDOL library of Salas et al. 2018: mean methylation of six immunomagnetically sorted leukocyte types at 450 EPIC CpGs (a 350-CpG legacy library on 450K). Projected as FlowSorted.Blood.EPIC's projectCellType_CP does with nonnegative = TRUE and lessThanOne = FALSE, its documented call for a beta matrix: non-negative, not forced to sum to one, rounded to four decimals. The authors recommend Noob-processed betas. Pyaging uses the paper's automatic 600-CpG reference instead of the IDOL library."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/idol_epic.csv"
+      sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"
+      provenance: "Salas et al. 2018 IDOL libraries as the authors ship them in FlowSorted.Blood.EPIC (GPL-3) at b837178: data/IDOLOptimizedCpGs.compTable.rda (EPIC, 450 CpGs) and IDOLOptimizedCpGs450klegacy.compTable.rda (450K, 350 CpGs). Extracted by python/tools/build_idol.py."
+      primary_source_traced: true
+      redistributable: true
+    deconvolution:
+      cell_type: "Mono"
+      tables:
+        - {platforms: ["EPICv1", "EPICv2"], file: "coefficients/idol_epic.csv", sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"}
+        - {platforms: ["450K"], file: "coefficients/idol_450klegacy.csv", sha256: "fc92cbea315de51f3baf2e2b04974f260cadc4a3de7418771c07e1c052f32d8a"}
     preprocess: []
     postprocess: []
 
@@ -540,26 +606,31 @@ clocks:
     species: "Homo sapiens"
     data_type: "dna_methylation"
     generation: "other"
-    tissue: ["purified blood leukocytes"]
-    platform: ["EPICv1"]
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
     predicts: ["neutrophil proportion"]
     training_target: ["cell-type-specific methylation contrast"]
     unit: ["proportion"]
     scale_type: "proportion"
     model_type: "reference-based constrained deconvolution"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Salas, L.A., Koestler, D.C., Butler, R.A. et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biology 19, 64 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1448-7"
-    notes: "Reference-based constrained deconvolution returning the neutrophil proportion from EPIC-array blood methylation. Pyaging uses the paper's automatic 600-CpG top-hypermethylated/top-hypomethylated reference, not the paper's preferred 450-CpG EPIC IDOL library."
+    notes: "The neutrophil proportion of a whole-blood sample, by reference-based deconvolution against the IDOL library of Salas et al. 2018: mean methylation of six immunomagnetically sorted leukocyte types at 450 EPIC CpGs (a 350-CpG legacy library on 450K). Projected as FlowSorted.Blood.EPIC's projectCellType_CP does with nonnegative = TRUE and lessThanOne = FALSE, its documented call for a beta matrix: non-negative, not forced to sum to one, rounded to four decimals. The authors recommend Noob-processed betas. Pyaging uses the paper's automatic 600-CpG reference instead of the IDOL library."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/idol_epic.csv"
+      sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"
+      provenance: "Salas et al. 2018 IDOL libraries as the authors ship them in FlowSorted.Blood.EPIC (GPL-3) at b837178: data/IDOLOptimizedCpGs.compTable.rda (EPIC, 450 CpGs) and IDOLOptimizedCpGs450klegacy.compTable.rda (450K, 350 CpGs). Extracted by python/tools/build_idol.py."
+      primary_source_traced: true
+      redistributable: true
+    deconvolution:
+      cell_type: "Neu"
+      tables:
+        - {platforms: ["EPICv1", "EPICv2"], file: "coefficients/idol_epic.csv", sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"}
+        - {platforms: ["450K"], file: "coefficients/idol_450klegacy.csv", sha256: "fc92cbea315de51f3baf2e2b04974f260cadc4a3de7418771c07e1c052f32d8a"}
     preprocess: []
     postprocess: []
 
@@ -569,26 +640,31 @@ clocks:
     species: "Homo sapiens"
     data_type: "dna_methylation"
     generation: "other"
-    tissue: ["purified blood leukocytes"]
-    platform: ["EPICv1"]
+    tissue: ["whole blood"]
+    platform: ["450K", "EPICv1"]
     predicts: ["natural killer cell proportion"]
     training_target: ["cell-type-specific methylation contrast"]
     unit: ["proportion"]
     scale_type: "proportion"
     model_type: "reference-based constrained deconvolution"
     population: "adults"
-    n_features: null
+    n_features: 450
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Salas, L.A., Koestler, D.C., Butler, R.A. et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biology 19, 64 (2018)."
     doi: "https://doi.org/10.1186/s13059-018-1448-7"
-    notes: "Reference-based constrained deconvolution returning the natural killer (NK) cell proportion from EPIC-array blood methylation. Pyaging uses the paper's automatic 600-CpG top-hypermethylated/top-hypomethylated reference, not the paper's preferred 450-CpG EPIC IDOL library."
+    notes: "The natural killer cell proportion of a whole-blood sample, by reference-based deconvolution against the IDOL library of Salas et al. 2018: mean methylation of six immunomagnetically sorted leukocyte types at 450 EPIC CpGs (a 350-CpG legacy library on 450K). Projected as FlowSorted.Blood.EPIC's projectCellType_CP does with nonnegative = TRUE and lessThanOne = FALSE, its documented call for a beta matrix: non-negative, not forced to sum to one, rounded to four decimals. The authors recommend Noob-processed betas. Pyaging uses the paper's automatic 600-CpG reference instead of the IDOL library."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/idol_epic.csv"
+      sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"
+      provenance: "Salas et al. 2018 IDOL libraries as the authors ship them in FlowSorted.Blood.EPIC (GPL-3) at b837178: data/IDOLOptimizedCpGs.compTable.rda (EPIC, 450 CpGs) and IDOLOptimizedCpGs450klegacy.compTable.rda (450K, 350 CpGs). Extracted by python/tools/build_idol.py."
+      primary_source_traced: true
+      redistributable: true
+    deconvolution:
+      cell_type: "NK"
+      tables:
+        - {platforms: ["EPICv1", "EPICv2"], file: "coefficients/idol_epic.csv", sha256: "57c4721ef03167c9894d27c25a4a40f492af326f6839f43399019abe59b16e49"}
+        - {platforms: ["450K"], file: "coefficients/idol_450klegacy.csv", sha256: "fc92cbea315de51f3baf2e2b04974f260cadc4a3de7418771c07e1c052f32d8a"}
     preprocess: []
     postprocess: []
 
@@ -606,18 +682,18 @@ clocks:
     scale_type: "relative_score"
     model_type: "elastic net regression"
     population: "adults"
-    n_features: null
+    n_features: 196
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Barbu, Miruna C., et al. \"Epigenetic prediction of major depressive disorder.\" Molecular Psychiatry 26.9 (2021): 5112-5123."
     doi: "https://doi.org/10.1038/s41380-020-0808-3"
     notes: "Blood methylation risk score for major depressive disorder built with penalised regression on genome-wide EPIC-array CpGs, trained on over 1,200 cases and 1,800 controls. Discriminates prevalent from incident MDD independently of polygenic risk, with a smoking-independent variant also derived."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/depressionbarbu.csv"
+      sha256: "abda6da22006074ff5afe7b94f662a8e67ae2a8fab3f1fae5eca667c1ab0aa61"
+      provenance: "Barbu et al. 2021, Molecular Psychiatry (CC BY), Supplementary Excel 2A: the 196 weights of the methylation risk score, which has no intercept. biolearn agrees on the weights to 5e-10 but adds an intercept of 12.2169841, which is Lin et al. 2016's and not in this paper."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -635,20 +711,21 @@ clocks:
     scale_type: "relative_score"
     model_type: "LASSO regression"
     population: "older adults"
-    n_features: null
+    n_features: 20
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Li, X. et al. Derivation and validation of an epigenetic frailty risk score in population-based cohorts of older adults. Nature Communications 13, 5269 (2022)."
     doi: "https://doi.org/10.1038/s41467-022-32893-x"
-    notes: "Epigenetic frailty risk score (eFRS), a weighted 20-CpG whole-blood DNA-methylation score selected by LASSO from replicated frailty-associated loci."
+    notes: "Epigenetic frailty risk score (eFRS), a weighted 20-CpG whole-blood DNA-methylation score selected by LASSO from replicated frailty-associated loci. The same score TranslAGE lists as eFRS; FALCONAge catalogued it twice until 2026-09-27, the second time as efrs."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/dnamfili.csv"
+      sha256: "5f7874f74e5e1875e83a285c6a869621b990fc2a6bbacaa9a7db8d0d9247fbe1"
+      provenance: "Li et al. 2022, Nature Communications (CC BY): the eFRS equation printed in the Results, 20 CpGs and the intercept 0.204, with the three decimals printed; two typesetting slips in it ('21656937' without its cg prefix, and a stray 'cg' before a multiplication sign) are read as the CpG ids Supplementary Data 2 lists. Identical to methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause)."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 0.204}
 
   dnamfitage:
     name: "dnamfitage"
@@ -838,20 +915,21 @@ clocks:
     scale_type: "relative_score"
     model_type: "elastic net regression"
     population: "older adults"
-    n_features: null
+    n_features: 91
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Fuentealba, M., Rouch, L., Guyonnet, S. et al. A blood-based epigenetic clock for intrinsic capacity predicts mortality and is associated with clinical, immunological and lifestyle factors. Nature Aging 5, 1207–1216 (2025)."
     doi: "https://doi.org/10.1038/s43587-025-00883-5"
     notes: "Whole-blood DNA-methylation predictor of intrinsic capacity, an average score across cognition, locomotion, psychological, sensory, and vitality domains; trained with tenfold cross-validated elastic net on INSPIRE-T and returning higher values for better capacity."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/dnamic.csv"
+      sha256: "3f5185ef80c7e1ced842a1f4ef209b7089bb06f1a8602845ba5ac28cc1e23e37"
+      provenance: "Fuentealba et al. 2025, Nature Aging (CC BY), Supplementary Table 1: the 91 coefficients and the intercept 0.7852837523517947. methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause) agrees to 5e-10, carrying fewer digits."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 0.7852837523517947}
 
   dnamphenoage:
     name: "dnamphenoage"
@@ -879,6 +957,11 @@ clocks:
       provenance: "Levine 2018, Supplement 2 Table S6 (publisher supplementary)"
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 60.664}
@@ -897,20 +980,21 @@ clocks:
     scale_type: "relative_score"
     model_type: "bootstrap-stabilized elastic net regression"
     population: "adults"
-    n_features: null
+    n_features: 211
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Jung, J., et al. “Additive Effects of Stress and Alcohol Exposure on Accelerated Epigenetic Aging in Alcohol Use Disorder.” Biological Psychiatry 93(4): 331–341 (2023)."
     doi: "https://doi.org/10.1016/j.biopsych.2022.06.036"
     notes: "Whole-blood methylation score (MS stress) derived as a 211-CpG proxy for a composite of 13 stress-related measures."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/dnamstress.csv"
+      sha256: "adc454a3fe6a765afc62e1fc52b9975307897f92b5f9a82aa4757c7fa49ff058"
+      provenance: "Jung et al. 2023, Biological Psychiatry, Supplementary Table S10 (read from its text, two wrapped cells rebuilt): the 211 coefficients and the intercept -4.494069. Identical to methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause), which is the redistribution route (the article is CC BY-NC-ND)."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: -4.494069}
 
   dnamtl:
     name: "dnamtl"
@@ -935,9 +1019,14 @@ clocks:
     coefficient_source:
       file: "coefficients/dnamtl.csv"
       sha256: "8c3f097cfc2f070905f6e311f18dae375e566b432c2f6ff6a5c5ba4ec3ba1096"
-      provenance: "Coefficients: third-party package copy, identical to biolearn's DNAmTL.csv; the paper's Supplementary Data 1 sits behind PMC's download challenge and could not be re-read. Intercept sign: set from the paper itself. Lu 2019 Table 2 reports DNAmTL = 8.046 - 0.018 x age kb in the test cohorts, and sorted-cell medians of 7.6 to 8.3 kb in men aged 27 to 32, so the intercept is +7.924780053 (biolearn), not the -7.924780053 FALCONAge 1.0.0 carried, which returned about -8.5 kb."
-      primary_source_traced: false
+      provenance: "Lu et al. 2019, Aging, Supplementary Table 3 (aging-11-102173-s003.xlsx, columns A and B): the 140 coefficients and the intercept +7.924780053, identical to this file and to the add step below. FALCONAge had carried the intercept as -7.924780053, which returned about -8.5 kb."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 7.924780053}
@@ -957,18 +1046,18 @@ clocks:
     scale_type: "relative_score"
     model_type: "weighted linear score"
     population: "newborns"
-    n_features: null
+    n_features: 652
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Muskens, Ivo S., et al. \"The genome-wide impact of trisomy 21 on DNA methylation and its implications for hematopoiesis.\" Nature Communications 12 (2021): 821."
     doi: "https://doi.org/10.1038/s41467-021-21064-z"
     notes: "Implementation-derived Down-syndrome-associated methylation projection score: pyaging computes a zero-intercept weighted sum of 652 neonatal blood-spot beta values using the paper's autosomal EWAS beta_overall effect estimates. The paper presents an EWAS, not a trained or validated Down syndrome classifier."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/downsyndrome.csv"
+      sha256: "fc808cbc593ea68b69c7ab8957dd5a4734ee9a4152fc2b5318e5c0b2cd20653b"
+      provenance: "Muskens et al. 2021, Nature Communications (CC BY), Supplementary Data 2a, column beta_overall: the 652 autosomal CpG effect estimates, summed with no intercept as biolearn and pyaging apply them (identical to biolearn to 1e-16). The paper reports an EWAS, not a predictor; the score is the catalogues' projection of it."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
     postprocess: []
 
@@ -1007,9 +1096,10 @@ clocks:
       primary_source_traced: false
       redistributable: false
       why: "Research use only; distributed through the authors' own R package under terms accepted at install."
-      obtain: "https://github.com/danbelsky/DunedinPACE"
+      obtain: "https://github.com/danbelsky/DunedinPACE: install the authors' R package under its terms, then fa.registry.load().import_dunedinpace(path to the installed package, its source checkout, or R/sysdata.rda). Needs Rscript, which the FALCONAge image has."
       alternatives: ["dunedinpoam38"]
-    preprocess: []
+    preprocess:
+      - {op: "quantile_normalize_gold"}
     postprocess: []
 
   dunedinpoam38:
@@ -1035,9 +1125,14 @@ clocks:
     coefficient_source:
       file: "coefficients/dunedinpoam38.csv"
       sha256: "1bd227b3222cfcadec0a62622120ff6e78d56e9adfeff27e7fbc6b113b6cdc7f"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Authors' package danbelsky/DunedinPoAm38 at 42499971, R/sysdata.rda, mPOA_Models (GPL-2): the 46 weights and the intercept (-0.06929805) are identical to this file and its postprocess step."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/dunedinpoam38.csv"
+      sha256: "0e45347c2b22bef57ee9feb62995aa9d343bc5aab4b813ff5adb3a6c2e071390"
+      label: "Dunedin training-cohort means (authors' package)"
+      provenance: "danbelsky/DunedinPoAm38 at 42499971, R/sysdata.rda, mPOA_Models$model_means (GPL-2): the values the authors' PoAmProjector() substitutes for a probe the data lacks. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: -0.06929805}
@@ -1900,9 +1995,14 @@ clocks:
     coefficient_source:
       file: "coefficients/hannum.csv"
       sha256: "58d84337d3100888358763cd79c29a776e5cfdc675af99c14a339595aceaf375"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Hannum et al. 2013, Molecular Cell, Table S3 (mmc2.xlsx, sheet Model_PrimaryData): the 71 markers and coefficients, identical to this file. The model has no intercept."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -1990,6 +2090,11 @@ clocks:
       provenance: "Horvath 2013, Additional File 3 (publisher supplementary)"
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/horvath2013.csv"
+      sha256: "8bec8a8c75cc80daf38dfa8e69824a65e2e9cb8942008bbf3600aef35f89845a"
+      label: "Horvath 2013 gold standard (Additional file 22)"
+      provenance: "Horvath 2013, Additional file 22 (CC BY 2.0), column goldstandard2: the per-probe beta the tutorial's BMIQ step calibrates every sample towards. The tutorial stops on an absent probe rather than filling it, so this is the published training reference, not a published fill. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 0.695507258}
@@ -2018,9 +2123,14 @@ clocks:
     coefficient_source:
       file: "coefficients/hrsinchphenoage.csv"
       sha256: "e10c893bb11cfea3687b83ef982038179b1bf9175b81e6b0a7dc3da1557e61c9"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "The weights are not in the paper's supplementary tables; they are in the first author's laboratory package methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause): data-raw/HRSInChPhenoAge_CpG.csv for the 959 weights and R/calcHRSInChPhenoAge.R for the intercept 52.8334080, identical to this file and to the add step below."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 52.833408}
@@ -2070,20 +2180,22 @@ clocks:
     scale_type: "age_years"
     model_type: "two-stage elastic net regression"
     population: "all ages"
-    n_features: null
+    n_features: 370
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Tomusiak, A., et al. “Development of an epigenetic clock resistant to changes in immune cell composition.” Communications Biology 7, 934 (2024)."
     doi: "https://doi.org/10.1038/s42003-024-06609-4"
-    notes: "Multi-tissue chronological-age clock designed by excluding CpGs associated with CD8+ T-cell differentiation, then fitting two sequential elastic-net models so predictions remain stable across immune-cell composition. The article reports 381 CpGs; the official lambda.min model and this implementation both use the same 380 non-zero CpG inputs."
+    notes: "Multi-tissue chronological-age clock that excludes CpGs associated with CD8+ T-cell differentiation, so that its predictions stay stable across immune-cell composition. As the authors' demo applies it: the cross-validated elastic net at lambda.1se (370 CpGs) and Horvath's inverse age transform. The article's 381 CpGs are the model's lambda.min fit."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/intrinclock.csv"
+      sha256: "c5df0bf289ef3cf64048cf5836eaf9ac77b83c83c010b0535c7c301048e64f36"
+      provenance: "The authors' model object (Tomusiak et al. 2024; Zenodo 10.5281/zenodo.10426597, final_model_small.RData, no licence stated) is identical to the copy methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause) ships as IntrinClock_data$model, through which it is redistributed. Evaluated at lambda.1se, the default of predict() that the authors' demo calls: 370 CpGs and the intercept -2.132860950847256, then the authors' returnAge, Horvath's inverse age transform with adult age 20. At lambda.1se the authors' published residuals for GSE67751 (Supplementary Data 1, sheet Figure5A) are reproduced to 1.2e-13; methylCIPHER's calcIntrinClock uses lambda.min (380 CpGs), which misses them by up to 1.5 years."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: -2.132860950847256}
+      - {op: "anti_log_linear", adult_age: 20}
 
   knight:
     name: "knight"
@@ -2109,12 +2221,12 @@ clocks:
     coefficient_source:
       file: "coefficients/knight.csv"
       sha256: "b06d261cafaec9cc58460b9b88454a477c197781a8d7f606a74713e6ab7ae7e5"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Knight et al. 2016, Genome Biology, Additional file 3 (13059_2016_1068_MOESM3_ESM.csv): the 148 coefficients, identical to this file, and the intercept 41.72579759, which FALCONAge had rounded to 41.7. The authors' code (Additional files 4 and 5) calibrates each sample to Horvath's gold standard before predicting; fa.preprocess.horvath_normalise does the same and, on their TestDataset, reproduces their stated 37.366, 38.346 and 39.324 weeks to 0.002."
+      primary_source_traced: true
       redistributable: true
     preprocess: []
     postprocess:
-      - {op: "add", value: 41.7}
+      - {op: "add", value: 41.72579759}
 
   leecontrol:
     name: "leecontrol"
@@ -2140,12 +2252,12 @@ clocks:
     coefficient_source:
       file: "coefficients/leecontrol.csv"
       sha256: "22c21c97ef9c5293ec219b30acb0b366a7d9128eb696a75b11165546f125591e"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Lee et al. 2019, Aging, Supplementary Table 1 (aging-11-102049-s001.csv), column Coefficient_CPC: the 546 non-zero coefficients, identical to this file, and the intercept 13.0618205."
+      primary_source_traced: true
       redistributable: true
     preprocess: []
     postprocess:
-      - {op: "add", value: 13.06182}
+      - {op: "add", value: 13.0618205}
 
   leerefinedrobust:
     name: "leerefinedrobust"
@@ -2171,12 +2283,12 @@ clocks:
     coefficient_source:
       file: "coefficients/leerefinedrobust.csv"
       sha256: "d7d98c85b53fe53cf9e5009c04e056efc42e7329d5587f3fcaea1ab2b16a7877"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Lee et al. 2019, Aging, Supplementary Table 1 (aging-11-102049-s001.csv), column Coefficient_refined_RPC: the 395 non-zero coefficients, identical to this file, and the intercept 30.74966212."
+      primary_source_traced: true
       redistributable: true
     preprocess: []
     postprocess:
-      - {op: "add", value: 30.74966}
+      - {op: "add", value: 30.74966212}
 
   leerobust:
     name: "leerobust"
@@ -2202,12 +2314,12 @@ clocks:
     coefficient_source:
       file: "coefficients/leerobust.csv"
       sha256: "8f2824c472504f6001a9bfbe9e9f62ad24004713c8a90fe1f5fe1f53669138cb"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Lee et al. 2019, Aging, Supplementary Table 1 (aging-11-102049-s001.csv), column Coefficient_RPC: the 558 non-zero coefficients, identical to this file, and the intercept 24.99772133."
+      primary_source_traced: true
       redistributable: true
     preprocess: []
     postprocess:
-      - {op: "add", value: 24.99772}
+      - {op: "add", value: 24.99772133}
 
   lin:
     name: "lin"
@@ -2232,12 +2344,48 @@ clocks:
     coefficient_source:
       file: "coefficients/lin.csv"
       sha256: "551964cfbfee6e19f793610e97ba6d48183096ad2259424f647141ec63bbd9f0"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Lin et al. 2016, Aging, Supplementary Table 1 (aging-08-394-s001.pdf): the 99 coefficients and the intercept 12.2169841, identical to this file and to the add step below."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 12.2169841}
+
+  linage2:
+    name: "linage2"
+    year: 2025
+    species: "Homo sapiens"
+    data_type: "clinical_chemistry"
+    generation: "second"
+    tissue: ["blood"]
+    platform: ["clinical laboratory assays"]
+    predicts: ["mortality risk"]
+    training_target: ["mortality"]
+    unit: ["years"]
+    scale_type: "age_years"
+    model_type: "Cox regression on principal components"
+    population: "adults"
+    n_features: 59
+    requires_fp64: false
+    availability: "bundled"
+    citation: "Fong, S., Denisov, K.A., Nefedova, A.A., Kennedy, B.K., Gruber, J. LinAge2: providing actionable insights and benchmarking with epigenetic clocks. npj Aging 11, 29 (2025)."
+    doi: "https://doi.org/10.1038/s41514-025-00221-4"
+    notes: "Clinical clock trained on all-cause mortality in the NHANES 1999-2000 wave (aged 40 to 84) and tested in 2001-2002: 59 inputs from the examination, blood and urine (urine albumin and creatinine) in NHANES variable names and units, three scores from health questionnaire items, sex-specific z-scores, principal components and Cox models, returned as the age of equal risk under a model on age alone. Inputs are named as in the authors' codebook."
+    formula: "linage2"
+    requires_covariates: ["age", "sex"]
+    coefficient_source:
+      file: "linage2/linage2.json"
+      sha256: "f1e5196e32d8412953c922bd687f7b39c81d3c59f8af6ae72c2f034ff995bd45"
+      provenance: "The authors publish code, not a table: linAge2.R in the paper's Supplementary Information (41514_2025_221_MOESM1_ESM.zip, CC BY 4.0) fits the model on the NHANES 1999-2002 file it ships with each time it runs. python/tools/build_linage2.py runs it once (answering its cotinine prompt 'C' and stopping before its interactive viewer) and records the fitted transforms, z-score medians and MADs, PC loadings and both sexes' Cox and null models. Applied natively, it reproduces the script's LinAge2 on the archive's 12 example subjects to 5e-11 years and on all 2,344 subjects of the 2001-2002 test wave to 5e-10."
+      primary_source_traced: true
+      redistributable: true
+    preprocess: []
+    postprocess: []
 
   mammalian1:
     name: "mammalian1"
@@ -2518,20 +2666,21 @@ clocks:
     scale_type: "gestational_weeks"
     model_type: "elastic net regression"
     population: "pregnancies"
-    n_features: null
+    n_features: 62
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Mayne, Benjamin T., et al. \"Accelerated placental aging in early onset preeclampsia pregnancies identified by DNA methylation.\" Epigenomics 9 (2017): 279–289."
     doi: "https://doi.org/10.2217/epi-2016-0103"
     notes: "Placental elastic-net clock trained on pooled healthy human placenta methylation datasets; 62 selected CpGs predict gestational age and were used to test age acceleration in early-onset preeclampsia."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/mayne.csv"
+      sha256: "a667f531fec76d817ab3ebdb9540ec846ed9394382b23d8006d3dc926ec9d142"
+      provenance: "Mayne et al. 2017, Epigenomics, Supplementary Table S5: the 62 coefficients and the intercept 24.99026439 (weeks). Identical to methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02, BSD-3-Clause), which is the redistribution route (the article is CC BY-NC-ND), and to biolearn."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 24.99026439}
 
   mccartneyalcohol:
     name: "mccartneyalcohol"
@@ -2567,6 +2716,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S3 - Alcohol' (CC BY): 450 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2604,6 +2758,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S1 - BMI' (CC BY): 1109 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2641,6 +2800,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S10 - % Body fat' (CC BY): 968 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2678,6 +2842,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S4 - Education' (CC BY): 373 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2715,6 +2884,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S6 - HDL cholesterol' (CC BY): 737 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2752,6 +2926,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S7 - LDL cholesterol' (CC BY): 233 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2789,6 +2968,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S2 - Smoking' (CC BY): 233 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2826,6 +3010,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S5 - Total cholesterol' (CC BY): 204 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2863,6 +3052,11 @@ clocks:
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S8 - Total-HDL ratio' (CC BY): 412 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
       primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -2898,6 +3092,72 @@ clocks:
       sha256: "93666bb5ab1494cb0427e5fa53239945bdc3082b649c3841e243f42c124c314b"
       url: "https://doi.org/10.1186/s13059-018-1514-1"
       provenance: "McCartney et al. 2018, Genome Biology 19:136, Additional file 1, sheet 'Table S9 - Waist-to-Hip ratio' (CC BY): 226 probes with LASSO weights, the predictor the paper evaluates. Probe ids are kept as published, including the ch. non-CpG probes."
+      primary_source_traced: true
+      redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
+    preprocess: []
+    postprocess: []
+
+  metaboage:
+    name: "metaboage"
+    year: 2020
+    species: "Homo sapiens"
+    data_type: "metabolomics_nmr"
+    generation: "first"
+    tissue: ["blood"]
+    platform: ["Nightingale Health 1H-NMR"]
+    predicts: ["chronological age"]
+    training_target: ["chronological age"]
+    unit: ["years"]
+    scale_type: "age_years"
+    model_type: "linear regression"
+    population: "adults"
+    n_features: 56
+    requires_fp64: false
+    availability: "bundled"
+    citation: "van den Akker, E. B., et al. \"Metabolic age based on the BBMRI-NL 1H-NMR metabolomics repository as biomarker of age-related disease.\" Circulation: Genomic and Precision Medicine 13.5 (2020): 541-547."
+    doi: "https://doi.org/10.1161/CIRCGEN.119.002610"
+    notes: "Chronological age predicted from 56 Nightingale NMR measures in 25,000 BBMRI-NL participants. Scored as MiMIR scores it: samples with more than one missing or zero measure, or a log value beyond 5 SD of the BBMRI-NL mean, are left unscored; measures are z-scored against the BBMRI-NL means and SDs and a missing one is set to the mean."
+    formula: "metaboage"
+    coefficient_source:
+      file: "metabolomics/metaboage.csv"
+      sha256: "cb2ea7c3b5f875f13726ecb020e134e93f5c9c344f6a540a5909feb44a38eeea"
+      provenance: "MiMIR (DanieleBizzarri/MiMIR at 1746f2d, GPL-3), data/PARAM_metaboAge.rda: coefficients, BBMRI-NL means and SDs. Extracted by python/tools/build_mimir.py."
+      primary_source_traced: true
+      redistributable: true
+    preprocess: []
+    postprocess: []
+
+  metabohealth:
+    name: "metabohealth"
+    year: 2019
+    species: "Homo sapiens"
+    data_type: "metabolomics_nmr"
+    generation: "second"
+    tissue: ["blood"]
+    platform: ["Nightingale Health 1H-NMR"]
+    predicts: ["mortality"]
+    training_target: ["all-cause mortality"]
+    unit: ["log hazard, per cohort SD"]
+    scale_type: "mortality_log_hazard"
+    model_type: "Cox regression"
+    population: "adults"
+    n_features: 14
+    requires_fp64: false
+    availability: "bundled"
+    citation: "Deelen, J., et al. \"A metabolic profile of all-cause mortality risk identified in an observational study of 44,168 individuals.\" Nature Communications 10 (2019): 3346."
+    doi: "https://doi.org/10.1038/s41467-019-11311-9"
+    notes: "Mortality score from 14 Nightingale NMR measures, fitted with Cox regression in 12 cohorts. A score, not an age. Scored as MiMIR scores it: 1 added to every value of a measure with a zero, logs taken, each measure z-scored within the cohort, then the weighted sum. The within-cohort scaling makes one sample's score depend on the others."
+    formula: "metabohealth"
+    requires_cohort: true
+    coefficient_source:
+      file: "metabolomics/metabohealth.csv"
+      sha256: "f1253f75d3d1d590f3e8218ff76d58fb755fc7e6ee9625ef40db9baa42059ea0"
+      provenance: "MiMIR (DanieleBizzarri/MiMIR at 1746f2d, GPL-3), data/mort_betas.rda. Extracted by python/tools/build_mimir.py."
       primary_source_traced: true
       redistributable: true
     preprocess: []
@@ -2982,7 +3242,7 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: true
-    availability: "untraced"
+    availability: "licensed"
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy trained to reproduce the original DNAmTL clock score; the implemented returned score is on the DNAmTL base-pair scale."
@@ -2995,9 +3255,12 @@ clocks:
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      provenance: "The authors' CalcAllPCClocks.RData (MorganLevineLab/PC-Clocks at 5e65bce, which links it on Yale Box); neither carries a licence, so it is not redistributed."
+      primary_source_traced: true
+      redistributable: false
+      why: "The PC-Clocks repository and its data file carry no licence, so the rotations, weights and imputation values are not ours to distribute."
+      obtain: "Download CalcAllPCClocks.RData from the Yale Box link in the PC-Clocks README (https://github.com/MorganLevineLab/PC-Clocks), then fa.registry.load().import_pc_clocks(path), which registers pchorvath2013, pcskinandblood, pchannum, pcphenoage and pcdnamtl with the authors' weights and their imputeMissingCpGs values. Needs Rscript, which the FALCONAge image has."
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -3055,7 +3318,7 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: true
-    availability: "untraced"
+    availability: "licensed"
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy trained to reproduce the original Hannum whole-blood age-clock score."
@@ -3068,9 +3331,12 @@ clocks:
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      provenance: "The authors' CalcAllPCClocks.RData (MorganLevineLab/PC-Clocks at 5e65bce, which links it on Yale Box); neither carries a licence, so it is not redistributed."
+      primary_source_traced: true
+      redistributable: false
+      why: "The PC-Clocks repository and its data file carry no licence, so the rotations, weights and imputation values are not ours to distribute."
+      obtain: "Download CalcAllPCClocks.RData from the Yale Box link in the PC-Clocks README (https://github.com/MorganLevineLab/PC-Clocks), then fa.registry.load().import_pc_clocks(path), which registers pchorvath2013, pcskinandblood, pchannum, pcphenoage and pcdnamtl with the authors' weights and their imputeMissingCpGs values. Needs Rscript, which the FALCONAge image has."
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -3090,7 +3356,7 @@ clocks:
     population: "all ages"
     n_features: null
     requires_fp64: true
-    availability: "untraced"
+    availability: "licensed"
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy of the 2013 Horvath pan-tissue clock, trained against the original clock score using substituted multi-tissue datasets."
@@ -3103,11 +3369,15 @@ clocks:
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      provenance: "The authors' CalcAllPCClocks.RData (MorganLevineLab/PC-Clocks at 5e65bce, which links it on Yale Box); neither carries a licence, so it is not redistributed."
+      primary_source_traced: true
+      redistributable: false
+      why: "The PC-Clocks repository and its data file carry no licence, so the rotations, weights and imputation values are not ours to distribute."
+      obtain: "Download CalcAllPCClocks.RData from the Yale Box link in the PC-Clocks README (https://github.com/MorganLevineLab/PC-Clocks), then fa.registry.load().import_pc_clocks(path), which registers pchorvath2013, pcskinandblood, pchannum, pcphenoage and pcdnamtl with the authors' weights and their imputeMissingCpGs values. Needs Rscript, which the FALCONAge image has."
+      alternatives: []
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "anti_log_linear", adult_age: 20}
 
   pcphenoage:
     name: "pcphenoage"
@@ -3125,7 +3395,7 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: true
-    availability: "untraced"
+    availability: "licensed"
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component DNAm PhenoAge model trained directly on phenotypic-age scores rather than as a proxy of the original CpG clock."
@@ -3138,9 +3408,12 @@ clocks:
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      provenance: "The authors' CalcAllPCClocks.RData (MorganLevineLab/PC-Clocks at 5e65bce, which links it on Yale Box); neither carries a licence, so it is not redistributed."
+      primary_source_traced: true
+      redistributable: false
+      why: "The PC-Clocks repository and its data file carry no licence, so the rotations, weights and imputation values are not ours to distribute."
+      obtain: "Download CalcAllPCClocks.RData from the Yale Box link in the PC-Clocks README (https://github.com/MorganLevineLab/PC-Clocks), then fa.registry.load().import_pc_clocks(path), which registers pchorvath2013, pcskinandblood, pchannum, pcphenoage and pcdnamtl with the authors' weights and their imputeMissingCpGs values. Needs Rscript, which the FALCONAge image has."
+      alternatives: []
     preprocess: []
     postprocess: []
 
@@ -3160,7 +3433,7 @@ clocks:
     population: "all ages"
     n_features: null
     requires_fp64: true
-    availability: "untraced"
+    availability: "licensed"
     citation: "Higgins-Chen, Albert T., et al. \"A computational solution for bolstering reliability of epigenetic clocks: implications for clinical trials and longitudinal tracking.\" Nature Aging 2 (2022): 644–661."
     doi: "https://doi.org/10.1038/s43587-022-00248-2"
     notes: "Principal-component proxy of the skin-and-blood age clock, trained against the original Horvath2 score using skin, blood, and fibroblast datasets."
@@ -3173,11 +3446,15 @@ clocks:
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      provenance: "The authors' CalcAllPCClocks.RData (MorganLevineLab/PC-Clocks at 5e65bce, which links it on Yale Box); neither carries a licence, so it is not redistributed."
+      primary_source_traced: true
+      redistributable: false
+      why: "The PC-Clocks repository and its data file carry no licence, so the rotations, weights and imputation values are not ours to distribute."
+      obtain: "Download CalcAllPCClocks.RData from the Yale Box link in the PC-Clocks README (https://github.com/MorganLevineLab/PC-Clocks), then fa.registry.load().import_pc_clocks(path), which registers pchorvath2013, pcskinandblood, pchannum, pcphenoage and pcdnamtl with the authors' weights and their imputeMissingCpGs values. Needs Rscript, which the FALCONAge image has."
+      alternatives: []
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "anti_log_linear", adult_age: 20}
 
   pedbe:
     name: "pedbe"
@@ -3203,12 +3480,12 @@ clocks:
     coefficient_source:
       file: "coefficients/pedbe.csv"
       sha256: "51ad198067f0caa3e41a8e7df32e33dcdc2e2270ee78072a6c52c9b7b4228187"
-      provenance: "third-party package copy; primary source not re-traced"
+      provenance: "Third-party copy; the primary source is not re-traced. The coefficients are in McEwen et al. 2020's PNAS supplement, which neither PNAS nor PMC serves to a script. methylCIPHER (github.com/HigginsChenLab/methylCIPHER, commit bfe5d02) ships the coefficient table as data-raw/PEDBE_coef.csv, with the columns ID, Coef, corAgeTraining and corAgeTest; its 94 coefficients are identical to this file, and its intercept is -2.09734933574694, which methylCIPHER's calcPEDBE rounds to -2.10. The add step below uses the table's value."
       primary_source_traced: false
       redistributable: true
     preprocess: []
     postprocess:
-      - {op: "add", value: -2.1}
+      - {op: "add", value: -2.09734933574694}
       - {op: "anti_log_linear", adult_age: 20}
 
   petkovich:
@@ -3386,20 +3663,21 @@ clocks:
     scale_type: "relative_score"
     model_type: "logistic regression"
     population: "adult men"
-    n_features: null
+    n_features: 3
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Kirby, M. K., et al. “Genome-wide DNA methylation measurements in prostate tissues uncovers novel prostate cancer diagnostic biomarkers and transcription factor binding patterns.” BMC Cancer 17: 273 (2017)."
     doi: "https://doi.org/10.1186/s12885-017-3252-2"
     notes: "Three-CpG prostate-tissue diagnostic classifier distinguishing malignant from benign-adjacent tissue; it was trained on 73 tumors and 63 benign-adjacent samples and externally validated in TCGA."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/prostatecancerkirby.csv"
+      sha256: "734f6bf8fc1e076353aa1868db11aa06b657acdf8f337fb1dba27490fec9af4c"
+      provenance: "Kirby et al. 2017, BMC Cancer (CC BY), Additional file 4 (Supplemental Table 4): R's printed coef() of the top diagnostic model, the 3 coefficients and the intercept 6.524 as printed; the score is on the log-odds scale."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 6.524}
 
   reedbmi:
     name: "reedbmi"
@@ -3668,9 +3946,14 @@ clocks:
     coefficient_source:
       file: "coefficients/skinandblood.csv"
       sha256: "c698aee4488d204b5ea44f1fde2b3f5502a7800dee7deac3a4bd457bdd3a08a1"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Horvath et al. 2018, Aging, Supplementary Data (aging-10-101508-s005.csv, columns ID and Coef): the 391 coefficients and the intercept -0.447119319, identical to this file and to the add step below."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: -0.447119319}
@@ -3750,20 +4033,21 @@ clocks:
     scale_type: "age_years"
     model_type: "elastic net regression"
     population: "adults"
-    n_features: null
+    n_features: 353
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Tong, Huige, et al. \"Quantifying the stochastic component of epigenetic aging.\" Nature Aging 4 (2024): 886–901."
     doi: "https://doi.org/10.1038/s43587-024-00600-8"
-    notes: "Stochastic chronological-age clock built from simulated methylation trajectories at the Horvath clock CpGs; it is a stochastic counterpart, not the original Horvath clock."
+    notes: "Stochastic chronological-age clock built from simulated methylation trajectories at the Horvath clock CpGs; it is a stochastic counterpart, not the original Horvath clock. Applied to betas as the authors' RunStochClocks applies them. The authors trained on per-CpG standardised values and read the clocks 'in a correlative sense': on six blood cohorts of the test corpus they track age closely (r 0.58 to 0.98) while the median error ranges from -19 to +32 years between cohorts, so compare samples within a cohort rather than reading an absolute age."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/stoch.csv"
+      sha256: "890602630233ae1742e79e837de5ebd4dd672d0c3da3b26f8042e50568c5d7a3"
+      provenance: "Tong et al. 2024, Nature Aging (CC BY), Supplementary Software: glmStocALL.Rd with RunStochClocks.R (GPL-3), the glmnet fit at its last lambda as RunStochClocks reads it: 353 coefficients on the Horvath 2013 CpGs and the intercept 59.80156663142174. Identical to biolearn (5e-14) and to methylCIPHER's glmStocALL."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 59.80156663142174}
 
   stocp:
     name: "stocp"
@@ -3779,20 +4063,21 @@ clocks:
     scale_type: "age_years"
     model_type: "elastic net regression"
     population: "adults"
-    n_features: null
+    n_features: 513
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Tong, Huige, et al. \"Quantifying the stochastic component of epigenetic aging.\" Nature Aging 4 (2024): 886–901."
     doi: "https://doi.org/10.1038/s43587-024-00600-8"
-    notes: "Stochastic chronological-age clock built from simulated methylation trajectories at PhenoAge CpGs; despite its CpG source, its fitted outcome and returned construct are chronological age, not PhenoAge."
+    notes: "Stochastic chronological-age clock built from simulated methylation trajectories at PhenoAge CpGs; despite its CpG source, its fitted outcome and returned construct are chronological age, not PhenoAge. Applied to betas as the authors' RunStochClocks applies them. The authors trained on per-CpG standardised values and read the clocks 'in a correlative sense': on six blood cohorts of the test corpus they track age closely (r 0.58 to 0.98) while the median error ranges from -19 to +32 years between cohorts, so compare samples within a cohort rather than reading an absolute age."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/stocp.csv"
+      sha256: "35327a7db3db2e7fb208f4b1a15db8258527c51876cb141178e20f75ddbe8453"
+      provenance: "Tong et al. 2024, Nature Aging (CC BY), Supplementary Software: glmStocALL.Rd with RunStochClocks.R (GPL-3), the glmnet fit at its last lambda as RunStochClocks reads it: 513 coefficients on the PhenoAge CpGs and the intercept 92.8310813279039. Identical to biolearn and to methylCIPHER's glmStocALL."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 92.8310813279039}
 
   stocz:
     name: "stocz"
@@ -3808,20 +4093,21 @@ clocks:
     scale_type: "age_years"
     model_type: "elastic net regression"
     population: "adults"
-    n_features: null
+    n_features: 514
     requires_fp64: false
-    availability: "untraced"
+    availability: "bundled"
     citation: "Tong, Huige, et al. \"Quantifying the stochastic component of epigenetic aging.\" Nature Aging 4 (2024): 886–901."
     doi: "https://doi.org/10.1038/s43587-024-00600-8"
-    notes: "Stochastic chronological-age clock built from simulated methylation trajectories at Zhang clock CpGs; it is a stochastic counterpart, not the original Zhang clock."
+    notes: "Stochastic chronological-age clock built from simulated methylation trajectories at Zhang clock CpGs; it is a stochastic counterpart, not the original Zhang clock. Applied to betas as the authors' RunStochClocks applies them. The authors trained on per-CpG standardised values and read the clocks 'in a correlative sense': on six blood cohorts of the test corpus they track age closely (r 0.58 to 0.98) while the median error ranges from -19 to +32 years between cohorts, so compare samples within a cohort rather than reading an absolute age."
     coefficient_source:
-      file: null
-      url: null
-      provenance: "not yet extracted; see registry/extractors/"
-      primary_source_traced: false
-      redistributable: null
+      file: "coefficients/stocz.csv"
+      sha256: "84815f98aab0fd68404bfe56b3e3c01543b4e14fad3f4b9060251a74e1f36d89"
+      provenance: "Tong et al. 2024, Nature Aging (CC BY), Supplementary Software: glmStocALL.Rd with RunStochClocks.R (GPL-3), the glmnet fit at its last lambda as RunStochClocks reads it: 514 coefficients on the Zhang EN CpGs and the intercept 64.80771886948943, applied to betas as they are (no per-sample standardisation, unlike zhangen). Identical to biolearn (5e-14) and to methylCIPHER's glmStocALL."
+      primary_source_traced: true
+      redistributable: true
     preprocess: []
-    postprocess: []
+    postprocess:
+      - {op: "add", value: 64.80771886948943}
 
   stubbs:
     name: "stubbs"
@@ -4282,16 +4568,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the basophil proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Bas"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4311,16 +4603,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the memory B cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Bmem"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4340,16 +4638,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the naive B cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Bnv"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4369,16 +4673,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the memory CD4+ T cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "CD4mem"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4398,16 +4708,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the naive CD4+ T cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "CD4nv"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4427,16 +4743,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the memory CD8+ T cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "CD8mem"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4456,16 +4778,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the naive CD8+ T cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "CD8nv"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4485,16 +4813,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the eosinophil proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Eos"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4514,16 +4848,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the monocyte proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Mono"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4543,16 +4883,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the neutrophil proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Neu"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4572,16 +4918,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the natural killer cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "NK"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4601,16 +4953,22 @@ clocks:
     population: "adults"
     n_features: null
     requires_fp64: false
-    availability: "untraced"
+    availability: "licensed"
     citation: "Salas, L.A., Zhang, Z., Koestler, D.C. et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nature Communications 13, 761 (2022)."
     doi: "https://doi.org/10.1038/s41467-021-27864-7"
     notes: "Reference-based constrained deconvolution returning the regulatory T-cell proportion from EPIC-array blood methylation. The published EPIC IDOL-Ext library used 1,200 CpGs selected to optimize recovery of known artificial-mixture cell-type proportions; pyaging instead inherits Biolearn’s undocumented 240-CpG replacement, whose rows reproducibly comprise 10 positive and 10 negative maximal cell-versus-other methylation contrasts per subtype and are not a subset of the published 1,200 probes."
     coefficient_source:
       file: null
       url: null
-      provenance: "not yet extracted; see registry/extractors/"
+      provenance: "research use only -- not distributed by FALCONAge"
       primary_source_traced: false
-      redistributable: null
+      redistributable: false
+      why: "The twelve-cell IDOL-Ext reference is distributed in FlowSorted.BloodExtended.EPIC under the Dartmouth College Non-exclusive Research Use Source Code License Agreement, which is signed per licensee and does not permit redistribution."
+      obtain: "https://github.com/immunomethylomics/FlowSorted.BloodExtended.EPIC, after signing the Dartmouth licence. Export the reference means as a CSV with a feature_id column and one column per cell type (Bas, Bmem, Bnv, CD4mem, CD4nv, CD8mem, CD8nv, Eos, Mono, Neu, NK, Treg), then register_local_weights(id, path) for each entry."
+      alternatives: ["deconvolutebloodepicbcell", "deconvolutebloodepiccd4tcell", "deconvolutebloodepiccd8tcell", "deconvolutebloodepicmonocyte", "deconvolutebloodepicneutrophil", "deconvolutebloodepicnkcell"]
+    deconvolution:
+      cell_type: "Treg"
+      tables: []
     preprocess: []
     postprocess: []
 
@@ -4637,9 +4995,14 @@ clocks:
     coefficient_source:
       file: "coefficients/vidalbralo.csv"
       sha256: "76eebb2ef6ae605476746107c16cd3c3425055aacad87da06f650d3882e3589c"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Vidal-Bralo et al. 2016, Frontiers in Genetics, Table 2: the 8 coefficients and the intercept 84.7, identical to this file and to the add step below (the table gives three significant figures)."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 84.7}
@@ -4673,6 +5036,11 @@ clocks:
       redistributable: true
     known_discrepancies:
       - "The third site is a substitution. The paper's gamma is not cg17861230 but an unnamed CpG upstream of it, measured by pyrosequencing and better correlated with age; no array id was ever published for it. Every array implementation of this clock, including this one, puts cg17861230 in its place, and gamma carries 164.7 of the model against 26.4 and 23.7 for the two genuine probes. Treat the result as the published model evaluated on a near neighbour."
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - op: "add"
@@ -4798,9 +5166,14 @@ clocks:
     coefficient_source:
       file: "coefficients/yingadaptage.csv"
       sha256: "c844962e50847593de78b22742e69665ad767756a94806573a906914334e22ee"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Ying et al. 2024, Nature Aging, Supplementary Data (43587_2023_557_MOESM6_ESM.zip, YingAdaptAge.csv): the 999 coefficients and the intercept -511.9742762, identical to this file and to the add step below."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: -511.9742762}
@@ -4832,9 +5205,14 @@ clocks:
     coefficient_source:
       file: "coefficients/yingcausage.csv"
       sha256: "c57f2e5622743c2fadce96c6bde990ce6c65a430601f3c4ef6b19c5c125a3947"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Ying et al. 2024, Nature Aging, Supplementary Data (43587_2023_557_MOESM6_ESM.zip, YingCausAge.csv): the 585 coefficients and the intercept 86.80816381, identical to this file and to the add step below."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 86.80816381}
@@ -4868,9 +5246,14 @@ clocks:
     coefficient_source:
       file: "coefficients/yingdamage.csv"
       sha256: "e3b2019563f150436119047622d4cce714949919ae871bfd6c1ce24588ec09e4"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Ying et al. 2024, Nature Aging, Supplementary Data (43587_2023_557_MOESM6_ESM.zip, YingDamAge.csv): the 1,089 coefficients and the intercept 543.4315887, identical to this file and to the add step below."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess:
       - {op: "add", value: 543.4315887}
@@ -4898,10 +5281,15 @@ clocks:
     coefficient_source:
       file: "coefficients/zhangblup.csv"
       sha256: "8d3dca6222c40ce95f022a0f4176fa643d43d875d68ac83198fdedcd725a8858"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Zhang et al. 2019, authors' repository qzhang314/DNAm-based-age-predictor, blup.coef at commit 18f20a4; identical to this file, intercept included"
+      primary_source_traced: true
       redistributable: true
-    preprocess: []
+    # Each sample standardised across every probe, as the authors' pred.R does
+    # (per-probe mean fill, all-NA probes dropped, R's scale with SD n-1). The
+    # weights were fitted on standardised values; applied to raw betas they put
+    # the scores about 29 years high on EPIC blood.
+    preprocess:
+      - {op: "standardise_within_sample", training_probes: "zhangblup"}
     postprocess:
       - {op: "add", value: 91.15396}
 
@@ -4928,10 +5316,15 @@ clocks:
     coefficient_source:
       file: "coefficients/zhangen.csv"
       sha256: "12ef266a40345a98878f2e52c0fa1bd67fa2390c5ed5712d20eeec5493fc8d28"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Zhang et al. 2019, authors' repository qzhang314/DNAm-based-age-predictor, en.coef at commit 18f20a4; identical to this file, intercept included"
+      primary_source_traced: true
       redistributable: true
-    preprocess: []
+    # Each sample standardised across every probe, as the authors' pred.R does
+    # (per-probe mean fill, all-NA probes dropped, R's scale with SD n-1). The
+    # weights were fitted on standardised values; applied to raw betas they put
+    # the scores about 29 years high on EPIC blood.
+    preprocess:
+      - {op: "standardise_within_sample", training_probes: "zhangblup"}
     postprocess:
       - {op: "add", value: 65.79295}
 
@@ -4958,14 +5351,20 @@ clocks:
     known_discrepancies:
       - "The paper defines this as an integer count of markers past quartile thresholds; the
         implementations in circulation compute a continuous weighted sum. They are different
-        statistics, and the continuous form has no published cut-points, which is why its
-        scale_type is relative_score rather than a count."
+        statistics, and the continuous form has no published cut-points. FALCONAge scores the
+        continuous sum of the LASSO Cox weights, a log hazard (scale_type mortality_log_hazard),
+        not the count."
     coefficient_source:
       file: "coefficients/zhangmortality.csv"
       sha256: "ebf3915e5f08ec8d1cf4b84d6017088cb87fea2b9cedd1cc781589847293a177"
-      provenance: "third-party package copy; primary source not re-traced"
-      primary_source_traced: false
+      provenance: "Zhang et al. 2017, Nature Communications, Supplementary Information, Supplementary Figure 1: the continuous risk score as the sum of the 10 CpG betas weighted by their LASSO coefficients, with no intercept; identical to this file."
+      primary_source_traced: true
       redistributable: true
+    reference_values:
+      file: "references/blood_adult.csv.gz"
+      sha256: "d7b1eb99604c4365dae12b3c5a369d78dfa3217ffcf6ff17dbd65cea366965c6"
+      label: "healthy adult whole blood (FALCONAge corpus)"
+      provenance: "No per-CpG values are published for this clock. Mean beta over healthy adult (18 or older) whole blood, buffy coat and peripheral blood leukocytes in ComputAgeBench (CC BY-SA 4.0): GSE49909, GSE99624, GSE166611, GSE193836, GSE107143, GSE214297, GSE182991. CpGs measured on fewer than 20 samples are left out. Built by python/tools/build_references.py."
     preprocess: []
     postprocess: []
 
@@ -5411,38 +5810,6 @@ clocks:
       alternatives: ["retroelementagev1", "retroelementagev2"]
     preprocess: []
     postprocess: []
-  efrs:
-    name: "efrs"
-    year: 2022
-    species: "Homo sapiens"
-    data_type: "dna_methylation"
-    generation: "other"
-    tissue: ["whole blood"]
-    platform: ["450K", "EPICv1"]
-    predicts: ["frailty index"]
-    training_target: ["frailty index"]
-    unit: ["unitless"]
-    scale_type: "relative_score"
-    model_type: "LASSO regression"
-    population: "older adults, ESTHER cohort"
-    n_features: 20
-    requires_fp64: false
-    availability: "untraced"
-    citation: "Gao, X., et al. “Derivation and validation of an epigenetic frailty risk score in population-based cohorts of older adults.” Nature Communications 13:5269 (2022)."
-    doi: "https://doi.org/10.1038/s41467-022-32893-x"
-    notes: "Epigenetic frailty risk score. 65 frailty-associated CpGs were found by epigenome-wide screening in ESTHER and LASSO reduced them to 20, validated in KORA-Age."
-    coefficient_source:
-      file: null
-      url: "https://doi.org/10.1038/s41467-022-32893-x"
-      provenance: "Unusual case, and worth stating precisely: the twenty CpGs ARE published. Supplementary Data 1 lists all 65 screened sites and marks the twenty that entered the score with footnote a: cg23458887, cg15058210, cg19267254, cg12510708, cg15380836, cg11700584, cg01234420, cg17860366, cg21656937, cg03725309, cg17971578, cg18791730, cg04955914, cg00921350, cg07312601, cg02867102, cg08463758, cg13570972, cg07349348, cg10408430. What the paper does not print is the LASSO weight on each, and the coefficients it does tabulate are per-CpG association estimates from a different model, not the score. A feature list without its weights is not a clock."
-      primary_source_traced: false
-      redistributable: null
-      why: "The feature set is published; the LASSO coefficients are not."
-      obtain: "Ask the authors for the twenty weights, or refit against the published feature list on your own cohort and say that is what you did."
-      alternatives: ["dnamfili", "dnamphenoage", "zhangmortality"]
-    preprocess: []
-    postprocess: []
-
   fiage:
     name: "fiage"
     year: 2025

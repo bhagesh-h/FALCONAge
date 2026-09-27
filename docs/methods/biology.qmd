@@ -13,7 +13,7 @@ carry the same chronological age and very different division counts. This is
 why a division count is not reported in years and why subtracting a
 chronological age from one is refused: the quantity was never elapsed time.
 
-The 12 hallmarks (López-Otín 2013 [[55]](../references.qmd#ref-55), updated 2023 [[56]](../references.qmd#ref-56)) are the biological vocabulary the scores are
+The twelve hallmarks of López-Otín et al. 2023 [[56]](../references.qmd#ref-56), which extend the nine of 2013 [[55]](../references.qmd#ref-55), are the biological vocabulary the scores are
 trying to summarise. Grouped as primary (damage), antagonistic (compensatory responses that
 turn harmful), integrative (system-level consequence). A hallmark must show age-associated
 manifestation, experimental acceleration of aging when worsened, and therapeutic reversibility.
@@ -136,7 +136,7 @@ is homoscedastic, but clock coefficients are almost always in β space, do not s
 |---|---|---|
 | Illumina 27K (HumanMethylation27) | 27,578 | Horvath 2013 and Bocklandt-era clocks |
 | Illumina 450K | 485,512 | The workhorse; most published coefficient sets |
-| EPIC v1 (850K) | 866,554 | Drops ~40% of 450K probes; adds enhancers |
+| EPIC v1 (850K) | 865,918 (manifest B4) | Keeps over 90% of 450K probes; adds about 413,000 CpGs, many in enhancers |
 | EPIC v2 | 937,690 probes / 923,452 unique sites | Probe IDs carry suffixes (`cg00000029_TC21`); replicate probes must be aggregated before applying any clock |
 | Illumina MSA (Methylation Screening Array) | ~270K | Targeted, cheaper; emerging |
 | HorvathMammalMethylChip40 | ~37K conserved loci | 128+ mammalian species, 59 tissues; basis of the universal mammalian clocks |
@@ -171,7 +171,7 @@ Deconvolution is a constrained regression onto a reference signature matrix; pya
 
 **Sex estimation from methylation.** X and Y chromosome probe z-scores against the autosomal
 mean and SD, projected on PCA loadings, implemented as `XChrom` (4,047 probes) and `YChrom`
-(284 probes) in [pyaging `_models.py`](https://github.com/lucascamillomd/pyaging) lines 1338–1399.
+(284 probes) in pyaging e7267e9, classes `XChrom` and `YChrom` in [`_models.py`](https://github.com/lucascamillomd/pyaging).
 Needed because GrimAge, DNAmFitAge and the mammalian clocks take sex as an input.
 
 ### 3.2 Transcriptomics

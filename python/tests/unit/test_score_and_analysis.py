@@ -477,3 +477,59 @@ def test_cox_matches_r_coxph_breslow_on_tied_times():
     B, C = _cox_breslow(d[["x", "age", "sex"]].to_numpy(), t, e)
     assert B == pytest.approx([0.512266, 0.039324, 0.419025], abs=1e-5)
     assert np.sqrt(np.diag(C)) == pytest.approx([0.071065, 0.004888, 0.127651], abs=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# Zhang et al. 2019: each sample standardised across the whole array
+# ---------------------------------------------------------------------------
+
+def _zhang_fixture():
+    from pathlib import Path
+
+    here = Path(__file__).resolve().parents[1] / "data"
+    X = pd.read_csv(here / "zhang_betas.csv.gz", index_col=0)
+    ref = pd.read_csv(here / "zhang_reference.txt", sep=" ", index_col=0)
+    obs = pd.DataFrame({"age": ref["age"], "tissue": "whole blood"}, index=X.index)
+    return fa.FalconData(X=X, obs=obs, modality="dna_methylation", platform="450K"), ref
+
+
+def test_zhang_matches_the_authors_pred_r():
+    """pred.R's own output on a matrix with absent probes, missing values and a
+    probe missing in every sample; provenance in tests/data/SOURCE.md."""
+    d, ref = _zhang_fixture()
+    res = fa.score(d, clocks=["zhangen", "zhangblup"], min_coverage=0.0)
+    assert np.allclose(res.scores["zhangen"], ref["enpred"], rtol=0, atol=1e-9)
+    assert np.allclose(res.scores["zhangblup"], ref["blupred"], rtol=0, atol=1e-9)
+    assert res.coverage["zhangen"]["imputation"] == "excluded"
+
+
+def test_zhang_refuses_a_subset_of_the_array():
+    """The per-sample mean and SD of a few thousand probes are not the array's,
+    so the default floor applies to the 319,607 probes the model was fitted on."""
+    from falconage.core.errors import FeatureCoverageError
+
+    d, _ = _zhang_fixture()
+    with pytest.raises(FeatureCoverageError, match="whole array"):
+        fa.score(d, clocks=["zhangen"])
+
+
+def test_associate_codes_text_covariates_as_indicators(synthetic_betas):
+    """On pandas 3 text is dtype "str", which the old object test sent through
+    to_numeric, dropping every row; and integer codes made a three-level factor
+    ordinal. Indicators, with a missing level left missing."""
+    obs = synthetic_betas.obs.copy()
+    obs["tissue"] = "whole blood"
+    obs["site"] = (["a", "b", "c"] * 8)[: len(obs)]
+    obs["outcome"] = np.arange(len(obs), dtype=float)
+    d = fa.FalconData(X=synthetic_betas.X, obs=obs, modality="dna_methylation")
+    res = fa.score(d, clocks=["hannum"], min_coverage=0.0)
+    tab = fa.associate(res, "outcome", covariates=("age", "sex", "site"))
+    assert tab["n"].iloc[0] == len(obs)
+    obs2 = obs.copy()
+    obs2.loc[obs2.index[0], "sex"] = None
+    res.obs = obs2
+    tab2 = fa.associate(res, "outcome", covariates=("age", "sex", "site"))
+    assert tab2["n"].iloc[0] == len(obs) - 1
+    res.obs = obs.assign(outcome=["x"] * len(obs))
+    with pytest.raises(fa.core.errors.AnalysisError, match="not numeric"):
+        fa.associate(res, "outcome")

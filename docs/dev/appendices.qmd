@@ -417,21 +417,23 @@ Listed in the transform table in §4.20. Fifteen distinct forms, of which `ident
 
 ### What FALCONAge implements of this
 
-Seven preprocess ops and nine postprocess transforms, in `models/ops.py`, which is what the 23
-scoring clocks reach for. Several are more general than their row above: `scale` takes centre and
-spread vectors and so covers `scale`, `scale_mean` and (with row statistics) `scale_row`;
-`quantile_normalize` takes the gold vector and the scoring index, covering the DunedinPACE and
-Stubbs rows.
+Seven per-clock preprocess ops, one dataset-level op and 21 postprocess transforms, in
+`models/ops.py`; 35 of the 69 bundled clocks declare at least one. Several are more general than
+their row above: `scale` takes centre and spread vectors stored with the model and so covers
+`scale` and `scale_mean`; `quantile_normalize` takes the gold vector and the scoring index,
+covering the DunedinPACE and Stubbs rows. `scale_row` needs statistics from the sample itself,
+over every probe the array carries, so it runs on the dataset before alignment.
 
 | Shipped | Covers |
 |---|---|
 | `beta_to_m`, `m_to_beta` | the β ↔ M logit pair, which no row above names because pyaging folds it into each clock |
-| `scale` | `scale`, `scale_mean`, `scale_row` |
+| `scale` | `scale`, `scale_mean` |
+| `standardise_within_sample` (dataset-level) | `scale_row`, over the whole array as the Zhang 2019 `pred.R` does |
 | `rank_normalize` | `median_fill_and_rank` |
 | `quantile_normalize` | `quantile_normalize_with_gold_standard`, `quantile_normalize_and_scale` |
 | `binarize` | `binarize` |
 | `simplex_projection` | the deconvolution row of the special passes |
-| `add`, `multiply`, `divide_by`, `clip`, `exp`, `expit`, `log_linear`, `anti_log_linear`, `cox_to_years` | the postprocess set |
+| `add`, `add_constant`, `multiply`, `divide_by`, `days_to_months`, `days_to_weeks`, `clip`, `exp`, `expit`, `sigmoid`, `one_minus`, `log_linear`, `anti_log`, `anti_log_linear`, `anti_log_log`, `anti_logp2`, `scale_and_shift`, `cox_to_years`, `mortality_to_phenoage`, `petkovich_blood`, `stubbs_multitissue` | the postprocess set |
 
 Reference filling is not an op here. `fill_nan_with_reference` is the largest row in the table and
 FALCONAge does it in `align()` instead, before any op runs, because the imputation choice is a
@@ -440,11 +442,16 @@ way. Zero is never a fill value: in β space zero means completely unmethylated,
 and extreme measurement, and a clock with a large positive coefficient on a probe the array does
 not carry will read "totally unmethylated" and shift the prediction by whole years.
 
-Unbuilt: `tpm_norm_log1p`, `mean_over_present`, `quantile95_over_present`, `nan_to_zero`,
-`autosomal_zscore`, `expand_with_reference`, and all ten special forward passes. Every one belongs
-to a clock family whose coefficients are not redistributable, so building the op first would
-produce code with no real answer to test against, see the tier table in
-[Architecture](index.qmd).
+Not ops, because the statistic is the whole model: `mean_over_present` and
+`quantile95_over_present` are `AggregationClock`, and the epiTOC2 / epiTOC3 row of the special
+passes below is `DivisionClock`, which averages over the sites present, as the published
+implementation does, where the table has `nan_to_zero`. The deconvolution row is
+`DeconvolutionClock`, by the authors' non-negative least squares rather than the pseudo-inverse and
+simplex projection the row describes. Unbuilt: `tpm_norm_log1p`, `autosomal_zscore`,
+`expand_with_reference`, and the other eight special forward passes. Each belongs to a clock family whose
+coefficients are licensed, not yet traced to a primary source, or absent from the registry, so
+building the op first would produce code with no real answer to test against, see the tier table
+in [Architecture](index.qmd).
 
 ### Special forward passes (not expressible as preprocess → linear → postprocess)
 

@@ -1,0 +1,68 @@
+# Which clock is which in each package, and what is already explained.
+#
+# Keys are FALCONAge clock ids; values name the same clock in the other
+# packages (a methylclock column of DNAmAge(), a dnaMethyAge clock name, a
+# methylCIPHER calc function, a biolearn model). A difference larger than
+# `tolerance` fails the suite unless it is listed under `explained` with the
+# reason, found once and recorded here so that it is not found again.
+dataset: GSE182991
+tolerance: 1.0e-6          # absolute, in the clock's own unit
+clocks:
+  horvath2013:      {methylclock: Horvath, dnaMethyAge: HorvathS2013, methylCIPHER: calcHorvath1, biolearn: Horvathv1}
+  skinandblood:     {methylclock: skinHorvath, dnaMethyAge: HorvathS2018, methylCIPHER: calcHorvath2, biolearn: Horvathv2}
+  hannum:           {methylclock: Hannum, dnaMethyAge: HannumG2013, methylCIPHER: calcHannum, biolearn: Hannum}
+  dnamphenoage:     {methylclock: Levine, dnaMethyAge: LevineM2018, methylCIPHER: calcPhenoAge, biolearn: PhenoAge}
+  zhangen:          {methylclock: EN, dnaMethyAge: ZhangQ2019}
+  zhangblup:        {methylclock: BLUP}
+  dnamtl:           {methylclock: TL, dnaMethyAge: LuA2019, methylCIPHER: calcDNAmTL, biolearn: DNAmTL}
+  pedbe:            {methylclock: PedBE, methylCIPHER: calcPEDBE, biolearn: PEDBE}
+  lin:              {methylCIPHER: calcLin, biolearn: Lin}
+  vidalbralo:       {methylCIPHER: calcVidalBralo, biolearn: VidalBralo}
+  weidner:          {methylCIPHER: calcWeidner, biolearn: Weidner}
+  zhangmortality:   {dnaMethyAge: ZhangY2017, methylCIPHER: calcZhang, biolearn: Zhang_10}
+  epitoc1:          {dnaMethyAge: YangZ2016, methylCIPHER: calcEpiTOC, biolearn: EpiTOC1}
+  epitoc2:          {dnaMethyAge: epiTOC2, methylCIPHER: calcEpiTOC2, biolearn: EpiTOC2}
+  hrsinchphenoage:  {methylCIPHER: calcHRSInChPhenoAge, biolearn: HRSInCHPhenoAge}
+  dunedinpoam38:    {methylCIPHER: calcDunedinPoAm38, biolearn: DunedinPoAm38}
+  knight:           {methylCIPHER: calcKnight, biolearn: Knight}
+  leecontrol:       {methylCIPHER: calcLeeControl, biolearn: LeeControl}
+  leerobust:        {methylCIPHER: calcLeeRobust, biolearn: LeeRobust}
+  leerefinedrobust: {methylCIPHER: calcLeeRefinedRobust, biolearn: LeeRefinedRobust}
+  mayne:            {methylCIPHER: calcMayne, biolearn: Mayne}
+  bohlin:           {methylCIPHER: calcBohlin, biolearn: Bohlin}
+  intrinclock:      {methylCIPHER: calcIntrinClock}
+  stoch:            {biolearn: StocH}
+  stocz:            {biolearn: StocZ}
+  stocp:            {biolearn: StocP}
+  yingcausage:      {biolearn: YingCausAge}
+  yingdamage:       {biolearn: YingDamAge}
+  yingadaptage:     {biolearn: YingAdaptAge}
+  mccartneysmoking: {methylCIPHER: calcSmokingMcCartney, biolearn: SmokingMcCartney}
+  mccartneyalcohol: {methylCIPHER: calcAlcoholMcCartney, biolearn: AlcoholMcCartney}
+  mccartneybmi:     {methylCIPHER: calcBMIMcCartney, biolearn: BMI_McCartney}
+  dnamic:           {methylCIPHER: calcDNAmIC}
+  dnamstress:       {methylCIPHER: calcDNAmStress}
+  cellpopage:       {methylCIPHER: calcCellPopAge}
+  depressionbarbu:  {biolearn: DepressionBarbu}
+  downsyndrome:     {biolearn: DownSyndrome}
+  prostatecancerkirby: {biolearn: ProstateCancerKirby}
+explained:
+  - {clock: dnamtl, package: methylCIPHER, reason: "calcDNAmTL subtracts the intercept 7.924780053 instead of adding it (Lu 2019 Table 2 and Supplementary Table 3 give +7.924780053), a constant 15.85 kb."}
+  - {clock: knight, package: methylCIPHER, reason: "Knight_CpGs carries the intercept rounded to 41.7; Knight 2016 Additional file 3 gives 41.72579759."}
+  - {clock: leerobust, package: methylCIPHER, reason: "Intercept rounded to 24.99772; Lee 2019 Supplementary Table 1 gives 24.99772133."}
+  - {clock: leerefinedrobust, package: methylCIPHER, reason: "Intercept rounded to 30.74966; Lee 2019 Supplementary Table 1 gives 30.74966212."}
+  - {clock: mayne, package: methylCIPHER, reason: "Intercept rounded to 24.99026; Mayne 2017 Supplementary Table S5 gives 24.99026439."}
+  - {clock: horvath2013, package: methylCIPHER, reason: "calcHorvath1 adds 0.696, Horvath 2013's intercept 0.695507258 rounded, before the inverse age transform."}
+  - {clock: pedbe, package: methylCIPHER, reason: "calcPEDBE subtracts 2.10; its own coefficient table (and methylclock, which agrees with FALCONAge to 1e-14) carries -2.09734933574694."}
+  - {clock: bohlin, package: methylCIPHER, reason: "methylCIPHER carries predictGA's lambda.min model (251 CpGs) in days; FALCONAge ships the package's default lambda.1se model (96 CpGs) in weeks."}
+  - {clock: weidner, package: methylCIPHER, reason: "calcWeidner indexes with match(colnames(DNAm), Weidner_CpGs), which selects the first three columns of the input rather than Weidner's CpGs, and uses a model (111.83 - 64.57, 42.57, +75.15) that is not in Weidner 2014 or its supplement; FALCONAge uses the equation printed in the paper."}
+  - {clock: dnamtl, package: biolearn, reason: "DNAmTL.csv carries the intercept as -7.924780053; Lu 2019 Supplementary Table 3 gives +7.924780053, a constant 15.85 kb."}
+  - {clock: depressionbarbu, package: biolearn, reason: "The model adds an intercept of 12.2169841, which is Lin 2016's; Barbu 2021's score has none (Supplementary Excel 2A)."}
+  - {clock: knight, package: biolearn, reason: "Intercept rounded to 41.7; Knight 2016 Additional file 3 gives 41.72579759."}
+  - {clock: leerobust, package: biolearn, reason: "Intercept rounded to 24.99772; Lee 2019 Supplementary Table 1 gives 24.99772133."}
+  - {clock: leerefinedrobust, package: biolearn, reason: "Intercept rounded to 30.74966; Lee 2019 Supplementary Table 1 gives 30.74966212."}
+  - {clock: mayne, package: biolearn, reason: "Intercept rounded to 24.99026; Mayne 2017 Supplementary Table S5 gives 24.99026439."}
+  - {clock: horvath2013, package: biolearn, reason: "The intercept is 0.696, Horvath 2013's 0.695507258 rounded, added before the inverse age transform."}
+  - {clock: pedbe, package: biolearn, reason: "Subtracts 2.1 where the coefficient table carries -2.09734933574694 (methylclock agrees with FALCONAge)."}
+  - {clock: bohlin, package: biolearn, reason: "Bohlin.csv is predictGA's lambda.min model (251 CpGs, + 277.2421) in days; FALCONAge ships the package's default lambda.1se model (96 CpGs) in weeks."}
+  - {clock: mccartneybmi, package: biolearn, reason: "biolearn applies a logistic transform; McCartney 2018 defines the predictor as the plain weighted sum, which FALCONAge returns (the registry's known_discrepancies)."}

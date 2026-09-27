@@ -494,6 +494,10 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
                 "n_present": int(alignment.present.sum()),
                 "n_imputed": alignment.n_imputed,
                 "imputation": alignment.imputation,
+                "n_from_reference": alignment.n_from_reference,
+                "n_pooled": alignment.n_pooled,
+                "reference": (reg.reference_label(cid)
+                              if alignment.n_from_reference else None),
             }
             if alignment.coverage < 0.95:
                 if alignment.imputation == EXCLUDED:
@@ -502,8 +506,28 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
                            "published implementation does")
                 else:
                     how = f"{alignment.n_imputed} value(s) imputed"
+                    if alignment.n_from_reference:
+                        how += (f"; {alignment.n_from_reference} absent feature(s) "
+                                f"filled from {reg.reference_label(cid)}")
                 warns.warn(f"{alignment.coverage:.1%} feature coverage; {how}",
                            clock=cid, category="coverage")
+            # The fallback, named every time it is used, whatever the coverage:
+            # one heavy CpG filled with a pooled value near 0.5 can move an age
+            # by years, and a run that did it silently looks like one that did
+            # not. The weight share says whether it matters.
+            if alignment.n_pooled and alignment.imputation != EXCLUDED:
+                share = ("" if alignment.pooled_mass is None else
+                         f", carrying {alignment.pooled_mass:.1%} of the model's "
+                         "|coefficient|,")
+                why = ("have no value in its reference" if reg.reference_label(cid)
+                       else "have no reference value, because none is published "
+                            "for this clock or its tissue")
+                warns.warn(
+                    f"{alignment.n_pooled} absent feature(s){share} {why}, and were "
+                    "filled with the mean of the clock's present features in this "
+                    "data. That value is near 0.5 for most clocks and differs "
+                    "between datasets.",
+                    clock=cid, category="imputation")
             # Worth its own warning, separate from the count. The count can look
             # fine while the weights do not, and that combination is the one a
             # user is least likely to check for. Fires only when the two

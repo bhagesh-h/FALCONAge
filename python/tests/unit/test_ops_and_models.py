@@ -242,7 +242,12 @@ def test_scaffold_architecture_is_testable_without_real_coefficients(tmp_path):
     import pandas as pd
 
     reg = fa.registry.ClockRegistry.from_yaml()
-    n = reg.get("dunedinpace").n_features or 20_000
+    # A licensed clock whose architecture is a plain weighted sum. DunedinPACE
+    # was the example until it gained its own model class, which needs the
+    # background set a bare weight vector does not carry.
+    cid = "pchannum"
+    assert reg.get(cid).availability == "licensed"
+    n = reg.get(cid).n_features or 20_000
     feats = [f"cg{i:08d}" for i in range(n)]
 
     w = tmp_path / "synthetic.csv"
@@ -250,13 +255,13 @@ def test_scaffold_architecture_is_testable_without_real_coefficients(tmp_path):
     coefs[7] = 2.0
     w.write_text("feature_id,coefficient\n"
                  + "\n".join(f"{f},{c}" for f, c in zip(feats, coefs)) + "\n")
-    reg.register_local_weights("dunedinpace", w)
+    reg.register_local_weights(cid, w)
 
     X = pd.DataFrame(np.full((2, n), 0.25), index=["a", "b"], columns=feats)
     X.iloc[0, 7] = 0.5
     d = fa.FalconData(X=X, obs=pd.DataFrame(index=["a", "b"]),
                       modality="dna_methylation")
-    model = fa.models.build(reg, "dunedinpace")
+    model = fa.models.build(reg, cid)
     got, _ = model.predict(d, resolve("cpu"))
     assert got["a"] == pytest.approx(1.0)   # 0.5 * 2.0, identity postprocess
     assert got["b"] == pytest.approx(0.5)   # 0.25 * 2.0

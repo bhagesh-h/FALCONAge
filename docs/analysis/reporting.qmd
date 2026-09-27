@@ -65,7 +65,7 @@ docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
 :::
 
 **Rendering it.** Quarto is not in the FALCONAge image. Installed it takes 423 MB, which would add
-62% to the 680 MB image for an optional document, so inside the image the source is written and
+about 17% to the 2.5 GB image for an optional document, so inside the image the source is written and
 the run says so. Render it with the Quarto container, from the output directory, and open
 `falconage_report.html`:
 
@@ -131,8 +131,9 @@ a directory that already exists.
 
 ### 10.3 What FALCONAge draws, and against which of the above
 
-Twenty-five figures, identical in Python and R because both read their colours, titles,
-subtitles and one-line descriptions from the same `colorscheme.yaml`. Every function returns its
+Thirty-one figures in Python, twenty of them also in R, drawn alike because both languages read
+their colours, titles, subtitles and one-line descriptions from the same `colorscheme.yaml`. The
+table lists those that answer the principles above; the [gallery](figures.qmd) shows every one. Every function returns its
 data frame as well as its figure, which is how two rendering engines draw the same numbers.
 
 | Figure | Answers | From §10.1 |
@@ -162,8 +163,9 @@ correlation heatmap says two clocks agree, and the chord says how much of that a
 built in by construction. A pair with a thick chord and a high correlation has told you much less
 than a pair with a high correlation and no chord at all.
 
-Not implemented, and honestly out of scope for v1.0: volcano and GSEA plots (11) belong to
-feature-level biology rather than to scoring, and spatial maps (12) wait on the spatial modality.
+A volcano plot of clock associations is implemented (`fa.plot.volcano`, R `plot_volcano`). GSEA (11)
+belongs to feature-level biology rather than to scoring, and spatial maps (12) wait on the spatial
+modality.
 
 Two rules the code enforces rather than recommends. A figure whose data is empty, flat, or all
 zeros raises `NothingToPlot` and `save_all` records the reason, because an axis-free rectangle in

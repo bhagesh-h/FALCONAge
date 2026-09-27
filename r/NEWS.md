@@ -5,6 +5,170 @@
 
 ## Added
 
+- **LinAge2** (Fong et al. 2025, npj Aging 11:29), a clinical clock trained on
+  survival: 59 examination, blood and urine inputs in NHANES variable names,
+  three scores from health questionnaire items, sex-specific z-scores and
+  principal components, and Cox models on age and 17 components, returned as
+  the age of equal risk under a model on age alone. The authors publish code
+  rather than a table, and their `linAge2.R` refits on the NHANES 1999-2002
+  file it ships with every time it runs; `python/tools/build_linage2.py` runs
+  it once and records what it fitted, and `linage2` applies that natively. It
+  reproduces the script to 5e-11 years on the twelve example subjects in the
+  archive and to 5e-10 on all 2,344 subjects of the 2001-2002 test wave. As in
+  the authors' code, a missing lipid sets LDL to 0; the result says which
+  samples that happened to.
+- **cAge** (Bernabeu et al. 2023, Genome Medicine 15:12): two elastic nets on
+  CpGs and their squares, one on age and one on log(age), the second replacing
+  the first at a prediction of 20 years or younger. Weights from Additional
+  file 4, Tables S8 and S9 (CC BY), by `python/tools/build_cage.py`; a new
+  `QuadraticClock`. On synthetic betas spanning 0.5 to 88 years it reproduces
+  the authors' `cage_predictor.R` to 1e-5 (the paper rounds S8 to nine
+  decimals). Absent CpGs take the adult-blood reference, which now covers
+  3,203 of cAge's 3,225 CpGs.
+- **Horvath's gold-standard normalisation**, opt-in:
+  `fa.preprocess.horvath_normalise()` (R: `horvath_normalise()`) calibrates
+  each sample to `goldstandard2` (Horvath 2013, Additional file 22, 21,368
+  probes, now shipped) by his `BMIQcalibration` (Additional file 24). Its fits
+  stop early, so their result depends on the optimiser's path; the port
+  reproduces each R piece it depends on (`set.seed` and `sample()`, `optim`'s
+  Nelder-Mead and BFGS, RPMM's `blc`, `density()`) and agrees with the
+  unmodified R code to 3e-10 in beta on a synthetic fixture, and to 2e-8 years
+  of Horvath age on 120 EPIC blood samples, where it moves Horvath age by
+  -1.87 years (SD 1.15). On Knight et al.'s own test dataset it gives 37.3665,
+  38.3463 and 39.322 weeks against their stated 37.366, 38.346 and 39.324
+  (`sample_kind="Rounding"`, the R they used; `absent="drop"`, their wrapper's
+  handling of absent probes).
+- **Thirteen catalogued clocks run**, each traced from methylCIPHER or
+  biolearn back to its primary source: Bohlin's gestational age, Mayne's
+  placental clock, IntrinClock, CellPopAge, the stochastic StocH, StocZ and
+  StocP, eFRS, DNAmIC, DNAmStress, Kirby's prostate classifier, Barbu's
+  depression score and the Down syndrome score. Three catalogue copies were
+  wrong: Bohlin is shipped as the authors' `predictGA` package applies it by
+  default (lambda.1se, 96 CpGs; the catalogues carry lambda.min, 251);
+  IntrinClock at lambda.1se, with which the authors' published residuals are
+  reproduced to 1e-13 (methylCIPHER uses lambda.min, 1.5 years away); and
+  Barbu's score without the intercept biolearn gives it, which is Lin 2016's.
+  Bohlin, the stochastic clocks and IntrinClock reproduce the authors' own
+  code to 1e-9 (`python/tests/data/catalogue_clocks_reference.R`).
+- **DunedinPACE with the user's own licence.**
+  `fa.registry.load().import_dunedinpace(path)` (R: `import_dunedinpace()`)
+  reads `mPACE_Models` from an installed DunedinPACE package, a source
+  checkout or an `.rda` file and registers the weights, the 20,000-probe
+  background and its means. Scoring follows `PACEProjector`: each sample is
+  quantile-normalised to the background by an exact port of
+  `preprocessCore::normalize.quantiles.use.target` (including its tie rule),
+  with the authors' 80% (70% on EPIC v2) probe threshold. It matches the
+  authors' code to 5e-15 on real EPIC data.
+- **NMR metabolomics.** A `metabolomics_nmr` modality, `fa.read_nightingale()`
+  for Nightingale exports, and MetaboAge (van den Akker et al. 2020) and
+  MetaboHealth (Deelen et al. 2019) as MiMIR computes them: its QC, its
+  z-scores, its missing-value rule. They match MiMIR to 1e-9 and 1e-12.
+  MetaboHealth is z-scored within the cohort, so it is flagged
+  `requires_cohort`. Reading `.xlsx` exports needs the `metabolomics` extra
+  (openpyxl).
+- **`fa.fit_clock()`**, an elastic net fitted to one cohort with every
+  reported prediction made out of fold (nested cross-validation, lambda chosen
+  in the inner folds). The estimator is glmnet's for a gaussian outcome,
+  including its internal scaling of y, its lambda grid and `cv.glmnet`'s
+  rules for `lambda.min` and `lambda.1se`; it reproduces glmnet 5.1's path to
+  within 1e-6 and chooses exactly the lambdas those rules give on glmnet's own
+  fold fits (cv.glmnet's own fold fits differ from direct glmnet calls by about
+  1e-4 in MSE, so its returned lambdas can differ slightly). The result is labelled a model of the
+  cohort, not a published clock.
+- **Blood-count ratios**: `fa.blood_count_ratios()` returns NLR, LMR, PLR and
+  SII from a complete blood count with declared units, converting counts to
+  10^9/L; percentages give NLR and LMR only, and a zero lymphocyte count gives
+  no ratio rather than infinity.
+- **Acceleration against a reference population**:
+  `acceleration(method="reference", reference=, match=)` fits the age line in
+  the reference only (per level of `match`), refuses ages outside it and a
+  reference scored with different coefficients, and records each fitted line in
+  `attrs["reference_fit"]`. `leave_one_marker_out()` recomputes a KDM,
+  HD or PhenoAge without each marker in turn and reports how far the score
+  and, with `test=`, the association moved.
+- **A conformance suite against the other implementations** (`test/conformance/`,
+  image `docker/Dockerfile.conformance`): GSE182991 scored by FALCONAge,
+  methylclock, dnaMethyAge, methylCIPHER and biolearn from one complete input,
+  failing on any difference above 1e-6 that is not recorded with its reason. Of
+  75 clock-package pairs, 56 agree and 19 differ for a recorded reason, every
+  one a copy that departs from the primary source.
+- With these, the catalogue reads 178 clocks: 69 bundled, 52 untraced and 57
+  licensed.
+
+## Fixed
+
+- **Fifteen bundled clocks traced to their primary sources**; fourteen match
+  the paper's own table or the authors' code to the last digit, and two
+  intercepts had been rounded: Knight's gestational age is 41.72579759, not
+  41.7, and the three placental clocks of Lee et al. carry 13.0618205,
+  24.99772133 and 30.74966212. The placental clocks and HRSInCH PhenoAge now
+  reproduce the authors' own code to 1e-10. PedBE's supplement cannot be
+  retrieved by script; its intercept is now its coefficient table's
+  -2.09734933574694 rather than the rounded -2.1, and it stays marked
+  untraced, the only bundled clock that is.
+- **`consensus()` no longer fails on a clock whose scores do not vary.** Such
+  a clock carries no information about a difference; it is left out, named in
+  `left_out` and counted in the verdict. Before, the mixed design stopped with
+  a singular-matrix error and the independent design reported a p-value of NaN.
+
+## Changed
+
+- **`efrs` is removed**: it was `dnamfili`, Li et al. 2022's epigenetic frailty
+  risk score, catalogued a second time (same DOI, same twenty CpGs, the first
+  author misnamed). TranslAGE's name for it, eFRS, is recorded as a catalogue
+  alias of `dnamfili`.
+
+## Added
+
+- **The PC clocks can be imported from the authors' file.** PC-Clocks keeps
+  its rotations, weights and fill values in one file, `CalcAllPCClocks.RData`,
+  which neither it nor its repository licenses, so FALCONAge does not ship it.
+  `fa.registry.load().import_pc_clocks(path)` (R: `import_pc_clocks()`) reads a
+  downloaded copy and registers PCHorvath 2013, PCSkinAndBlood, PCHannum,
+  PCPhenoAge and PCDNAmTL. Each is linear in the betas, so it is collapsed
+  without approximation to one weight per CpG and a constant; the authors'
+  `imputeMissingCpGs` become its reference values, and the file's own
+  `anti.trafo` is checked against Horvath's before the registry applies it to
+  the two Horvath clocks. On a file built with the authors' object layout, the
+  imported clocks reproduce `run_calcPCClocks.R` to 1e-10 on a matrix with
+  absent and partly missing CpGs. The five entries move from `untraced` to
+  `licensed`, since their source is known and not redistributable. PCGrimAge
+  needs a composite model class and is not imported. A user's coefficient
+  file may now carry an `(Intercept)` row, added as a constant; before, it
+  would have been aligned as a CpG the data lacks and filled, and a reference
+  can be registered beside such a file (`register_local_reference`).
+- **`consensus()` on repeated measures.** `design="paired"` tests each
+  person's change between two visits (`subject_col` names the person), and
+  `design="mixed"` fits `y ~ visit + (1 | person)` by REML over two or more
+  visits, keeping a person who missed one. The mixed model is
+  `falconage.analysis.mixed`, a profiled-REML fit for one random intercept with
+  nlme's containment degrees of freedom; on a three-visit design with nine
+  missing visits it reproduces `nlme::lme` (estimates to 1e-7, standard errors
+  to 1e-6, degrees of freedom exactly, the visit F test), and with complete
+  pairs its t is the paired t. Both designs report `mdc95`, the minimum
+  detectable change 1.96·√2·SEM (Weir 2005), flag significant mean changes
+  smaller than it, and say how many in the verdict. The R wrapper takes
+  `design` and `subject_col`.
+- **Six-cell blood deconvolution runs.** The six `deconvolutebloodepic*`
+  entries (CD8+ T, CD4+ T, NK, B cells, monocytes, neutrophils) are bundled
+  with the IDOL libraries of Salas et al. 2018 as the authors ship them in
+  FlowSorted.Blood.EPIC (GPL-3): 450 CpGs on EPIC and a 350-CpG legacy table on
+  450K, chosen by the data's platform (`python/tools/build_idol.py`). A new
+  `DeconvolutionClock` projects each sample as the package's
+  `projectCellType_CP` does with its documented arguments for a beta matrix
+  (`nonnegative = TRUE, lessThanOne = FALSE`): non-negative least squares over
+  the CpGs the sample observes, rounded to four decimals, not forced to sum to
+  one. On 858 whole-blood EPIC samples from one cohort the six proportions
+  equal minfi's `estimateCellCounts2` output for every sample and cell type.
+  `fa.cell_composition()` and `acceleration(adjust="cell_composition")` now
+  have proportions to use. The twelve 12-cell IDOL-Ext entries are `licensed`,
+  since FlowSorted.BloodExtended.EPIC is under a Dartmouth research-use
+  licence, and `register_local_weights` accepts a user's own table for them.
+  With the PC-clock change below, the catalogue reads 52 bundled, 66 untraced
+  and 57 licensed.
+  `probe_loss()` reports feature coverage for a network or a deconvolution
+  entry instead of "coefficients not available".
+
 - **The documentation is arranged by what a reader is doing.** The site was
   eleven pages, two of them over 3,000 lines, with the literature review, the
   methods, the design plan and other packages' registries on one page. It is
@@ -189,6 +353,89 @@
 
 ## Fixed
 
+- **The corpus results printed a units error and dropped two figures.** The
+  gestational table compared every clock scored on cord blood with the
+  recorded gestational age under `median_predicted_weeks`, so adult clocks'
+  years, proportions and kilobases were read as weeks; it now lists only
+  clocks that return weeks (Knight: 37.93 against 37.29 recorded, r 0.953).
+  `plot.save_all()` drew the score-interval figure for the first age clock
+  alphabetically, which is now AltumAge, a network `technical_se()` refuses,
+  and failed; it takes the first clock with a technical SE. The gallery's
+  missingness example came from a series with no missing values, whose
+  all-zero histogram is refused; it now uses one that has some. The probe-loss
+  figure matched units containing "year", so it drew DunedinPoAm38's pace
+  (years per year) and McCartney smoking's pack-years on an axis in years; it
+  takes clocks in years only, and its caption describes the reference fill.
+- **An absent CpG was filled with the mean of the clock's other CpGs.** The
+  default `imputation="reference"` had no reference to use: `LinearClock` never
+  passed one to `align()`, so every absent feature took the pooled mean of the
+  clock's present features in the data, near 0.5 for most clocks and different
+  in every dataset, while many clock CpGs sit near 0 or 1. Absent features now
+  take the clock's reference values, in the registry as `reference_values` and
+  built by `python/tools/build_references.py` from pinned sources: the authors'
+  own for DunedinPoAm38 (training-cohort means, the values `PoAmProjector`
+  substitutes), CorticalClock (the mean of 700 control cortical samples that
+  `CorticalClock.r` adds), AltumAge (the published scaler's centre) and Horvath
+  2013 (`goldstandard2`, Additional file 22, the per-probe normalisation
+  target); and for 22 other blood clocks, the mean over healthy adult whole
+  blood in the test corpus (8,085 CpGs, 24 to 100 samples each). A missing
+  value of a feature the data does carry keeps that feature's own cohort mean,
+  as the authors' implementations do. Clocks with no reference and no blood
+  counterpart (placenta, buccal, cord blood, mouse) keep the pooled fill, and
+  the run now names it every time, with the share of the model's |coefficient|
+  involved (warning category `imputation`); the manifest records per clock how
+  many features came from each. Measured on the corpus's 450K matrices masked to
+  EPIC probe sets, the median probe-loss shift on the years scale fell from 3.36
+  to 0.66 years (Hannum on EPIC v2 from −11.5 to +1.0 years, HRS PhenoAge from
+  +15.9 to +0.9), out of sample: the blood reference is rebuilt without each
+  dataset the platform-bias and conformal builders score. DunedinPoAm38's
+  weights and intercept are now traced to the authors' package, where they are
+  identical.
+- **Zhang 2019 elastic net and BLUP weighted unstandardised betas.** The
+  authors' `pred.R` fills each missing value with its probe's mean, drops
+  probes missing in every sample, and z-scores each sample across every probe
+  of the array (SD with n − 1) before the weights are applied. FALCONAge
+  applied the weights to raw betas, and the conformal calibration put healthy
+  blood 19.6 (elastic net) and 31.1 years (BLUP) above chronological age at
+  the median. A dataset-level op, `standardise_within_sample`, now runs that
+  procedure on the whole matrix before alignment, in two passes over column
+  blocks, and the two clocks refuse data carrying less than `min_coverage` of
+  the 319,607 probes the models were trained on. On the authors' example (10
+  samples, all 485,512 probes of the 450K) the estimates match `pred.R` to
+  1e-13 years (elastic net) and 5e-12 (BLUP); a synthetic fixture with
+  `pred.R`'s output is in the test suite. On the whole-blood calibration set
+  the median biases are now +3.7 and +2.3 years. Standardising over the model's own inputs instead, as pyaging
+  does, puts the elastic-net estimate 17.7 years lower on average on the same
+  example; the formulas page records it. The coefficient files were traced to
+  the authors' repository and are identical, intercepts included.
+- **The conformal calibration was mostly sorted cells.** It took every
+  healthy "blood" sample in the corpus, and 89 of its 164 were CD4+ or CD8+
+  T cells or CD14+ monocytes, on which a whole-blood clock's residual carries
+  the cell type (Hannum 21 years low on CD8+ T cells, DNAm PhenoAge 24 low on
+  CD14+ monocytes and 40 on CD8+ T cells). The calibration now takes whole
+  blood, buffy coat and peripheral blood leukocytes from adults only, as its
+  documentation already said; children had been in it too. Three ComputAgeBench
+  studies were added to the test corpus for their healthy whole-blood
+  controls (GSE99624, GSE166611, GSE193836; 181 MB, 36 files and 767 MB in
+  all), which keeps 12 clocks above the 40-sample floor with up to 99
+  samples (54 rows).
+- **The calibration tables had fallen behind the registry.** `conformal.csv`
+  lacked AltumAge and Weidner, and `platform_bias.csv` covered 15 of the 37
+  clocks it now measures (86 rows, 206 samples over eight datasets). Each
+  bootstrap interval in the platform table now draws from its own stream,
+  keyed on clock and platform, so adding a clock no longer moves the
+  intervals of the others. The Zhang BLUP shift on EPIC v2 is −0.46 years at
+  the median, measured as −0.64 from the lost probes and +0.15 from
+  restandardising over that array's probe set.
+- **The operation inventory on the developer pages.** It said seven
+  preprocess ops and nine postprocess transforms served 23 clocks, that
+  `scale` covered `scale_row`, and that the mitotic statistics were unbuilt.
+  `models/ops.py` has seven per-clock preprocess ops, one dataset-level op and
+  21 postprocess transforms, declared by 24 of the 46 bundled clocks;
+  `scale_row` is the dataset-level op; the mean, 95th-percentile and
+  division statistics are the model classes `AggregationClock` and
+  `DivisionClock`. The postprocess section named a module that does not
+  exist.
 - **Stale numbers and retired vocabulary on the documentation pages.** The
   install page printed a `falconage_config()` run from when the registry held
   161 clocks in tiers A, B and C; the getting-started page and the R page's
@@ -315,12 +562,11 @@
   −7.924780053; the estimator is `Σ wβ + 7.924780053` kilobases. On one cohort's
   858 EPIC samples FALCONAge returned a mean of −8.45 kb where dnaMethyAge
   returned 7.50; it now returns 7.40, and the remaining 0.10 kb is how the 30
-  CpGs absent from that dataset are filled. The coefficients are identical to
-  biolearn's `DNAmTL.csv`, which carries +7.924780053. The sign is set from the
-  paper itself: Lu et al. 2019 (Aging 11:5895, Table 2) fit DNAmTL = 8.05 −
-  0.018 × age kb in their test cohorts. The paper's supplementary coefficient
-  table sits behind PMC's download challenge and was not re-read, and the
-  registry says so.
+  CpGs absent from that dataset are filled. The sign is the paper's: Lu et al.
+  2019 (Aging 11:5895) fit DNAmTL = 8.05 − 0.018 × age kb in their test cohorts
+  (Table 2), and Supplementary Table 3 gives the 140 coefficients with the
+  intercept +7.924780053. methylCIPHER and biolearn 0.9.1 both carry the
+  negative sign, and the conformance suite records the 15.85 kb they differ by.
 
 - **Klemera-Doubal biological age was 1.77 years away from the reference
   implementation, and every KDM value computed with an earlier 1.0.0 build is

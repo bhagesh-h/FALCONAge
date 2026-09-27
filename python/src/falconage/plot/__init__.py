@@ -150,7 +150,11 @@ def save_all(result, outdir, *, data=None, bench=None, acc=None, age_col: str = 
     # the assay rather than the biology.
     if se is not None:
         emit("reliability_forest", lambda: reliability_forest(se))
-        for c in age_clocks[:1]:
+        # The first age clock that has a technical SE. technical_se() refuses a
+        # network such as AltumAge, which sorts first, and a figure keyed on a
+        # clock with no interval fails rather than drawing one.
+        have = set((se.se if hasattr(se, "se") else se).columns)
+        for c in [x for x in age_clocks if x in have][:1]:
             emit(f"score_interval_{c}",
                  lambda c=c: score_interval(result, c, se=se, conformal=conformal,
                                             age_col=age_col))

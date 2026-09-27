@@ -331,6 +331,95 @@ PREPROCESS: dict[str, Callable] = {
 
 
 # ---------------------------------------------------------------------------
+# dataset-level preprocess
+# ---------------------------------------------------------------------------
+# The ops above see the clock's own features. One published clock needs more:
+# Zhang et al. 2019 standardise each sample across every probe the data
+# carries before the weights are applied, so the step has to run on the whole
+# matrix, before alignment. A chain names such an op like any other, and
+# LinearClock runs it on the dataset rather than on the aligned slice.
+
+def _filled_blocks(X, block: int):
+    """Column blocks of X with each missing value set to its probe's mean over
+    samples, and probes missing in every sample dropped: pred.R's `addna` and
+    its all-NA filter, applied a block at a time."""
+    import warnings
+
+    # One array view, then numpy slices. Slicing columns out of a frame this
+    # wide with .iloc cost more than the arithmetic: 6 of 10 seconds on the
+    # authors' 10 x 485,512 example.
+    A = X.to_numpy(dtype=np.float64, copy=False)
+    for a in range(0, A.shape[1], block):
+        B = A[:, a:a + block].copy()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            cm = np.nanmean(B, axis=0)
+        keep = ~np.isnan(cm)
+        B, cm = B[:, keep], cm[keep]
+        miss = np.isnan(B)
+        if miss.any():
+            B[miss] = np.take(cm, np.nonzero(miss)[1])
+        yield B
+
+
+def standardise_within_sample(X, features, block: int = 50_000):
+    """Each sample centred on its own mean and scaled by its own SD, over every probe.
+
+    Zhang et al. 2019 (Genome Medicine 11:54), as their ``pred.R`` computes it:
+    a missing value is first replaced by its probe's mean over samples, a probe
+    missing in every sample is dropped, then each sample is standardised with
+    R's ``scale`` (SD with n - 1) across all remaining probes. The moments are
+    accumulated a column block at a time, so the standardised matrix is never
+    held in full; only the ``features`` asked for are returned, as a frame with
+    the data's sample index. A feature the data does not carry is left out,
+    which in standardised units is the sample's own mean, 0, and is what
+    ``pred.R`` does when it restricts the weights to the probes present.
+    """
+    import pandas as pd
+
+    n = X.shape[0]
+    s1, kept = np.zeros(n), 0
+    for B in _filled_blocks(X, block):
+        s1 += B.sum(axis=1)
+        kept += B.shape[1]
+    if kept < 2:
+        raise ScoringError("standardise_within_sample needs at least two probes")
+    mean = s1 / kept
+    s2 = np.zeros(n)
+    for B in _filled_blocks(X, block):
+        s2 += ((B - mean[:, None]) ** 2).sum(axis=1)
+    sd = np.sqrt(s2 / (kept - 1))
+    import warnings
+
+    pos = X.columns.get_indexer(list(features))
+    present = [f for f, i in zip(features, pos) if i >= 0]
+    F = X.to_numpy(dtype=np.float64, copy=False)[:, pos[pos >= 0]]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        cm = np.nanmean(F, axis=0) if present else np.empty(0)
+    keep = ~np.isnan(cm)
+    F, cm = F[:, keep], cm[keep]
+    miss = np.isnan(F)
+    if miss.any():
+        F[miss] = np.take(cm, np.nonzero(miss)[1])
+    cols = [f for f, k in zip(present, keep) if k]
+    Z = (F - mean[:, None]) / sd[:, None]
+    return pd.DataFrame(Z, index=X.index, columns=cols), kept
+
+
+#: Steps a registry entry may declare that a model class carries out itself,
+#: because they need more than one clock's slice of the data.
+MODEL_STEPS: dict[str, str] = {
+    # DunedinPACE's quantile normalisation to its 20,000-probe background.
+    "quantile_normalize_gold": "falconage.models.pace.PaceClock",
+}
+
+DATASET_PREPROCESS: dict[str, Callable] = {
+    "standardise_within_sample": standardise_within_sample,
+}
+
+
+# ---------------------------------------------------------------------------
 # derivatives, for propagating measurement error through a chain
 # ---------------------------------------------------------------------------
 # WHY THESE ARE WRITTEN OUT RATHER THAN DIFFERENTIATED NUMERICALLY. A central

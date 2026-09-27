@@ -47,7 +47,7 @@ FALCONAge 1.0.0 (R)
   torch         2.6.0  CUDA 12.4
   device        cuda:0  NVIDIA RTX A4000, 16 GB
   dtype         float64
-  registry      1.1.0  (175 clocks)
+  registry      1.1.0  (178 clocks)
   cache         /home/x/.cache/falconage  (2.1 GB)
 ```
 
@@ -191,7 +191,7 @@ Authors@R:
     person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5957-8005"))
 Description: Scores DNA methylation and clinical chemistry data against a
-    catalogue of 175 published aging clocks, and provides the downstream
+    catalogue of 178 published aging clocks, and provides the downstream
     statistics the field expects: age acceleration in its three conventions,
     survival and association models, technical reliability, and the AA1/AA2
     benchmark. Numerical work is delegated to the 'falconage' Python package

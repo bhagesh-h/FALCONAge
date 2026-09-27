@@ -2,48 +2,52 @@
 title: "7. The clock catalogue"
 ---
 
-pyaging's registry is the most complete machine-readable inventory in existence: **173 clocks**
-with curated provenance
-([pyaging clock_metadata.json](https://github.com/lucascamillomd/pyaging), audited
-2026-07 with an evidence ledger of 6 author-confirmed, 313 code-confirmed, 2,390 paper-confirmed
-and 59 supplement-confirmed field assignments, 0 unresolved).
+pyaging's registry is the most complete machine-readable inventory in existence: at commit e7267e9,
+**177 clocks** with curated provenance
+([pyaging clock_metadata.json](https://github.com/lucascamillomd/pyaging)), backed by an evidence
+ledger of 6 author-confirmed, 332 code-confirmed, 2,435 paper-confirmed and 59 supplement-confirmed
+field assignments. This chapter describes that registry; FALCONAge's own catalogue of 178 clocks is
+in [the clock catalogue](../clocks/catalogue.qmd).
 
 ## 7.1 Distributions
 
-**Data type** - DNA methylation 158, histone modification 8, transcriptomics 4, chromatin
-accessibility 2, clinical biomarkers 1.
+Counted from pyaging's `clock_metadata.json` at commit e7267e9 (177 clocks).
 
-**Species** - *Homo sapiens* 155, multiple species 9, *Mus musculus* 7, *C. elegans* 1,
-human+mouse 1.
+**Data type.** DNA methylation 156, histone modification 8, transcriptomics 6, clinical
+biomarkers 5, chromatin accessibility 2.
 
-**Platform** - Illumina 450K 94, EPIC 87, 27K 13, MammalMethylChip40 10, ChIP-seq 8, RNA-seq 4,
-RRBS 3, expression microarray 3, mammalian methylation array 2, MammalMethylChip320 2, ATAC-seq 2,
-bisulfite sequencing 2, targeted bisulfite 1, clinical lab assays 1.
+**Species.** *Homo sapiens* 157, multiple species 11, *Mus musculus* 7, *C. elegans* 1,
+human and mouse 1.
 
-**Model type** - elastic net 64, LASSO 20, reference-based constrained deconvolution 18,
+**Platform.** Illumina 450K 92, EPIC 87, 27K 13, MammalMethylChip40 10, ChIP-seq 8, RNA-seq 6,
+clinical laboratory assays 5, RRBS 3, expression microarray 3, mammalian methylation array 2,
+MammalMethylChip320 2, ATAC-seq 2, bisulfite sequencing 2, targeted bisulfite sequencing 1.
+
+**Model type.** Elastic net 66, LASSO 18, reference-based constrained deconvolution 18,
 PCA + elastic net 18, PCA + elastic net + ARD 8, linear regression 5, weighted linear score 3,
-causality-weighted elastic net 3, logistic regression 2, single-CpG score 2, mean methylation
-aggregation 2, dynamic methylation transmission 2, elastic net Cox 2, 95th-percentile aggregation
-2, PCA 2, and one each of: deep neural network, Cox PH, PCA + Cox, elastic net Cox ensemble,
-Klemera–Doubal composite, bootstrap-stabilised elastic net, complement of mean methylation,
-two-stage elastic net + Cox, feature-selected logistic, mean aggregation, two-stage elastic net,
-ridge logistic, orthologue-transferred ridge logistic, penalised hazards with Gompertz
-calibration, weighted methylation aggregation, ridge, elastic net logistic, quadratically
-calibrated elastic net, screened elastic net, BLUP.
+causality-weighted elastic net 3, and two each of logistic regression, single-CpG score,
+PCA + Cox, Klemera–Doubal composite, mean methylation aggregation, dynamic methylation
+transmission, elastic net Cox, 95th-percentile aggregation and PCA. One each of: deep neural
+network, Cox proportional hazards, elastic net Cox ensemble, bootstrap-stabilised elastic net,
+complement of mean methylation, two-stage elastic net + Cox, feature-selected logistic,
+Mahalanobis distance composite, mean aggregation, two-stage elastic net, ridge logistic,
+orthologue-transferred ridge logistic, penalised hazards with Gompertz calibration, Gompertz
+hazards with age calibration, weighted methylation aggregation, ridge, elastic net logistic,
+quadratically calibrated elastic net, screened elastic net and BLUP.
 
-**Unit** - years 83, proportion 20, unitless 17, pg/mL 7, beta value 6, weeks 6, probability 3,
-months 3, m/s 2, kg 2, biological years per chronological year 2, days 2, cell divisions per
-stem cell 2, pack-years 2, ratio 2, log odds 2, population doublings 2, and one each of hours,
-passages, mL/kg/min, kb, relative age, ln(%), ln(mg/L), units/week, bp, log hazard.
+**Unit.** Years 86, proportion 20, unitless 18, pg/mL 7, beta value 6, weeks 6, months 4,
+probability 3, and two each of biological years per chronological year, days, cell divisions per
+stem cell, pack-years, ratio, log odds, population doublings and log hazard. One each of hours,
+passages, m/s, kg, mL/kg/min, kb, relative age, ln(%), ln(mg/L), units per week and bp.
 
-**Population** - adults 72, older adults 29, all ages 27, multiple mammalian species 9, human
-age-unspecified 7, mice 6, newborns 4, human cell cultures 4, pregnancies 4, adult men 3,
-adult women 2, and one each of *C. elegans*, centenarians, humans and mice, children and
-adolescents, prenatal and newborn, children.
+**Population.** Adults 78, older adults 29, all ages 27, multiple mammalian species 11, human age
+unspecified 7, mice 6, newborns 4, human cell cultures 4, pregnancies 4, and one each of
+*C. elegans*, centenarians, humans and mice, children and adolescents, adult men, prenatal and
+newborn, and children.
 
 ## 7.2 Selected clocks with their key parameters
 
-The full 173-row table is in the registry; this is the subset a new tool should support first,
+The full 177-row table is in the registry; this is the subset a new tool should support first,
 sorted by likely usage.
 
 | Clock | Year | Layer | Features | Model | Predicts | Unit | Notes |
@@ -55,7 +59,7 @@ sorted by likely usage.
 | phenoage | 2018 | clinical chem | 10 | Gompertz-calibrated penalised hazards | phenotypic age | years | see §5.1 |
 | dnamphenoage | 2018 | DNAm blood | 513 | elastic net | phenotypic age | years | |
 | zhangen | 2019 | DNAm blood/saliva | 514 | elastic net | CA | years | per-sample z-score |
-| zhangblup | 2019 | DNAm | 319,607 | BLUP | CA | years | RMSE 2.04 y |
+| zhangblup | 2019 | DNAm | 319,607 | BLUP | CA | years | per-sample z-score |
 | grimage | 2019 | DNAm blood | 1,032 | 2-stage EN + Cox | mortality | years | 8 sub-clocks |
 | grimage2 | 2022 | DNAm blood | 1,032 | EN Cox | mortality | years | 10 sub-clocks (+logCRP, +logA1C) |
 | dunedinpoam38 | 2020 | DNAm blood | 46 | elastic net | pace | bio-y/chron-y | |
@@ -117,4 +121,7 @@ sorted by likely usage.
   (R/Bioconductor, Python `racpy`, Shiny).
 - **MEAT** - muscle epigenetic age test (Bioconductor).
 - **MiAge** - mitotic age; coefficients ship in ComputAge.
-- **GlycanAge**, **MetaboAge**, **IMM-AGE**, microbiome clocks.
+- **GlycanAge**, **IMM-AGE**, microbiome clocks.
+
+Of the clocks outside pyaging, FALCONAge now scores MetaboAge and MetaboHealth (NMR metabolomics),
+LinAge2 and cAge; OMICmAge is catalogued as licensed.

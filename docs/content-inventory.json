@@ -1,11 +1,83 @@
 {
 "amended": {
+"008e084a95331d81": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `stocz` | 2024 | chronological age | `age_years` | \u2014 | sorted monocytes | 450K | [Tong 2"
+]
+},
+"008ebb5ef0c48e30": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"7. The clock catalogue",
+"pyaging's registry is the most complete machine-readable inventory in existence: **173 clo"
+]
+},
+"019deceb2a7c331d": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**Units.** PhenoAge in SI vs conventional units gives different answers with the same biom"
+]
+},
+"02d37ec753e25001": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"22.1 A clock is a combination score",
+"A clock sums hundreds of weighted features, which makes it the same kind of object as a po"
+]
+},
 "040a0d3b09ed6152": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "14. [Open questions]()"
+]
+},
+"04e5d3b4df667e4f": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.4 The ten special forward passes",
+"```python sorted_v, _ = torch.sort(p_raw, dim=1, descending=True) cssv = torch.cumsum(sort"
+]
+},
+"0553d84bf870afbb": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| clock | platform | probes kept | median shift |"
+]
+},
+"05852d0bbbe7ecb8": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"11.3 TranslAGE - reliability validation",
+"bioRxiv 2025.10.16.682960. Computes ICCs from technical replicates and from repeated biolo"
+]
+},
+"0744c867c60392fc": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.15 Deep learning",
+"- **CpGPT** (Camillo 2024), transformer pretrained on >1,500 datasets, >100,000 samples. E"
+]
+},
+"0831ddcba6b41c1c": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"The clock catalogue",
+"| `licensed` | 40 | Obtain a coefficient file and register it. The architecture is impleme"
 ]
 },
 "09e5d433074b873d": {
@@ -16,12 +88,108 @@
 "- [References]()"
 ]
 },
+"0a135fe76918e72d": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"15.2 Where the paper and the coefficients disagree",
+"| `zhangmortality` | The paper defines this as an integer count of markers past quartile t"
+]
+},
+"0abdbe02a4fab882": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"3.1 DNA methylation",
+"**Sex estimation from methylation.** X and Y chromosome probe z-scores against the autosom"
+]
+},
+"0b471393226db2c1": {
+"reason": "Platform-bias table regenerated after the Zhang standardisation fix: zhangblup EPICv2 median -0.54 y (was -0.23 on unstandardised betas), split measured as -0.73 y probe loss and +0.27 y restandardisation; 74 rows, 37 clocks",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| zhangblup | EPICv2 | 286,843 / 319,607 | **\u22120.23 y** |"
+]
+},
+"0d0c1d3cd05a5f9f": {
+"reason": "Five single-model PC clocks reclassified untraced to licensed with an import path from the authors' file; totals 52 bundled, 66 untraced, 57 licensed",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| How long are the telomeres? | `dnamtl` | \u2014 | `pcdnamtl` | `telomere_kb` |"
+]
+},
+"0e23c2b73720a7db": {
+"reason": "Five single-model PC clocks reclassified untraced to licensed with an import path from the authors' file; totals 52 bundled, 66 untraced, 57 licensed",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| How old does this sample look? | `altumage`, `corticalclock`, `hannum`, `horvath2013`, `"
+]
+},
+"0e5a2f1aa270a52a": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"index.qmd",
+"Installation",
+"The second line proves it by running the 462-test suite inside the image, against the sour"
+]
+},
+"0eaf94f97e23c174": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"guide/clocks.qmd",
+"Availability",
+"| `untraced` | 89 | Catalogued, but no primary source has been established, so no coeffici"
+]
+},
+"106a97978a25933d": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.16 SystemsAge",
+"Systems: Blood, Brain, Inflammation, Heart, Hormone, Immune, Kidney, Liver, Metabolic, Lun"
+]
+},
+"11fa31dc60b506f0": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `deconvolutebloodepiccd4tcell` | 2018 | CD4+ T cell proportion | `proportion` | \u2014 | puri"
+]
+},
+"1264590c1d727ecb": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"20.1 The point estimate problem",
+"Split one DNA sample, run both halves on the same array, and six prominent clocks disagree"
+]
+},
+"132a38aa7fac8b5b": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"architecture.qmd",
+"6.4 Imputation, kept in three distinct places",
+"Clock-level filling uses `reference_values` from the registry. Filling a missing beta with"
+]
+},
 "13e576f8699c863f": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "17. [The frontier, and what FALCONAge does not yet compute]()"
+]
+},
+"158ff64394f00ce5": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"11.1 ComputAgeBench, the reference methodology",
+"**Running it.** `run_benchmark(models_config, experiment_prefix, output_folder)` where `mo"
 ]
 },
 "15d518ea9a56400c": {
@@ -32,12 +200,44 @@
 "21.2 Out-of-band signal, which everything downstream rests on"
 ]
 },
+"16904bd11cf791bd": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"The Claude skill",
+"The repository ships a [Claude]() skill at `.claude/skills/falconage/`. It is four markdow"
+]
+},
+"17a7e29809fe6ae9": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"architecture.qmd",
+"8.2 Environment management",
+"``` FALCONAge 1.0.0 (R) python core 1.0.0 /home/x/.virtualenvs/r-falconage/bin/python torc"
+]
+},
 "17ab4c1d5fd5225b": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "- [B - tAge transcriptomic clock registry (60 models)]()"
+]
+},
+"199d6cf27fc75db4": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.1 Array normalisation, and what it corrects",
+"Until this ships, normalise with [sesame]() or [minfi]() and bring the beta matrix here."
+]
+},
+"19a673645ef82f73": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.3 Aggregate outputs a tool should offer",
+"- Age-acceleration matrix (both AAA and RAA)."
 ]
 },
 "1da0713a56ee6fe0": {
@@ -48,12 +248,28 @@
 "10. [Plots]()"
 ]
 },
+"1db448b5f038ca9f": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"7.3 Clocks outside pyaging worth supporting",
+"- **GlycanAge**, **MetaboAge**, **IMM-AGE**, microbiome clocks."
+]
+},
 "1dce6cf29183ae4f": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "20.4 Specimen type is not metadata",
 "20.4 Specimen type is not metadata"
+]
+},
+"1f1139275ae97278": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"7.2 Selected clocks with their key parameters",
+"| zhangblup | 2019 | DNAm | 319,607 | BLUP | CA | years | RMSE 2.04 y |"
 ]
 },
 "1f2800eb37ed9c92": {
@@ -64,12 +280,36 @@
 "11. [Benchmarking and validation]()"
 ]
 },
+"1f34c0c33a8ff494": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.2 Scale types and what you may do with them",
+"| Physical units | DNAmTL (kb), PCDNAmTL (bp), gait (m/s), grip (kg), VO2max (mL/kg/min) |"
+]
+},
 "21f3bd88694197ae": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "12. [CI/CD and publishing]()"
+]
+},
+"23b1cd304b3186b3": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.1 The output record",
+"``` sample_id, clock_name, clock_version, value, unit, scale_type, chronological_age (if s"
+]
+},
+"25125ebc1deb0519": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"guide/clocks.qmd",
+"Availability",
+"| `bundled` | 46 | Nothing. Coefficients ship inside the package, or the clock is a formul"
 ]
 },
 "269f98b6b9da742e": {
@@ -80,6 +320,22 @@
 "21.1 What an IDAT does not contain"
 ]
 },
+"27a8cea075d84693": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"The clock catalogue",
+"| `bundled` | 46 | Nothing. Forty-three ship a weights file; PhenoAge, KDM and homeostatic"
+]
+},
+"2933fbb41dc50cd5": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.5 Methylation foundation models",
+"This would also be the first model here where a GPU is the right default. Everything curre"
+]
+},
 "2b877f1937e6ae23": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
@@ -88,12 +344,44 @@
 "21.4 Two steps that ship switched off, and why"
 ]
 },
+"2bd5ce9fd17c9ffe": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Bundled: 46 clocks",
+"Bundled: 46 clocks"
+]
+},
 "2be1e7aff669891a": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "20.1 The point estimate problem",
 "20.1 The point estimate problem"
+]
+},
+"2be7634d47997820": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"3.7 The three tiers",
+"**As shipped in v1.0.0.** The registry names the tiers by what they mean: `bundled` (A), `"
+]
+},
+"2bfc2c52773e1a86": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.2 Scale types and what you may do with them",
+"| Proportion | deconvolution clocks | sums to 1 across the cell-type family |"
+]
+},
+"2c88e0e0f32b694b": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"19. Uncertainty, specimen and platform",
+"Added in this release. Sections 1\u201319 are about computing the number correctly. This one is"
 ]
 },
 "2faf8cd5fd9b1cd0": {
@@ -112,6 +400,14 @@
 "20.7 Before the first array, and after the last"
 ]
 },
+"33b41125120a08a2": {
+"reason": "Platform-bias table regenerated after the Zhang standardisation fix: zhangblup EPICv2 median -0.54 y (was -0.23 on unstandardised betas), split measured as -0.73 y probe loss and +0.27 y restandardisation; 74 rows, 37 clocks",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"Three things to read out of that table. `lin` loses three probes of ninety-nine and moves "
+]
+},
 "34d30c9707743f54": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -128,12 +424,68 @@
 "23. [Building a clock of your own]()"
 ]
 },
+"37d511a2d4b1c8a2": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.2 Cross-platform harmonisation",
+"Two mitigations are complementary: principal-component clocks absorb probe loss because a "
+]
+},
+"3a6b367ac1bff135": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| vidalbralo | either | 8 / 8 | **0.00 y** |"
+]
+},
+"3be423509441c93d": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**Subtracting CA from a rate clock.** DunedinPACE is not an age."
+]
+},
+"3c2e5f9894faf3cf": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"guide/clocks.qmd",
+"Availability",
+"| `licensed` | 40 | Obtain a coefficient file and register it. The architecture is impleme"
+]
+},
 "3ccd4ed3d896ce91": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "20.2 Propagating measurement error",
 "20.2 Propagating measurement error"
+]
+},
+"3d52d857f9355375": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"10.3 What FALCONAge draws, and against which of the above",
+"Twenty-five figures, identical in Python and R because both read their colours, titles, su"
+]
+},
+"3de151b7a94cfb5c": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `depressionbarbu` | 2021 | major depressive disorder | `relative_score` | \u2014 | whole bloo"
+]
+},
+"3e113c2fb59a26bb": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.3 Model classes",
+"| `DeconvolutionClock` | pseudo-inverse \u2192 simplex projection \u2192 column select | 6-cell and "
 ]
 },
 "3e2d916afd94d1f1": {
@@ -152,12 +504,28 @@
 "The named `falconage-cache` volume is worth adding from the start. Nothing in tier A needs"
 ]
 },
+"403ff9673bb26538": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"index.qmd",
+"Out-of-scope use",
+"- **Fill a missing probe with zero.** In beta space zero means completely unmethylated, wh"
+]
+},
 "414a1886ee5a141b": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "20.8 Evidence, attached to the score",
 "20.8 Evidence, attached to the score"
+]
+},
+"42899c4ea77167fc": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"index.qmd",
+"",
+"It is one numerical core in Python, called from R through reticulate, so a result obtained"
 ]
 },
 "42bf7d4dfd9e2cd1": {
@@ -184,12 +552,196 @@
 "22. [Structure above the single probe]()"
 ]
 },
+"4418e499dbc9b895": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `bohlin` | 2016 | gestational age | `gestational_weeks` | \u2014 | cord blood | 450K | [Bohli"
+]
+},
+"449127646dff5985": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.3 Aggregate outputs a tool should offer",
+"8.3 Aggregate outputs a tool should offer"
+]
+},
+"462f6f84b8ae53e4": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"architecture.qmd",
+"4.2 Postprocess transforms",
+"`falconage/models/ops/postprocess.py`. Scalar in, scalar out, applied elementwise over the"
+]
+},
+"4b2a3af8a7d566b0": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"20.4 Specimen type is not metadata",
+"`refuse` : twelve clocks whose training tissue has no counterpart elsewhere: three placent"
+]
+},
+"4bcf208fc8c000d0": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Measurement uncertainty",
+"Also new in this release, and the reason the rest of this page is worth running. Technical"
+]
+},
+"4bfca4c830b06c12": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"science.qmd",
+"What FALCONAge implements of this",
+"Unbuilt: `tpm_norm_log1p`, `mean_over_present`, `quantile95_over_present`, `nan_to_zero`, "
+]
+},
+"4cfcf57503d55980": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `dnamfili` | 2022 | frailty risk | `relative_score` | \u2014 | whole blood | EPICv1, 450K | ["
+]
+},
+"4dd99a9e0c352bf1": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"",
+"- One score per sample per clock, for as many of the 175 catalogued clocks as your feature"
+]
+},
+"4e1783545d58d2e0": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Python",
+"```python d = fa.prepare(fa.read_betas(\"betas.csv\")) res = fa.score(d, clocks=\"compatible\""
+]
+},
+"4f216b97e7e739c5": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.3 Model classes",
+"| `NeuralClock` | arbitrary network from a registry-declared spec | AltumAge | specified |"
+]
+},
+"4f4bd152a63dedb3": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `deconvolutebloodepicbcell` | 2018 | B cell proportion | `proportion` | \u2014 | purified blo"
+]
+},
+"4fa5322f258d83f1": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 2: obtain the image",
+"Or build the same thing from the clone, which takes a few minutes the first time and is th"
+]
+},
+"51ec5758315d5983": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `stoch` | 2024 | chronological age | `age_years` | \u2014 | sorted monocytes | 450K | [Tong 2"
+]
+},
+"53255ea80074faeb": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Clinical chemistry",
+"KDM and homeostatic dysregulation have no fixed coefficients at all: they are defined rela"
+]
+},
+"5391d6c04a32f641": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"science.qmd",
+"What FALCONAge implements of this",
+"| `add`, `multiply`, `divide_by`, `clip`, `exp`, `expit`, `log_linear`, `anti_log_linear`,"
+]
+},
+"540e500da83c3311": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"9.5 Reliability",
+"Intraclass correlation coefficient on technical replicates (same DNA, two arrays) and on b"
+]
+},
+"549fed7b57df143a": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"10.3 What FALCONAge draws, and against which of the above",
+"Not implemented, and honestly out of scope for v1.0: volcano and GSEA plots (11) belong to"
+]
+},
+"550209af3949567c": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| What is the blood's cell composition? | \u2014 | \u2014 | `deconvolutebloodepicbcell`, `deconvolut"
+]
+},
+"55a3748ae2fa6bd4": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.1 The output record",
+"pyaging writes value into `adata.obs[clock]`, metadata into `adata.uns[f\"{clock}_metadata\""
+]
+},
+"55d209b8463bfe0f": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.6 Mitotic / replicative clocks",
+"- **epiCMIT-hyper / epiCMIT-hypo** - mean over 184 hypermethylating and 1,164 hypomethylat"
+]
+},
+"592b62bfcf6f332b": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"`probe_loss()` has always said how much of a model is absent: count and coefficient mass. "
+]
+},
+"598ab16ef807d9ed": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"beyond-clocks.qmd",
+"Simulating it",
+"`reference` is sorted-cell mean beta, features by cell type. It is **not bundled**: every "
+]
+},
 "5a220a17cb5ab35f": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "gpu.md",
 "2. Which clocks the device actually reaches",
 "| `ScaffoldClock` | not applicable | 28 tier C entries; it raises rather than scoring |"
+]
+},
+"5a56b5c9e21617b6": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"22.4 Interactions between variants are real and small",
+"Genome-wide tests for SNP by SNP effects on methylation find them, and find that they expl"
 ]
 },
 "5b7cbe934a50dbc5": {
@@ -200,12 +752,36 @@
 "4. [Algorithms, the complete operation catalogue]()"
 ]
 },
+"5e039fcb3eaa442e": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.20 Transform reference table",
+"| `one_minus` | `1 \u2212 y` | HypoClock |"
+]
+},
+"5e0526c129d71c9a": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| What is a specific protein or lab value likely to be? | \u2014 | `grimage2adm`, `grimage2b2m`"
+]
+},
 "5e95a8a3e48e5760": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "architecture.qmd",
 "1.4 What actually got laid down",
 "``` python/src/falconage/ \u251c\u2500\u2500 core/ backend.py config.py container.py errors.py \u2502 logging."
+]
+},
+"6167d4745d9e4192": {
+"reason": "Five single-model PC clocks reclassified untraced to licensed with an import path from the authors' file; totals 52 bundled, 66 untraced, 57 licensed",
+"was": [
+"guide/FALCONAge.qmd",
+"R",
+"``` tier n_features n_present coverage mass_coverage bias_years heaviest_absent horvath201"
 ]
 },
 "6198a9862a2c88dd": {
@@ -216,12 +792,44 @@
 "20.5 Probe loss, priced"
 ]
 },
+"61f0d8b2424bf60d": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"23.5 Two metrics that disagree, and both are needed",
+"$$ \\text{MAE} = \\operatorname{median}_i\\left|\\hat{y}_i - y_i\\right|, \\qquad r = \\operatorn"
+]
+},
+"6432f3e10ca3079d": {
+"reason": "Platform-bias table regenerated after the Zhang standardisation fix: zhangblup EPICv2 median -0.54 y (was -0.23 on unstandardised betas), split measured as -0.73 y probe loss and +0.27 y restandardisation; 74 rows, 37 clocks",
+"was": [
+"architecture.qmd",
+"15.2 New registry artefacts",
+"| `platform_bias.csv` | 30 | this corpus, masked and rescored | `build_platform_bias.py` |"
+]
+},
+"6487deb4ea439f06": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**Zero-filling missing methylation features.** \u03b2 = 0 means fully unmethylated. Use referen"
+]
+},
 "64fd843c2f1bbfc9": {
 "reason": "Item 28: the DESCRIPTION quoted on the R package page brought to the real file's 175 clocks; the discrepancy table's intro now reads '22 of the 175 catalogued clocks', so its count is not read as the catalogue's total.",
 "was": [
 "architecture.qmd",
 "8.6 DESCRIPTION",
 "``` Package: FALCONAge Title: Multiomic Biological Age and Aging Clock Scoring Version: 1."
+]
+},
+"68d7a7f789964d9d": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 2: obtain the image",
+"One image carries Python, R, the CLI and all 46 bundled clocks. Pull the published one:"
 ]
 },
 "69f18daa6c29e635": {
@@ -240,12 +848,28 @@
 "None of those are tier A yet, which is exactly why this document can only report that the "
 ]
 },
+"6a5f53be6f31bd13": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"The clock catalogue",
+"| `untraced` | 89 | Catalogued, but no primary source for the numbers has been established"
+]
+},
 "6b10cc583ebe5b47": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "architecture.qmd",
 "Behaviour without coefficients",
 "`clocks=\"compatible\"` excludes unregistered tier C clocks by default and reports the exclu"
+]
+},
+"6ba4c850813c5add": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"science.qmd",
+"What FALCONAge implements of this",
+"Seven preprocess ops and nine postprocess transforms, in `models/ops.py`, which is what th"
 ]
 },
 "6d74763e7238fa6b": {
@@ -264,6 +888,22 @@
 "> **v1.0 stores this differently.** All 161 entries live in one file, > `python/src/falcon"
 ]
 },
+"6ef759600d3ed5e1": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"Every one of the 175 catalogued clocks appears above, routed by its declared `predicts` fi"
+]
+},
+"6f6dfb6a98ee0226": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"architecture.qmd",
+"6.4 Imputation, kept in three distinct places",
+"| Clock-level | `score.features` | reference values from the registry; zero only when no r"
+]
+},
 "6fccaab9a17e58cb": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -280,12 +920,28 @@
 "21. [Genetic variation under the probe]()"
 ]
 },
+"71ec6dc842497fd2": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"18. Datasets, registries, reference resources",
+"- pyaging `clock_metadata.json` (173 clocks) + `evidence_ledger.jsonl` (894 KB of per-fiel"
+]
+},
 "72706afaa6c6ee48": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "14. [GPU computing]()"
+]
+},
+"7354124f5799246a": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.3 Prediction error is a different, larger question",
+"Split conformal: take healthy blood samples with known ages, compute the absolute residual"
 ]
 },
 "73703a6eb69c1bd9": {
@@ -296,12 +952,44 @@
 "FALCONAge scores DNA methylation, clinical chemistry, proteomic and transcriptomic data ag"
 ]
 },
+"738e22aa39f66463": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| Is a named disease more likely? | \u2014 | \u2014 | `adbahadosingh`, `cvdwesterman`, `depressionba"
+]
+},
 "74d9e0324499fd70": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "8. [R package]()"
+]
+},
+"754fbfd2c0113100": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.3 Model classes",
+"| `PCLinearClock` | `((x \u2212 \u03bc)R)W + b` | PCHorvath2013, PCHannum, PCPhenoAge, PCSkinAndBloo"
+]
+},
+"758174161cc943b6": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"architecture.qmd",
+"4. Algorithms, the complete operation catalogue",
+"> **v1.0 implements seven of the fifteen preprocess ops below and nine postprocess transfo"
+]
+},
+"76cf4b850362bc08": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Age acceleration",
+"The three conventions disagree by several years on the same data, and papers frequently do"
 ]
 },
 "775199d41531687f": {
@@ -312,12 +1000,68 @@
 "10. [Testing]()"
 ]
 },
+"778817a6736b1e87": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `cellpopage` | 2024 | cell-population passage age | `relative_score` | \u2014 | cultured fibr"
+]
+},
+"77ed60a2bc9784bb": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**Sample size for HD.** The Mahalanobis covariance needs more reference samples than bioma"
+]
+},
 "7d1bc9aa0aae66af": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "architecture.qmd",
 "7.8 CLI",
 "```bash falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out resu"
+]
+},
+"7d32020c34e67f45": {
+"reason": "Item 28 C2: pyaging distributions recounted at commit e7267e9 (177 clocks); spaced-hyphen dashes replaced with bold labels.",
+"was": [
+"science.qmd",
+"7.1 Distributions",
+"**Platform** - Illumina 450K 94, EPIC 87, 27K 13, MammalMethylChip40 10, ChIP-seq 8, RNA-s"
+]
+},
+"7d4028db93ba7905": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.2 Scale types and what you may do with them",
+"| Unitless score | ZhangMortality, DNAmFILi, DNAmIC, DNAmStress, ReedBMI, DownSyndrome | r"
+]
+},
+"7e38afdcbb878d14": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.3 Model classes",
+"| `LinearClock` | `xW + b` | ~120 | **shipped** |"
+]
+},
+"7eebcbf5cce259ca": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**Per-sample vs per-feature scaling.** Zhang z-scores across probes *within* a sample; Alt"
+]
+},
+"8009a428d94217b5": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"20.2 Propagating measurement error",
+"On the corpus, Horvath 2013 comes out at \u00b11.58 years of technical error with an implied co"
 ]
 },
 "801bdceeda456b65": {
@@ -336,12 +1080,44 @@
 "20.9 What was deliberately not built"
 ]
 },
+"80e68ad74b125e10": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 4: download and verify",
+"Only smaller pieces, if 586 MB is too much:"
+]
+},
+"80ee3cbdebea29cb": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.1 Penalised linear regression, the field's default",
+"then a clock-specific output transform (\u00a75). Of the 173 clocks in pyaging's registry, 64 a"
+]
+},
 "8157cca080e29e49": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "21.3 The validation, and why it is a real one",
 "21.3 The validation, and why it is a real one"
+]
+},
+"8254a2382959ce26": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"science.qmd",
+"What FALCONAge implements of this",
+"| `scale` | `scale`, `scale_mean`, `scale_row` |"
+]
+},
+"8407fa5f7b3f1f3c": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| yingdamage | EPICv1 | 1089 / 1089 | **0.00 y** |"
 ]
 },
 "8471d05de39850f4": {
@@ -352,6 +1128,14 @@
 "20.6 A reported score must not move when the next plate arrives"
 ]
 },
+"8700c356eba9c94c": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.4 The ten special forward passes",
+"The twelve 12-cell entries and six 6-cell entries share a weight file and differ by `cell_"
+]
+},
 "87e1f97897396d89": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -360,12 +1144,36 @@
 "3. [Measurement chemistry, per omics layer]()"
 ]
 },
+"89f1c7f18035c4b1": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"20.4 Specimen type is not metadata",
+"Which clock matters as much as which specimen. On those samples DunedinPACE differed by \u22120"
+]
+},
 "8a98ecdc2df6dd5d": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "4. [Algorithm families with full math]()"
+]
+},
+"8b118b5c9c2ab83c": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.1 Array normalisation, and what it corrects",
+"An Infinium array carries two probe chemistries. **Type I** uses two beads per CpG read in"
+]
+},
+"8b77e85ab8800421": {
+"reason": "Platform-bias table regenerated after the Zhang standardisation fix: zhangblup EPICv2 median -0.54 y (was -0.23 on unstandardised betas), split measured as -0.73 y probe loss and +0.27 y restandardisation; 74 rows, 37 clocks",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"**What the table does not cover, so it is not read as covering it.** Thirty rows: fifteen "
 ]
 },
 "8c4479f4e3200788": {
@@ -384,12 +1192,52 @@
 "19. [Uncertainty, specimen and platform]()"
 ]
 },
+"8d1b9ededad17f44": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.3 Survival models",
+"``` avg_r = intercept + slope \u00d7 mean_age # = \u22124.801912 years = (\u2212avg_r + r) / slope \u2212 inte"
+]
+},
 "8dc21b6630043eb9": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "11. [Documentation]()"
+]
+},
+"8ddb74bc1a7f1511": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.1 Penalised linear regression, the field's default",
+"**BLUP** (Zhang 2019) treats all 319,607 probes as random effects with a common variance, "
+]
+},
+"8deb29517f1c1e6f": {
+"reason": "PC-clock corroboration paragraph: the clocks are licensed and import_pc_clocks turns the check on",
+"was": [
+"science.qmd",
+"20.7 Before the first array, and after the last",
+"**That PC clause is the sharpest test in the paper, and by default FALCONAge cannot run it"
+]
+},
+"8e756224c09fe31e": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 4: download and verify",
+"```bash docker run --rm -v \"$PWD/test/data:/data\" falconage-testdata:1.0.0 \\ python test/d"
+]
+},
+"8f1c5724caff809b": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `deconvolutebloodepicneutrophil` | 2018 | neutrophil proportion | `proportion` | \u2014 | pur"
 ]
 },
 "9058fb5c3207c329": {
@@ -416,6 +1264,14 @@
 "13. [Build order]()"
 ]
 },
+"93b3d28f771602ac": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| hannum | EPICv2 | 64 / 71 | \u22127.7 y |"
+]
+},
 "947e26b3ff6f56f0": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
@@ -424,12 +1280,116 @@
 "1. [Definitions and framing]()"
 ]
 },
+"94ad8fa41caa4e2d": {
+"reason": "Item 28 C2: pyaging distributions recounted at commit e7267e9 (177 clocks); spaced-hyphen dashes replaced with bold labels.",
+"was": [
+"science.qmd",
+"7.1 Distributions",
+"**Species** - *Homo sapiens* 155, multiple species 9, *Mus musculus* 7, *C. elegans* 1, hu"
+]
+},
+"94b2aaee5e0d4e4e": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Command line",
+"**Rendering it.** Quarto is not in the FALCONAge image. Installed it takes 423 MB, which w"
+]
+},
+"95bceb7d9af88dd2": {
+"reason": "Item 28 C2: pyaging distributions recounted at commit e7267e9 (177 clocks); spaced-hyphen dashes replaced with bold labels.",
+"was": [
+"science.qmd",
+"7.1 Distributions",
+"**Population** - adults 72, older adults 29, all ages 27, multiple mammalian species 9, hu"
+]
+},
+"95d6c058c273eb4a": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| What is this person exposed to, or how do they live? | `mccartneyalcohol`, `mccartneybmi"
+]
+},
+"9639ff7ea0867a55": {
+"reason": "Item 28 C2: pyaging distributions recounted at commit e7267e9 (177 clocks); spaced-hyphen dashes replaced with bold labels.",
+"was": [
+"science.qmd",
+"7.1 Distributions",
+"**Model type** - elastic net 64, LASSO 20, reference-based constrained deconvolution 18, P"
+]
+},
+"96b0181d362637c6": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"R",
+"``` Error: 'acceleration' is not defined for dunedinpoam38, whose output is pace_ratio (bi"
+]
+},
+"97120e76c688bee6": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `stocp` | 2024 | chronological age | `age_years` | \u2014 | sorted monocytes | 450K | [Tong 2"
+]
+},
+"99e071a753febcb3": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"Known limitations",
+"- **147 of the 175 catalogued clocks have no traced coefficient source.** A per-clock lite"
+]
+},
+"9af91a420d2b4ece": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| hrsinchphenoage | EPICv2 | 874 / 959 | **+16.7 y** |"
+]
+},
+"9b58dbd6130c39ba": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| horvath2013 | EPICv2 | 339 / 353 | \u22122.6 y |"
+]
+},
+"9b663e76fa569735": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"index.qmd",
+"Training targets, and what a score means",
+"- **Deconvolution models** return cell-type proportions, which are a composition and must "
+]
+},
+"9ba9b96e75fbb1a3": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| lin | EPICv2 | 96 / 99 | \u22129.4 y |"
+]
+},
 "9cc23576c92ff285": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "20.3.1 What the calibration found, and what it turned into",
 "20.3.1 What the calibration found, and what it turned into"
+]
+},
+"9d0a2c457e531ddb": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `intrinclock` | 2024 | chronological age | `age_years` | \u2014 | multi-tissue | 450K, EPICv1"
 ]
 },
 "9de3c2e8baae7676": {
@@ -456,12 +1416,28 @@
 "22 catalogued clocks carry a `known_discrepancies` note: a place where the paper, its coef"
 ]
 },
+"a0769bfb02e4dca2": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"| Model classes | `LinearClock`, `ClinicalClock`, `ScaffoldClock`, **`PCLinearClock`**, **"
+]
+},
 "a0fb9fae5a2c032d": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "9. [Downstream statistics on an aging score]()"
+]
+},
+"a275909d5a9c06e0": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `mayne` | 2017 | gestational age | `gestational_weeks` | \u2014 | placenta | 27K, 450K | [May"
 ]
 },
 "a289444f4b09d56b": {
@@ -472,12 +1448,100 @@
 "**The proteomic and transcriptomic chains ship without registry entries.** Every published"
 ]
 },
+"a2b2aa14eba1a795": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.16 SystemsAge",
+"Nature Aging, September 2025 (Higgins-Chen & Levine). One blood methylome \u2192 11 system-spec"
+]
+},
+"a37db61342525bb5": {
+"reason": "Five single-model PC clocks reclassified untraced to licensed with an import path from the authors' file; totals 52 bundled, 66 untraced, 57 licensed",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| Who is at risk of dying sooner, or is frailer? | `dnamphenoage`, `hd`, `hrsinchphenoage`"
+]
+},
+"a4029ae0dd41fc1e": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `prostatecancerkirby` | 2017 | prostate cancer | `relative_score` | \u2014 | prostate | 450K "
+]
+},
+"a45b964f13bf7e97": {
+"reason": "Absent-CpG fill changed to per-clock reference values (authors' published values for 4 clocks, healthy adult blood mean for 22); probe-loss table now shows pooled against reference fill, out of sample; imputation description corrected to the shipped code",
+"was": [
+"science.qmd",
+"8.2 Scale types and what you may do with them",
+"The intervals are wide on purpose: they catch a sign, unit or fill error, not an unusual c"
+]
+},
+"a4849c2c9e0afb9c": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"Untraced: 89 clocks"
+]
+},
+"a4ec691593c95397": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"beyond-clocks.qmd",
+"",
+"This page covers the three things FALCONAge computes that are not clocks: the disorder rea"
+]
+},
+"a8203671e170d1a1": {
+"reason": "Item 28 C2: pyaging distributions recounted at commit e7267e9 (177 clocks); spaced-hyphen dashes replaced with bold labels.",
+"was": [
+"science.qmd",
+"7.1 Distributions",
+"**Data type** - DNA methylation 158, histone modification 8, transcriptomics 4, chromatin "
+]
+},
+"a8a3e43cac0ea37c": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"science.qmd",
+"4.10 Deconvolution as a model",
+"Reference-based, constrained. Given a signature matrix S (cell types \u00d7 CpGs) and a sample "
+]
+},
+"a9784379705e1965": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.3 Model classes",
+"| `ScaffoldClock` | refuses, and says where the coefficients come from | the 40 `licensed`"
+]
+},
 "aa24f05ca81cf748": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "12. [Existing software landscape]()"
+]
+},
+"ab8eb00cb270134a": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"Further reading",
+"- [Clock catalogue](), all 175, searchable."
+]
+},
+"abc12fb9f54ac98b": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"3.1 DNA methylation",
+"| EPIC v1 (850K) | 866,554 | Drops ~40% of 450K probes; adds enhancers |"
 ]
 },
 "ad5d4dd049635b49": {
@@ -488,12 +1552,100 @@
 "5. [Download module]()"
 ]
 },
+"ad98c4260bc43f33": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"science.qmd",
+"20.5 Probe loss, priced",
+"| yingcausage | EPICv2 | 492 / 585 | +13.9 y |"
+]
+},
+"b173e73325190587": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"guide/FALCONAge.qmd",
+"Installation",
+"**Docker is the supported path**, and it is the one the rest of this page assumes. One ima"
+]
+},
+"b2576e6421b6a484": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"The selected set is not the biology",
+"Rerun the same fit with a slightly different $\\lambda$, a different fold split, or a diffe"
+]
+},
+"b29b715139993d95": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.1 Array normalisation, and what it corrects",
+"FALCONAge takes a beta matrix. It does not produce one from raw intensities, and the chain"
+]
+},
+"b88ae3d552df0745": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"23.5 Two metrics that disagree, and both are needed",
+"Expect the fitted slope of $\\hat{y}$ on $y$ to fall below one. Penalisation shrinks coeffi"
+]
+},
+"b907e79de1084c5e": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Scale type and permitted operations",
+"| `age_years` | 77 | acceleration, correlate, difference, mean, residual | \u2014 |"
+]
+},
+"bb640b7e43da61c3": {
+"reason": "Item 28 C2: pyaging distributions recounted at commit e7267e9 (177 clocks); spaced-hyphen dashes replaced with bold labels.",
+"was": [
+"science.qmd",
+"7.1 Distributions",
+"**Unit** - years 83, proportion 20, unitless 17, pg/mL 7, beta value 6, weeks 6, probabili"
+]
+},
+"bdced1e64605b49d": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"2. Biology of aging that the scores encode",
+"The 12 hallmarks (L\u00f3pez-Ot\u00edn 2013 [[55]](), updated 2023 [[56]]()) are the biological voca"
+]
+},
 "be9c965b4737430f": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "3. [Clock registry]()"
+]
+},
+"beb89d9c86adf1f0": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"Scale types and permitted operations",
+"| `mortality_log_hazard` | 2 | A risk on the log-hazard scale. Exponentiating a difference"
+]
+},
+"beedf4a7ae076a15": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.2 Cross-platform harmonisation",
+"Probe content changed across 27K, 450K, EPIC v1 and EPIC v2. EPIC v2 both dropped probes e"
+]
+},
+"befff79d4562a778": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"11.4 Intervention responsiveness",
+"From the 2026 Frontiers in Genetics review of interventions that lower next-generation clo"
 ]
 },
 "bf1ca413d37ff460": {
@@ -504,12 +1656,68 @@
 "- [D - organAging organ protein panels]()"
 ]
 },
+"bfa3054cca7b5d11": {
+"reason": "Probe-loss figure caption describes the reference fill and the years-only filter",
+"was": [
+"gallery.qmd",
+"What probe loss costs, in years",
+"Full 450K matrices masked down to each platform's probe set and rescored; the bar is the m"
+]
+},
+"c030131e978c5cfe": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `downsyndrome` | 2021 | Down syndrome methylation score | `relative_score` | \u2014 | neonata"
+]
+},
 "c0a2ed8a5e911136": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "architecture.qmd",
 "Behaviour without coefficients",
 "Scoring a tier C clock with nothing registered raises rather than silently skipping:"
+]
+},
+"c245754b66d54d60": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.18 tAge, relative transcriptomic clocks",
+"Species maximum-lifespan factors: human 122.5, mouse 48, rat 50.4, monkey 39 ([tage_predic"
+]
+},
+"c27da9df55469e24": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.15 Deep learning",
+"- **AltumAge** (2022) - MLP over 20,318 CpGs shared across 27K/450K/EPIC. Architecture fro"
+]
+},
+"c44dd059ad677001": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.4 The ten special forward passes",
+"**7. Deconvolution** (`models/deconvolution.py`). Pseudo-inverse of the signature matrix, "
+]
+},
+"c50904ccdf41910c": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"guide/FALCONAge.qmd",
+"Installation",
+"Or build the same image from a clone, which takes about ten minutes:"
+]
+},
+"c53dab8f32b0f981": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"Scale types and permitted operations",
+"| `relative_score` | 54 | A score with no external unit. Comparable within a cohort, meani"
 ]
 },
 "c746955c8a5d1190": {
@@ -520,12 +1728,68 @@
 "8. [Output types and units]()"
 ]
 },
+"c80f85116556fe74": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"science.qmd",
+"6.3 Two distinct imputation stages",
+"**Horvath's normalisation is optional in his own code, and the packages default differentl"
+]
+},
+"c84722e6c8571216": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Scale type and permitted operations",
+"| `mortality_log_hazard` | 2 | correlate, hazard ratio, mean, rank | acceleration: a log-h"
+]
+},
+"c8b9246aff95bf68": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"index.qmd",
+"Installation",
+"```bash git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge docker build "
+]
+},
 "c8fd598245c83c2a": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "18. [Datasets, registries, reference resources]()"
+]
+},
+"ca97d1da546c3815": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.6 Single-cell",
+"Single-cell methylation is binary and sparse -- a site is covered or not, methylated or no"
+]
+},
+"cacf9ec82c22071b": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `dnamstress` | 2023 | stress exposure | `relative_score` | \u2014 | whole blood | EPICv1 | [J"
+]
+},
+"cbf144a3a233dd37": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"| Clock catalogue | 175 entries. **46 `bundled` score offline**: 43 ship a coefficient fil"
+]
+},
+"cd87b5665cb621eb": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.20 Transform reference table",
+"| `sigmoid` | `1/(1+e^(\u2212y))` | McCartney BMI/education/cholesterol/body-fat, MammalianFema"
 ]
 },
 "ce3037f50ca46367": {
@@ -552,12 +1816,84 @@
 "- [A - Full pyaging clock registry (173 clocks)]()"
 ]
 },
+"d034f6555b9f3094": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 4: download and verify",
+"The first fetches 33 files from GEO and Hugging Face into `test/data/` on your own disk, n"
+]
+},
+"d0eaf8c39b3c238f": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Scale type and permitted operations",
+"| `relative_score` | 54 | correlate, rank | everything except correlation and rank: there "
+]
+},
+"d2590e19a5ff8380": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**`torch.load(weights_only=False)`.** Arbitrary code execution from a downloaded file. Mov"
+]
+},
+"d2abccee1e9d7132": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"index.qmd",
+"Scale types and permitted operations",
+"| `proportion` | 18 | A composition. The estimates are fractions of a whole and are constr"
+]
+},
 "d321ff49eb324918": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "science.qmd",
 "",
 "7. [The clock catalogue]()"
+]
+},
+"d38e223deef97d13": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"4.3 Model classes",
+"| `AggregationClock` | mean / quantile / transmission-model reduction | epiTOC1/2/3, stemT"
+]
+},
+"d3a7ad259dc0c071": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"21.2 Three ways a variant reaches the beta value",
+"**A SNP at the interrogated base.** Single-base extension reads the variant rather than th"
+]
+},
+"d3c16cc05b32aa8d": {
+"reason": "Calibration corpus extended with three healthy whole-blood sets (GSE99624, GSE166611, GSE193836); platform-bias table rebuilt on 206 samples over 8 datasets (hannum EPICv2 -11.5 y, zhangblup -0.46 y split -0.64/+0.15); conformal restricted to whole blood, buffy coat, PBL",
+"was": [
+"guide/FALCONAge.qmd",
+"Step 3: inspect the corpus before downloading it",
+"``` group files size what it is for ------------------------------------------------------"
+]
+},
+"d5a4654f29158493": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `deconvolutebloodepicmonocyte` | 2018 | monocyte proportion | `proportion` | \u2014 | purifie"
+]
+},
+"d8b61cb0f0810b55": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"What of this exists",
+"| Preprocess ops | 7: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_norma"
 ]
 },
 "db99228da575acff": {
@@ -576,12 +1912,44 @@
 "A tier C clock without a published worked example carries `gold_standard.source: \"syntheti"
 ]
 },
+"dc95957a2dc18d2d": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Licensed: 40 clocks",
+"Licensed: 40 clocks"
+]
+},
+"ddd84b72a5a3d456": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| How much has this tissue divided? | `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`,"
+]
+},
+"de6e1637a78e8b2a": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `deconvolutebloodepiccd8tcell` | 2018 | CD8+ T cell proportion | `proportion` | \u2014 | puri"
+]
+},
 "e092c9c9ea483f02": {
 "reason": "Generated in-page contents lists of science.qmd and architecture.qmd, removed when those pages were split into chapters (item 27): the sidebar now lists the pages they pointed at.",
 "was": [
 "architecture.qmd",
 "What of this exists",
 "6. [Preprocess module]()"
+]
+},
+"e0f27df1763f4e17": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `dnamic` | 2025 | intrinsic capacity | `relative_score` | \u2014 | whole blood | EPICv1 | [Fu"
 ]
 },
 "e192ba2f091221b6": {
@@ -608,12 +1976,84 @@
 "7. [Scoring, analysis, plots, report]()"
 ]
 },
+"e3567333485725ae": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"4.3 Survival models",
+"**Cox proportional hazards.** `h(t|x) = h\u2080(t) exp(x'\u03b2)`. The linear predictor `x'\u03b2` is a l"
+]
+},
+"e37b3379b2fa74b9": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"The clock catalogue",
+"175 clocks, in three availability groups. Availability is about redistribution rights, not"
+]
+},
+"e3cc5402f5a29b89": {
+"reason": "Op inventory read against models/ops.py: 7 per-clock preprocess ops, 1 dataset-level op (standardise_within_sample, Zhang 2019), 21 postprocess transforms, 24 of 46 bundled clocks declare one; scale_row is the dataset-level op, not scale; mitotic statistics are model classes; postprocess module path corrected",
+"was": [
+"architecture.qmd",
+"4.1 Preprocess ops",
+"Shipped: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binar"
+]
+},
+"e496b93d27518f7a": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"architecture.qmd",
+"1.1 What each release delivered",
+"| Clock coefficients | 46 bundled, 40 scaffold-only, 89 untraced (\u00a73.7, \u00a74.7) | the untrac"
+]
+},
 "e5bc9491cfcd97e1": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "20.3 Prediction error is a different, larger question",
 "20.3 Prediction error is a different, larger question"
+]
+},
+"e64e8349e06f377b": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"index.qmd",
+"Scale types and permitted operations",
+"| `age_years` | 77 | An age. The model predicts elapsed time and is reported on the same s"
+]
+},
+"e68a50e515b98c20": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"",
+"**175 clocks**, registry schema `1.1.0`."
+]
+},
+"e9dfc19e4cc03a00": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"science.qmd",
+"4.10 Deconvolution as a model",
+"This is exact, differentiable almost everywhere, and vectorises across a batch, a good pat"
+]
+},
+"e9e451a6cd226336": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"22.1 A clock is a combination score",
+"The shared property matters more than the shared arithmetic. A combination score is robust"
+]
+},
+"eab2798cc65d62e4": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"7.2 Selected clocks with their key parameters",
+"The full 173-row table is in the registry; this is the subset a new tool should support fi"
 ]
 },
 "eade6ef05eb70c35": {
@@ -624,12 +2064,68 @@
 "**GrimAge2 Cox \u2192 years.** A Cox linear predictor of 16.0 becomes `((16.0 \u2212 15.370829484122"
 ]
 },
+"eb9fd6e4e697b030": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**Age-range extrapolation.** Models trained on adults 20\u201370 do not extrapolate; gestationa"
+]
+},
+"eef467509295d8f3": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"index.qmd",
+"Installation",
+"[Getting started]() walks the same ground one command at a time, including fetching real p"
+]
+},
+"f005fe4ace3136fb": {
+"reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `deconvolutebloodepicnkcell` | 2018 | natural killer cell proportion | `proportion` | \u2014 "
+]
+},
 "f09868d754e6c013": {
 "reason": "Item 28 accuracy pass 1: science \u00a719 and \u00a720 subsections renumbered from 20.x and 21.x to 19.x and 20.x to match their sections and the text citing them; stale counts (161 clocks, 35/28/23 per tier) and the stale falconage_config() output replaced with the current registry (175: 46 bundled, 89 untraced, 40 licensed); retired tier letters replaced by availability names where the shipped system is described; the reference group 'named in the brief' renamed; GPU page corrected where AltumAge was bundled after its measurements.",
 "was": [
 "science.qmd",
 "14.2 Published speedups, and what we measured instead",
 "That comparison is GPU-pyaging against CPU-biolearn, so it measures two packages as much a"
+]
+},
+"f168520bc2d37828": {
+"reason": "Platform-bias table regenerated after the Zhang standardisation fix: zhangblup EPICv2 median -0.54 y (was -0.23 on unstandardised betas), split measured as -0.73 y probe loss and +0.27 y restandardisation; 74 rows, 37 clocks",
+"was": [
+"architecture.qmd",
+"15.2 New registry artefacts",
+"| `conformal.csv` | 48 | healthy controls in this corpus | `build_conformal.py` |"
+]
+},
+"f2c7ab8e51ab48e7": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"index.qmd",
+"Installation",
+"Docker is the supported path. One image carries Python, R, the CLI and all 43 bundled weig"
+]
+},
+"f40d736795bb030c": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"guide/FALCONAge.qmd",
+"Adjusting for cell composition",
+"Blood cell composition changes with age, and with most other things that happen to a perso"
+]
+},
+"f4a8aeb12bb5dff9": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.3 Aggregate outputs a tool should offer",
+"- Per-sample \u00d7 per-clock long table (tidy) and wide matrix."
 ]
 },
 "f5cbdf6bfb51439b": {
@@ -654,6 +2150,62 @@
 "science.qmd",
 "21.5 Probe masks: standard for an EWAS, a decision for a clock",
 "21.5 Probe masks: standard for an EWAS, a decision for a clock"
+]
+},
+"f7d69215aa66a289": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"clocks.qmd",
+"Untraced: 89 clocks",
+"| `efrs` | 2022 | frailty index | `relative_score` | 20 | whole blood | 450K, EPICv1 | [Ga"
+]
+},
+"f8ecc937c3b02831": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"16. Failure modes",
+"**EPIC v2 suffixes.** Aggregate before scoring or every clock sees zero features."
+]
+},
+"fada192f4316f2fd": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"science.qmd",
+"23.4 Feature selection is not settled",
+"Two rows there are worth sitting with. A single CpG in ELOVL2 reaches R\u00b2 = 0.73, so most o"
+]
+},
+"fafe76f8564711f0": {
+"reason": "Item 28 continued: failure-modes 16 states what FALCONAge does (units, coverage floor, rate refusal, safetensors) and does not (population check, HD condition number); figure counts (31 Python, 20 R); the two Installation sections merged; ComputAge's run_benchmark named as such; one probe count on the building page.",
+"was": [
+"index.qmd",
+"Installation",
+"On Windows PowerShell write `\"${PWD}\"`. Open a session with `docker run --rm -it -v \"$PWD:"
+]
+},
+"fb6e29e7b5ade5a0": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"17.1 Array normalisation, and what it corrects",
+"The order is load-bearing -- noob, dye bias, pOOBAH, then BMIQ -- and it matters because *"
+]
+},
+"fbef0de5bf89689c": {
+"reason": "Catalogue counts brought to the registry (178 clocks: 69 bundled, 52 untraced, 57 licensed) after items 17, 21, 32 and 33; Horvath's BMIQcalibration now ships as horvath_normalise (item 25).",
+"was": [
+"guide/clocks.qmd",
+"Choosing by research question",
+"| How old is this newborn, gestationally? | `knight`, `leecontrol`, `leerefinedrobust`, `l"
+]
+},
+"fc9eef66c04e2ce2": {
+"reason": "Item 28 accuracy pass, 2026-09-27: statements corrected against the code, the registry and the cited sources (findings in the audit record): pyaging counts at e7267e9, AltumAge's RobustScaler, organAging's Gompertz inversion, the IDAT chain order and what now ships, Zhou masks not applied automatically, fit_clock's lambda claim, reference acceleration's record, Sugden and Sehgal/Borrus attributions, placenta count, res.long() columns, install and quickstart commands and counts.",
+"was": [
+"science.qmd",
+"8.2 Scale types and what you may do with them",
+"| Log hazard | SenMortalityAge, organAging mortality, raw Cox scores | exponentiate for HR"
 ]
 },
 "fca7ccee7ea0dd81": {

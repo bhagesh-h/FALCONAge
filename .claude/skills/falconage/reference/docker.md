@@ -149,8 +149,18 @@ a naive "just refit on the reference" gets wrong.
 
 ## Licensed clocks
 
-Forty clocks are tested scaffolds whose coefficients are research-use-only, or have no public
-source FALCONAge may redistribute. Obtain the file from the authors, then:
+Fifty-seven clocks are tested scaffolds whose coefficients are research-use-only, or have no
+public source FALCONAge may redistribute. Two families are imported from the authors' own files
+and then score exactly as the authors' code does:
+
+```python
+reg = fa.registry.load()
+reg.import_dunedinpace("DunedinPACE")        # installed package, source checkout or .rda
+reg.import_pc_clocks("CalcAllPCClocks.RData")
+fa.score(d, clocks=["dunedinpace", "pchorvath2013"], registry=reg)
+```
+
+For any other licensed clock, obtain the file from the authors, then:
 
 ```python
 fa.registry.register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")

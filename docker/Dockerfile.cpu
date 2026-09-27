@@ -55,10 +55,9 @@ ENV PYTHONUNBUFFERED=1 \
     OMP_NUM_THREADS=4 \
     OPENBLAS_NUM_THREADS=4 \
     MKL_NUM_THREADS=4 \
-    # Weights land here. Mount a host directory or a named volume over it to
-    # keep them between runs: the PC clocks are 78-1216 MB each and SystemsAge
-    # is 2 GB, so a cold cache is the difference between a two-minute run and a
-    # twenty-minute one.
+    # Downloads land here: the Illumina manifests fetch_manifest() caches (12 to
+    # 26 MB each) and data fetched with fa.download. Mount a host directory or a
+    # named volume over it to keep them between runs. Nothing bundled needs it.
     HF_HOME=/opt/falconage/cache \
     FALCONAGE_CACHE=/opt/falconage/cache \
     LANG=C.UTF-8 \
@@ -107,7 +106,7 @@ COPY python/pyproject.toml python/uv.lock /opt/falconage/python/
 RUN pip install --no-cache-dir uv==0.8.17 \
  && cd /opt/falconage/python \
  && uv export --frozen --no-dev --no-emit-project \
-      --extra methylation --extra plot --extra anndata --extra cli \
+      --extra methylation --extra plot --extra anndata --extra cli --extra metabolomics \
       --format requirements-txt > /tmp/requirements.txt \
  && pip install --no-cache-dir --require-hashes -r /tmp/requirements.txt \
  && rm /tmp/requirements.txt

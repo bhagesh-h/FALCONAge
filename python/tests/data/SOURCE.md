@@ -93,3 +93,48 @@ coefficients="bioage")` is checked against the reference implementation on every
 BioAge computes `phenoage0` in `R/phenoage_calc.R` from the full-precision weights and `lncrp =
 log(1 + crp)`. FALCONAge reproduces it to below 0.00001 years on every row. With Table 1's printed
 weights instead, it is a mean 0.074 years higher. Licence and citation as for the `kdm0` fixture.
+
+## `zhang_betas.csv.gz` and `zhang_reference.txt`
+
+Eight synthetic samples for checking FALCONAge's Zhang et al. 2019 predictors against the
+authors' own script. The 4,494 probes are 494 of the elastic-net model's 514 (20 left out), 2,500
+of the BLUP model's other probes and 1,500 probes neither model uses, drawn from a Beta(0.6, 0.6)
+per probe with Gaussian noise (NumPy `default_rng(19)`), rounded to six decimals. Four values are
+missing and one probe is missing in every sample, so the per-probe mean fill and the all-NA
+filter are both exercised.
+
+`zhang_reference.txt` is the output of `pred.R` from `qzhang314/DNAm-based-age-predictor` at
+`18f20a4`, run unmodified in R 4.5.3 on this matrix (`Rscript pred.R -i input.rds -o
+zhang.pred -a ages`): per sample, the chronological age given to it and the elastic-net and BLUP
+predictions.
+
+| File | SHA-256 |
+|---|---|
+| `pred.R` | `9c2a45aa89cc223e76af5654e82c5ceb19c9a8225ffa7c20aef57fc71a07e5e3` |
+| `en.coef` | `c8096eadc79dd3f9dc44544293150ed24043616332130bac2cc7dd7d604a4bc0` |
+| `blup.coef` | `d4802729177da3e5f3506ce0e652549594ad2d2b74b21d544b9e6572c3175777` |
+| `zhang_betas.csv.gz` | `b780e5c9e356507c13a7e64a21c6b803c1015ad46ae34c33496412d7dc0c1130` |
+| `zhang_reference.txt` | `9470dbb02bc90fea96a27c6ec1ef873d25e621d3fc0ae5ccad06445030370b1c` |
+
+FALCONAge agrees to 5e-14 years. On the authors' own example, `data.rds` (10 samples by the full
+485,512 probes of the 450K array; SHA-256 `7a82f8fed2a7cddf09f228a6eebc755ce248f5e48ab4c54eef45279376ef914e`),
+it agrees to 1e-13 years for the elastic net and 5e-12 for BLUP with the default coverage floor;
+that file is 38 MB and is not kept here.
+
+## `knight_testdataset.csv.gz`
+
+Knight et al.'s demonstration dataset for their gestational-age clock, so that the clock and
+Horvath's gold-standard normalisation can be checked against the output the authors state for it:
+37.366, 38.346 and 39.324 weeks (Additional file 7, the instructions).
+
+| | |
+|---|---|
+| Source file | Additional file 6 (`TestDataset.csv`) of Knight AK et al., Genome Biology 2016;17:206, `https://static-content.springer.com/esm/art%3A10.1186%2Fs13059-016-1068-z/MediaObjects/13059_2016_1068_MOESM6_ESM.csv` |
+| Source SHA-256 | `629c4dd3106263f19fffa4395da97fb5c718f77c5626b6dc2964713aa4c919a8` |
+| Rows kept | the 21,265 of its 27,235 probes that are in Horvath's goldstandard2, the only ones the normalisation and the clock read |
+| Values | as published, line endings converted from CR to LF |
+| Fixture SHA-256 | `38e0a03114163c824de6a432cf36758862e15fdac5b53b6cac6e6d4c0d70fa6c` |
+
+**Licence and citation.** CC BY 4.0. Cite: Knight AK, Craig JM, Theda C, et al. An epigenetic
+clock for gestational age at birth based on blood methylation data. Genome Biol 2016;17:206.
+https://doi.org/10.1186/s13059-016-1068-z

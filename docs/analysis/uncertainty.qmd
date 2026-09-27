@@ -3,7 +3,7 @@ title: "Uncertainty, specimen and platform"
 ---
 
 ## Measurement uncertainty
-Also new in this release, and the reason the rest of this page is worth running. Technical replicates of
+Technical replicates of
 the *same DNA* differ by up to nine years on prominent clocks, so a bare number does not say
 whether a difference between two samples is real.
 
@@ -44,7 +44,7 @@ Two samples whose intervals overlap are not distinguishable by that clock on tha
 different their point estimates look.
 
 ## 19. Uncertainty, specimen and platform
-Added in this release. Sections 1–19 are about computing the number correctly. This one
+The preceding sections are about computing the number correctly. This one
 is about the fact that a correctly computed number is still not interpretable on
 its own, which is what the field's own literature says and what no
 implementation, including this one until now, did anything about.
@@ -63,9 +63,12 @@ run before recruiting, not after.
 
 Split one DNA sample, run both halves on the same array, and six prominent
 clocks disagree with themselves by **up to nine years**
-([Nat Aging 2022](https://doi.org/10.1038/s43587-022-00248-2)). Only **18 % of
-CpGs on the 450K array reach ICC ≥ 0.5** in adult whole blood (Sugden 2020): for
-most probes, the technical variance exceeds the biological variance. A reader
+([Nat Aging 2022](https://doi.org/10.1038/s43587-022-00248-2)). In adult whole blood
+many 450K probes are measured unreliably, and the unreliable ones replicate worse
+(Sugden et al., *Patterns* 2020;1:100014,
+[doi:10.1016/j.patter.2020.100014](https://doi.org/10.1016/j.patter.2020.100014)); DunedinPACE was
+trained only on the 81,239 probes shared by 450K and EPIC whose ICC exceeded 0.4 in that study
+([Belsky et al. 2022](https://doi.org/10.7554/eLife.73420)). A reader
 handed "DNAmAge = 54.2" cannot tell whether a 1.5-year change between two draws
 is biology or the assay.
 
@@ -128,7 +131,7 @@ is exactly the false precision the section exists to argue against.
 
 On the corpus, Horvath 2013 comes out at ±1.58 years of technical error with an
 implied cohort ICC of 0.98; DunedinPoAm38 is the least repeatable at 0.72; the
-319,607-probe BLUP clock reaches 1.00, because a rotation spread over the whole
+319,607-probe BLUP clock reaches 1.00, because a weight spread thinly over the whole
 array averages the noise away. That last result is the same mechanism that makes
 PC clocks robust to probe loss, arrived at from the other direction. Read all
 three as lower bounds, for the reason just given.
@@ -138,7 +141,7 @@ three as lower bounds, for the reason just given.
 `technical_se()` asks what a repeat of the same DNA would do. `conformal_interval()`
 asks how far the number is from the truth.
 
-Split conformal: take healthy blood samples with known ages, compute the
+Split conformal: take healthy whole-blood samples with known ages, compute the
 absolute residuals, and the `⌈(n+1)(1−α)⌉/n` quantile is a half-width that
 covers the truth at the stated rate on any exchangeable sample. No
 distributional assumption is made, and the guarantee is finite-sample. Conformalised quantile
@@ -146,6 +149,14 @@ regression ([Genet Epidemiol 2025](https://doi.org/10.1002/gepi.70008)) is the
 better version, widening the interval where the training data were sparse; it
 needs fitted quantile models, so split conformal ships and the calibration table
 reports the width per age band so a reader can see where one width is lying.
+
+The calibration takes whole blood, buffy coat and peripheral blood leukocytes
+from adults, and nothing else. The corpus also labels sorted populations and PBMC as blood, and
+on those a whole-blood clock's residual carries the cell type: on its healthy
+controls Hannum ran 21 years low on CD8+ T cells, and DNAm PhenoAge 24 years low
+on CD14+ monocytes and 40 on CD8+ T cells. Until that was noticed they were
+more than half the calibration set, and the widths quoted composition as clock
+error.
 
 The limitation is not small and is stated in the output: every row carries
 `exchangeable = False`. The calibration cohort is adult, blood, and
@@ -211,7 +222,7 @@ study, same pipeline, difference under half a year, which is what makes the
 saliva number a specimen effect rather than noise.
 
 Which clock matters as much as which specimen. On those samples DunedinPACE
-differed by −0.007 years (p = 0.486) where Hannum differed by 12.5, so "this
+differed by −0.007 biological years per chronological year (p = 0.486) where Hannum differed by 12.5 years, so "this
 clock transfers" is a per-clock fact, not a per-tissue one, and FALCONAge
 therefore holds the policy per clock. Across unrelated tissues the published
 figure is 20–30 years (PMC12714307).
@@ -227,8 +238,9 @@ and takes one of three positions:
     measured discordance where one is published.
 
 `refuse`
-  : twelve clocks whose training tissue has no counterpart elsewhere: three
-    placenta clocks, cord blood and neonatal blood spots, buccal, brain cortex.
+  : twelve clocks whose training tissue has no counterpart elsewhere: four
+    placenta clocks, three cord-blood clocks, neonatal blood spots, buccal, and
+    three brain clocks.
     A placenta clock on blood is a category error, not an offset.
 
 Not every package holds a policy. methylclock 1.16.0's `DNAmAge()` takes no tissue argument and,
@@ -258,34 +270,57 @@ exists to catch, and it caught it here first.
 `probe_loss()` has always said how much of a model is absent: count and
 coefficient mass. It could not say what that costs. Now it can, because the cost
 was measured: every full-450K matrix in the corpus, masked down to each
-platform's probe set and rescored, 109 samples across five datasets.
+platform's probe set and rescored, 206 samples across eight datasets. The two
+right-hand columns are the same masks under two ways of filling an absent CpG:
+the mean of the clock's present CpGs in the data, which FALCONAge used until
+the reference values existed, and the clock's reference value, which it uses
+now.
 
-| clock | platform | probes kept | median shift |
-|---|---|---|---|
-| hrsinchphenoage | EPICv2 | 874 / 959 | **+16.7 y** |
-| yingcausage | EPICv2 | 492 / 585 | +13.9 y |
-| lin | EPICv2 | 96 / 99 | −9.4 y |
-| hannum | EPICv2 | 64 / 71 | −7.7 y |
-| horvath2013 | EPICv2 | 339 / 353 | −2.6 y |
-| zhangblup | EPICv2 | 286,843 / 319,607 | **−0.23 y** |
-| yingdamage | EPICv1 | 1089 / 1089 | **0.00 y** |
-| vidalbralo | either | 8 / 8 | **0.00 y** |
+| clock | platform | probes kept | pooled fill | reference fill |
+|---|---|---|---|---|
+| hrsinchphenoage | EPICv2 | 874 / 959 | +15.9 y | +0.88 y |
+| yingcausage | EPICv2 | 492 / 585 | +14.8 y | −6.1 y |
+| hannum | EPICv2 | 64 / 71 | −11.5 y | +1.03 y |
+| lin | EPICv2 | 96 / 99 | −9.3 y | +0.84 y |
+| yingdamage | EPICv2 | 1009 / 1089 | +9.1 y | +0.66 y |
+| horvath2013 | EPICv2 | 339 / 353 | −2.5 y | −1.3 y |
+| zhangblup | EPICv2 | 286,843 / 319,607 | −0.46 y | −0.46 y (no fill) |
+| yingdamage | EPICv1 | 1089 / 1089 | 0.00 y | 0.00 y |
+| vidalbralo | either | 8 / 8 | 0.00 y | 0.00 y |
 
-Three things to read out of that table. `lin` loses three probes of ninety-nine
-and moves nine years, the coefficient-mass argument in its most extreme form.
-`zhangblup` loses ten percent of a 319,607-probe model and moves a quarter of a
-year, which is the graceful-degradation property published for PC clocks,
-reproduced here in a different architecture. And the two rows at exactly zero
-are the internal check: a clock that loses nothing must shift by nothing, and
-does.
+Most of what the pooled column prices is the fill, not the loss. A pooled value
+sits near 0.5, and clock CpGs are often near 0 or 1: `lin` lost three probes of
+ninety-nine and moved nine years. Filled from the reference, the same masks move
+`hannum`, `lin`, `hrsinchphenoage` and `yingdamage` by about a year or less;
+over the 19 rows on the years scale whose fill changed, the median absolute
+shift fell from 3.36 to 0.66 years, and 38 of the 45 rows with a reference moved
+less. Those numbers are out of sample: the blood reference is a mean over
+healthy controls in this corpus, so each dataset was scored against it rebuilt
+without that dataset (scored in-sample, `hannum` read −0.40 rather than +1.03).
+`yingcausage` still moves six years, its 93 lost CpGs carrying weight that no
+fixed value stands in for.
 
-**What the table does not cover, so it is not read as covering it.** Thirty rows:
-fifteen clocks × two targets, EPIC v1 and EPIC v2. 450K is the *reference* the
+`zhangblup` fills nothing, because an absent probe drops out after the
+per-sample standardisation, and loses ten percent of a 319,607-probe model for
+under half a year at the median: the graceful-degradation property published for
+PC clocks, reproduced here in a different architecture. Its shift has two parts.
+Scored on the same samples, the lost probes alone move the estimate by −0.64 y
+at the median, and restandardising over the EPIC v2 probe set by +0.15 y. And
+the two rows at exactly zero are the internal check: a clock that loses nothing
+must shift by nothing, and does.
+
+**What the table does not cover, so it is not read as covering it.** 86 rows:
+43 clocks × two targets, EPIC v1 and EPIC v2. For the six deconvolution entries
+the shift is not probe loss alone: a 450K matrix is deconvolved with the 350-CpG
+legacy IDOL table and an EPIC one with the 450-CpG table, so their rows price a
+change of array, which is what a user moving between arrays sees (a median shift of at most
+0.034 in a cell-type proportion). 450K is the *reference* the
 shift is measured from, so it cannot appear, its shift is zero by
 construction, not by measurement. 27K is absent for a different reason: masking
 a 450K matrix to 27,578 probes leaves most of these clocks below the coverage
 floor, so what would be measured is the shift of a clock that would have been
-refused anyway. And the reference cohort is 109 blood samples of adults; a shift
+refused anyway. And the reference cohort is 206 blood-derived samples of
+adults, whole blood and leukocytes as well as PBMC and sorted T cells; a shift
 measured there is a reasonable prior for another blood cohort and not a
 correction factor for a different tissue.
 
@@ -363,13 +398,19 @@ biomarkers across the 51 longitudinal studies of TranslAGE
 report uses comes from.
 
 **That PC clause is the sharpest test in the paper, and by default FALCONAge
-cannot run it.** Every principal-component clock in the registry is catalogued
-as untraced or licensed, so their weights are not ours to distribute, and a
-corroboration check with nothing to check against would be inert. `consensus()`
-therefore names each clock's counterpart in `high_reliability_partner`, reports
-agreement in `partner_corroborates`, and where the counterpart was not scored it
-says so in the verdict string rather than dropping the clause. Registering the
-weights with `fa.registry.register_local_weights()` turns the check on.
+cannot run it.** The principal-component clocks are `licensed`: the authors'
+data file (`CalcAllPCClocks.RData`, linked from the PC-Clocks repository) carries
+no licence, so it is not ours to distribute, and a corroboration check with
+nothing to check against would be inert. `consensus()` therefore names each
+clock's counterpart in `high_reliability_partner`, reports agreement in
+`partner_corroborates`, and where the counterpart was not scored it says so in
+the verdict string rather than dropping the clause.
+`fa.registry.load().import_pc_clocks(path)` turns the check on: it reads a
+downloaded copy of that file and registers PCHorvath 2013, PCSkinAndBlood,
+PCHannum, PCPhenoAge and PCDNAmTL, each collapsed exactly to one weight per CpG
+with the authors' fill values for absent CpGs, and it reproduces the authors'
+`run_calcPCClocks.R` to 1e-10. PCGrimAge, eight sub-models on the components
+plus sex and age, needs a composite model class FALCONAge does not have yet.
 
 So `consensus()` tests every scored clock, corrects across the whole set
 actually run, and returns a verdict rather than a table to pick from:
@@ -378,6 +419,23 @@ outcome-trained clock and survival of Bonferroni; one lit clock is `unsupported`
 whatever its p-value. The verdict string always carries the counts it was
 computed from, a verdict without its arithmetic is an oracle, and that is the
 opposite of the posture of this package.
+
+**Repeated measures.** An intervention usually measures the same people more than
+once, and treating each visit as a new person lets the spread between people
+swamp the change within them. `design="paired"` tests each person's change from
+one visit to another (`subject_col` names the person); `design="mixed"` fits
+`y ~ visit + (1 | person)` by REML, keeps a person who missed a visit, and takes
+any number of visits, testing them jointly. It reproduces `nlme::lme` on a
+design with missing visits: estimates to 1e-7, standard errors to 1e-6, and the
+containment degrees of freedom exactly ([Pinheiro & Bates 2000](https://doi.org/10.1007/978-1-4419-0318-1)).
+Both add `mdc95`, the minimum detectable change 1.96·√2·SEM with the SEM the
+within-person SD across the visits
+([Weir 2005](https://doi.org/10.1519/15184.1)), and flag a significant mean
+change that is smaller than it: twelve people can make a group change of 1.6 SD
+of the change significant while no one of them could be shown to have changed.
+That SEM holds day-to-day biology and assay noise together; `technical_se()`
+gives the assay part alone, and `variance_components()` separates the two when
+there are technical replicates.
 
 ### 19.8 Evidence, attached to the score
 

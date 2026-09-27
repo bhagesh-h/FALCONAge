@@ -17,6 +17,12 @@
 #'   `"within_group"` -- residual from a regression fitted separately within
 #'   each level of `group`. What the AA2 benchmark needs: it asks whether cases
 #'   accelerate relative to *their own* controls.
+#'
+#'   `"both"` -- `"absolute"` and `"residual"` side by side, suffixed.
+#'
+#'   `"reference"` -- residual from a line fitted in another scored population,
+#'   `reference`, within each level of the categorical `match` columns, and
+#'   applied unchanged here. An age outside the reference's range is refused.
 #' @param age_col Column in the sample annotation holding chronological age.
 #' @param group Grouping column, required for `"within_group"`.
 #' @param clocks Optional clock names. Naming them means every one must be
@@ -32,6 +38,11 @@
 #'   A character vector instead names columns of the sample annotation, for
 #'   measured counts or anything else. Only available with
 #'   `method = "residual"`.
+#' @param reference For `method = "reference"`: a `falcon_result` for the
+#'   reference population, scored with the same clocks.
+#' @param match For `method = "reference"`: the annotation columns the
+#'   comparison is matched on; `age_col` is the regressor and the others are
+#'   categorical.
 #'
 #' @section Which convention a paper used:
 #' Often not stated, and the three disagree by several years on the same data.
@@ -44,9 +55,10 @@
 #' acceleration(res, method = "within_group", group = "dataset")
 #' }
 #' @export
-acceleration <- function(x, method = c("residual", "absolute", "within_group"),
+acceleration <- function(x, method = c("residual", "absolute", "within_group", "both",
+                                        "reference"),
                          age_col = "age", group = NULL, clocks = NULL,
-                         adjust = NULL) {
+                         adjust = NULL, reference = NULL, match = c("age", "sex")) {
   method <- match.arg(method)
   adj <- if (is.null(adjust)) {
     reticulate::py_none()
@@ -58,7 +70,9 @@ acceleration <- function(x, method = c("residual", "absolute", "within_group"),
   out <- py_do(fa()$acceleration(
     x$py, age_col = age_col, method = method, group = or_none(group),
     clocks = if (is.null(clocks)) reticulate::py_none() else reticulate::r_to_py(as.list(clocks)),
-    adjust = adj))
+    adjust = adj,
+    reference = if (is.null(reference)) reticulate::py_none() else reference$py,
+    match = reticulate::r_to_py(as.list(match))))
   df <- as_df(out)
   attr(df, "method") <- method
   # An adjusted acceleration is a different quantity from an unadjusted one and

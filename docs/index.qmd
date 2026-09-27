@@ -32,7 +32,7 @@ error per sample, and calibrates distribution-free prediction intervals against 
 
 It is one numerical core in Python, called from R through reticulate, so a result obtained in
 either language is the same bits rather than two implementations that agree approximately. The
-catalogue holds 175 clocks; 46 of them score offline, and the rest are documented with the reason
+catalogue holds 178 clocks; 69 of them score offline, and the rest are documented with the reason
 they cannot, which is licensing or untraced provenance rather than missing code.
 
 These are instruments for population research, not a clinical judgement about one person.
@@ -58,7 +58,7 @@ say what else it cannot do.
 
 **Output**
 
-- One score per sample per clock, for as many of the 175 catalogued clocks as your features support
+- One score per sample per clock, for as many of the 178 catalogued clocks as your features support
 - **A standard error on every score**, propagated from published per-probe reliability through each
   clock's own weights, and a distribution-free prediction interval
 - A coverage figure per clock, and what the probes you are missing cost in *years*
@@ -99,8 +99,11 @@ last gate is a score and a manifest recording which gates it passed and on what 
 Each of these is a silent wrong answer somewhere else, so each is a hard failure here:
 
 - **Fill a missing probe with zero.** In beta space zero means completely unmethylated, which is a
-  real and extreme measurement. Absent features take the clock's published reference value, or the
-  cohort column mean, and the substitution is counted in the manifest.
+  real and extreme measurement. An absent feature takes the clock's reference value: the authors'
+  own for Horvath 2013, DunedinPoAm38, CorticalClock and AltumAge, a healthy adult blood mean for
+  22 other blood clocks. Where there is none, it takes the mean of the clock's present features,
+  and the run names that fallback with the share of the weight it touched. Every substitution is
+  counted in the manifest.
 - **Guess clinical units.** PhenoAge has SI and conventional variants that disagree by years.
   `units=` has no default.
 - **Score below the coverage floor.** A clock whose features are largely absent is skipped and
@@ -135,7 +138,7 @@ in full, with the algorithms and the reason each is or is not blocked.
 - **It has no foundation-model backend.** The `NeuralClock` architecture ships, safetensors only.
   CpGPT and MethylGPT are interesting here for zero-shot imputation and array conversion rather
   than as another age predictor.
-- **147 of the 175 catalogued clocks have no traced coefficient source.** A per-clock literature
+- **105 of the 178 catalogued clocks have no traced coefficient source.** A per-clock literature
   hunt, not a technical problem, and `primary_source_traced: false` is the honest record of it.
 
 Removed from this list, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
@@ -146,7 +149,7 @@ refusal.
 - [Getting started](start/quickstart.qmd), install, score, interpret, in both languages.
 - [Choosing a clock](clocks/choosing.qmd), by the question you asked, by what the scale permits, and
   by whether the coefficients transfer to your data at all.
-- [Clock catalogue](clocks/catalogue.qmd), all 175, searchable.
+- [Clock catalogue](clocks/catalogue.qmd), all 178, searchable.
 - [Python reference](reference/index.qmd) · [R reference](r/index.html)
 - [GPU support](dev/gpu.qmd), what was verified on real hardware, and why `device="auto"` is CPU.
 

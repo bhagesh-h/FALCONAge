@@ -3,7 +3,7 @@ title: "Age acceleration"
 ---
 
 ## Age acceleration
-The three conventions disagree by several years on the same data, and papers frequently do not say
+The conventions disagree by several years on the same data, and papers frequently do not say
 which they used.
 
 ::: {.panel-tabset}
@@ -35,11 +35,28 @@ cases accelerate relative to *their own* controls. `"both"` returns the first tw
 suffixed, for when you would otherwise have to pick without knowing which the comparison paper
 used.
 
+### Against a reference population
+
+The residual is centred on this cohort, so it cannot say how the cohort compares with anyone else,
+and it absorbs any effect the whole cohort shares. `method="reference"` fits the age line in a
+second, scored population and applies it unchanged here:
+
+```python
+ref = fa.score(reference_data, clocks=["phenoage"])
+fa.acceleration(res, method="reference", reference=ref, match=("age", "sex"))
+```
+
+The line is fitted separately within each level of the categorical `match` columns (usually sex),
+an age outside the reference's range in its stratum is refused rather than extrapolated, and a
+reference scored with different coefficients is refused. `attrs["reference_fit"]` records, per clock
+and stratum, the reference sample size, age range, fitted line and residual SD.
+
 ### Adjusting for cell composition
 
 Blood cell composition changes with age, and with most other things that happen to a person. In
 more than 10,000 blood samples, immune composition was significantly associated with age
-acceleration for **every one** of six widely used clocks, so an unadjusted acceleration is
+acceleration for **every one** of six widely used clocks (Zhang et al., *Aging Cell*
+2024;23:e14071, [doi:10.1111/acel.14071](https://doi.org/10.1111/acel.14071)), so an unadjusted acceleration is
 measuring two things and reporting one number.
 
 The proportions needed to separate them are usually already in the result, computed by the
@@ -73,10 +90,11 @@ Ask for acceleration on a pace-of-aging clock and it refuses:
 
 ::: {.falcon-output}
 ```
-Error: 'acceleration' is not defined for dunedinpoam38, whose output is
+IllegalOperationError: 'acceleration' is not defined for dunedinpoam38, whose output is
   pace_ratio (biological years per chronological year).
-  A pace of aging is already a rate; subtracting chronological age from it is
-  a units error, not a conservative choice.
+  Legal here: correlate, difference, mean, rank.
+  A pace of aging is already a rate; subtracting chronological age from it is a units
+  error, not a conservative choice.
 ```
 :::
 
@@ -136,6 +154,6 @@ absolute change and the change relative to the measurement's own ICC.
 
 Intraclass correlation coefficient on technical replicates (same DNA, two arrays) and on
 biological replicates (same person, short interval). Pool across studies with Fisher-Z. The
-TranslAGE 2025 result is the one to remember: **technical reproducibility does not predict
+result to remember is from Sehgal et al. (bioRxiv 2025.10.13.682176), on the TranslAGE platform: **technical reproducibility does not predict
 biological reliability**, and PCGrimAge was the only clock reaching ICC > 0.75 for biological
 reliability. A tool should surface each clock's published ICC next to its prediction.

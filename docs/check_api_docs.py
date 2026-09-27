@@ -67,7 +67,7 @@ IGNORE = {"py", "R"}
 # A checker that cries wolf gets switched off, so the pattern anchors on the
 # function name and only reads the arguments belonging to that call.
 ENUMS = [
-    ("acceleration", "method", {"absolute", "residual", "both", "within_group"}),
+    ("acceleration", "method", {"absolute", "residual", "both", "within_group", "reference"}),
     ("agreement", "method", {"pearson", "spearman", "kendall"}),
     ("score", "imputation", {"reference", "mean", "none"}),
     ("score", "device", {"auto", "cpu", "cuda", "mps"}),

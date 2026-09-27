@@ -267,12 +267,17 @@ def run_gestational(records: dict) -> None:
                     index=False)
 
     weeks = pd.to_numeric(d.obs["gestational_age_days"], errors="coerce") / 7.0
+    # Only a clock that returns gestational weeks is compared with the recorded
+    # gestational age. The adult clocks this cord blood also scores return
+    # years, proportions or kilobases, and listing them under
+    # median_predicted_weeks printed a units error as a result.
+    gest = [c for c in clocks if tuple(res.registry.get(c).unit) == ("weeks",)]
     cmp = pd.DataFrame({
-        "clock": clocks,
-        "median_predicted_weeks": [round(float(res.scores[c].median()), 2) for c in clocks],
+        "clock": gest,
+        "median_predicted_weeks": [round(float(res.scores[c].median()), 2) for c in gest],
         "median_recorded_weeks": round(float(weeks.median()), 2),
-        "cor_with_recorded": [round(float(res.scores[c].corr(weeks)), 3) for c in clocks],
-        "medae_weeks": [round(float((res.scores[c] - weeks).abs().median()), 2) for c in clocks],
+        "cor_with_recorded": [round(float(res.scores[c].corr(weeks)), 3) for c in gest],
+        "medae_weeks": [round(float((res.scores[c] - weeks).abs().median()), 2) for c in gest],
     })
     write_table(dd, "vs_recorded_gestational_age", cmp, index=False)
     make_figures("gestational", "GSE66459", res, data=d)
@@ -642,14 +647,14 @@ GALLERY_SOURCES = [
     ("calibration",           "bench", "GSE182991", "same"),
     ("acceleration_group",    "bench", "GSE107143", "the one condition every clock detects"),
     ("acceleration_density",  "bench", "GSE130030", "balanced 14 vs 14"),
-    ("acceleration_heatmap",  "bench", "_combined", "all ten studies at once"),
-    ("clock_corr",            "bench", "_combined", "twenty clocks, enough to cluster"),
+    ("acceleration_heatmap",  "bench", "_combined", "all thirteen studies at once"),
+    ("clock_corr",            "bench", "_combined", "the full clock set, enough to cluster"),
     ("clock_chord",           "bench", "_combined", "feature sharing needs the full clock set"),
     ("clock_radar",           "bench", "_combined", "profile across conditions"),
     ("clock_pca",             "bench", "_combined", "structure only appears across studies"),
     ("coverage_bar",          "bench", "GSE56606",  "27K: the platform where coverage bites"),
     ("beta_density",          "bench", "GSE182991", "EPIC, clean bimodal"),
-    ("missingness",           "bench", "GSE130030", "typical 450K series"),
+    ("missingness",           "bench", "GSE118468", "a 450K series with missing values; six of the corpus series have none, and an all-zero histogram is refused"),
     ("platform",              "bench", "_combined", "three array generations side by side"),
     ("study",                 "bench", "_combined", "between-study spread"),
     ("benchmark_bars",        "bench", "_combined", "the headline benchmark figure"),

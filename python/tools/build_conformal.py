@@ -54,6 +54,18 @@ LEVELS = (0.80, 0.90, 0.95)
 #: the 95% level needs the largest residual in the set, which is one number.
 MIN_CALIBRATION = 40
 BANDS = ((0, 30), (30, 50), (50, 70), (70, 120))
+#: The specimens a whole-blood clock was fitted on: the leukocyte mixture of
+#: whole blood, as whole blood, buffy coat or peripheral blood leukocytes. The
+#: corpus also labels sorted populations and PBMC as blood, and on them the
+#: residual carries the cell type: on the healthy controls here Hannum ran
+#: 21 years low on CD8+ T cells and DNAm PhenoAge 24 low on CD14+ monocytes and
+#: 40 low on CD8+ T cells. An interval calibrated on that mix quotes the
+#: composition as if it were the clock's error.
+WHOLE_BLOOD = frozenset({"Whole blood", "Buffy coat", "PBL"})
+#: Adults only. The header and the documentation state the calibration is adult,
+#: and two of the EPIC sets bring children (GSE182991's controls average 7.7
+#: years), whose residuals on adult-trained clocks are a different question.
+MIN_AGE = 18
 #: A band needs at least this many samples. ceil((20+1)*0.90) = 19 <= 20, so 20
 #: is the smallest n at which the 90% conformal quantile is attainable at all.
 MIN_BAND = 20
@@ -78,13 +90,23 @@ def conformal_half_width(absr: np.ndarray, level: float) -> tuple[float, bool]:
 
 
 def calibration_set():
-    """Healthy blood samples with a chronological age, from the corpus.
+    """Healthy whole-blood samples with a chronological age, from the corpus.
 
+    Whole blood only, adults only; see :data:`WHOLE_BLOOD` and :data:`MIN_AGE`.
     Healthy only. A conformal interval calibrated on a cohort half of whom have
     an aging-accelerating condition would quote the spread of the disease as if
     it were the clock's error.
     """
     import falconage as fa
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from build_references import blood_parts, left_out
+
+    # The corpus blood reference that fills 22 clocks' absent CpGs is a mean
+    # over these same samples. Each dataset is scored against it rebuilt without
+    # that dataset, or its residuals would be smaller than a user's.
+    base = fa.registry.load()
+    parts = blood_parts(base)
 
     meta = pd.read_csv(CORPUS / "bench" / "computage_bench_meta.tsv", sep="\t",
                        index_col=0)
@@ -98,6 +120,8 @@ def calibration_set():
             "Age": "age", "Gender": "sex", "Condition": "condition",
             "DatasetID": "dataset", "Tissue": "tissue"})
         keep = (obs["condition"].astype(str) == "HC")
+        keep &= obs["CellType"].isin(WHOLE_BLOOD)
+        keep &= pd.to_numeric(obs["age"], errors="coerce") >= MIN_AGE
         keep &= pd.to_numeric(obs["age"], errors="coerce").notna()
         if keep.sum() < 5:
             continue
@@ -106,7 +130,7 @@ def calibration_set():
         # The ordinary coverage floor, deliberately. Calibrating on a clock
         # whose probes are 40% imputed measures the imputation, and the width
         # would then be quoted at users whose arrays are fine.
-        res = fa.score(d, clocks="compatible")
+        res = fa.score(d, clocks="compatible", registry=left_out(base, parts, gse))
         long = res.scores.copy()
         long["age"] = pd.to_numeric(d.obs["age"], errors="coerce").to_numpy()
         long["tissue"] = d.obs["tissue"].astype(str).str.lower().to_numpy()
@@ -181,8 +205,10 @@ def render() -> tuple[str, dict]:
     buf = io.StringIO()
     buf.write("# Split-conformal prediction intervals against chronological age.\n")
     buf.write("# half_width is the ceil((n+1)*level)/n quantile of the absolute\n"
-              "# residual on the calibration set: healthy-control blood samples\n"
-              "# with a recorded age, from the FALCONAge test corpus.\n")
+              "# residual on the calibration set: healthy-control whole blood,\n"
+              "# buffy coat or peripheral blood leukocytes from adults (18 or\n"
+              "# older) with a recorded age, from the FALCONAge test corpus. Sorted cell populations and PBMC\n"
+              "# are left out: their residuals carry the cell type.\n")
     buf.write("# Coverage holds for data EXCHANGEABLE with that cohort. It is\n"
               "# public blood data, adult, and overwhelmingly of European ancestry;\n"
               "# on a paediatric or non-European cohort the guarantee does not\n"
