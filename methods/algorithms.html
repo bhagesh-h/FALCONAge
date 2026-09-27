@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>4. Algorithm families with full math – FALCONAge</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../favicon.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6bc2510a377bfbe78f0e93c5094f7fd0.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5461c4b6f8ae7e6f5675648daca67215.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6bc2510a377bfbe78f0e93c5094f7fd0.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-26c3c54a9a50c6b5b340ca6bbcb7b31e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-dfb789abe40afa4faea88ae33a8415b5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-26c3c54a9a50c6b5b340ca6bbcb7b31e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">FALCONAge</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-contents" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Contents</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-contents">    
+        <li class="dropdown-header">1. Start</li>
+        <li>
+    <a class="dropdown-item" href="../index.html">
+ <span class="dropdown-text">What FALCONAge is</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/install.html">
+ <span class="dropdown-text">Install</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/quickstart.html">
+ <span class="dropdown-text">Getting started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/claude.html">
+ <span class="dropdown-text">Using FALCONAge from Claude</span></a>
+  </li>  
+        <li class="dropdown-header">2. Your data</li>
+        <li>
+    <a class="dropdown-item" href="../data/loading.html">
+ <span class="dropdown-text">Loading your data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/preprocessing.html">
+ <span class="dropdown-text">Preprocessing and coverage</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/raw-arrays.html">
+ <span class="dropdown-text">Raw arrays to betas</span></a>
+  </li>  
+        <li class="dropdown-header">3. Clocks</li>
+        <li>
+    <a class="dropdown-item" href="../clocks/choosing.html">
+ <span class="dropdown-text">Choosing a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/meaning.html">
+ <span class="dropdown-text">What a score means</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/catalogue.html">
+ <span class="dropdown-text">Clock catalogue</span></a>
+  </li>  
+        <li class="dropdown-header">4. Analysis</li>
+        <li>
+    <a class="dropdown-item" href="../analysis/acceleration.html">
+ <span class="dropdown-text">Age acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/uncertainty.html">
+ <span class="dropdown-text">Uncertainty</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/clinical.html">
+ <span class="dropdown-text">Clinical chemistry and survival</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/benchmarking.html">
+ <span class="dropdown-text">Benchmarking</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/beyond.html">
+ <span class="dropdown-text">Beyond the clock score</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/reporting.html">
+ <span class="dropdown-text">Figures and reports</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/figures.html">
+ <span class="dropdown-text">Figure gallery</span></a>
+  </li>  
+        <li class="dropdown-header">5. Methods</li>
+        <li>
+    <a class="dropdown-item" href="../methods/index.html">
+ <span class="dropdown-text">The science of aging clocks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/biology.html">
+ <span class="dropdown-text">Biology and measurement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/algorithms.html">
+ <span class="dropdown-text">Algorithm families</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/formulas.html">
+ <span class="dropdown-text">Published formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/clocks.html">
+ <span class="dropdown-text">The clocks, by family</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/genetics.html">
+ <span class="dropdown-text">Genotype and structure</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/building.html">
+ <span class="dropdown-text">Building a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/failure-modes.html">
+ <span class="dropdown-text">Failure modes and the frontier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/resources.html">
+ <span class="dropdown-text">Datasets and resources</span></a>
+  </li>  
+        <li class="dropdown-header">6. Reference</li>
+        <li>
+    <a class="dropdown-item" href="../reference/index.html">
+ <span class="dropdown-text">Python reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../r/index.html">
+ <span class="dropdown-text">R reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../references.html">
+ <span class="dropdown-text">References</span></a>
+  </li>  
+        <li class="dropdown-header">7. Developer notes</li>
+        <li>
+    <a class="dropdown-item" href="../dev/index.html">
+ <span class="dropdown-text">Architecture</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/engine.html">
+ <span class="dropdown-text">Core engine and registry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/algorithms.html">
+ <span class="dropdown-text">Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/modules.html">
+ <span class="dropdown-text">Modules</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/r-package.html">
+ <span class="dropdown-text">R package</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/operations.html">
+ <span class="dropdown-text">Docker, testing and CI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/gpu.html">
+ <span class="dropdown-text">GPU support</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/history.html">
+ <span class="dropdown-text">Design history</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/software.html">
+ <span class="dropdown-text">Other software</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/appendices.html">
+ <span class="dropdown-text">Appendices</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-download" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Download</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-download">    
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge.pdf">
+ <span class="dropdown-text">Documentation (PDF)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge-docs-markdown.zip">
+ <span class="dropdown-text">Documentation (markdown ZIP)</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link active" href="https://github.com/bhagesh-h/FALCONAge" aria-current="page"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../methods/index.html">5. Methods</a></li><li class="breadcrumb-item"><a href="../methods/algorithms.html">Algorithm families</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">1. Start</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What FALCONAge is</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/install.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Install</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/quickstart.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Getting started</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/claude.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Using FALCONAge from Claude</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">2. Your data</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/loading.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loading your data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/preprocessing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preprocessing and coverage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/raw-arrays.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw arrays to betas</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">3. Clocks</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/choosing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Choosing a clock</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/meaning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What a score means</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/catalogue.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Clock catalogue</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">4. Analysis</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Age acceleration</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/uncertainty.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Uncertainty</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/clinical.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Clinical chemistry and survival</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/benchmarking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Benchmarking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/beyond.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Beyond the clock score</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/reporting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Figures and reports</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Figure gallery</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">5. Methods</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The science of aging clocks</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/biology.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Biology and measurement</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/algorithms.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Algorithm families</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/formulas.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Published formulas</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/clocks.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The clocks, by family</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/genetics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Genotype and structure</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/building.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Building a clock</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/failure-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Failure modes and the frontier</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/resources.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Datasets and resources</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">6. Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python reference</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../r/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R reference</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">7. Developer notes</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/engine.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Core engine and registry</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/algorithms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Algorithms</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/modules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Modules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/r-package.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R package</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/operations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Docker, testing and CI</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/gpu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GPU support</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/history.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design history</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/software.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Other software</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/appendices.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Appendices</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+<div class="quarto-sidebar-footer"><div class="sidebar-footer-item">
+<p><a href="https://orcid.org/0000-0002-5957-8005">Bhagesh Hunakunti</a><br>
+<a href="https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE">GPL-3.0-or-later</a> · <a href="https://github.com/bhagesh-h/FALCONAge">source</a></p>
+</div></div></nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#penalised-linear-regression-the-fields-default" id="toc-penalised-linear-regression-the-fields-default" class="nav-link active" data-scroll-target="#penalised-linear-regression-the-fields-default">4.1 Penalised linear regression, the field’s default</a></li>
+  <li><a href="#pc-clocks" id="toc-pc-clocks" class="nav-link" data-scroll-target="#pc-clocks">4.2 PC clocks</a></li>
+  <li><a href="#survival-models" id="toc-survival-models" class="nav-link" data-scroll-target="#survival-models">4.3 Survival models</a></li>
+  <li><a href="#klemeradoubal-method-kdm" id="toc-klemeradoubal-method-kdm" class="nav-link" data-scroll-target="#klemeradoubal-method-kdm">4.4 Klemera–Doubal method (KDM)</a></li>
+  <li><a href="#homeostatic-dysregulation-hd" id="toc-homeostatic-dysregulation-hd" class="nav-link" data-scroll-target="#homeostatic-dysregulation-hd">4.5 Homeostatic dysregulation (HD)</a></li>
+  <li><a href="#mitotic-replicative-clocks" id="toc-mitotic-replicative-clocks" class="nav-link" data-scroll-target="#mitotic-replicative-clocks">4.6 Mitotic / replicative clocks</a></li>
+  <li><a href="#grimage-architecture" id="toc-grimage-architecture" class="nav-link" data-scroll-target="#grimage-architecture">4.7 GrimAge architecture</a></li>
+  <li><a href="#dunedinpace-and-dunedinpoam" id="toc-dunedinpace-and-dunedinpoam" class="nav-link" data-scroll-target="#dunedinpace-and-dunedinpoam">4.8 DunedinPACE and DunedinPoAm</a></li>
+  <li><a href="#mammalian-universal-clocks" id="toc-mammalian-universal-clocks" class="nav-link" data-scroll-target="#mammalian-universal-clocks">4.9 Mammalian universal clocks</a></li>
+  <li><a href="#deconvolution-as-a-model" id="toc-deconvolution-as-a-model" class="nav-link" data-scroll-target="#deconvolution-as-a-model">4.10 Deconvolution as a model</a></li>
+  <li><a href="#binarisation-clocks" id="toc-binarisation-clocks" class="nav-link" data-scroll-target="#binarisation-clocks">4.11 Binarisation clocks</a></li>
+  <li><a href="#rank-based-transcriptomic-clocks" id="toc-rank-based-transcriptomic-clocks" class="nav-link" data-scroll-target="#rank-based-transcriptomic-clocks">4.12 Rank-based transcriptomic clocks</a></li>
+  <li><a href="#spatial-single-cell-clocks" id="toc-spatial-single-cell-clocks" class="nav-link" data-scroll-target="#spatial-single-cell-clocks">4.13 Spatial single-cell clocks</a></li>
+  <li><a href="#single-cell-methylation-clocks" id="toc-single-cell-methylation-clocks" class="nav-link" data-scroll-target="#single-cell-methylation-clocks">4.14 Single-cell methylation clocks</a></li>
+  <li><a href="#deep-learning" id="toc-deep-learning" class="nav-link" data-scroll-target="#deep-learning">4.15 Deep learning</a></li>
+  <li><a href="#systemsage" id="toc-systemsage" class="nav-link" data-scroll-target="#systemsage">4.16 SystemsAge</a></li>
+  <li><a href="#ensembling-and-stacking" id="toc-ensembling-and-stacking" class="nav-link" data-scroll-target="#ensembling-and-stacking">4.17 Ensembling and stacking</a></li>
+  <li><a href="#tage-relative-transcriptomic-clocks" id="toc-tage-relative-transcriptomic-clocks" class="nav-link" data-scroll-target="#tage-relative-transcriptomic-clocks">4.18 tAge, relative transcriptomic clocks</a></li>
+  <li><a href="#scale---literature-informed-single-cell-aging-score" id="toc-scale---literature-informed-single-cell-aging-score" class="nav-link" data-scroll-target="#scale---literature-informed-single-cell-aging-score">4.19 SCALE - literature-informed single-cell aging score</a></li>
+  <li><a href="#transform-reference-table" id="toc-transform-reference-table" class="nav-link" data-scroll-target="#transform-reference-table">4.20 Transform reference table</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/methods/algorithms.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../methods/index.html">5. Methods</a></li><li class="breadcrumb-item"><a href="../methods/algorithms.html">Algorithm families</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">4. Algorithm families with full math</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="penalised-linear-regression-the-fields-default" class="level2">
+<h2 class="anchored" data-anchor-id="penalised-linear-regression-the-fields-default">4.1 Penalised linear regression, the field’s default</h2>
+<p>Objective for elastic net over samples i and features j:</p>
+<pre><code>min_β  (1/2n) Σ_i (y_i − β₀ − Σ_j x_ij β_j)²  +  λ [ (1−α)/2 · Σ_j β_j²  +  α · Σ_j |β_j| ]</code></pre>
+<p>α = 1 is LASSO, α = 0 is ridge. Horvath used α = 0.5. Application at inference is a dot product:</p>
+<pre><code>score = β₀ + Σ_j β_j x_j</code></pre>
+<p>then a clock-specific output transform (§5). Of the 177 clocks in pyaging’s registry at commit e7267e9, 66 are elastic net, 18 LASSO, 5 ordinary linear regression, 1 ridge and 1 BLUP.</p>
+<p><strong>BLUP</strong> (Zhang 2019) treats all 319,607 probes as random effects with a common variance, <code>β = (X'X + λI)⁻¹X'y</code> in the mixed-model sense. It spreads small weights over all 319,607 probes, so it degrades less than elastic net when many probes are missing, as Zhang’s script notes (line 91, <a href="https://github.com/qzhang314/DNAm-based-age-predictor">DNAm-based-age-predictor pred.R</a>). Crucially, both Zhang models <strong>z-score within each sample across probes</strong> before the dot product:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dataNona.norm <span class="ot">&lt;-</span> <span class="fu">apply</span>(dataNona, <span class="dv">1</span>, scale)   <span class="co"># per-individual scaling, probes x individuals</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="pc-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="pc-clocks">4.2 PC clocks</h2>
+<p>Higgins-Chen 2022. Instead of regressing age on individual CpGs, regress on the top principal components of a large CpG block (78,464 probes for most PC clocks, 125,175 for SystemsAge). This averages away probe-level technical noise and raises test-retest ICC dramatically.</p>
+<pre><code>score = ((x − μ) W) β + β₀</code></pre>
+<p>where μ is the training centre vector, W the p × k rotation (1,933 PCs for PCGrimAge), β the regression weights on PCs. Implemented as <code>PCLinearModel</code> (<a href="https://github.com/lucascamillomd/pyaging">pyaging _base_models.py:72</a>). The storage cost is the rotation matrix - 78,464 × k floats, which is why PC clocks are the memory-heavy members of any registry.</p>
+</section>
+<section id="survival-models" class="level2">
+<h2 class="anchored" data-anchor-id="survival-models">4.3 Survival models</h2>
+<p><strong>Cox proportional hazards.</strong> <code>h(t|x) = h₀(t) exp(x'β)</code>. The linear predictor <code>x'β</code> is a log-hazard, unbounded, not in years. FALCONAge fits it by Newton–Raphson on the partial likelihood with Breslow’s handling of tied event times, where the risk set at a time includes every subject still followed at that time, tied subjects included, and matches R’s <code>survival::coxph(ties = "breslow")</code> to six decimals in its tests. Follow-up recorded in whole months, as NHANES is, makes ties the usual case rather than the exception; FALCONAge 1.0.0 left tied subjects out of each other’s risk sets and was 1.1% off R on such data. <code>cox_hazard()</code> reports the hazard ratio per unit of the score, per year for an age clock. SenMortalityAge and organAging’s mortality models report this linear predictor; GrimAge, GrimAge2 and CpGPTGrimAge3 compute it internally and rescale it to years, as below.</p>
+<p><strong>Cox → years.</strong> GrimAge standardises the Cox score against training-set moments then rescales to the training age distribution:</p>
+<pre><code>years = ((cox − cox_mean) / cox_std) × age_std + age_mean</code></pre>
+<p>GrimAge v1: cox_mean 13.20127, cox_std 1.086805, age_mean 59.63951, age_std 9.049608. GrimAge2: cox_mean 15.370829484122, cox_std 1.09534876966487, age_mean 66.0943807965085, age_std 9.05974444998421 (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:1683,1769</a>).</p>
+<p><strong>Gompertz mortality → years.</strong> The PhenoAge route (§5.1) and the organAging route. organAging’s published human Gompertz fit on the log scale: intercept −9.94613787413831, slope 0.0897860500778604, mean cohort age 57.29426 y. Convert a relative log-hazard <code>r</code> to years:</p>
+<pre><code>avg_r      = intercept + slope × mean_age            # = −4.801912
+years      = (avg_r + r − intercept) / slope</code></pre>
+<p>That inverts the Gompertz model as stated. organAging’s README (commit 5147b03, line 100) writes <code>(−avg_r + r) / slope − intercept</code>, which returns 63.4 rather than the cohort mean of 57.29 years at <code>r = 0</code>; a comparison with README-converted values has to say which expression it used.</p>
+<p><strong>Accelerated failure time.</strong> organAging also fits <code>WeibullAFTFitter(penalizer=0.01)</code> (lifelines) for time-to-death models (<a href="https://github.com/ludgergoeminne/organAging">organAging clock_utils.py</a>).</p>
+<p><strong>Cox elastic net.</strong> <code>CoxnetSurvivalAnalysis(alpha_min_ratio="auto", n_alphas=50)</code> from scikit-survival, grid-searched over <code>l1_ratio ∈ {0.5, 1.0}</code> with 3-fold CV - organAging’s mortality models.</p>
+</section>
+<section id="klemeradoubal-method-kdm" class="level2">
+<h2 class="anchored" data-anchor-id="klemeradoubal-method-kdm">4.4 Klemera–Doubal method (KDM)</h2>
+<p>The most statistically principled of the clinical-chemistry methods. Fit one univariate regression of each biomarker on age, then invert them all jointly with precision weights.</p>
+<p>For biomarker j: <code>x_j = q_j + k_j · CA + ε_j</code>, with residual SD <code>s_j</code> and R² <code>r_j</code>.</p>
+<pre><code>BA_E = Σ_j (x_j − q_j)(k_j / s_j²)  /  Σ_j (k_j / s_j)²</code></pre>
+<p>KDM corrects <code>BA_E</code> toward CA using the residual variance:</p>
+<pre><code>BA = [ Σ_j (x_j − q_j)(k_j/s_j²) + CA / s_BA² ]  /  [ Σ_j (k_j/s_j)² + 1/s_BA² ]</code></pre>
+<p><code>s_BA²</code> is estimated as <code>s² − s_r</code> where <code>s²</code> is the observed variance of <code>(BA_E − CA)</code> and</p>
+<pre><code>r_char = Σ_j |(k_j/s_j)√r_j| / Σ_j |k_j/s_j|
+s_r    = ((1 − r_char²)/r_char²) × ((age_max − age_min)² / (12 m))</code></pre>
+<p>with m the number of biomarkers. Verbatim in <a href="https://github.com/dayoonkwon/BioAge">BioAge kdm_calc.R</a>. BioAge trains separately by sex on NHANES III aged 30–75, non-pregnant, and projects into NHANES IV. Samples with more than 2 missing biomarkers are set to NA. Output columns: <code>kdm</code>, <code>kdm_advance = kdm − age</code>.</p>
+<p><strong>How FALCONAge follows it.</strong> <code>fa.models.fit_kdm</code> and <code>fa.models.clinical.kdm</code> reproduce the <code>kdm0</code> column BioAge ships with its NHANES data: on NHANES III to 0.0007 years mean absolute difference (maximum 0.007 years, n = 9,583), and projected into NHANES IV to 0.0007 years (maximum 0.005 years, n = 8,243). Three details carry that agreement. Each biomarker is regressed on the rows where that biomarker is present; <code>s_j</code> is the residual SD with divisor n − 1, as BioAge’s <code>get_effs</code> takes it; and <code>s_BA²</code> is estimated on the reference rows that carry every biomarker, then reused when projecting into another cohort. That last choice follows the shipped <code>kdm0</code> rather than today’s <code>kdm_calc.R</code>, which also averages over partially observed rows and reproduces <code>kdm0</code> only to r = 0.94. The shipped <code>kdm0</code> is complete-case (every row with a value carries all nine markers); <code>kdm(..., max_missing=0)</code> reproduces it exactly, including which rows are NA, and the default <code>max_missing=2</code> is the rule in today’s code. FALCONAge 1.0.0 took the square root of the correlation in <code>r_char</code>, where the formula takes the square root of R², and was 1.77 years out on the same rows. The regression test runs on a fixture of those NHANES III rows (<code>python/tests/data/</code>). <code>fa.models.clinical.validate_panel(reference, full, reduced)</code> asks whether a reduced panel is still the same clock: both are fitted on the same reference rows, and their agreement and mortality hazard ratios are reported, the latter in BioAge’s <code>table_surv</code> form (advance standardised within sex, Cox with age and sex, HR per SD). On NHANES III, a nine-marker panel against the twelve-marker one gives r = 0.978 for biological age, r = 0.895 for advance, and HR per SD of 1.353 against 1.349. <code>fa.models.clinical.kdm_bioage(df)</code> scores a cohort on the <code>kdm0</code> scale from a packaged fit of those rows (<code>registry/data/kdm_bioage_nhanes3.json</code>, built by <code>python/tools/build_kdm_bioage.py</code>), which is what most NHANES papers mean by KDM biological age. It takes BioAge’s column names and units: FEV1 in mL, SBP in mmHg, total cholesterol in mg/dL, HbA1c in %, albumin in g/dL, creatinine in mg/dL, <code>lncrp</code> = ln(1 + CRP in mg/dL), ALP in U/L, BUN in mg/dL.</p>
+<p>ComputAge also ships a <em>de novo</em> KDM estimator (<a href="https://github.com/ComputationalAgingLab/ComputAge">ComputAge deage/kdm.py</a>) with forward feature selection, LASSO preselection, 10-fold CV, RSE weighting, and stability testing, useful as a template for letting users fit their own KDM on arbitrary biomarker panels.</p>
+</section>
+<section id="homeostatic-dysregulation-hd" class="level2">
+<h2 class="anchored" data-anchor-id="homeostatic-dysregulation-hd">4.5 Homeostatic dysregulation (HD)</h2>
+<p>Mahalanobis distance from a young reference cohort. Standardise both the reference and target matrices using the reference means and SDs, then</p>
+<pre><code>HD_i = sqrt( (x_i − μ_ref)' Σ_ref⁻¹ (x_i − μ_ref) )</code></pre>
+<p>Reported both raw (<code>hd</code>, scaled by its own SD) and logged (<code>hd_log = log(HD)/sd(log HD)</code>). Both divisors are the scored cohort’s own spread, so BioAge’s values are not comparable between cohorts. FALCONAge’s <code>hd()</code> returns the unscaled distance, which is comparable between cohorts scored against one reference, and <code>fa.models.clinical.bioage_hd_scale()</code> gives BioAge’s two forms for comparison. The reference must be young (typically 20–30), non-pregnant, and within clinically normal biomarker windows; train separately by sex. <a href="https://github.com/dayoonkwon/BioAge">BioAge hd_calc.R</a>. Unlike KDM and PhenoAge, HD has no age units, it is a dimensionless distance, and it does <em>not</em> need to be residualised against CA the same way.</p>
+</section>
+<section id="mitotic-replicative-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="mitotic-replicative-clocks">4.6 Mitotic / replicative clocks</h2>
+<ul>
+<li><p><strong>epiTOC1</strong> - plain mean β over 385 “ground-state hypomethylated” Polycomb-target CpGs. Missing sites encoded as −1 and excluded from the mean (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:1988</a>).</p></li>
+<li><p><strong>epiTOC2</strong> - an explicit stem-cell division model. Given per-CpG methylation-transmission rate δ_c and ground-state β₀_c:</p>
+<pre><code>tnsc = (2/k) Σ_c (β_c − β₀_c) / (δ_c (1 − β₀_c))</code></pre>
+<p>k CpGs (163 for epiTOC2, 170 for epiTOC3). Units: estimated cell divisions per stem cell. <a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:2008</a>. The sum and k run over the sites the data carries, as in the authors’ own code (<a href="https://github.com/aet21/EpiMitClocks">EpiMitClocks</a>, <code>colMeans</code> over the matched rows) and in dnaMethyAge. FALCONAge matches both to a relative 1e-9 on a test matrix with sites absent and values missing (<code>python/tests/data/SOURCE.md</code>). The authors also return a simplified estimate with every β₀ set to 0 (<code>tnsc2</code>), which dnaMethyAge reports under <code>simple_mode = TRUE</code>. It is not a rescaling of the full one: on 858 EPIC v1 blood samples it was a median 1.22 times larger. FALCONAge returns the full estimate, so a comparison has to state which one the other package reported.</p></li>
+<li><p><strong>stemTOC</strong> - 0.95 quantile of β over 371 (or 629 in-vitro) CpGs rather than the mean, which makes it robust to cell-type dilution.</p></li>
+<li><p><strong>HypoClock</strong> - mean β over 678 solo-WCGW hypomethylating sites, returned as <code>1 − mean</code>.</p></li>
+<li><p><strong>epiCMIT-hyper / epiCMIT-hypo</strong>: the mean over 184 hypermethylating, and one minus the mean over 1,164 hypomethylating, B-cell CpGs.</p></li>
+<li><p><strong>RepliTali</strong> - elastic net on 87 EPIC CpGs predicting population doublings in cultured cells; <code>RepliTaliNorm</code> is its 218-CpG upstream normaliser exposed separately.</p></li>
+</ul>
+</section>
+<section id="grimage-architecture" class="level2">
+<h2 class="anchored" data-anchor-id="grimage-architecture">4.7 GrimAge architecture</h2>
+<p>Two-stage. Stage 1: eight (v1) or ten (v2) independent elastic nets predict plasma protein concentrations and smoking pack-years from methylation. Stage 2: a Cox model on those DNAm surrogates plus age and sex.</p>
+<p>v1 components: PACKYRS, ADM (adrenomedullin), B2M, CystatinC, GDF15, Leptin, PAI-1, TIMP-1. v2 adds logCRP and logA1C. Feature counts (pyaging registry): ADM 187, B2M 92, CystatinC 88, GDF15 138, Leptin 187, logA1C 87, logCRP 132, PACKYRS 173, PAI-1 211, TIMP-1 43; the composite model touches 1,032 CpGs plus age and female indicator.</p>
+<p>Forward pass (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:1656</a>), concat order matters and is fixed: <code>[GDF15, B2M, CystatinC, TIMP1, ADM, PAI1, Leptin, PACKYRS, (LogCRP, A1C), Age, Female]</code>.</p>
+<p><strong>PCGrimAge</strong> inserts a PCA step: centre 78,464 CpGs, rotate to 1,933 PCs, append Female and Age, then run eight PC-based sub-clocks and the Cox layer.</p>
+<p><strong>CpGPTGrimAge3 / CpGPTPCGrimAge3</strong> (2024) replace most sub-clocks with CpGPT-derived protein proxies. Required inputs: age, seven GrimAge2 proxies (<code>grimage2timp1</code>, <code>grimage2packyrs</code>, <code>grimage2logcrp</code>, <code>grimage2adm</code>, <code>grimage2leptin</code>, <code>grimage2gdf15</code>, <code>grimage2pai1</code>) and 16 CpGPT protein proxies (<code>cpgpt_s100a9</code>, <code>tnfrsf13c</code>, <code>tgfb1</code>, <code>tek</code>, <code>ccl14</code>, <code>tnfsf15</code>, <code>lilrb2</code>, <code>tnf</code>, <code>chit1</code>, <code>postn</code>, <code>il34</code>, <code>pdcd1</code>, <code>cst3</code>, <code>cxcl2</code>, <code>gzma</code>, <code>il5</code>). 24 features total for the non-PC variant, 31 for the PC variant (which rotates 30 → 29 PCs). Trained on Framingham Heart Study whole blood, Illumina 450K, mortality endpoint (author clarification recorded in <a href="https://github.com/lucascamillomd/pyaging">pyaging audit_report.md</a>).</p>
+</section>
+<section id="dunedinpace-and-dunedinpoam" class="level2">
+<h2 class="anchored" data-anchor-id="dunedinpace-and-dunedinpoam">4.8 DunedinPACE and DunedinPoAm</h2>
+<p><strong>DunedinPoAm38</strong> (2020) - 46 CpGs, elastic net on the 12-year, 3-timepoint Pace of Aging from the Dunedin cohort. In-sample r = 0.6.</p>
+<p><strong>DunedinPACE</strong> (2022) - 173 scoring CpGs, elastic net on the 20-year, 4-timepoint Pace of Aging; CpGs restricted to probes with test-retest ICC &gt; 0.4 (n = 81,239 candidates). In-sample r = 0.78. The published algorithm quantile-normalises the sample against a <strong>gold-standard mean vector</strong> before scoring. pyaging implements the official 20,000-probe panel: 173 scoring CpGs plus 19,827 background probes used only to define the sample’s rank distribution (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:238</a>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sorted_gold <span class="op">=</span> sort(reference_values)                       <span class="co"># length 20000</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>q_idx       <span class="op">=</span> linspace(<span class="dv">0</span>, <span class="bu">len</span>(sorted_gold)<span class="op">-</span><span class="dv">1</span>, x.shape[<span class="dv">1</span>])  <span class="co"># rank → gold quantile map</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> each sample row:</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    normalized[argsort(row)] <span class="op">=</span> sorted_gold[q_idx]</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> normalized[:, scoring_indices]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is a per-sample rank transform, so <strong>the background probes must be present</strong> - dropping them silently changes the answer.</p>
+</section>
+<section id="mammalian-universal-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="mammalian-universal-clocks">4.9 Mammalian universal clocks</h2>
+<p>Three variants, all elastic net on the HorvathMammalMethylChip40, each with a different age parameterisation and a species lookup table (AnAge: gestation time, average age at sexual maturity, maximum lifespan).</p>
+<ul>
+<li><p><strong>Clock 1</strong> - predicts <code>log(age + 2)</code>; inverse <code>age = exp(ŷ) − 2</code>.</p></li>
+<li><p><strong>Clock 2</strong> (relative age), predicts a log-log-transformed relative age. Inverse:</p>
+<pre><code>rel   = exp(−exp(−ŷ))
+age   = rel × (max_age + gestation) − gestation</code></pre></li>
+<li><p><strong>Clock 3</strong> (log-linear age relative to maturity), with <code>m̂ = 5 (gestation / maturity)^0.38</code>:</p>
+<pre><code>ŷ ≥ 0 : age = m̂ (maturity + gestation)(ŷ + 1) − gestation
+ŷ &lt; 0 : age = m̂ (maturity + gestation) exp(ŷ) − gestation</code></pre></li>
+</ul>
+<p>Species is passed as a one-hot block appended to the CpG vector (1,756 species for clock-2 variants, 1,707 for clock-3 variants); the model splits the input tensor by these widths (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:513–771</a>). Also in this family: MammalianLifespan (predicts species maximum lifespan, <code>exp</code> link) and MammalianFemale (sex classifier, sigmoid).</p>
+</section>
+<section id="deconvolution-as-a-model" class="level2">
+<h2 class="anchored" data-anchor-id="deconvolution-as-a-model">4.10 Deconvolution as a model</h2>
+<p>Reference-based, constrained. Given a reference table X (CpGs × cell types) of sorted-cell mean methylation and a sample’s betas y, the proportions p minimise ‖Xp − y‖² with p ≥ 0 (<a href="https://doi.org/10.1186/1471-2105-13-86">Houseman et al.&nbsp;2012</a>). FALCONAge solves it as the authors’ FlowSorted.Blood.EPIC does in <code>projectCellType_CP</code>, with the arguments its documentation gives for a beta matrix (<code>nonnegative = TRUE, lessThanOne = FALSE</code>): per sample, over the CpGs that sample observes, rounded to four decimals. With non-negativity the only constraint, the problem is non-negative least squares, whose solution is unique, and <code>scipy.optimize.nnls</code> returns it. The proportions are not forced to sum to one; the sum is how much of the sample the reference explains. On 858 whole-blood EPIC samples from one cohort, the six proportions equal minfi’s <code>estimateCellCounts2</code> output for every sample and cell type, to the four decimals it reports.</p>
+<p>pyaging solves a different problem: an unconstrained fit through the pseudo-inverse, then a <strong>Euclidean projection onto the probability simplex</strong> (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:1269</a>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>p_raw <span class="op">=</span> x <span class="op">@</span> pinv(S).T</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>sorted_v <span class="op">=</span> sort(p_raw, descending)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>cssv     <span class="op">=</span> cumsum(sorted_v)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>rho      <span class="op">=</span> <span class="bu">max</span>{ i : sorted_v[i] − (cssv[i] − <span class="dv">1</span>)<span class="op">/</span>(i<span class="op">+</span><span class="dv">1</span>) <span class="op">&gt;</span> <span class="dv">0</span> }</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>theta    <span class="op">=</span> (cssv[rho] − <span class="dv">1</span>) <span class="op">/</span> (rho <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>p        <span class="op">=</span> clamp(p_raw − theta, <span class="bu">min</span><span class="op">=</span><span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It vectorises across a batch, but it is not the constrained fit: the projection forces the sum to one and is taken in the geometry of p rather than of the least-squares problem. On the same 858 samples and the same reference it adds 0.0058 to every cell type on average (at most 0.0099), the 3.6% the reference leaves unexplained spread evenly, which is a relative 11% for B cells at a mean of 0.053. pyaging’s libraries are its own 600-CpG 6-cell and 240-CpG 12-cell selections. FALCONAge ships the published IDOL libraries of <a href="https://doi.org/10.1186/s13059-018-1448-7">Salas et al.&nbsp;2018</a>, 450 CpGs on EPIC and 350 on 450K (FlowSorted.Blood.EPIC, GPL-3). The 12-cell IDOL-Ext library (<a href="https://doi.org/10.1038/s41467-021-27864-7">Salas et al.&nbsp;2022</a>) is under a Dartmouth research-use licence, so those entries are <code>licensed</code> and read a table the user registers.</p>
+</section>
+<section id="binarisation-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="binarisation-clocks">4.11 Binarisation clocks</h2>
+<p>Two independent lines converged on the same idea: with sparse count data, the <em>identity</em> of expressed genes carries more robust age signal than their levels.</p>
+<ul>
+<li><strong>BiT age</strong> (<em>C. elegans</em>, Meyer &amp; Schumacher 2021). Per sample: mask zeros, compute the median of non-zero CPMs, set gene = 1 if CPM &gt; median else 0. Score = Σ (binary × elastic-net coef)
+<ul>
+<li>intercept. Intercept 103.54631743289005 for <em>C. elegans</em> (hours); 59.626 for human fibroblasts. 576 predictor genes. <a href="https://github.com/Meyer-DH/AgingClock">AgingClock biological_age_prediction.py</a>.</li>
+</ul></li>
+<li><strong>CellBiAge</strong> (mouse brain single cell, Yu et al., <em>Cell Reports</em> 42:113500, Dec 2023). Pipeline: log-normalise → CCA batch integration → scale (mean 0, SD 1 per gene) → <strong>binarise at 0</strong> (scaled value &gt; 0 → 1). Feature space: top 2,000 highly variable genes (HVGs beat highly expressed genes decisively; 1,413 shared between train/test batches in the hypothalamus data). The mean threshold beat BiT age’s median threshold on their test data.</li>
+</ul>
+<p>CellBiAge numbers worth carrying into a benchmark suite. Metric is AUPRC (test sets are class-imbalanced), models are elastic-net logistic regression, random forest, gradient boosting, SVM, XGBoost and an MLP, tuned with GridSearchCV / KerasTuner under group CV:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Setting</th>
+<th>Before binarisation</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Hypothalamus, ElasticNet</td>
+<td>0.60</td>
+<td>0.94</td>
+</tr>
+<tr class="even">
+<td>Hypothalamus, all five models</td>
+<td>~0.65</td>
+<td>~0.96</td>
+</tr>
+<tr class="odd">
+<td>SVZ control, MLP and ELN</td>
+<td>0.67</td>
+<td>0.90</td>
+</tr>
+<tr class="even">
+<td>Train/test batch swapped</td>
+<td>-</td>
+<td>0.94</td>
+</tr>
+<tr class="odd">
+<td>Top 80 genes only</td>
+<td>-</td>
+<td>~0.95</td>
+</tr>
+<tr class="even">
+<td>Top 40 genes only</td>
+<td>-</td>
+<td>0.90</td>
+</tr>
+</tbody>
+</table>
+<p>Data: female C57BL/6 hypothalamus snRNA-seq, 40,064 nuclei, 3 vs 24 months, two batches on different chemistry (10x v3 + NovaSeq for train, v2 + HiSeq for test); male SVZ scRNA-seq, 79,123 cells, 15 animals, 6 vs 23 months, sedentary vs 5 weeks voluntary wheel running. Exercise significantly reduced predicted-aged probability in young-animal neuroblasts (p = 0.027) and activated NSC/NPCs (p = 0.031); no effect in aged animals or in the all-cell pooled analysis. Only 4 genes (<em>Nes</em>, <em>Ly6a</em>, <em>Slc5a4b</em>, <em>B230312C02Rik</em>) were shared among the top 200 features across all cell types. CellBiAge slightly outperformed the Buckley 2023 bootstrap clock on the three shared cell types while avoiding the 100-pseudo-cell bootstrap.</p>
+</section>
+<section id="rank-based-transcriptomic-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="rank-based-transcriptomic-clocks">4.12 Rank-based transcriptomic clocks</h2>
+<p>Pasta and REG (2025) fill NaNs with the global median, then rank-normalise <strong>within each sample</strong> with average ranks for ties, then apply a ridge-logistic (Pasta) or ridge (REG) linear layer over 8,113 genes. Pasta’s output transform is <code>x·scale + offset·scale</code>; REG’s is <code>x + intercept</code>. Rank normalisation makes the model invariant to any monotone per-sample transformation, which is why these clocks work across RNA-seq and microarray without re-normalising. <a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:1037–1189</a>.</p>
+</section>
+<section id="spatial-single-cell-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="spatial-single-cell-clocks">4.13 Spatial single-cell clocks</h2>
+<p>Sun et al., <em>Nature</em> 638:160–171 (2025). Per cell type (18 brain cell types), a LASSO model with 5-fold CV over 20 alphas, fitted on spatially smoothed expression.</p>
+<p><strong>SpatialSmooth.</strong> Build a spatial graph per animal (fixed k = 20 neighbours, binary adjacency S), then iterate to convergence:</p>
+<pre><code>X_{t+1} = (1 − α) X₀ + α S X_t ,   α = 0.8, max_iter = 30, tol = 1e-2</code></pre>
+<p>This is label propagation applied to expression. Missing genes are imputed with per-gene training means (or SpaGE, which projects from a reference scRNA-seq atlas via shared principal vectors). Age acceleration is defined <strong>within animal and cell type</strong>, as prediction minus the mean prediction for that (animal, cell type) pair, which cancels the animal-level batch and calendar age. The package also computes <strong>cell proximity effects</strong>: for each effector cell type, split target cells into “near” and “far” sets by distance cutoff (optionally a ring of given width), then t-test the age acceleration difference. Outputs a data frame with <code>Near Cell</code>, <code>AgeAccel Cell</code>, cutoff multiplier <code>n</code>, <code>t</code>, <code>p</code>, <code>Aging Effect</code>, <code>Near Freq</code>, <code>Near Num</code>.</p>
+</section>
+<section id="single-cell-methylation-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="single-cell-methylation-clocks">4.14 Single-cell methylation clocks</h2>
+<ul>
+<li><strong>scAge</strong> (Trapp 2021, Python). Uses the bulk CpG–age linear relationships as priors and computes, for each cell, the age maximising the product of per-CpG likelihoods given the binary methylation call. Handles arbitrary, non-overlapping CpG coverage per cell.</li>
+<li><strong>scEpiAge</strong> (Bonder 2024, <em>Nat Commun</em> 15:7567). Inverts the regression: predicts methylation <em>from</em> age, so cells need not share CpGs. Mouse blood 10–101 weeks; DNAm-age distribution is wider than technical noise predicts, and CD4+/CD8+ T cells read younger than B cells. Cell-type effect exceeds age effect, a warning for any single-cell aging score.</li>
+</ul>
+</section>
+<section id="deep-learning" class="level2">
+<h2 class="anchored" data-anchor-id="deep-learning">4.15 Deep learning</h2>
+<ul>
+<li><strong>AltumAge</strong> (2022) - MLP over 20,318 CpGs shared across 27K/450K/EPIC. Architecture from <a href="https://github.com/lucascamillomd/pyaging">pyaging _base_models.py:89</a>: BatchNorm(20318) → Linear(20318,32) → SELU → [BatchNorm(32) → Linear(32,32) → SELU] × 4 → BatchNorm(32) → Linear(32,1). BatchNorm eps 0.001, momentum 0.99 (Keras defaults, preserved on port). Preprocessing is scikit-learn’s <strong>RobustScaler</strong>, <code>(x − median) / IQR</code> with the training set’s median and interquartile range; pyaging stores the IQR under the name <code>std</code>.</li>
+<li><strong>CpGPT</strong> (de Lima Camillo et al., bioRxiv 2024.10.24.619766), a transformer pretrained on more than 2,000 datasets and over 150,000 samples. Encodes sequence context, genomic position and epigenetic state per CpG; imputes and reconstructs genome-wide profiles from partial input; transfers across platforms, tissues, mammalian species and single-cell data. Fine-tuned heads give SOTA mortality and chronological-age prediction. Code: github.com/lucascamillomd/CpGPT.</li>
+<li><strong>GraphAge</strong> (PNAS Nexus 2025) - GNN over a CpG regulatory graph; interprets which CpG interactions matter and how their importance shifts with age.</li>
+<li><strong>DeepStrataAge</strong> (npj Aging 2026) - DNN on 12,234 CpGs, MAE 1.89 y across &gt;20,000 blood methylomes, with SHAP attributions revealing sex-specific “epigenetic waves”.</li>
+<li><strong>EpInflammAge</strong> - epigenetic + inflammatory markers, MAE ~7 y, r = 0.85 in healthy controls.</li>
+<li><strong>XAI-AGE</strong> - pathway-structured network giving pathway-level activity as an interpretable intermediate.</li>
+<li><strong>PointNet</strong> - used by scImmuAging alongside LASSO and random forest for PBMC cell-type clocks.</li>
+</ul>
+</section>
+<section id="systemsage" class="level2">
+<h2 class="anchored" data-anchor-id="systemsage">4.16 SystemsAge</h2>
+<p>Sehgal et al., <em>Nature Aging</em> 5:1880-1896 (2025). One blood methylome → 11 system-specific ages plus a composite. Forward pass (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:2617</a>):</p>
+<ol type="1">
+<li>Centre 125,175 CpGs and rotate to DNAm PCs.</li>
+<li>Project PCs onto a <code>system_vector</code> to obtain system components.</li>
+<li>Per system, a linear module over its component indices → 11 system scores.</li>
+<li>Separately, a PC → predicted-age model, with a quadratic polynomial correction <code>a + b·ŷ + c·ŷ²</code>, then divide by 12 (months → years).</li>
+<li>Concatenate the 11 system scores with predicted age; for the composite, run a second PCA-based model over that 12-vector.</li>
+<li>Affine calibration per output: <code>((raw − c₀)/c₁) × c₃ + c₂</code>, then <code>/12</code>.</li>
+</ol>
+<p>Systems: Blood, Brain, Inflammation, Heart, Hormone, Immune, Kidney, Liver, Metabolic, Lung, MusculoSkeletal (indices 0–10 in the pyaging classes), with index −1 for the composite. In a reliability study of 18 clocks (Sehgal et al., bioRxiv 2025.10.13.682176), the PC-based clocks, PCGrimAge and SystemsAge in particular, stayed technically reliable across slide positions and DNA extraction protocols.</p>
+</section>
+<section id="ensembling-and-stacking" class="level2">
+<h2 class="anchored" data-anchor-id="ensembling-and-stacking">4.17 Ensembling and stacking</h2>
+<ul>
+<li><p><strong>EnsembleAgeStatic / EnsembleAgeStaticTop</strong> (mouse, 2025), elastic net over 288 / 431 CpGs designed to be responsive to lifespan-modulating interventions.</p></li>
+<li><p><strong>EnsembleAgeHumanMouse</strong> - 100 CpGs on the mammalian array, cross-species relative age.</p></li>
+<li><p><strong>StackAge</strong> (2026), ensemble over UK Biobank plasma proteomics + metabolomics, n = 30,376; improves risk prediction for 12 chronic diseases over single-omic clocks.</p></li>
+<li><p><strong>DNAmFitAge</strong> - a Klemera–Doubal composite over four DNAm-predicted fitness measures. It fits sex-specific models. The four inputs are standardised with published slopes and intercepts (<a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py:1875</a>):</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Input</th>
+<th>Female (offset, slope)</th>
+<th>Male (offset, slope)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>VO2max</td>
+<td>46.825091, −0.13620215</td>
+<td>49.836389, −0.141862925</td>
+</tr>
+<tr class="even">
+<td>Grip</td>
+<td>39.857718, −0.22074456</td>
+<td>57.514016, −0.253179827</td>
+</tr>
+<tr class="odd">
+<td>Gait</td>
+<td>2.508547, −0.01245682</td>
+<td>2.349080, −0.009380061</td>
+</tr>
+<tr class="even">
+<td>GrimAge</td>
+<td>7.978487, 0.80928530</td>
+<td>9.549733, 0.835120557</td>
+</tr>
+</tbody>
+</table>
+<p>Each is transformed <code>(value − offset)/slope</code>, then a sex-specific KDM layer produces the age.</p></li>
+</ul>
+</section>
+<section id="tage-relative-transcriptomic-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="tage-relative-transcriptomic-clocks">4.18 tAge, relative transcriptomic clocks</h2>
+<p>Tyshkovskiy et al., <em>Nature</em> 654:173–188 (2026), from &gt;11,000 transcriptomes across &gt;25 tissues in mouse, rat, macaque and human. 60 distributed models: {EN, BR} × {Chronological, Mortality, Normalized age} × {Mouse, Multispecies, Rodents} × {Multi-Tissue, Brain, Kidney, Liver, Skeletal Muscle} × {Scaled, YuGene}.</p>
+<p>Preprocessing chain (<a href="https://github.com/Gladyshev-Lab/tAge">tAge preprocessing.R</a>):</p>
+<ol type="1">
+<li><code>filter_genes</code> - keep genes with count ≥ 10 in ≥ 20% of samples.</li>
+<li><code>map_genes</code> - to mouse Entrez space via ortholog tables.</li>
+<li><code>RLE_normalization</code> - <code>sweep(counts, 2, libsize × calcNormFactors(RLE), "/") × 1e7</code>.</li>
+<li><code>log_transform</code> - <code>log10(x + 1)</code>.</li>
+<li><code>scale_eset</code> - <strong>column-wise</strong> z-score, i.e.&nbsp;per sample across genes.</li>
+<li><code>YuGene</code> - per sample: shift to non-negative, sort descending, cumulative proportion, carry forward for ties, value = <code>1 − cumprop</code>. A non-parametric rank/uniformisation.</li>
+<li><code>.align_to_gene_list</code> - reorder to the reference gene list, pad missing genes with <strong>NA</strong> (not zero) so the model’s own <code>SimpleImputer</code> fills them with training medians.</li>
+<li><code>control_subtraction</code> - subtract the per-gene median of a reference group, or of all samples when no reference is given. <strong>All distributed clocks are relative (<code>_diff</code>) models; centring is never skipped.</strong></li>
+</ol>
+<p>Output units, from the clock registry (<a href="https://github.com/Gladyshev-Lab/tAge">tAge clocks_metadata.csv</a>):</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Outcome</th>
+<th>Units</th>
+<th>Rescaled by max lifespan?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Chronological</td>
+<td>years (human) / months (rodents)</td>
+<td>Yes - × species max lifespan</td>
+</tr>
+<tr class="even">
+<td>Mortality</td>
+<td>log10(hazard ratio)</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td>Normalized age</td>
+<td>fraction of max lifespan</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p>Species maximum-lifespan factors in tAge 87352dd: human 122 and monkey 39 (years), mouse 48 and rat 45.6 (months) (<a href="https://github.com/Gladyshev-Lab/tAge">tage_predict.py</a>). Mortality clocks must never be multiplied by these, a mistake the registry flag <code>lifespan_scaled</code> exists to prevent.</p>
+<p>The paper’s biology: genes for senescence, inflammation and apoptosis go up with age across species and cell types; wound healing, differentiation and ECM synthesis go down. CDKN1A and LGALS3 are universal markers whose protein levels also track mortality and multimorbidity in UK Biobank. Modules (inflammation, energy production, ECM organisation) get their own clocks so an intervention’s primary axis of action can be read off.</p>
+</section>
+<section id="scale---literature-informed-single-cell-aging-score" class="level2">
+<h2 class="anchored" data-anchor-id="scale---literature-informed-single-cell-aging-score">4.19 SCALE - literature-informed single-cell aging score</h2>
+<p>Mao et al.&nbsp;A weighted, expression-detection-frequency-scaled z-score over a curated aging gene set (<a href="https://github.com/ChengLiLab/SCALE">4_SCALE_score.R</a>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>weights <span class="ot">=</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>,<span class="dv">50</span>), <span class="fu">rep</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">50</span>)) <span class="sc">*</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>          <span class="fu">rowSums</span>(counts[aging_genes,] <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">/</span> <span class="fu">ncol</span>(counts)   <span class="co"># detection frequency</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>z       <span class="ot">=</span> <span class="fu">t</span>(<span class="fu">scale</span>(<span class="fu">t</span>(logdata[aging_genes,])))                  <span class="co"># gene-wise z across cells</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>score   <span class="ot">=</span> <span class="fu">t</span>(z) <span class="sc">%*%</span> weights</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The 50 up / 50 down genes per tissue come from glmnet selection over a union of curated aging resources: GenAge, CSGene, AgeFactDB, Aging Atlas, GO:aging, GO:CellAge, plus manual curation. Applied to Tabula Muris Senis across 20+ tissues. Validated against single-cell entropy and somatic mutation accumulation, and against transcriptomic and methylation clocks in muscle stem cells, Alzheimer’s, and heterochronic parabiosis. Correlation with age is assessed four ways: Pearson, distance correlation (<code>energy::dcor</code>), MIC (<code>minerva</code>), and nonlinear correlation (<code>nlcor</code>), a good template for reporting monotone-but-nonlinear age relationships.</p>
+</section>
+<section id="transform-reference-table" class="level2">
+<h2 class="anchored" data-anchor-id="transform-reference-table">4.20 Transform reference table</h2>
+<p>Every clock’s output transform, extracted from <a href="https://github.com/lucascamillomd/pyaging">pyaging _postprocessing.py</a> and <a href="https://github.com/lucascamillomd/pyaging">pyaging _models.py</a>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Formula</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>identity</td>
+<td><code>y</code></td>
+<td>most elastic-net clocks</td>
+</tr>
+<tr class="even">
+<td><code>anti_log_linear</code> (Horvath)</td>
+<td><code>y&lt;0 : 21·eʸ − 1</code> ; <code>y≥0 : 21·y + 20</code></td>
+<td>Horvath2013, SkinAndBlood, PedBE, Han, PCHorvath2013, PCSkinAndBlood, IntrinClock, CorticalClock, Pipek×3</td>
+</tr>
+<tr class="odd">
+<td>Horvath with adult_age 48 → years</td>
+<td>same with 49/48, then <code>/12</code></td>
+<td>Wu (children)</td>
+</tr>
+<tr class="even">
+<td><code>anti_logp2</code></td>
+<td><code>eʸ − 2</code></td>
+<td>Mammalian1</td>
+</tr>
+<tr class="odd">
+<td><code>anti_log</code></td>
+<td><code>eʸ</code></td>
+<td>MammalianLifespan</td>
+</tr>
+<tr class="even">
+<td><code>anti_log_log</code></td>
+<td><code>e^(−e^(−y))</code></td>
+<td>Mammalian2 relative-age step</td>
+</tr>
+<tr class="odd">
+<td><code>mortality_to_phenoage</code></td>
+<td>see §5.1</td>
+<td>PhenoAge</td>
+</tr>
+<tr class="even">
+<td><code>cox_to_years</code></td>
+<td><code>((y−cox_mean)/cox_std)·age_std + age_mean</code></td>
+<td>GrimAge, GrimAge2, CpGPTGrimAge3, CpGPTPCGrimAge3</td>
+</tr>
+<tr class="odd">
+<td><code>petkovichblood</code></td>
+<td><code>age = ((y + 1.712)/0.1666)^(1/0.4185) / 30.5</code></td>
+<td>Petkovich (mouse, months)</td>
+</tr>
+<tr class="even">
+<td><code>stubbsmultitissue</code></td>
+<td><code>age = (exp(0.1207y² + 1.2424y + 2.5440) − 3) × 7/30.5</code></td>
+<td>Stubbs (mouse, months)</td>
+</tr>
+<tr class="odd">
+<td><code>days_to_months</code></td>
+<td><code>y / 30.5</code></td>
+<td>Meer</td>
+</tr>
+<tr class="even">
+<td><code>days_to_weeks</code></td>
+<td><code>y / 7</code></td>
+<td>Bohlin, EPICGA</td>
+</tr>
+<tr class="odd">
+<td><code>sigmoid</code></td>
+<td><code>1/(1+e^(−y))</code></td>
+<td>MammalianFemale, CVDWesterman, ADBahadoSingh; pyaging also applies it to the McCartney predictors, which the paper defines without a link and FALCONAge scores as the plain weighted sum (§15.2)</td>
+</tr>
+<tr class="even">
+<td><code>one_minus</code></td>
+<td><code>1 − y</code></td>
+<td>HypoClock, epiCMIT-hypo</td>
+</tr>
+<tr class="odd">
+<td><code>add_constant</code></td>
+<td><code>y + c</code></td>
+<td>REG, Lin (+12.2169841), PhenoAgeV1 in ComputAge (+60.664), YingCausAge (+86.80816381), YingDamAge (+543.4315887), YingAdaptAge (−511.9742762)</td>
+</tr>
+<tr class="even">
+<td><code>scale_and_shift</code></td>
+<td><code>y·s + o·s</code></td>
+<td>Pasta, PastaMouse</td>
+</tr>
+</tbody>
+</table>
+<p>Note the intercept convention differs between packages: ComputAge/biolearn carry the intercept in the <code>transform</code> lambda, pyaging bakes it into the <code>nn.Linear</code> bias. A merged tool must pick one and normalise on import.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script>
+// Wrap every article table in a horizontal scroll container.
+//
+// WHY THIS IS JAVASCRIPT AND NOT CSS. The scrolling element has to be a
+// *parent* of the table. Setting `display: block; overflow-x: auto` on the
+// table itself -- the obvious CSS-only version, and what this site did -- makes
+// the table a block box of width auto, so it shrinks to the container and the
+// anonymous inner table compresses every column to its minimum content width.
+// Measured at 390px on the clock catalogue: cells 46-120px wide and 82px tall,
+// with "dnamphenoage" broken over three lines. The table was not overflowing;
+// it was being crushed.
+//
+// Bootstrap solves this with a `.table-responsive` wrapper div, and Pandoc does
+// not emit one, so it gets added here. Then the table keeps a sane width and
+// the wrapper scrolls, which is the behaviour everyone expects from a wide
+// table on a phone.
+(function () {
+  function wrap() {
+    var tables = document.querySelectorAll(
+      "main table:not(.falcon-wrapped)");
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      t.classList.add("falcon-wrapped");
+      // Already inside something that scrolls (Quarto does wrap some outputs)?
+      // A second wrapper would nest two scrollbars.
+      if (t.parentElement &&
+          t.parentElement.classList.contains("falcon-table-scroll")) continue;
+
+      var box = document.createElement("div");
+      box.className = "falcon-table-scroll";
+      // Keyboard users need to be able to scroll it too, and a focusable
+      // scroll container is the accessible way to expose that.
+      box.setAttribute("tabindex", "0");
+      box.setAttribute("role", "region");
+      var cap = t.querySelector("caption");
+      box.setAttribute("aria-label",
+        cap && cap.textContent.trim() ? cap.textContent.trim() : "Table");
+
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wrap);
+  } else {
+    wrap();
+  }
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bhagesh-h\.github\.io\/FALCONAge\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+        for (let i=0; i<annoteTargets.length; i++) {
+          const annoteTarget = annoteTargets[i];
+          const targetCell = annoteTarget.getAttribute("data-target-cell");
+          const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+          const contentFn = () => {
+            const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+            if (content) {
+              const tipContent = content.cloneNode(true);
+              tipContent.classList.add("code-annotation-tip-content");
+              return tipContent.outerHTML;
+            }
+          }
+          const config = {
+            allowHTML: true,
+            content: contentFn,
+            onShow: (instance) => {
+              selectCodeLines(instance.reference);
+              instance.reference.classList.add('code-annotation-active');
+              window.tippy.hideAll();
+            },
+            onHide: (instance) => {
+              unselectCodeLines();
+              instance.reference.classList.remove('code-annotation-active');
+            },
+            maxWidth: 300,
+            delay: [50, 0],
+            duration: [200, 0],
+            offset: [5, 10],
+            arrow: true,
+            appendTo: function(el) {
+              return el.parentElement.parentElement.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'quarto',
+            placement: 'right',
+            popperOptions: {
+              modifiers: [
+              {
+                name: 'flip',
+                options: {
+                  flipVariations: false, // true by default
+                  allowedAutoPlacements: ['right'],
+                  fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                options: {
+                  mainAxis: false,
+                  altAxis: false
+                }
+              }
+              ]        
+            }      
+          };
+          window.tippy(annoteTarget, config); 
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/methods/algorithms.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></div></div></footer></body></html>

@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Raw arrays to betas – FALCONAge</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../favicon.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6bc2510a377bfbe78f0e93c5094f7fd0.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5461c4b6f8ae7e6f5675648daca67215.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6bc2510a377bfbe78f0e93c5094f7fd0.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-26c3c54a9a50c6b5b340ca6bbcb7b31e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-dfb789abe40afa4faea88ae33a8415b5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-26c3c54a9a50c6b5b340ca6bbcb7b31e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">FALCONAge</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-contents" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Contents</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-contents">    
+        <li class="dropdown-header">1. Start</li>
+        <li>
+    <a class="dropdown-item" href="../index.html">
+ <span class="dropdown-text">What FALCONAge is</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/install.html">
+ <span class="dropdown-text">Install</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/quickstart.html">
+ <span class="dropdown-text">Getting started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/claude.html">
+ <span class="dropdown-text">Using FALCONAge from Claude</span></a>
+  </li>  
+        <li class="dropdown-header">2. Your data</li>
+        <li>
+    <a class="dropdown-item" href="../data/loading.html">
+ <span class="dropdown-text">Loading your data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/preprocessing.html">
+ <span class="dropdown-text">Preprocessing and coverage</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/raw-arrays.html">
+ <span class="dropdown-text">Raw arrays to betas</span></a>
+  </li>  
+        <li class="dropdown-header">3. Clocks</li>
+        <li>
+    <a class="dropdown-item" href="../clocks/choosing.html">
+ <span class="dropdown-text">Choosing a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/meaning.html">
+ <span class="dropdown-text">What a score means</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/catalogue.html">
+ <span class="dropdown-text">Clock catalogue</span></a>
+  </li>  
+        <li class="dropdown-header">4. Analysis</li>
+        <li>
+    <a class="dropdown-item" href="../analysis/acceleration.html">
+ <span class="dropdown-text">Age acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/uncertainty.html">
+ <span class="dropdown-text">Uncertainty</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/clinical.html">
+ <span class="dropdown-text">Clinical chemistry and survival</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/benchmarking.html">
+ <span class="dropdown-text">Benchmarking</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/beyond.html">
+ <span class="dropdown-text">Beyond the clock score</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/reporting.html">
+ <span class="dropdown-text">Figures and reports</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/figures.html">
+ <span class="dropdown-text">Figure gallery</span></a>
+  </li>  
+        <li class="dropdown-header">5. Methods</li>
+        <li>
+    <a class="dropdown-item" href="../methods/index.html">
+ <span class="dropdown-text">The science of aging clocks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/biology.html">
+ <span class="dropdown-text">Biology and measurement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/algorithms.html">
+ <span class="dropdown-text">Algorithm families</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/formulas.html">
+ <span class="dropdown-text">Published formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/clocks.html">
+ <span class="dropdown-text">The clocks, by family</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/genetics.html">
+ <span class="dropdown-text">Genotype and structure</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/building.html">
+ <span class="dropdown-text">Building a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/failure-modes.html">
+ <span class="dropdown-text">Failure modes and the frontier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/resources.html">
+ <span class="dropdown-text">Datasets and resources</span></a>
+  </li>  
+        <li class="dropdown-header">6. Reference</li>
+        <li>
+    <a class="dropdown-item" href="../reference/index.html">
+ <span class="dropdown-text">Python reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../r/index.html">
+ <span class="dropdown-text">R reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../references.html">
+ <span class="dropdown-text">References</span></a>
+  </li>  
+        <li class="dropdown-header">7. Developer notes</li>
+        <li>
+    <a class="dropdown-item" href="../dev/index.html">
+ <span class="dropdown-text">Architecture</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/engine.html">
+ <span class="dropdown-text">Core engine and registry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/algorithms.html">
+ <span class="dropdown-text">Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/modules.html">
+ <span class="dropdown-text">Modules</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/r-package.html">
+ <span class="dropdown-text">R package</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/operations.html">
+ <span class="dropdown-text">Docker, testing and CI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/gpu.html">
+ <span class="dropdown-text">GPU support</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/history.html">
+ <span class="dropdown-text">Design history</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/software.html">
+ <span class="dropdown-text">Other software</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/appendices.html">
+ <span class="dropdown-text">Appendices</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-download" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Download</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-download">    
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge.pdf">
+ <span class="dropdown-text">Documentation (PDF)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge-docs-markdown.zip">
+ <span class="dropdown-text">Documentation (markdown ZIP)</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link active" href="https://github.com/bhagesh-h/FALCONAge" aria-current="page"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../data/loading.html">2. Your data</a></li><li class="breadcrumb-item"><a href="../data/raw-arrays.html">Raw arrays to betas</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">1. Start</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What FALCONAge is</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/install.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Install</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/quickstart.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Getting started</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/claude.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Using FALCONAge from Claude</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">2. Your data</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/loading.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loading your data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/preprocessing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preprocessing and coverage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/raw-arrays.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Raw arrays to betas</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">3. Clocks</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/choosing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Choosing a clock</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/meaning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What a score means</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/catalogue.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Clock catalogue</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">4. Analysis</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Age acceleration</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/uncertainty.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Uncertainty</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/clinical.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Clinical chemistry and survival</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/benchmarking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Benchmarking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/beyond.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Beyond the clock score</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/reporting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Figures and reports</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Figure gallery</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">5. Methods</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The science of aging clocks</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/biology.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Biology and measurement</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/algorithms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Algorithm families</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/formulas.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Published formulas</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/clocks.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The clocks, by family</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/genetics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Genotype and structure</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/building.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Building a clock</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/failure-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Failure modes and the frontier</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/resources.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Datasets and resources</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">6. Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python reference</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../r/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R reference</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false">
+ <span class="menu-text">7. Developer notes</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/engine.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Core engine and registry</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/algorithms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Algorithms</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/modules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Modules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/r-package.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R package</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/operations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Docker, testing and CI</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/gpu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GPU support</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/history.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design history</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/software.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Other software</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/appendices.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Appendices</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+<div class="quarto-sidebar-footer"><div class="sidebar-footer-item">
+<p><a href="https://orcid.org/0000-0002-5957-8005">Bhagesh Hunakunti</a><br>
+<a href="https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE">GPL-3.0-or-later</a> · <a href="https://github.com/bhagesh-h/FALCONAge">source</a></p>
+</div></div></nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#raw-idats" id="toc-raw-idats" class="nav-link active" data-scroll-target="#raw-idats">Raw IDATs</a></li>
+  <li><a href="#from-raw-arrays-to-betas" id="toc-from-raw-arrays-to-betas" class="nav-link" data-scroll-target="#from-raw-arrays-to-betas">20. From raw arrays to betas</a>
+  <ul class="collapse">
+  <li><a href="#what-an-idat-does-not-contain" id="toc-what-an-idat-does-not-contain" class="nav-link" data-scroll-target="#what-an-idat-does-not-contain">20.1 What an IDAT does not contain</a></li>
+  <li><a href="#out-of-band-signal-which-everything-downstream-rests-on" id="toc-out-of-band-signal-which-everything-downstream-rests-on" class="nav-link" data-scroll-target="#out-of-band-signal-which-everything-downstream-rests-on">20.2 Out-of-band signal, which everything downstream rests on</a></li>
+  <li><a href="#the-validation-and-why-it-is-a-real-one" id="toc-the-validation-and-why-it-is-a-real-one" class="nav-link" data-scroll-target="#the-validation-and-why-it-is-a-real-one">20.3 The validation, and why it is a real one</a></li>
+  <li><a href="#two-steps-that-ship-switched-off-and-why" id="toc-two-steps-that-ship-switched-off-and-why" class="nav-link" data-scroll-target="#two-steps-that-ship-switched-off-and-why">20.4 Two steps that ship switched off, and why</a></li>
+  <li><a href="#probe-masks-standard-for-an-ewas-a-decision-for-a-clock" id="toc-probe-masks-standard-for-an-ewas-a-decision-for-a-clock" class="nav-link" data-scroll-target="#probe-masks-standard-for-an-ewas-a-decision-for-a-clock">20.5 Probe masks: standard for an EWAS, a decision for a clock</a></li>
+  <li><a href="#what-the-chain-still-does-not-do" id="toc-what-the-chain-still-does-not-do" class="nav-link" data-scroll-target="#what-the-chain-still-does-not-do">20.6 What the chain still does not do</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/data/raw-arrays.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../data/loading.html">2. Your data</a></li><li class="breadcrumb-item"><a href="../data/raw-arrays.html">Raw arrays to betas</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Raw arrays to betas</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="raw-idats" class="level2">
+<h2 class="anchored" data-anchor-id="raw-idats">Raw IDATs</h2>
+<p>New in this release. Before this you had to normalise in sesame or minfi and bring a beta matrix back.</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Python</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">R</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> fa.read_idat_dir(<span class="st">"idats/"</span>)        <span class="co"># every Grn/Red pair in the folder</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> fa.score(fa.prepare(d), clocks<span class="op">=</span><span class="st">"compatible"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The raw-array chain is Python-only for now; call it through reticulate.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>fa <span class="ot">&lt;-</span> reticulate<span class="sc">::</span><span class="fu">import</span>(<span class="st">"falconage"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>d  <span class="ot">&lt;-</span> fa<span class="sc">$</span><span class="fu">read_idat_dir</span>(<span class="st">"idats/"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+<p>The chain runs detection first (pOOBAH), then background correction (noob), because pOOBAH’s null <em>is</em> the uncorrected out-of-band signal. Undetected probes become <code>NA</code> rather than a number. The array manifest is downloaded from Illumina’s public bucket the first time and cached. It is the one step in FALCONAge that needs a network.</p>
+<div class="falcon-output">
+<pre><code>FalconData(2 samples x 865918 features, dna_methylation, EPICv1, 2.0% missing)</code></pre>
+</div>
+</section>
+<section id="from-raw-arrays-to-betas" class="level2">
+<h2 class="anchored" data-anchor-id="from-raw-arrays-to-betas">20. From raw arrays to betas</h2>
+<p>Also new here, and the other half of it. Section 20 is about what a score is worth; this is about being able to produce one from what a laboratory actually has.</p>
+<p>At first FALCONAge read beta matrices and told you to normalise elsewhere. That was accurate and it was the single largest reason somebody with their own IDATs could not use the package.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/idat-to-beta-pipeline.png" class="img-fluid figure-img"></p>
+<figcaption>The chain from two channels of raw intensity to a beta matrix</figcaption>
+</figure>
+</div>
+<p>Each step answers a question the next one assumes. Detection asks whether a probe was measured at all, background and dye correction asks what the intensity would have been without the array’s own offset, and BMIQ asks how to put two probe chemistries on one scale. Masking removes probes that are known to be unreliable rather than merely absent. Skipping a step does not fail; it produces a beta matrix that is quietly on a different scale from the one the clock’s coefficients were fitted on.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/array-probe-types.png" class="img-fluid figure-img"></p>
+<figcaption>Why the two probe designs need reconciling before a coefficient means anything</figcaption>
+</figure>
+</div>
+<p>A type I probe uses two bead addresses and one colour channel; a type II probe uses one address and both channels. The two designs give measurably different beta distributions, with type II compressed toward the middle of the range, which is what BMIQ corrects by mapping type II onto the type I reference. On EPIC arrays type II probes are the large majority, so leaving this uncorrected shifts most of the matrix a clock will read.</p>
+<section id="what-an-idat-does-not-contain" class="level3">
+<h3 class="anchored" data-anchor-id="what-an-idat-does-not-contain">20.1 What an IDAT does not contain</h3>
+<p>An IDAT is keyed by <strong>bead address</strong>, not by probe. A type I probe has two addresses and reads both in one colour; a type II probe has one address and reads methylated in green, unmethylated in red. Which colour a type I probe uses is a property of its chemistry and is written down nowhere in the file.</p>
+<p>So the first thing the chain needs is the array manifest, and Illumina’s licence does not permit redistributing it. <code>methylprep</code> (MIT) solved this by downloading from a public S3 bucket and caching; FALCONAge uses the same bucket, the same filenames, and its own <code>download.fetch</code>. One network round trip per machine, ever. Every other path in the package works offline and this one says so.</p>
+<p>The manifest’s SHA-256 goes into the run manifest. A beta matrix is a function of which manifest resolved its addresses, in exactly the way a score is a function of which coefficient file produced it, and recording one and not the other would be an odd place to stop.</p>
+</section>
+<section id="out-of-band-signal-which-everything-downstream-rests-on" class="level3">
+<h3 class="anchored" data-anchor-id="out-of-band-signal-which-everything-downstream-rests-on">20.2 Out-of-band signal, which everything downstream rests on</h3>
+<p>A type I probe’s <em>other</em> colour, at its own two addresses, measures nothing real. It is the array’s background, sampled on this chip, in this run, at tens of thousands of addresses. That is what makes it a usable null, and it is why type II probes, which have no out-of-band signal, borrow the type I null.</p>
+<p>Two steps use it and they must run in this order:</p>
+<p><strong>pOOBAH</strong> (Zhou et al.&nbsp;2018) asks, per probe, the probability that a signal this bright could come from background alone; read straight off the empirical out-of-band distribution in the relevant channel. A probe above 0.05 becomes <code>NaN</code>, because a beta of 0.43 computed from two noise readings is indistinguishable from a real 0.43 once it is in the matrix.</p>
+<p><strong>noob</strong> (Triche et al.&nbsp;2013) then deconvolves the observed signal into a normal background plus an exponential true signal, per channel, using the same out-of-band values.</p>
+<p>Detection <strong>before</strong> correction, and <code>noob()</code> raises if asked to run first. The reason is not stylistic: pOOBAH’s null is the <em>uncorrected</em> out-of-band distribution, and correcting first subtracts the background from the very numbers that define what background looks like. Every probe then clears a bar that has been lowered underneath it.</p>
+<p>Two numerical points worth recording because both were wrong in a first draft:</p>
+<ul>
+<li>The background location and scale use <strong>Huber’s M-estimator</strong>, as minfi does. The upper tail of the out-of-band signal is cross-hybridisation, not background. On the corpus’s EPIC v1 arrays a plain mean of the contaminated green channel reads about three times the robust estimate.</li>
+<li>The normal-exponential posterior is evaluated through <code>log_ndtr</code>. Written directly as a density over a tail probability it is <code>0/0</code> for any probe well below background, which is <em>every undetected probe on the array</em>, not an edge case.</li>
+</ul>
+</section>
+<section id="the-validation-and-why-it-is-a-real-one" class="level3">
+<h3 class="anchored" data-anchor-id="the-validation-and-why-it-is-a-real-one">20.3 The validation, and why it is a real one</h3>
+<p>The corpus holds raw IDATs for GSM5548192 and GSM5548193, and the betas their authors published for those same two physical samples. The two paths share nothing.</p>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td>correlation</td>
+<td><strong>r = 0.99928</strong></td>
+</tr>
+<tr class="even">
+<td>median absolute difference</td>
+<td><strong>0.0113</strong></td>
+</tr>
+<tr class="odd">
+<td>probes within 0.05</td>
+<td><strong>99.7%</strong></td>
+</tr>
+<tr class="even">
+<td>probes compared</td>
+<td>809,400</td>
+</tr>
+</tbody>
+</table>
+<p>That is a check on the address decoding, the type I/II split and the channel assignment, where a raw-array reader actually goes wrong, and where an error would be a whole-matrix error rather than a subtle one.</p>
+<p>It is asserted on the <strong>uncorrected</strong> betas, deliberately. GSE182991’s published matrix agrees with our raw decode at r = 0.999, which says its own processing was minimal; comparing our background-corrected output against it would be asserting that a correction does nothing.</p>
+</section>
+<section id="two-steps-that-ship-switched-off-and-why" class="level3">
+<h3 class="anchored" data-anchor-id="two-steps-that-ship-switched-off-and-why">20.4 Two steps that ship switched off, and why</h3>
+<p><strong>Dye bias.</strong> Green and red do not fluoresce equally, and a type II probe reads methylated in one and unmethylated in the other, so it carries a tilt that is not methylation. The standard fix matches the two channels using type I probes.</p>
+<p>Measured on real IDATs, our implementation of it moves the median beta by <strong>+0.10 to +0.12</strong>: far more than a dye correction should. The cause is visible in the data: on that chip red runs about twice as hot as green (median out-of-band 1,171 against 415), so mapping red onto green halves every type II unmethylated signal.</p>
+<p>That is a limitation of the <em>assumption</em>, not an arithmetic slip. Matching the two channels’ distributions presumes type I green probes and type I red probes measure the same underlying quantity; on this array their median betas are 0.05 and 0.14. A correct correction needs the normalisation control probes, whose addresses are not in the core-columns manifest we can fetch. So it is left in, opt-in, and documented. Turned on by default it would silently make results worse.</p>
+<p><strong>BMIQ.</strong> Implemented in full, a three-state beta mixture per probe type, fitted by EM, then a quantile map within each state (Teschendorff et al.&nbsp;2013). It has to be asked for because clocks differ in how much they depend on it, and type I probes come out untouched, so BMIQ never moves a clock built purely on them.</p>
+</section>
+<section id="probe-masks-standard-for-an-ewas-a-decision-for-a-clock" class="level3">
+<h3 class="anchored" data-anchor-id="probe-masks-standard-for-an-ewas-a-decision-for-a-clock">20.5 Probe masks: standard for an EWAS, a decision for a clock</h3>
+<p>Zhou, Laird and Shen catalogued the probes that do not measure what their name says, multi-mapping, common SNP at the interrogated base, repeats, polymorphic extension base, and publish a recommended general mask. On 450K it flags 29,504 probes, six percent of the array.</p>
+<p>Masking them is correct for an EWAS. <strong>Scoring a pre-fitted clock is a different situation</strong>: every clock in this registry was trained on unmasked data, before most of these masks existed, and its coefficients were fitted with those probes in, whatever the probes were measuring. Removing them at score time does not recover a truer number: it deletes an input the model expects and hands the gap to the imputer.</p>
+<p>So nothing is masked automatically, and <code>mask_report()</code> prices the decision:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>clock</th>
+<th style="text-align: right;">probes masked</th>
+<th style="text-align: right;">share of model</th>
+<th style="text-align: right;">share of |coefficient|</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dunedinpoam38</td>
+<td style="text-align: right;">5 / 46</td>
+<td style="text-align: right;">10.9%</td>
+<td style="text-align: right;"><strong>6.1%</strong></td>
+</tr>
+<tr class="even">
+<td>dnamtl</td>
+<td style="text-align: right;">15 / 140</td>
+<td style="text-align: right;">10.7%</td>
+<td style="text-align: right;">5.4%</td>
+</tr>
+<tr class="odd">
+<td>hannum</td>
+<td style="text-align: right;">1 / 71</td>
+<td style="text-align: right;">1.4%</td>
+<td style="text-align: right;">1.6%</td>
+</tr>
+<tr class="even">
+<td>horvath2013</td>
+<td style="text-align: right;"><strong>1 / 353</strong></td>
+<td style="text-align: right;">0.3%</td>
+<td style="text-align: right;"><strong>0.2%</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two clocks, the same published mask, and opposite answers. For Horvath it is free; for DunedinPoAm38 it removes a ninth of the model. The coefficient-mass column is the one to read, and it is why this is a report rather than a step.</p>
+</section>
+<section id="what-the-chain-still-does-not-do" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-chain-still-does-not-do">20.6 What the chain still does not do</h3>
+<ul>
+<li><strong>No control-probe normalisation.</strong> The core-columns manifest carries no control addresses, which is why dye bias is unvalidated (§20.4).</li>
+<li><strong>No cross-platform liftover.</strong> Unchanged from v1.0, and blocked for the same reason: mLiftOver’s tables encode empirical paired-sample concordance.</li>
+<li><strong>EPIC v1 and v2 cannot be told apart by address count.</strong> They are five percent apart, so detection refuses as ambiguous rather than picking the closer one. Pass <code>platform=</code> for a chip near the boundary.</li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+// Wrap every article table in a horizontal scroll container.
+//
+// WHY THIS IS JAVASCRIPT AND NOT CSS. The scrolling element has to be a
+// *parent* of the table. Setting `display: block; overflow-x: auto` on the
+// table itself -- the obvious CSS-only version, and what this site did -- makes
+// the table a block box of width auto, so it shrinks to the container and the
+// anonymous inner table compresses every column to its minimum content width.
+// Measured at 390px on the clock catalogue: cells 46-120px wide and 82px tall,
+// with "dnamphenoage" broken over three lines. The table was not overflowing;
+// it was being crushed.
+//
+// Bootstrap solves this with a `.table-responsive` wrapper div, and Pandoc does
+// not emit one, so it gets added here. Then the table keeps a sane width and
+// the wrapper scrolls, which is the behaviour everyone expects from a wide
+// table on a phone.
+(function () {
+  function wrap() {
+    var tables = document.querySelectorAll(
+      "main table:not(.falcon-wrapped)");
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      t.classList.add("falcon-wrapped");
+      // Already inside something that scrolls (Quarto does wrap some outputs)?
+      // A second wrapper would nest two scrollbars.
+      if (t.parentElement &&
+          t.parentElement.classList.contains("falcon-table-scroll")) continue;
+
+      var box = document.createElement("div");
+      box.className = "falcon-table-scroll";
+      // Keyboard users need to be able to scroll it too, and a focusable
+      // scroll container is the accessible way to expose that.
+      box.setAttribute("tabindex", "0");
+      box.setAttribute("role", "region");
+      var cap = t.querySelector("caption");
+      box.setAttribute("aria-label",
+        cap && cap.textContent.trim() ? cap.textContent.trim() : "Table");
+
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wrap);
+  } else {
+    wrap();
+  }
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bhagesh-h\.github\.io\/FALCONAge\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+        for (let i=0; i<annoteTargets.length; i++) {
+          const annoteTarget = annoteTargets[i];
+          const targetCell = annoteTarget.getAttribute("data-target-cell");
+          const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+          const contentFn = () => {
+            const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+            if (content) {
+              const tipContent = content.cloneNode(true);
+              tipContent.classList.add("code-annotation-tip-content");
+              return tipContent.outerHTML;
+            }
+          }
+          const config = {
+            allowHTML: true,
+            content: contentFn,
+            onShow: (instance) => {
+              selectCodeLines(instance.reference);
+              instance.reference.classList.add('code-annotation-active');
+              window.tippy.hideAll();
+            },
+            onHide: (instance) => {
+              unselectCodeLines();
+              instance.reference.classList.remove('code-annotation-active');
+            },
+            maxWidth: 300,
+            delay: [50, 0],
+            duration: [200, 0],
+            offset: [5, 10],
+            arrow: true,
+            appendTo: function(el) {
+              return el.parentElement.parentElement.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'quarto',
+            placement: 'right',
+            popperOptions: {
+              modifiers: [
+              {
+                name: 'flip',
+                options: {
+                  flipVariations: false, // true by default
+                  allowedAutoPlacements: ['right'],
+                  fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                options: {
+                  mainAxis: false,
+                  altAxis: false
+                }
+              }
+              ]        
+            }      
+          };
+          window.tippy(annoteTarget, config); 
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/data/raw-arrays.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></div></div></footer></body></html>

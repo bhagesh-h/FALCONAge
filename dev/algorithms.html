@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>4. Algorithms, the complete operation catalogue – FALCONAge</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../favicon.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6bc2510a377bfbe78f0e93c5094f7fd0.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-5461c4b6f8ae7e6f5675648daca67215.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6bc2510a377bfbe78f0e93c5094f7fd0.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-26c3c54a9a50c6b5b340ca6bbcb7b31e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-dfb789abe40afa4faea88ae33a8415b5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-26c3c54a9a50c6b5b340ca6bbcb7b31e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">FALCONAge</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-contents" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Contents</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-contents">    
+        <li class="dropdown-header">1. Start</li>
+        <li>
+    <a class="dropdown-item" href="../index.html">
+ <span class="dropdown-text">What FALCONAge is</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/install.html">
+ <span class="dropdown-text">Install</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/quickstart.html">
+ <span class="dropdown-text">Getting started</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/claude.html">
+ <span class="dropdown-text">Using FALCONAge from Claude</span></a>
+  </li>  
+        <li class="dropdown-header">2. Your data</li>
+        <li>
+    <a class="dropdown-item" href="../data/loading.html">
+ <span class="dropdown-text">Loading your data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/preprocessing.html">
+ <span class="dropdown-text">Preprocessing and coverage</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/raw-arrays.html">
+ <span class="dropdown-text">Raw arrays to betas</span></a>
+  </li>  
+        <li class="dropdown-header">3. Clocks</li>
+        <li>
+    <a class="dropdown-item" href="../clocks/choosing.html">
+ <span class="dropdown-text">Choosing a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/meaning.html">
+ <span class="dropdown-text">What a score means</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/catalogue.html">
+ <span class="dropdown-text">Clock catalogue</span></a>
+  </li>  
+        <li class="dropdown-header">4. Analysis</li>
+        <li>
+    <a class="dropdown-item" href="../analysis/acceleration.html">
+ <span class="dropdown-text">Age acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/uncertainty.html">
+ <span class="dropdown-text">Uncertainty</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/clinical.html">
+ <span class="dropdown-text">Clinical chemistry and survival</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/benchmarking.html">
+ <span class="dropdown-text">Benchmarking</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/beyond.html">
+ <span class="dropdown-text">Beyond the clock score</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/reporting.html">
+ <span class="dropdown-text">Figures and reports</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/figures.html">
+ <span class="dropdown-text">Figure gallery</span></a>
+  </li>  
+        <li class="dropdown-header">5. Methods</li>
+        <li>
+    <a class="dropdown-item" href="../methods/index.html">
+ <span class="dropdown-text">The science of aging clocks</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/biology.html">
+ <span class="dropdown-text">Biology and measurement</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/algorithms.html">
+ <span class="dropdown-text">Algorithm families</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/formulas.html">
+ <span class="dropdown-text">Published formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/clocks.html">
+ <span class="dropdown-text">The clocks, by family</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/genetics.html">
+ <span class="dropdown-text">Genotype and structure</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/building.html">
+ <span class="dropdown-text">Building a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/failure-modes.html">
+ <span class="dropdown-text">Failure modes and the frontier</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/resources.html">
+ <span class="dropdown-text">Datasets and resources</span></a>
+  </li>  
+        <li class="dropdown-header">6. Reference</li>
+        <li>
+    <a class="dropdown-item" href="../reference/index.html">
+ <span class="dropdown-text">Python reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../r/index.html">
+ <span class="dropdown-text">R reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../references.html">
+ <span class="dropdown-text">References</span></a>
+  </li>  
+        <li class="dropdown-header">7. Developer notes</li>
+        <li>
+    <a class="dropdown-item" href="../dev/index.html">
+ <span class="dropdown-text">Architecture</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/engine.html">
+ <span class="dropdown-text">Core engine and registry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/algorithms.html">
+ <span class="dropdown-text">Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/modules.html">
+ <span class="dropdown-text">Modules</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/r-package.html">
+ <span class="dropdown-text">R package</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/operations.html">
+ <span class="dropdown-text">Docker, testing and CI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/gpu.html">
+ <span class="dropdown-text">GPU support</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/history.html">
+ <span class="dropdown-text">Design history</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/software.html">
+ <span class="dropdown-text">Other software</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/appendices.html">
+ <span class="dropdown-text">Appendices</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-download" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Download</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-download">    
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge.pdf">
+ <span class="dropdown-text">Documentation (PDF)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge-docs-markdown.zip">
+ <span class="dropdown-text">Documentation (markdown ZIP)</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link active" href="https://github.com/bhagesh-h/FALCONAge" aria-current="page"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../dev/index.html">7. Developer notes</a></li><li class="breadcrumb-item"><a href="../dev/algorithms.html">Algorithms</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false">
+ <span class="menu-text">1. Start</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What FALCONAge is</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/install.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Install</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/quickstart.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Getting started</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../start/claude.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Using FALCONAge from Claude</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false">
+ <span class="menu-text">2. Your data</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/loading.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Loading your data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/preprocessing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preprocessing and coverage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../data/raw-arrays.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Raw arrays to betas</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false">
+ <span class="menu-text">3. Clocks</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/choosing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Choosing a clock</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/meaning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">What a score means</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../clocks/catalogue.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Clock catalogue</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false">
+ <span class="menu-text">4. Analysis</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/acceleration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Age acceleration</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/uncertainty.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Uncertainty</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/clinical.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Clinical chemistry and survival</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/benchmarking.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Benchmarking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/beyond.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Beyond the clock score</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/reporting.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Figures and reports</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/figures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Figure gallery</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false">
+ <span class="menu-text">5. Methods</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The science of aging clocks</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/biology.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Biology and measurement</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/algorithms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Algorithm families</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/formulas.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Published formulas</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/clocks.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">The clocks, by family</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/genetics.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Genotype and structure</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/building.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Building a clock</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/failure-modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Failure modes and the frontier</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../methods/resources.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Datasets and resources</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false">
+ <span class="menu-text">6. Reference</span></a>
+          <a class="sidebar-item-toggle text-start collapsed" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-6" role="navigation" aria-expanded="false" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-6" class="collapse list-unstyled sidebar-section depth1 ">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../reference/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Python reference</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../r/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R reference</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true">
+ <span class="menu-text">7. Developer notes</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-7" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-7" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/engine.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Core engine and registry</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/algorithms.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Algorithms</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/modules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Modules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/r-package.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R package</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/operations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Docker, testing and CI</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/gpu.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">GPU support</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/history.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design history</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/software.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Other software</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/appendices.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Appendices</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+<div class="quarto-sidebar-footer"><div class="sidebar-footer-item">
+<p><a href="https://orcid.org/0000-0002-5957-8005">Bhagesh Hunakunti</a><br>
+<a href="https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE">GPL-3.0-or-later</a> · <a href="https://github.com/bhagesh-h/FALCONAge">source</a></p>
+</div></div></nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#preprocess-ops" id="toc-preprocess-ops" class="nav-link active" data-scroll-target="#preprocess-ops">4.1 Preprocess ops</a></li>
+  <li><a href="#postprocess-transforms" id="toc-postprocess-transforms" class="nav-link" data-scroll-target="#postprocess-transforms">4.2 Postprocess transforms</a></li>
+  <li><a href="#model-classes" id="toc-model-classes" class="nav-link" data-scroll-target="#model-classes">4.3 Model classes</a></li>
+  <li><a href="#the-ten-special-forward-passes" id="toc-the-ten-special-forward-passes" class="nav-link" data-scroll-target="#the-ten-special-forward-passes">4.4 The ten special forward passes</a></li>
+  <li><a href="#clinical-chemistry-clocks" id="toc-clinical-chemistry-clocks" class="nav-link" data-scroll-target="#clinical-chemistry-clocks">4.5 Clinical chemistry clocks</a></li>
+  <li><a href="#op-composition-and-validation" id="toc-op-composition-and-validation" class="nav-link" data-scroll-target="#op-composition-and-validation">4.6 Op composition and validation</a></li>
+  <li><a href="#scaffold-only-clocks" id="toc-scaffold-only-clocks" class="nav-link" data-scroll-target="#scaffold-only-clocks">4.7 Scaffold-only clocks</a>
+  <ul class="collapse">
+  <li><a href="#which-they-are-and-why" id="toc-which-they-are-and-why" class="nav-link" data-scroll-target="#which-they-are-and-why">Which they are, and why</a></li>
+  <li><a href="#what-ships" id="toc-what-ships" class="nav-link" data-scroll-target="#what-ships">What ships</a></li>
+  <li><a href="#supplying-coefficients" id="toc-supplying-coefficients" class="nav-link" data-scroll-target="#supplying-coefficients">Supplying coefficients</a></li>
+  <li><a href="#behaviour-without-coefficients" id="toc-behaviour-without-coefficients" class="nav-link" data-scroll-target="#behaviour-without-coefficients">Behaviour without coefficients</a></li>
+  <li><a href="#testing-a-clock-whose-weights-you-do-not-have" id="toc-testing-a-clock-whose-weights-you-do-not-have" class="nav-link" data-scroll-target="#testing-a-clock-whose-weights-you-do-not-have">Testing a clock whose weights you do not have</a></li>
+  <li><a href="#could-they-be-reimplemented-from-scratch-instead" id="toc-could-they-be-reimplemented-from-scratch-instead" class="nav-link" data-scroll-target="#could-they-be-reimplemented-from-scratch-instead">Could they be reimplemented from scratch instead?</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/dev/algorithms.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../dev/index.html">7. Developer notes</a></li><li class="breadcrumb-item"><a href="../dev/algorithms.html">Algorithms</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">4. Algorithms, the complete operation catalogue</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/clock-anatomy.png" class="img-fluid figure-img"></p>
+<figcaption>The four parts every clock has, and where implementations disagree</figcaption>
+</figure>
+</div>
+<p>The shape is the field’s, not this package’s: the reviews that survey it describe the same four parts <a href="../references.html#ref-59">[59]</a> <a href="../references.html#ref-60">[60]</a>.</p>
+<p>Every clock in the registry is expressible as <code>select features → preprocess ops → architecture forward → postprocess ops</code>, with ten exceptions that need their own forward pass (§4.3). The ops are the vocabulary; implementing all of them is what makes adding a clock a YAML edit rather than a code change.</p>
+<p>The weights are the part everybody agrees on, because they are published. The disagreements between implementations of the same clock are almost all in the last box: whether an anti-log is applied, which of two published transforms was meant, whether an intercept was already folded into the coefficients. That is why the registry stores the postprocess chain as declared data rather than burying it in each model class, and why the clocks whose packaged coefficients contradict their own paper carry the discrepancy as a warning at score time.</p>
+<blockquote class="blockquote">
+<p><strong>v1.0 implements seven of the fifteen preprocess ops below, one dataset-level op and 21 postprocess transforms</strong>; 35 of the 69 bundled clocks declare at least one. The rest are not ops here. A bundled clock that needs one does the step in its own model class (AltumAge’s per-feature scaler in <code>neural.py</code>, the mitotic statistics in <code>aggregation.py</code> and <code>division.py</code>), and the others wait on coefficients that are licensed, not yet traced to a primary source, or absent from the registry. An op with no reachable test vector is an op that is wrong in a way nobody will notice. They are kept here because the vocabulary is the point: when a coefficient set does arrive, adding the clock stays a registry edit.</p>
+</blockquote>
+<section id="preprocess-ops" class="level2">
+<h2 class="anchored" data-anchor-id="preprocess-ops">4.1 Preprocess ops</h2>
+<p><code>falconage/models/ops.py</code>, dispatched through <code>PREPROCESS</code> and applied by <code>apply_chain()</code>.</p>
+<p>They are plain functions of <code>(x, xp, **params)</code>, not <code>nn.Module</code> subclasses as originally specified. <code>xp</code> is the array module the device resolver handed back, numpy or torch, so one implementation serves both backends and the CPU path never imports torch. An <code>nn.Module</code> would have forced torch on every install for a 500-CpG dot product that numpy finishes before torch has finished importing. All are batched and vectorised; none contains a Python loop over samples. Source for each is <a href="../dev/appendices.html#appendix-e---preprocess-and-postprocess-operation-inventory">Appendix E</a>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_chain(x, chain: Sequence[<span class="bu">dict</span>], table: <span class="bu">dict</span>, <span class="op">*</span>, xp) <span class="op">-&gt;</span> Any:</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Run an ordered op list from a registry entry. Order is load-bearing:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">    beta_to_m then scale is not scale then beta_to_m."""</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Shipped: <code>beta_to_m</code>, <code>m_to_beta</code>, <code>scale</code>, <code>rank_normalize</code>, <code>quantile_normalize</code>, <code>binarize</code>, <code>simplex_projection</code>. The full specified catalogue follows. Under more general names the shipped seven cover <code>identity</code>, <code>scale_median</code>, <code>scale_mean</code>, <code>quantile_normalize_gold</code>, <code>quantile_normalize_scale_gold</code> (as <code>quantile_normalize</code> then <code>scale</code>), <code>binarize_row_median</code> and <code>median_fill_rank</code>. <code>scale_row</code> is not <code>scale</code>, which applies statistics stored with the model; it is the dataset-level op below.</p>
+<p>One op runs on the dataset rather than on a clock’s slice: <code>standardise_within_sample</code>, in <code>DATASET_PREPROCESS</code>, which the Zhang et al.&nbsp;2019 elastic-net and BLUP predictors name in their chains. It needs every probe the data carries, so <code>LinearClock</code> runs it before alignment, from two passes over column blocks that never hold the standardised matrix, and refuses when the data holds less than <code>min_coverage</code> of the 319,607 probes the models were fitted on. The per-sample mean and SD of a subset are not the array’s. It is the <code>scale_row</code> row of the table below, with the row statistics taken over the array as the authors’ <code>pred.R</code> takes them, not over the model’s inputs; <a href="../methods/formulas.html#zhang-2019-predictors">formulas §5.4</a> gives what the narrower scope does to the elastic-net estimate.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Op</th>
+<th>Computation</th>
+<th>Stored params</th>
+<th>Clocks</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>identity</code></td>
+<td><code>x</code></td>
+<td>-</td>
+<td>default</td>
+</tr>
+<tr class="even">
+<td><code>fill_nan_with_reference</code></td>
+<td><code>where(isnan(x), ref, x)</code></td>
+<td><code>ref[n_features]</code></td>
+<td>~90, the <code>LinearReferenceClock</code> family</td>
+</tr>
+<tr class="odd">
+<td><code>scale_median</code></td>
+<td><code>(x − median) / std</code></td>
+<td><code>median[]</code>, <code>std[]</code></td>
+<td>AltumAge, CpGPTGrimAge3</td>
+</tr>
+<tr class="even">
+<td><code>scale_mean</code></td>
+<td><code>(x − mean) / std</code></td>
+<td><code>mean[]</code>, <code>std[]</code></td>
+<td>CpGPTPCGrimAge3</td>
+</tr>
+<tr class="odd">
+<td><code>scale_row</code></td>
+<td><code>(x − rowmean) / rowstd</code>, guarding zero SD</td>
+<td>-</td>
+<td>ZhangEN, ZhangBLUP</td>
+</tr>
+<tr class="even">
+<td><code>quantile_normalize_gold</code></td>
+<td>rank map onto sorted gold means, then column subset</td>
+<td><code>gold[20000]</code>, <code>idx[]</code></td>
+<td>DunedinPACE</td>
+</tr>
+<tr class="odd">
+<td><code>quantile_normalize_scale_gold</code></td>
+<td>as above, then <code>(x − gold_mean)/gold_std</code>, then subset</td>
+<td><code>gold[]</code>, <code>gold_std[]</code>, <code>idx[]</code></td>
+<td>Stubbs</td>
+</tr>
+<tr class="even">
+<td><code>tpm_log1p</code></td>
+<td><code>log1p(1e6 · (1000·x/len) / rowsum)</code>, then subset</td>
+<td><code>lengths[]</code>, <code>idx[]</code></td>
+<td>OcampoATAC1/2</td>
+</tr>
+<tr class="odd">
+<td><code>binarize_row_median</code></td>
+<td>mask zeros, threshold at each row’s non-zero median</td>
+<td>-</td>
+<td>BiTAge</td>
+</tr>
+<tr class="even">
+<td><code>median_fill_rank</code></td>
+<td>fill NaN with global median, then per-row average ranks</td>
+<td>-</td>
+<td>Pasta, PastaMouse, REG</td>
+</tr>
+<tr class="odd">
+<td><code>mean_over_present</code></td>
+<td>mean of entries <code>!= -1</code> per row</td>
+<td>-</td>
+<td>epiTOC1, HypoClock, epiCMIT×2</td>
+</tr>
+<tr class="even">
+<td><code>quantile_over_present</code></td>
+<td>q-quantile of entries <code>!= -1</code> per row</td>
+<td><code>q=0.95</code></td>
+<td>stemTOC, stemTOCvitro</td>
+</tr>
+<tr class="odd">
+<td><code>nan_to_zero</code></td>
+<td><code>nan_to_num(x, 0)</code></td>
+<td>-</td>
+<td>epiTOC2, epiTOC3</td>
+</tr>
+<tr class="even">
+<td><code>autosomal_zscore</code></td>
+<td>z-score every probe against that sample’s autosomal mean and SD</td>
+<td><code>autosome_idx[]</code></td>
+<td>XChrom, YChrom</td>
+</tr>
+<tr class="odd">
+<td><code>expand_with_reference</code></td>
+<td>scatter the provided features into a wider reference vector</td>
+<td><code>full_ref[]</code>, <code>idx[]</code></td>
+<td>PastaMouse</td>
+</tr>
+</tbody>
+</table>
+<p>Three of these need care.</p>
+<p><strong><code>quantile_normalize_gold</code>.</strong> The DunedinPACE gold standard is 20,000 probes, of which only 173 are scored; the other 19,827 exist to define the sample’s rank distribution (<a href="../methods/index.html">the science notes, §4.8</a>). Dropping them produces a plausible wrong number, so the op raises <code>FeatureMismatchError</code> when background coverage falls below a configurable 90%. Vectorised form:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sorted_gold <span class="op">=</span> torch.sort(gold)[<span class="dv">0</span>]                                  <span class="co"># [20000]</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q_idx <span class="op">=</span> torch.linspace(<span class="dv">0</span>, <span class="bu">len</span>(sorted_gold) <span class="op">-</span> <span class="dv">1</span>, x.shape[<span class="dv">1</span>]).<span class="bu">long</span>()</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> torch.argsort(x, dim<span class="op">=</span><span class="dv">1</span>)                                    <span class="co"># [B, F]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> torch.empty_like(x)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>out.scatter_(<span class="dv">1</span>, order, sorted_gold[q_idx].expand_as(x))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> out[:, <span class="va">self</span>.scoring_idx]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>One <code>argsort</code> and one <code>scatter_</code> per batch, replacing pyaging’s per-row Python loop (<a href="https://github.com/lucascamillomd/pyaging"><code>pyaging/models/_models.py</code>:255</a>).</p>
+<p><strong><code>median_fill_rank</code>.</strong> Average ranks with tie handling. pyaging’s implementation is a nested <code>while</code> loop per row and is the slowest path in that package. The vectorised form uses the double-argsort identity for ordinal ranks and a segment-mean over <code>unique_consecutive</code> for ties:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> torch.argsort(x, dim<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>ordinal <span class="op">=</span> torch.empty_like(order)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ordinal.scatter_(<span class="dv">1</span>, order, torch.arange(x.shape[<span class="dv">1</span>], device<span class="op">=</span>x.device).expand_as(order))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># tie correction: for each run of equal sorted values, replace with the run's mean rank</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong><code>autosomal_zscore</code>.</strong> Mean and SD over autosomal probes only, computed per sample with NaN masking, then applied to all probes including the sex chromosomes (<a href="../methods/index.html">the science notes, §3.1</a>).</p>
+</section>
+<section id="postprocess-transforms" class="level2">
+<h2 class="anchored" data-anchor-id="postprocess-transforms">4.2 Postprocess transforms</h2>
+<p><code>falconage/models/ops.py</code>, dispatched through <code>POSTPROCESS</code>. Scalar in, scalar out, applied elementwise over the batch. Constants come from <a href="../methods/index.html">the science notes §4.20</a> and §5.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Op</th>
+<th>Formula</th>
+<th>Params</th>
+<th>Clocks</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>identity</code></td>
+<td><code>y</code></td>
+<td>-</td>
+<td>most</td>
+</tr>
+<tr class="even">
+<td><code>anti_log_linear</code></td>
+<td><code>y&lt;0: (1+A)eʸ − 1</code> ; <code>y≥0: (1+A)y + A</code></td>
+<td><code>adult_age=20</code></td>
+<td>Horvath2013, SkinAndBlood, PedBE, Han, PCHorvath2013, PCSkinAndBlood, IntrinClock, CorticalClock, Pipek×3</td>
+</tr>
+<tr class="odd">
+<td><code>anti_log_linear_months</code></td>
+<td>as above with <code>A=48</code>, then <code>/12</code></td>
+<td><code>adult_age=48</code></td>
+<td>Wu</td>
+</tr>
+<tr class="even">
+<td><code>anti_logp2</code></td>
+<td><code>eʸ − 2</code></td>
+<td>-</td>
+<td>Mammalian1</td>
+</tr>
+<tr class="odd">
+<td><code>anti_log</code></td>
+<td><code>eʸ</code></td>
+<td>-</td>
+<td>MammalianLifespan</td>
+</tr>
+<tr class="even">
+<td><code>anti_log_log</code></td>
+<td><code>e^(−e^(−y))</code></td>
+<td>-</td>
+<td>Mammalian2 relative-age step</td>
+</tr>
+<tr class="odd">
+<td><code>mortality_to_phenoage</code></td>
+<td><code>1 − exp(−exp(y)(e^{120λ}−1)/λ)</code> then <code>141.50225 + ln(−0.00553·ln(1−m))/0.090165</code></td>
+<td><code>lambda=0.0192</code></td>
+<td>PhenoAge</td>
+</tr>
+<tr class="even">
+<td><code>cox_to_years</code></td>
+<td><code>((y−μ_c)/σ_c)·σ_a + μ_a</code></td>
+<td>four constants</td>
+<td>GrimAge, GrimAge2, CpGPTGrimAge3, CpGPTPCGrimAge3</td>
+</tr>
+<tr class="odd">
+<td><code>petkovich_blood</code></td>
+<td><code>((y+1.712)/0.1666)^(1/0.4185) / 30.5</code></td>
+<td>-</td>
+<td>Petkovich</td>
+</tr>
+<tr class="even">
+<td><code>stubbs_multitissue</code></td>
+<td><code>(exp(0.1207y² + 1.2424y + 2.5440) − 3) · 7/30.5</code></td>
+<td>-</td>
+<td>Stubbs</td>
+</tr>
+<tr class="odd">
+<td><code>divide</code></td>
+<td><code>y / d</code></td>
+<td><code>d</code></td>
+<td>Meer (30.5), Bohlin (7), EPICGA (7)</td>
+</tr>
+<tr class="even">
+<td><code>sigmoid</code></td>
+<td><code>1/(1+e^{−y})</code></td>
+<td>-</td>
+<td>McCartney ×6, MammalianFemale, CVDWesterman, ADBahadoSingh</td>
+</tr>
+<tr class="odd">
+<td><code>one_minus</code></td>
+<td><code>1 − y</code></td>
+<td>-</td>
+<td>HypoClock</td>
+</tr>
+<tr class="even">
+<td><code>add_constant</code></td>
+<td><code>y + c</code></td>
+<td><code>c</code></td>
+<td>REG, Lin (+12.2169841), Ying ×3</td>
+</tr>
+<tr class="odd">
+<td><code>scale_and_shift</code></td>
+<td><code>y·s + o·s</code></td>
+<td><code>s</code>, <code>o</code></td>
+<td>Pasta, PastaMouse</td>
+</tr>
+</tbody>
+</table>
+<p><code>mortality_to_phenoage</code> clamps the mortality score to <code>[1e-12, 1 − 1e-12]</code> before the logarithm, following mcp-phenoage-clock (<a href="https://github.com/199-mcp/mcp-phenoage-clock"><code>mcp-phenoage-clock/src/phenoage.ts</code></a>), and records <code>clamped: true</code> in the result when it fires, an extreme biomarker combination that saturates the Gompertz CDF is information, not an implementation detail.</p>
+<p><strong>Intercept convention.</strong> ComputAge and biolearn carry the clock intercept inside the transform lambda; pyaging bakes it into the <code>nn.Linear</code> bias. FALCONAge normalises on import: the intercept always lives in the linear bias, and <code>add_constant</code> is reserved for genuine post-hoc offsets that the source publishes separately. The registry records <code>intercept_source: bias | transform</code> for each imported clock so the normalisation is auditable.</p>
+</section>
+<section id="model-classes" class="level2">
+<h2 class="anchored" data-anchor-id="model-classes">4.3 Model classes</h2>
+<p><code>falconage/models/</code></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> FalconClock(nn.Module, ABC):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    meta: ClockMeta</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    features: <span class="bu">list</span>[<span class="bu">str</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    reference_values: Tensor <span class="op">|</span> <span class="va">None</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> preprocess(<span class="va">self</span>, x: Tensor) <span class="op">-&gt;</span> Tensor      <span class="co"># composed from meta.preprocess</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@abstractmethod</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> core(<span class="va">self</span>, x: Tensor, ctx: ClockContext) <span class="op">-&gt;</span> Tensor</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> postprocess(<span class="va">self</span>, y: Tensor) <span class="op">-&gt;</span> Tensor     <span class="co"># composed from meta.postprocess</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x: Tensor, ctx: ClockContext) <span class="op">-&gt;</span> Tensor</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>ClockContext</code> carries what a clock may need beyond its feature matrix, <code>age</code>, <code>sex</code>, <code>species</code>, and the outputs of other clocks it depends on:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ClockContext:</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    age:      Tensor <span class="op">|</span> <span class="va">None</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    female:   Tensor <span class="op">|</span> <span class="va">None</span>          <span class="co"># 1.0 / 0.0; unknown is an error, never 0.5</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    species:  Tensor <span class="op">|</span> <span class="va">None</span>          <span class="co"># one-hot for mammalian clocks</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    upstream: <span class="bu">dict</span>[<span class="bu">str</span>, Tensor]      <span class="co"># e.g. grimage for DNAmFitAge</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Sex encoding deserves its own note. ComputAge maps unknown sex to 0.5 (<a href="https://github.com/ComputationalAgingLab/ComputAge"><code>ComputAge/computage/models_library/model.py</code></a>), which silently produces a half-male half-female prediction. FALCONAge raises <code>MissingCovariateError</code> and offers <code>sex_unknown="error" | "impute_from_methylation" | "half"</code>, where the middle option runs <code>XChrom</code>/<code>YChrom</code> first and the last must be chosen deliberately.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Class</th>
+<th>Core computation</th>
+<th>Clocks</th>
+<th>v1.0</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>LinearClock</code></td>
+<td><code>xW + b</code></td>
+<td>34 bundled</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="even">
+<td><code>ClinicalClock</code></td>
+<td>PhenoAge / KDM / HD on tabular biomarkers</td>
+<td>3</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="odd">
+<td><code>ScaffoldClock</code></td>
+<td>refuses, and says where the coefficients come from</td>
+<td>the 57 <code>licensed</code> clocks</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="even">
+<td><code>PCLinearClock</code></td>
+<td><code>((x − μ)R)W + b</code></td>
+<td>PCHorvath2013, PCHannum, PCPhenoAge, PCSkinAndBlood, PCDNAmTL, PCGrimAge</td>
+<td>implemented; no weights ship, so <code>build()</code> never reaches it</td>
+</tr>
+<tr class="odd">
+<td><code>MultiStageCoxClock</code></td>
+<td>sub-linear-models → ordered concat with covariates → Cox layer</td>
+<td>GrimAge, GrimAge2, CpGPTGrimAge3, CpGPTPCGrimAge3</td>
+<td>specified</td>
+</tr>
+<tr class="even">
+<td><code>NeuralClock</code></td>
+<td>dense layers from a safetensors file</td>
+<td>AltumAge</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="odd">
+<td><code>AggregationClock</code></td>
+<td>mean or 95th percentile over the sites present</td>
+<td>epiTOC1, stemTOC×2, HypoClock, epiCMIT×2</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="even">
+<td><code>DivisionClock</code></td>
+<td>methylation transmission model, averaged over the sites present</td>
+<td>epiTOC2, epiTOC3</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="odd">
+<td><code>DeconvolutionClock</code></td>
+<td>per-sample non-negative least squares on a reference table (<code>projectCellType_CP</code>) → column select</td>
+<td>6-cell IDOL (EPIC, 450K); 12-cell IDOL-Ext with a registered table</td>
+<td><strong>shipped</strong></td>
+</tr>
+<tr class="even">
+<td><code>CompositeClock</code></td>
+<td>multiple sub-clocks combined by a declared rule</td>
+<td>SystemsAge ×12, DNAmFitAge</td>
+<td>specified</td>
+</tr>
+<tr class="odd">
+<td><code>SpeciesClock</code></td>
+<td>split CpG block from species one-hot, species-dependent inverse transform</td>
+<td>Mammalian ×9</td>
+<td>specified</td>
+</tr>
+<tr class="even">
+<td><code>SexScoreClock</code></td>
+<td>autosomal z-score → sex-chromosome projection</td>
+<td>XChrom, YChrom</td>
+<td>specified</td>
+</tr>
+</tbody>
+</table>
+<p><code>ScaffoldClock</code> is the class that is not in the original design and turned out to matter most. Every “specified” row above is needed by a clock family whose coefficients cannot be redistributed, so writing the class first would produce code with no real answer to test against. Instead the registry entry, the feature list, the transform chain and the expected shapes all ship, <code>build()</code> returns a <code>ScaffoldClock</code>, and calling it raises <code>WeightsUnavailableError</code> naming the laboratory to ask, the licence that applies, and the open clocks that answer the same question. A silent skip would leave a results table with a column quietly missing.</p>
+</section>
+<section id="the-ten-special-forward-passes" class="level2">
+<h2 class="anchored" data-anchor-id="the-ten-special-forward-passes">4.4 The ten special forward passes</h2>
+<p>Each gets an explicit implementation and its own gold-standard vector.</p>
+<p><strong>1. GrimAge / GrimAge2</strong> (<code>models/cox.py</code>). Ten (v2) or eight (v1) sub-linear-models on disjoint feature index sets, then a fixed concat order, then the Cox layer, then <code>cox_to_years</code>. The order is <code>[GDF15, B2M, CystatinC, TIMP1, ADM, PAI1, Leptin, PACKYRS, (LogCRP, A1C), Age, Female]</code> and is load-bearing, the Cox coefficients are positional (<a href="https://github.com/lucascamillomd/pyaging"><code>pyaging/models/_models.py</code>:1742</a>). The registry declares the order; a mismatch between declared and stored sub-model count fails validation.</p>
+<p><strong>2. PCGrimAge.</strong> Centre 78,464 CpGs, rotate to 1,933 PCs, append <code>Female</code> and <code>Age</code>, run eight PC-space sub-clocks, then the Cox layer. <code>requires_fp64: true</code>.</p>
+<p><strong>3. CpGPTPCGrimAge3.</strong> Scale → split age from the 30 proxies → rotate 30 → 29 PCs → concat → rescale the PC block with a second mean/std pair → linear → <code>cox_to_years</code>. The two-stage scaling is not a mistake in the source; both scalers are stored.</p>
+<p><strong>4. DNAmFitAge.</strong> Split the batch by sex, run <code>GaitF/GaitM</code>, <code>GripF/GripM</code> and a shared <code>VO2Max</code>, standardise each with the published sex-specific offset and slope, then a sex-specific Klemera–Doubal layer, then recombine in the original row order. The eight constants (<a href="../methods/index.html">the science notes, §4.17</a>) live in the registry, not in code.</p>
+<p><strong>5. Mammalian clocks</strong> (<code>models/species.py</code>). Input is <code>[CpGs | species_one_hot]</code> with the one-hot width declared per clock (1,756 for clock-2 variants, 1,707 for clock-3). The species index selects gestation time, average maturity age and maximum lifespan from a packaged AnAge table, and the inverse transform is clock-specific:</p>
+<pre><code>clock 1:  age = exp(ŷ) − 2
+clock 2:  age = e^(−e^(−ŷ)) · (max_age + gestation) − gestation
+clock 3:  m̂ = 5 (gestation / maturity)^0.38
+          ŷ ≥ 0 : age = m̂ (maturity + gestation)(ŷ + 1) − gestation
+          ŷ &lt; 0 : age = m̂ (maturity + gestation) e^ŷ − gestation</code></pre>
+<p>A species not in the AnAge table raises rather than falling back to a default.</p>
+<p><strong>6. SystemsAge</strong> (<code>models/composite.py</code>). Seven steps (<a href="../methods/index.html">the science notes, §4.16</a>): centre and rotate 125,175 CpGs → project onto the system vector → 11 per-system linear modules → a separate PC→age model with a quadratic correction then <code>/12</code> → concat the 12-vector → optional composite PCA layer → affine calibration <code>((raw − c₀)/c₁)·c₃ + c₂</code> → <code>/12</code>. Twelve registry entries share one weight file and differ only in <code>prediction_index</code> (0–10, or −1 for the composite), so the weights are loaded once and cached across the twelve.</p>
+<p><strong>7. Deconvolution</strong> (<code>models/deconvolution.py</code>). The design was pyaging’s: pseudo-inverse of the signature matrix, then a Euclidean projection onto the probability simplex. What shipped is the authors’ own, <code>projectCellType_CP</code> from FlowSorted.Blood.EPIC with <code>nonnegative = TRUE, lessThanOne = FALSE</code>: per sample, non-negative least squares over the CpGs it observes (<code>scipy.optimize.nnls</code>), rounded to four decimals, with no sum-to-one constraint. The simplex projection is a different estimator, and on real blood it moved every cell type by about 0.006 (<a href="../methods/algorithms.html#deconvolution-as-a-model">methods §4.10</a> gives the comparison).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> registry.deconvolution_table(cid, data.platform, present<span class="op">=</span>data.X.columns)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>al <span class="op">=</span> align_present(data, <span class="bu">list</span>(table.index))            <span class="co"># absent CpGs left out, not filled</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>props <span class="op">=</span> project(al.matrix, table.to_numpy())           <span class="co"># samples x cell types</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> props[:, <span class="bu">list</span>(table.columns).index(cell_type)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The six 6-cell entries share one table per array (EPIC, 450K legacy) and differ by <code>deconvolution.cell_type</code> in the registry; the twelve 12-cell entries read a table the user registers under its licence. <code>fa.cell_composition(result)</code> returns every proportion scored in a run as one frame.</p>
+<p><strong>8. epiTOC2 / epiTOC3.</strong> <code>tnsc = (2/k) Σ_c (β_c − β₀_c) / (δ_c(1 − β₀_c))</code>, with per-CpG <code>δ</code> and <code>β₀</code> vectors stored as weights and a guard against <code>δ(1−β₀) == 0</code>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../images/epitoc2-inversion.png" class="img-fluid figure-img"></p>
+<figcaption>The division model inverted per site, then averaged</figcaption>
+</figure>
+</div>
+<p>This is not a weighted sum with a different name. Each site is inverted on its own: the drift observed since the ground state is divided by that site’s drift per division, which turns a methylation fraction into a division count. Only then are the per-site estimates averaged, and <code>k</code> is the number of sites actually present rather than the number the clock declares, so a missing site drops out of both the sum and the divisor instead of contributing a zero. The factor of two converts from the per-allele rate to divisions per stem cell.</p>
+<p><strong>9. XChrom / YChrom.</strong> Autosomal z-score, then <code>Σ (z_sex − mean) · coef</code> over the sex-chromosome probe subset. Exposed both as clocks and through <code>estimate_sex(data) -&gt; DataFrame[x_score, y_score, predicted_sex, confidence]</code>, since sex estimation is a preprocessing need as much as a clock.</p>
+<p><strong>10. PastaMouse.</strong> Expand the mouse feature vector into the full 8,113-gene human space using reference values for human-only genes, then run the shared Pasta forward.</p>
+</section>
+<section id="clinical-chemistry-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="clinical-chemistry-clocks">4.5 Clinical chemistry clocks</h2>
+<p><code>falconage/models/clinical.py</code>. These are not methylation clocks and do not share the tensor path; they operate on a tabular biomarker frame and are implemented in a way that mirrors <a href="https://github.com/dayoonkwon/BioAge"><code>BioAge/R</code>/</a> so the numbers can be checked against it directly.</p>
+<p><strong>PhenoAge.</strong> Two variants, selected explicitly.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> phenoage(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    data: pd.DataFrame,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    units: Literal[<span class="st">"si"</span>, <span class="st">"conventional"</span>],       <span class="co"># no default</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    variant: Literal[<span class="st">"levine2018"</span>, <span class="st">"liu2019"</span>] <span class="op">=</span> <span class="st">"levine2018"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> pd.DataFrame                                <span class="co"># phenoage, mortality_score, phenoage_advance, clamped</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The two coefficient sets and their Gompertz constants are in <a href="../methods/index.html">the science notes §5.1</a> and are stored in the registry, not in code. <code>units</code> has no default because the SI and conventional parameterisations are not interconvertible by scaling the inputs, the coefficients differ too. The <code>0.090165</code> constant is the corrected one; BioAge’s April 2026 commit fixed a widespread <code>0.09165</code> and the test suite pins the corrected value.</p>
+<p><strong>KDM.</strong> Fit-then-project, with the fit reusable:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_kdm(reference: pd.DataFrame, markers: <span class="bu">list</span>[<span class="bu">str</span>], age_col: <span class="bu">str</span> <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>            s_ba2: <span class="bu">float</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> KDMReference</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kdm(df: pd.DataFrame, ref: KDMReference, age_col: <span class="bu">str</span> <span class="op">=</span> <span class="st">"age"</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        max_missing: <span class="bu">int</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="dv">2</span>) <span class="op">-&gt;</span> pd.Series</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The math is <a href="../methods/index.html">the science notes §4.4</a>, transcribed from <a href="https://github.com/dayoonkwon/BioAge"><code>BioAge/R/kdm_calc.R</code></a> including the details that matter: per-marker regressions on the rows carrying each marker, <code>r_char</code> from the ratio of two weighted sums, <code>s_r</code> from the age range and biomarker count, <code>s_BA²</code> estimated on the reference and kept with the fit, and the rule that a sample with more than two missing biomarkers returns NA rather than a partial score. Fitting by sex is the caller’s choice: fit one reference per sex, as BioAge does. The result reproduces BioAge’s shipped <code>kdm0</code> to 0.0007 years (§4.4), and <code>kdm_bioage()</code> scores on that scale from a packaged NHANES III fit.</p>
+<p><strong>Homeostatic dysregulation.</strong> Mahalanobis distance from a young reference cohort:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hd_fit(reference: pd.DataFrame, biomarkers: <span class="bu">list</span>[<span class="bu">str</span>]) <span class="op">-&gt;</span> HDFit</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hd(data, biomarkers, fit<span class="op">=</span><span class="va">None</span>, log<span class="op">=</span><span class="va">True</span>, by_sex<span class="op">=</span><span class="va">True</span>) <span class="op">-&gt;</span> pd.DataFrame</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>hd_fit</code> standardises the reference by its own mean and SD, then stores the covariance. It checks the condition number and raises when the covariance is near-singular. BioAge only warns on a single-row reference, which is the degenerate case rather than the common one. The reference cohort must be young, non-pregnant and within the clinical windows in <a href="../methods/index.html">the science notes §3.5</a>; the packaged NHANES III fit satisfies this and is the default.</p>
+</section>
+<section id="op-composition-and-validation" class="level2">
+<h2 class="anchored" data-anchor-id="op-composition-and-validation">4.6 Op composition and validation</h2>
+<p>At load time the registry entry’s <code>preprocess</code> and <code>postprocess</code> lists are compiled into an <code>nn.Sequential</code>, and the composition is validated:</p>
+<ul>
+<li>an op requiring stored params must find them in the weight file</li>
+<li><code>quantile_normalize_gold</code> must be followed by a column subset</li>
+<li>a clock with <code>scale_type: age_years</code> may not carry <code>sigmoid</code> as its final transform</li>
+<li>the declared <code>n_features</code> must match the weight tensor’s leading dimension</li>
+</ul>
+<p>These checks run in <code>registry/validate.py</code> in CI and again at load time, so a malformed registry entry fails before it produces a number.</p>
+</section>
+<section id="scaffold-only-clocks" class="level2">
+<h2 class="anchored" data-anchor-id="scaffold-only-clocks">4.7 Scaffold-only clocks</h2>
+<p>Forty clocks are <code>licensed</code> (tier C): their architecture is described in a published paper and is implemented here in full, but their coefficients are not ours to distribute. For these FALCONAge ships <strong>the scaffold and nothing else</strong> - the model class, the feature list, the preprocess and postprocess chain, the shape and dtype of every expected tensor, and a loader that accepts a coefficient file the user supplies.</p>
+<p>Everything about these clocks except the numbers is written from scratch, and all of it is testable. What cannot be done is invent the numbers.</p>
+<section id="which-they-are-and-why" class="level3">
+<h3 class="anchored" data-anchor-id="which-they-are-and-why">Which they are, and why</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Family</th>
+<th>n</th>
+<th>Why permission is needed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>GrimAge, GrimAge2 and its 10 sub-clocks, CpGPTGrimAge3, CpGPTPCGrimAge3</td>
+<td>14</td>
+<td>Coefficients were never published in the papers. UCLA licenses the clock; what circulates in other packages has no traceable primary source.</td>
+</tr>
+<tr class="even">
+<td>SystemsAge and its 11 system variants</td>
+<td>12</td>
+<td>Flagged research-use-only by the authors. Coefficients are on a lab Google Drive, published in Nature Aging 2025 but not under a redistribution licence.</td>
+</tr>
+<tr class="odd">
+<td>PCGrimAge</td>
+<td>1</td>
+<td>A principal-component reparameterisation of GrimAge; inherits its restriction.</td>
+</tr>
+<tr class="even">
+<td>DunedinPACE</td>
+<td>1</td>
+<td>Research-use-only. Distributed through the authors’ R package under terms the user accepts on install.</td>
+</tr>
+</tbody>
+</table>
+<p>The GrimAge family is the sharp case. GrimAge2 is the most-used mortality clock in the field, and its coefficient set has no public primary source at all, pyaging re-hosts a copy whose origin its own audit could not establish. FALCONAge will not launder that. The scaffold is complete and correct; the numbers must come from UCLA or from the user’s own licensed copy.</p>
+</section>
+<section id="what-ships" class="level3">
+<h3 class="anchored" data-anchor-id="what-ships">What ships</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># registry/clocks/grimage2.yaml  (excerpt)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">availability</span><span class="kw">:</span><span class="at"> C</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">coefficient_source</span><span class="kw">:</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">tier</span><span class="kw">:</span><span class="at"> T5</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">url</span><span class="kw">:</span><span class="at"> </span><span class="ch">null</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">primary_source_traced</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">licence</span><span class="kw">:</span><span class="at"> </span><span class="st">"Research use only. Commercial licensing via UCLA TDG."</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">  obtain</span><span class="kw">: </span><span class="ch">&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    GrimAge2 coefficients are not publicly redistributable. Request access from</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    the Horvath laboratory, or use the authors' online calculator at</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    dnamage.clockfoundation.org. Once you hold a coefficient file, register it</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    with falconage.registry.register_local_weights("grimage2", path).</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">contact</span><span class="kw">:</span><span class="at"> </span><span class="st">"https://dnamage.clockfoundation.org"</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="fu">scaffold</span><span class="kw">:</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">complete</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">expects</span><span class="kw">:</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"sub_models"</span><span class="kw">,</span><span class="at"> </span><span class="fu">shape</span><span class="kw">:</span><span class="at"> </span><span class="st">"10 x (n_features_i,)"</span><span class="kw">,</span><span class="at"> </span><span class="fu">dtype</span><span class="kw">:</span><span class="at"> float64</span><span class="kw">}</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"cox"</span><span class="kw">,</span><span class="at"> </span><span class="fu">shape</span><span class="kw">:</span><span class="at"> </span><span class="st">"(12,)"</span><span class="kw">,</span><span class="at"> </span><span class="fu">dtype</span><span class="kw">:</span><span class="at"> float64</span><span class="kw">}</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">validated_against</span><span class="kw">:</span><span class="at"> </span><span class="st">"published worked example, Lu 2022 Table 2"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="supplying-coefficients" class="level3">
+<h3 class="anchored" data-anchor-id="supplying-coefficients">Supplying coefficients</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> falconage <span class="im">as</span> fa</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>fa.registry.register_local_weights(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grimage2"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"~/licensed/grimage2_coefficients.csv"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> fa.score(data, clocks<span class="op">=</span>[<span class="st">"grimage2"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">register_local_weights</span>(<span class="st">"grimage2"</span>, <span class="st">"~/licensed/grimage2_coefficients.csv"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">score</span>(data, <span class="at">clocks =</span> <span class="st">"grimage2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>register_local_weights</code> parses the file, checks it against the scaffold’s declared shapes and feature count, warns on any feature the scaffold does not expect, converts to safetensors, and caches it. A file that does not match the published architecture is rejected with the mismatch named, which also makes this the mechanism for validating a coefficient set someone hands you.</p>
+<p>The registration is recorded in the run manifest as <code>weights_source: user_supplied, sha256: ...</code>, so a result computed from a licensed copy is distinguishable from one computed from a redistributed set.</p>
+</section>
+<section id="behaviour-without-coefficients" class="level3">
+<h3 class="anchored" data-anchor-id="behaviour-without-coefficients">Behaviour without coefficients</h3>
+<p>Scoring a licensed clock with nothing registered raises rather than silently skipping:</p>
+<pre><code>WeightsUnavailableError: grimage2 is a scaffold-only clock.
+
+  Its architecture is implemented and tested, but its coefficients are
+  not distributed with FALCONAge.
+
+  Why: Research use only; coefficients were never published in the paper and the copies
+  circulating in other packages have no traceable primary source.
+
+  Obtain them from: https://dnamage.clockfoundation.org (Horvath laboratory); commercial
+  licensing via UCLA TDG
+  Then: falconage.registry.load().register_local_weights('grimage2', &lt;path&gt;)
+
+  The question it answers: Who is at risk of dying sooner, or is frailer?
+  Bundled clocks that answer it too:
+    dnamphenoage     dna methylation     513 features, bundled
+    hrsinchphenoage  dna methylation     959 features, bundled
+    zhangmortality   dna methylation     10 features, bundled
+    hd               clinical chemistry  markers chosen by the user, bundled
+    kdm              clinical chemistry  markers chosen by the user, bundled
+    phenoage         clinical chemistry  10 features, bundled</code></pre>
+<p>Naming the open alternatives matters. A user who wanted a mortality clock and hit a wall should leave with one that works, not with an error. The list is derived, not kept by hand: it is every bundled clock that <code>falconage.registry.questions</code> routes to the same question as the licensed one, the same routing the <a href="../clocks/choosing.html">choosing a clock</a> page uses. A hand-kept list offered Horvath and Hannum, both fitted to chronological age, in place of GrimAge. Where no bundled clock answers the question, as for SystemsAge, the message says so. The registry’s <code>coefficient_source.alternatives</code> follow as “Related entries”, each with its availability, so a sibling that is itself licensed is never presented as something to run instead.</p>
+<p><code>clocks="compatible"</code> excludes unregistered licensed clocks by default and reports the exclusion. <code>clocks="all"</code> includes them and fails loudly. <code>falconage clocks list --tier licensed</code> shows the whole set with its obtain instructions.</p>
+</section>
+<section id="testing-a-clock-whose-weights-you-do-not-have" class="level3">
+<h3 class="anchored" data-anchor-id="testing-a-clock-whose-weights-you-do-not-have">Testing a clock whose weights you do not have</h3>
+<p>The scaffold is still fully tested, three ways:</p>
+<ol type="1">
+<li><strong>Synthetic weights.</strong> Generate a coefficient set of the right shape; run it, and assert the forward pass produces the algebraically expected value. This tests the architecture, the sub-model ordering, the concat order, the Cox transform constants, without needing the real numbers. A GrimAge2 scaffold given a coefficient vector of all zeros except one must return the value that hand-computation says it should.</li>
+<li><strong>Published worked examples.</strong> Several papers report a reference sample’s inputs and its resulting age. Where one exists it is the gold-standard vector, and it is a better oracle than another package’s output because it comes from the authors.</li>
+<li><strong>Shape and invariant contracts.</strong> Feature count, dtype, sub-model count, concat order, output range and scale type are all asserted from the registry entry regardless of which weights are loaded.</li>
+</ol>
+<p>A licensed clock without a published worked example carries <code>gold_standard.source: "synthetic weights, architecture only"</code> and the docs say so on its page. It is honest about being an untested-against-truth implementation of a correctly-described architecture.</p>
+</section>
+<section id="could-they-be-reimplemented-from-scratch-instead" class="level3">
+<h3 class="anchored" data-anchor-id="could-they-be-reimplemented-from-scratch-instead">Could they be reimplemented from scratch instead?</h3>
+<p>For the architecture, yes, and that is what §4.4 already specifies, the GrimAge two-stage structure, the PC rotation and SystemsAge’s seven-step pass are all described well enough in their papers to write independently, and are written here.</p>
+<p>For the coefficients, no. They are the output of an elastic net fit to cohorts that are not public. Framingham, the Women’s Health Initiative, the Dunedin Study. Refitting the same architecture on different data produces a different clock that must not carry the same name. That path is real and is scoped as a v1.5 milestone (§13), where a FALCONAge-native mortality clock trained on the open ComputAgeBench split would be a new contribution rather than a substitute.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+// Wrap every article table in a horizontal scroll container.
+//
+// WHY THIS IS JAVASCRIPT AND NOT CSS. The scrolling element has to be a
+// *parent* of the table. Setting `display: block; overflow-x: auto` on the
+// table itself -- the obvious CSS-only version, and what this site did -- makes
+// the table a block box of width auto, so it shrinks to the container and the
+// anonymous inner table compresses every column to its minimum content width.
+// Measured at 390px on the clock catalogue: cells 46-120px wide and 82px tall,
+// with "dnamphenoage" broken over three lines. The table was not overflowing;
+// it was being crushed.
+//
+// Bootstrap solves this with a `.table-responsive` wrapper div, and Pandoc does
+// not emit one, so it gets added here. Then the table keeps a sane width and
+// the wrapper scrolls, which is the behaviour everyone expects from a wide
+// table on a phone.
+(function () {
+  function wrap() {
+    var tables = document.querySelectorAll(
+      "main table:not(.falcon-wrapped)");
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      t.classList.add("falcon-wrapped");
+      // Already inside something that scrolls (Quarto does wrap some outputs)?
+      // A second wrapper would nest two scrollbars.
+      if (t.parentElement &&
+          t.parentElement.classList.contains("falcon-table-scroll")) continue;
+
+      var box = document.createElement("div");
+      box.className = "falcon-table-scroll";
+      // Keyboard users need to be able to scroll it too, and a focusable
+      // scroll container is the accessible way to expose that.
+      box.setAttribute("tabindex", "0");
+      box.setAttribute("role", "region");
+      var cap = t.querySelector("caption");
+      box.setAttribute("aria-label",
+        cap && cap.textContent.trim() ? cap.textContent.trim() : "Table");
+
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wrap);
+  } else {
+    wrap();
+  }
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bhagesh-h\.github\.io\/FALCONAge\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+        for (let i=0; i<annoteTargets.length; i++) {
+          const annoteTarget = annoteTargets[i];
+          const targetCell = annoteTarget.getAttribute("data-target-cell");
+          const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+          const contentFn = () => {
+            const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+            if (content) {
+              const tipContent = content.cloneNode(true);
+              tipContent.classList.add("code-annotation-tip-content");
+              return tipContent.outerHTML;
+            }
+          }
+          const config = {
+            allowHTML: true,
+            content: contentFn,
+            onShow: (instance) => {
+              selectCodeLines(instance.reference);
+              instance.reference.classList.add('code-annotation-active');
+              window.tippy.hideAll();
+            },
+            onHide: (instance) => {
+              unselectCodeLines();
+              instance.reference.classList.remove('code-annotation-active');
+            },
+            maxWidth: 300,
+            delay: [50, 0],
+            duration: [200, 0],
+            offset: [5, 10],
+            arrow: true,
+            appendTo: function(el) {
+              return el.parentElement.parentElement.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'quarto',
+            placement: 'right',
+            popperOptions: {
+              modifiers: [
+              {
+                name: 'flip',
+                options: {
+                  flipVariations: false, // true by default
+                  allowedAutoPlacements: ['right'],
+                  fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                options: {
+                  mainAxis: false,
+                  altAxis: false
+                }
+              }
+              ]        
+            }      
+          };
+          window.tippy(annoteTarget, config); 
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/dev/algorithms.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></div></div></footer></body></html>
