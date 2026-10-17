@@ -175,19 +175,20 @@ CHROME = """
     logos: count('img.sidebar-logo, img.navbar-logo'),
     // HOW MANY PAGE MARKS ARE PAINTED.
     //
-    // The mark is a floated ::before carrying a background image, so it is not
-    // an element and none of the counts above can see it. An earlier revision
-    // attached it to two selectors, the title block and the first section, so
-    // that reference pages (whose title block is empty) would get one; every
-    // prose page matched both and painted it twice. Nothing caught that: it is
-    // invisible to the overflow, overlap and image checks alike.
+    // The mark is a pseudo-element carrying a background image (the title's
+    // ::after; its navy outline is the ::before, drawn with a mask), so it is
+    // not an element and none of the counts above can see it. An earlier
+    // revision attached it to two selectors, the title block and the first
+    // section, so that reference pages (whose title block is empty) would get
+    // one; every prose page matched both and painted it twice. Nothing caught
+    // that: it is invisible to the overflow, overlap and image checks alike.
+    // `includes`, not `startsWith`: the sticker is an image-set() of three
+    // sizes, which computes as `image-set(url(...) 1x, ...)`.
     pageMarks: [...document.querySelectorAll('main, main *, #quarto-document-content, #title-block-header, #title-block-header *')]
-      .filter(el => {
-        const cs = getComputedStyle(el, '::before');
-        return cs.content !== 'none'
-            && (cs.backgroundImage || '').startsWith('url(')
-            && parseFloat(cs.width) > 40;
-      }).length,
+      .flatMap(el => ['::before', '::after'].map(p => getComputedStyle(el, p)))
+      .filter(cs => cs.content !== 'none'
+            && (cs.backgroundImage || '').includes('url(')
+            && parseFloat(cs.width) > 40).length,
     // Which one, and whether the file actually resolved at this page depth --
     // a logo that 404s from guide/ still counts as one element.
     logoWhich: [...document.querySelectorAll('img.sidebar-logo, img.navbar-logo')]
@@ -385,8 +386,8 @@ def main(argv=None) -> int:
                 if c["pageMarks"] != 1:
                     failures.append(
                         f"@{width}px ({state}): {c['pageMarks']} page marks "
-                        "painted, expected exactly 1. The mark is a floated "
-                        "::before, so it is invisible to every other check "
+                        "painted, expected exactly 1. The mark is a pseudo-element "
+                        "(the title's ::after), so it is invisible to every other check "
                         "here; two means a second selector is matching, none "
                         "means the rule stopped applying.")
                 if c["navLists"] > 1:

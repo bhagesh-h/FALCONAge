@@ -32,6 +32,8 @@ ROOT = HERE.parent
 GROUPS = HERE / "reference-groups.yml"
 QUARTO = HERE / "_quarto.yml"
 PKGDOWN = ROOT / "r" / "_pkgdown.yml"
+# The interface colours and faces, which both halves of the site take.
+TOKENS = ROOT / "python" / "src" / "falconage" / "plot" / "colorscheme.yaml"
 
 # The concept diagrams live at the repository root in `images/`, beside the
 # prompt file that produced them, because they are not documentation-only: the
@@ -165,7 +167,7 @@ def quarto_yaml(spec: dict) -> str:
         # or drops them from _site, and the "R reference" navbar link 404s.
         "project": {"type": "website", "output-dir": "_site",
                     "resources": ["r/**", "logo.png", "favicon.png",
-                                  "images/**"]},
+                                  "images/**", "assets/**"]},
         "website": {
             "title": site["title"],
             "description": " ".join(site["description"].split()),
@@ -288,13 +290,17 @@ def quarto_yaml(spec: dict) -> str:
             # SCSS files import, and the dark file changes colour only.
             "theme": {"light": ["cosmo", "theme-light.scss"],
                       "dark": ["cosmo", "theme-dark.scss"]},
+            # The typefaces and the logo sticker, which are files: a url() in
+            # theme SCSS does not resolve (see the head of assets/brand.css).
+            "css": ["assets/brand.css"],
             "toc": True,
             "code-copy": True,
             "code-overflow": "wrap",
             # table-scroll wraps every article table in a scroll container,
             # which has to be a parent of the table and which Pandoc does not
-            # emit.
-            "include-after-body": ["table-scroll.html"],
+            # emit. nucleotides.html is the home page's A/T/G/C field; it does
+            # nothing on a page without `body-classes: falcon-home`.
+            "include-after-body": ["table-scroll.html", "nucleotides.html"],
             # Both languages appear in the same tabset on every guide page, so
             # a reader picking "R" once keeps R selected across the whole site.
             "code-annotations": "hover",
@@ -328,6 +334,7 @@ def quarto_yaml(spec: dict) -> str:
 
 def pkgdown_yaml(spec: dict) -> str:
     site = spec["site"]
+    ui = yaml.safe_load(TOKENS.read_text(encoding="utf-8"))["ui"]
     reference = []
     for g in spec["groups"]:
         if not g.get("r"):
@@ -340,14 +347,28 @@ def pkgdown_yaml(spec: dict) -> str:
 
     doc = {
         "url": site["url"] + "r/",
-        # The same logo orange as the Quarto half, and pkgdown's own dark-mode
-        # switch so the two sites behave alike when a reader crosses between
-        # them. #a84800 is the darker shade: pkgdown uses `primary` for body
-        # links, where the logo colour itself is only 3.4:1 on white.
+        # The same colours and faces as the Quarto half, read from the same
+        # interface tokens, and pkgdown's own dark-mode switch so the two sites
+        # behave alike when a reader crosses between them. `primary` is the
+        # accent, not the brand: pkgdown uses it for body links, where the
+        # logo orange is only 3.3:1 on the paper. The faces themselves, the
+        # grain and the logo beside each title are r/pkgdown/extra.css.
         "template": {
             "bootstrap": 5,
             "light-switch": True,
-            "bslib": {"primary": "#a84800", "link-color": "#a84800"},
+            "bslib": {
+                "primary": ui["light"]["accent"],
+                "link-color": ui["light"]["accent"],
+                "body-bg": ui["light"]["bg"],
+                "body-color": ui["light"]["ink"],
+                "border-color": ui["light"]["line"],
+                "body-bg-dark": ui["dark"]["bg"],
+                "body-color-dark": ui["dark"]["ink"],
+                "border-color-dark": ui["dark"]["line"],
+                "link-color-dark": ui["dark"]["accent"],
+                "font-family-sans-serif": ui["font_sans"],
+                "font-family-monospace": ui["font_mono"],
+            },
             # pkgdown draws its own <head>, so the Quarto half's `favicon:`
             # does not reach these pages and the R reference used to be the
             # one part of the site with a blank tab. The href is
@@ -376,8 +397,11 @@ def pkgdown_yaml(spec: dict) -> str:
                 "main": {"text": "Full site", "href": site["url"]},
                 "background": {
                     "text": "Background",
+                    # The page's path, not its file name: methods/index.qmd
+                    # and dev/index.qmd are both index.html, and the bare name
+                    # pointed both at the home page and the gallery at a 404.
                     "menu": [{"text": p["title"],
-                              "href": site["url"] + Path(p["file"]).with_suffix(".html").name}
+                              "href": site["url"] + Path(p["file"]).with_suffix(".html").as_posix()}
                              for p in spec.get("pages", [])],
                 },
             },
@@ -470,6 +494,31 @@ def citation_block(spec: dict) -> str:
         "",
         CITE_END,
     ])
+
+
+PKGDOWN_CSS = ROOT / "r" / "pkgdown" / "extra.css"
+TOKENS_BEGIN = "/* BEGIN GENERATED: tokens */"
+TOKENS_END = "/* END GENERATED: tokens */"
+
+
+def pkgdown_css() -> str | None:
+    """The R site's colour custom properties, from the interface tokens.
+
+    bslib takes the ground, ink, link and border colours as Sass variables
+    (`template.bslib` above); the navy, the muted grey and the surface have no
+    Bootstrap variable to ride on, so they are written into the R site's
+    stylesheet here rather than copied there by hand.
+    """
+    ui = yaml.safe_load(TOKENS.read_text(encoding="utf-8"))["ui"]
+    keys = ("bg", "panel", "ink", "muted", "line", "brand", "accent", "navy")
+    names = {"bg": "paper", "panel": "surface"}
+
+    def block(mode: str) -> str:
+        return "".join(f"  --falcon-{names.get(k, k)}: {ui[mode][k]};\n" for k in keys)
+
+    body = (f"{TOKENS_BEGIN}\n:root,\n[data-bs-theme=\"light\"] {{\n{block('light')}}}\n"
+            f"[data-bs-theme=\"dark\"] {{\n{block('dark')}}}\n{TOKENS_END}")
+    return fill_block(PKGDOWN_CSS, TOKENS_BEGIN, TOKENS_END, body)
 
 
 def fill_block(path: Path, begin: str, end: str, body: str) -> str | None:
@@ -680,7 +729,8 @@ def main(argv=None) -> int:
 
     spec = load()
     outputs = {QUARTO: quarto_yaml(spec), PKGDOWN: pkgdown_yaml(spec)}
-    for path, text in ((R_README, r_readme(spec)), (INDEX, index_page(spec))):
+    for path, text in ((R_README, r_readme(spec)), (INDEX, index_page(spec)),
+                       (PKGDOWN_CSS, pkgdown_css())):
         if text is not None:
             outputs[path] = text
 

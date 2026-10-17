@@ -1584,6 +1584,14 @@
 "| yingcausage | EPICv2 | 492 / 585 | +13.9 y |"
 ]
 },
+"b017017c6cfba600": {
+"reason": "the wordmark is now ink, not the logo orange; the sentence says where the orange is used",
+"was": [
+"gallery.qmd",
+"",
+"The caption under each image is the same text the figure prints beneath its own axes. Ther"
+]
+},
 "b173e73325190587": {
 "reason": "Six-cell IDOL deconvolution bundled (FlowSorted.Blood.EPIC, GPL-3; projectCellType_CP as NNLS), twelve-cell entries licensed (Dartmouth research-use licence); catalogue totals now 52 bundled, 71 untraced, 52 licensed; model-class table and deconvolution sections describe the shipped code",
 "was": [

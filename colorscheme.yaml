@@ -89,34 +89,43 @@ palette:
 # Quarto report. Data colours stay in `palette` above; these are for text,
 # lines and surfaces.
 #
+# The neutrals, the navy and the two typefaces are the author's site
+# (bhagesh-h.github.io), so the documentation reads as part of it: a paper
+# ground (`bg`) with white cards (`panel`), near-black ink, and the navy of the
+# second line under a title. Bricolage Grotesque and IBM Plex Mono ship with
+# the site in docs/assets/fonts (SIL OFL); a report opened elsewhere falls back
+# to the system faces after them in each stack.
+#
 # `brand` is the logo, sampled: 88% of the non-grey pixels in logo.png sit
-# within one quantisation step of #e06000. It is 3.6:1 on white, enough for the
-# wordmark (large text) and not for a sentence, so links and buttons use
-# `accent`. Every text colour here is at least 4.5:1 on both `bg` and `panel`
-# in its theme (WCAG 2.1 AA), which a test checks; the Okabe-Ito vermillion
-# the reports once used for warning text was 3.9:1.
+# within one quantisation step of #e06000. It is 3.3:1 on the paper ground,
+# enough for the wordmark (large text) and not for a sentence, so links and
+# buttons use `accent`. Every text colour here is at least 4.5:1 on both `bg`
+# and `panel` in its theme (WCAG 2.1 AA), which a test checks; the Okabe-Ito
+# vermillion the reports once used for warning text was 3.9:1.
 ui:
-  font_sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-  font_mono: '"SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace'
+  font_sans: '"Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  font_mono: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
   light:
-    bg: "#ffffff"
-    panel: "#f7f7f7"
-    ink: "#1a1a1a"
-    muted: "#666666"
-    line: "#e0e0e0"
+    bg: "#f2f4f7"
+    panel: "#ffffff"
+    ink: "#12151b"
+    muted: "#566072"
+    line: "#dce0e7"
     brand: "#e06000"
-    accent: "#a84800"
+    accent: "#b04a00"
+    navy: "#2d3a55"
     pass: "#00674c"
     warn: "#8a6100"
     stop: "#a4231c"
   dark:
-    bg: "#1c1c1e"
-    panel: "#26262a"
-    ink: "#e6e6e6"
-    muted: "#a8a8ad"
-    line: "#3a3a3e"
-    brand: "#ff8c42"
-    accent: "#ff8c42"
+    bg: "#0e1014"
+    panel: "#161a21"
+    ink: "#eceef2"
+    muted: "#9aa3b3"
+    line: "#272c36"
+    brand: "#f07a1e"
+    accent: "#ff9a52"
+    navy: "#93a9d1"
     pass: "#3fb68b"
     warn: "#e3b341"
     stop: "#ff7b72"

@@ -350,8 +350,8 @@ def needs_landscape(block: list[str]) -> bool:
 #: darker variant is the one used for links, because the brand orange does not
 #: reach 4.5:1 on white.
 BRAND = "#e06000"
-ACCENT = "#a84800"
-INK = "#1a1a1a"
+ACCENT = "#b04a00"
+INK = "#12151b"
 
 TYPST_PREAMBLE = f"""```{{=typst}}
 #let brand = rgb("{BRAND}")

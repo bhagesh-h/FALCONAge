@@ -8,6 +8,7 @@ project:
   - logo.png
   - favicon.png
   - images/**
+  - assets/**
 website:
   title: FALCONAge
   description: Biological age and aging-clock scoring from multiomic data, in Python and R,
@@ -224,11 +225,14 @@ format:
       dark:
       - cosmo
       - theme-dark.scss
+    css:
+    - assets/brand.css
     toc: true
     code-copy: true
     code-overflow: wrap
     include-after-body:
     - table-scroll.html
+    - nucleotides.html
     code-annotations: hover
 quartodoc:
   package: falconage

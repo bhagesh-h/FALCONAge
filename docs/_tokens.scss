@@ -2,27 +2,29 @@
 // python/src/falconage/plot/colorscheme.yaml. Edit the YAML, not this
 // file: the next build reverts it. The reports read the same block.
 
-$falcon-light-bg: #ffffff;
-$falcon-light-panel: #f7f7f7;
-$falcon-light-ink: #1a1a1a;
-$falcon-light-muted: #666666;
-$falcon-light-line: #e0e0e0;
+$falcon-light-bg: #f2f4f7;
+$falcon-light-panel: #ffffff;
+$falcon-light-ink: #12151b;
+$falcon-light-muted: #566072;
+$falcon-light-line: #dce0e7;
 $falcon-light-brand: #e06000;
-$falcon-light-accent: #a84800;
+$falcon-light-accent: #b04a00;
+$falcon-light-navy: #2d3a55;
 $falcon-light-pass: #00674c;
 $falcon-light-warn: #8a6100;
 $falcon-light-stop: #a4231c;
 
-$falcon-dark-bg: #1c1c1e;
-$falcon-dark-panel: #26262a;
-$falcon-dark-ink: #e6e6e6;
-$falcon-dark-muted: #a8a8ad;
-$falcon-dark-line: #3a3a3e;
-$falcon-dark-brand: #ff8c42;
-$falcon-dark-accent: #ff8c42;
+$falcon-dark-bg: #0e1014;
+$falcon-dark-panel: #161a21;
+$falcon-dark-ink: #eceef2;
+$falcon-dark-muted: #9aa3b3;
+$falcon-dark-line: #272c36;
+$falcon-dark-brand: #f07a1e;
+$falcon-dark-accent: #ff9a52;
+$falcon-dark-navy: #93a9d1;
 $falcon-dark-pass: #3fb68b;
 $falcon-dark-warn: #e3b341;
 $falcon-dark-stop: #ff7b72;
 
-$falcon-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-$falcon-font-mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+$falcon-font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$falcon-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;

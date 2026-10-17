@@ -129,6 +129,9 @@
   a clock carries no information about a difference; it is left out, named in
   `left_out` and counted in the verdict. Before, the mixed design stopped with
   a singular-matrix error and the independent design reported a p-value of NaN.
+- **The R site's "Background" menu pointed at the wrong pages.** It kept each
+  page's file name and dropped its folder, so "The science of aging clocks" and
+  "Architecture" both opened the home page and "Figure gallery" was a 404.
 
 ## Changed
 
@@ -136,6 +139,17 @@
   risk score, catalogued a second time (same DOI, same twenty CpGs, the first
   author misnamed). TranslAGE's name for it, eFRS, is recorded as a catalogue
   alias of `dnamfili`.
+- **The documentation takes the look of the author's site**
+  (bhagesh-h.github.io), on both the Quarto and the pkgdown half: a paper
+  ground with a fine grain, near-black ink, a navy subtitle, Bricolage
+  Grotesque and IBM Plex Mono served with the site (SIL OFL), round pill
+  controls and a round theme switch. Every page opens with its title on the
+  left and the FALCONAge sticker large on the right, with a navy outline of
+  its hexagon a little off register; on the home page that is the whole hero,
+  over a field of A/T/G/C hexagons that light up only in empty space. The
+  interface tokens in `colorscheme.yaml` carry the new neutrals, a `navy` role
+  and the two typefaces, so the HTML and Quarto reports share them; every text
+  colour is still at least 4.5:1 on both surfaces.
 
 ## Added
 

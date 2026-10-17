@@ -8,7 +8,7 @@ import pytest
 
 from falconage.plot import spec
 
-TEXT_ROLES = ("ink", "muted", "accent", "pass", "warn", "stop")
+TEXT_ROLES = ("ink", "muted", "accent", "navy", "pass", "warn", "stop")
 
 
 def _luminance(hex_colour: str) -> float:

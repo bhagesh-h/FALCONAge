@@ -5,8 +5,19 @@ template:
   bootstrap: 5
   light-switch: true
   bslib:
-    primary: '#a84800'
-    link-color: '#a84800'
+    primary: '#b04a00'
+    link-color: '#b04a00'
+    body-bg: '#f2f4f7'
+    body-color: '#12151b'
+    border-color: '#dce0e7'
+    body-bg-dark: '#0e1014'
+    body-color-dark: '#eceef2'
+    border-color-dark: '#272c36'
+    link-color-dark: '#ff9a52'
+    font-family-sans-serif: '"Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+    font-family-monospace: '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+      "Liberation Mono", monospace'
   includes:
     in_header: <link rel="icon" type="image/png" href="/FALCONAge/favicon.png">
 home:
@@ -32,17 +43,17 @@ navbar:
       text: Background
       menu:
       - text: The science of aging clocks
-        href: https://bhagesh-h.github.io/FALCONAge/index.html
+        href: https://bhagesh-h.github.io/FALCONAge/methods/index.html
       - text: Architecture
-        href: https://bhagesh-h.github.io/FALCONAge/index.html
+        href: https://bhagesh-h.github.io/FALCONAge/dev/index.html
       - text: Figure gallery
-        href: https://bhagesh-h.github.io/FALCONAge/figures.html
+        href: https://bhagesh-h.github.io/FALCONAge/analysis/figures.html
       - text: Clock catalogue
-        href: https://bhagesh-h.github.io/FALCONAge/catalogue.html
+        href: https://bhagesh-h.github.io/FALCONAge/clocks/catalogue.html
       - text: Beyond the clock score
-        href: https://bhagesh-h.github.io/FALCONAge/beyond.html
+        href: https://bhagesh-h.github.io/FALCONAge/analysis/beyond.html
       - text: GPU support
-        href: https://bhagesh-h.github.io/FALCONAge/gpu.html
+        href: https://bhagesh-h.github.io/FALCONAge/dev/gpu.html
 reference:
 - title: Reading data
   desc: Every reader returns the same container, so nothing downstream can tell which format

@@ -1,0 +1,364 @@
+<script>
+// The home page's background: a field of A/T/G/C hexagons, as on the author's
+// site (bhagesh-h.github.io), which this is ported from.
+//
+// A hexagonal grid spans the page behind everything. Single cells light up
+// with a white A, T, G or C (the fill encodes the base) and pick a new letter
+// each time they fade back in; cells near the pointer light up and trail off.
+// Before anything lights, the layout is mapped so that a cell only ever
+// appears in empty space: never under text, tables, code, the sidebar, the
+// contents list, the header or the logo sticker. A faint lattice surrounds
+// the sticker.
+//
+// ONLY ON THE HOME PAGE (`body-classes: falcon-home`). The other pages are for
+// reading, and a letter fading in at the end of a line is a distraction there.
+// Progressive enhancement: the page is complete without it, nothing moves with
+// reduced motion (a still scattering is drawn instead), and print hides it.
+(function () {
+  'use strict';
+  var body = document.body;
+  if (!body || !body.classList.contains('falcon-home') || !window.Uint8Array || !window.Map) return;
+
+  var root = document.documentElement;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var host = document.querySelector('#title-block-header.quarto-title-block');
+
+  var layer = document.createElement('div');
+  layer.className = 'falcon-dna';
+  layer.setAttribute('aria-hidden', 'true');
+  body.insertBefore(layer, body.firstChild);
+  body.style.position = 'relative';
+
+  var BASES = ['A', 'T', 'G', 'C'];
+  // Tight boxes around each line: the hero, where the empty space beside a
+  // short line is part of the design.
+  var TEXT = '.quarto-title .title, .quarto-title .subtitle, .quarto-title-breadcrumbs';
+  // Whole boxes: reading text and everything drawn.
+  var BOXES = 'main p, main li, main h2, main h3, main h4, main h5, main dl, main table, ' +
+              'main pre, main .sourceCode, main .callout, main figure, main img, main blockquote, ' +
+              'main .panel-tabset, main .cell, main .quarto-figure, footer';
+  // The header is fixed and the sidebar and contents list are sticky, so they
+  // move with the screen: checked live in screen coordinates.
+  var FIXED = ['#quarto-header', '#quarto-sidebar', '#quarto-margin-sidebar', '.quarto-secondary-nav'];
+  var STICKER = [[50, 0], [100, 25], [100, 75], [50, 100], [0, 75], [0, 25]];
+  var MAX_CELLS = 140;
+
+  var R = 14, DX = 0, DY = 0, cols = 0, rows = 0, free = null, docW = 0, docH = 0;
+  var active = new Map(), pool = [], fading = [], pendingOn = [], made = 0;
+  var halo = null, haloBox = null;
+  var mouse = { x: 0, y: 0, cx: 0, cy: 0, on: false, dirty: false };
+  var raf = 0, nextSpawn = 0, liveRects = [];
+  var rand = Math.random;
+
+  function colX(r, c) { return c * DX + ((r & 1) ? DX / 2 : 0); }
+
+  function inPolygon(x, y, poly) {
+    var inside = false;
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      var xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Mark every cell whose hexagon touches the box [x0,y0]-[x1,y1] (page coords) as taken.
+  function block(x0, y0, x1, y1) {
+    var r0 = Math.max(0, Math.floor((y0 - R) / DY)), r1 = Math.min(rows - 1, Math.ceil((y1 + R) / DY));
+    for (var r = r0; r <= r1; r++) {
+      var y = r * DY;
+      if (y + R < y0 || y - R > y1) continue;
+      var off = (r & 1) ? DX / 2 : 0;
+      var c0 = Math.max(0, Math.floor((x0 - DX - off) / DX)), c1 = Math.min(cols - 1, Math.ceil((x1 + DX - off) / DX));
+      for (var c = c0; c <= c1; c++) {
+        var x = c * DX + off;
+        if (x + DX / 2 < x0 || x - DX / 2 > x1) continue;
+        free[r * cols + c] = 0;
+      }
+    }
+  }
+
+  function readLive() {
+    liveRects = [];
+    FIXED.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var b = el.getBoundingClientRect();
+      if (b.bottom > 0 && b.top < window.innerHeight && b.width && b.height &&
+          getComputedStyle(el).display !== 'none') liveRects.push(b);
+    });
+    document.querySelectorAll('.dropdown-menu.show').forEach(function (el) {
+      liveRects.push(el.getBoundingClientRect());
+    });
+  }
+
+  // True if the cell at page position (x, y) would sit under something that moves with the screen.
+  function underFixed(x, y) {
+    var vx = x - window.scrollX, vy = y - window.scrollY, m = R * 0.5;
+    for (var i = 0; i < liveRects.length; i++) {
+      var b = liveRects[i];
+      if (vx + DX / 2 > b.left - m && vx - DX / 2 < b.right + m && vy + R > b.top - m && vy - R < b.bottom + m) return true;
+    }
+    return false;
+  }
+
+  // The sticker is the title block's ::after, which has no box of its own to
+  // ask for, so its place is read from the pseudo-element's computed position.
+  function stickerRect(sx, sy) {
+    if (!host) return null;
+    var cs = getComputedStyle(host, '::after');
+    if (cs.content === 'none' || cs.display === 'none') return null;
+    var w = parseFloat(cs.width), h = parseFloat(cs.height);
+    if (!w || !h) return null;
+    var tb = host.getBoundingClientRect();
+    return { x: tb.left + sx + parseFloat(cs.left) + (parseFloat(cs.marginLeft) || 0),
+             y: tb.top + sy + parseFloat(cs.top) + (parseFloat(cs.marginTop) || 0), w: w, h: h };
+  }
+
+  function build() {
+    var sx = window.scrollX, sy = window.scrollY, prevR = R, prevCols = cols;
+    docW = layer.clientWidth; docH = layer.clientHeight;
+    if (!docW || !docH) return;
+    R = docW < 600 ? 12 : 14;
+    DX = Math.sqrt(3) * R; DY = 1.5 * R;
+    layer.style.setProperty('--nt-w', (DX * 0.9).toFixed(2) + 'px');
+    layer.style.setProperty('--nt-h', (2 * R * 0.9).toFixed(2) + 'px');
+    layer.style.setProperty('--nt-fs', Math.round(R * 0.95) + 'px');
+
+    cols = Math.floor(docW / DX) + 1;
+    rows = Math.floor(docH / DY) + 1;
+    free = new Uint8Array(rows * cols);
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var x = colX(r, c), y = r * DY;
+        free[r * cols + c] = (x - DX / 2 >= 0 && x + DX / 2 <= docW && y - R >= 0 && y + R <= docH) ? 1 : 0;
+      }
+    }
+
+    var m = R * 0.5;   // breathing room around every element
+    function rect(b) {
+      if (b.width || b.height) block(b.left + sx - m, b.top + sy - m, b.right + sx + m, b.bottom + sy + m);
+    }
+    var range = document.createRange();
+    document.querySelectorAll(TEXT).forEach(function (el) {
+      range.selectNodeContents(el);                       // tight boxes around each line of text
+      Array.prototype.forEach.call(range.getClientRects(), rect);
+    });
+    document.querySelectorAll(BOXES).forEach(function (el) { rect(el.getBoundingClientRect()); });
+
+    haloBox = null;
+    var p = stickerRect(sx, sy);
+    if (p) {
+      var poly = STICKER.map(function (v) { return [p.x + v[0] / 100 * p.w, p.y + v[1] / 100 * p.h]; });
+      var pr0 = Math.max(0, Math.floor((p.y - R) / DY)), pr1 = Math.min(rows - 1, Math.ceil((p.y + p.h + R) / DY));
+      for (var rr = pr0; rr <= pr1; rr++) {
+        for (var cc = 0; cc < cols; cc++) {
+          var hx = colX(rr, cc), hy = rr * DY;
+          if (hx < p.x - DX || hx > p.x + p.w + DX) continue;
+          // blocked if the centre or any corner of the cell falls on the sticker
+          var hit = inPolygon(hx, hy, poly);
+          for (var k = 0; k < 6 && !hit; k++) {
+            var a = Math.PI / 180 * (60 * k - 90);
+            hit = inPolygon(hx + R * Math.cos(a), hy + R * Math.sin(a), poly);
+          }
+          if (hit) free[rr * cols + cc] = 0;
+        }
+      }
+      haloBox = { x: p.x - 0.24 * p.w, y: p.y - 0.14 * p.h, w: 1.48 * p.w, h: 1.28 * p.h };
+    }
+
+    // Lit cells fade out if the grid changed or something now sits on them.
+    active.forEach(function (cell, key) {
+      if (R !== prevR || cols !== prevCols || !free[key]) cell.until = 0;
+    });
+    drawHalo();
+    if (reduceMotion.matches) seedStill();
+  }
+
+  function haloWeight(x, y) {
+    if (!haloBox) return 0;
+    var nx = (x - haloBox.x - haloBox.w / 2) / (haloBox.w / 2);
+    var ny = (y - haloBox.y - haloBox.h / 2) / (haloBox.h / 2);
+    var d = Math.sqrt(nx * nx + ny * ny);
+    return d < 0.58 ? 1 : Math.max(0, 1 - (d - 0.58) / 0.4);
+  }
+
+  function hexPath(ctx, x, y, r) {
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+      var a = Math.PI / 180 * (60 * i - 90);
+      if (i === 0) ctx.moveTo(x + r * Math.cos(a), y + r * Math.sin(a));
+      else ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
+    }
+    ctx.closePath();
+  }
+
+  function drawHalo() {
+    if (!haloBox) { if (halo) halo.remove(); halo = null; return; }
+    if (!halo) {
+      halo = document.createElement('canvas');
+      halo.className = 'falcon-dna-halo';
+      layer.insertBefore(halo, layer.firstChild);
+    }
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    halo.style.transform = 'translate(' + haloBox.x + 'px,' + haloBox.y + 'px)';
+    halo.style.width = haloBox.w + 'px';
+    halo.style.height = haloBox.h + 'px';
+    halo.width = Math.round(haloBox.w * dpr);
+    halo.height = Math.round(haloBox.h * dpr);
+    var ctx = halo.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, -haloBox.x * dpr, -haloBox.y * dpr);
+    ctx.strokeStyle = getComputedStyle(root).getPropertyValue('--falcon-line').trim() || '#ccc';
+    ctx.lineWidth = 1;
+    var r0 = Math.max(0, Math.floor(haloBox.y / DY)), r1 = Math.min(rows - 1, Math.ceil((haloBox.y + haloBox.h) / DY));
+    for (var r = r0; r <= r1; r++) {
+      for (var c = 0; c < cols; c++) {
+        if (!free[r * cols + c]) continue;
+        var x = colX(r, c), y = r * DY, w = haloWeight(x, y);
+        if (w <= 0) continue;
+        ctx.globalAlpha = w;
+        hexPath(ctx, x, y, R * 0.9);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function makeCell() {
+    var el = document.createElement('span');
+    el.className = 'falcon-nt';
+    el.appendChild(document.createElement('span'));
+    layer.appendChild(el);
+    made++;
+    return el;
+  }
+
+  function light(r, c, now, ms) {
+    if (r < 0 || c < 0 || r >= rows || c >= cols) return;
+    var key = r * cols + c;
+    if (!free[key]) return;
+    var x = colX(r, c), y = r * DY;
+    if (underFixed(x, y)) return;
+    var cell = active.get(key);
+    if (cell) { if (now + ms > cell.until) cell.until = now + ms; return; }
+    var el = pool.pop() || (made < MAX_CELLS ? makeCell() : null);
+    if (!el) return;
+    var base = BASES[(rand() * 4) | 0];                  // a fresh letter every time it fades in
+    el.className = 'falcon-nt falcon-nt-' + base;
+    el.firstChild.textContent = base;
+    el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    active.set(key, { el: el, until: now + ms, x: x, y: y });
+    pendingOn.push(el);
+  }
+
+  function lightAround(px, py, now) {
+    var reach = R * 4.2;
+    var r0 = Math.floor((py - reach) / DY), r1 = Math.ceil((py + reach) / DY);
+    for (var r = r0; r <= r1; r++) {
+      var off = (r & 1) ? DX / 2 : 0;
+      var c0 = Math.floor((px - reach - off) / DX), c1 = Math.ceil((px + reach - off) / DX);
+      for (var c = c0; c <= c1; c++) {
+        var dx = c * DX + off - px, dy = r * DY - py, d = Math.sqrt(dx * dx + dy * dy);
+        if (d <= reach) light(r, c, now, 450 + (1 - d / reach) * 750);
+      }
+    }
+  }
+
+  function spawn(now) {
+    var top = window.scrollY, vh = window.innerHeight;
+    var nearSticker = haloBox && rand() < 0.4 && haloBox.y + haloBox.h > top && haloBox.y < top + vh;
+    for (var t = 0; t < 10; t++) {
+      var x, y;
+      if (nearSticker) { x = haloBox.x + rand() * haloBox.w; y = haloBox.y + rand() * haloBox.h; }
+      else { x = rand() * docW; y = top + rand() * vh; }
+      var r = Math.round(y / DY), c = Math.round((x - ((r & 1) ? DX / 2 : 0)) / DX);
+      if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+      var key = r * cols + c;
+      if (!free[key] || active.has(key)) continue;
+      if (nearSticker && haloWeight(colX(r, c), r * DY) < 0.5) continue;
+      light(r, c, now, 1600 + rand() * 2400);
+      return;
+    }
+  }
+
+  function tick(now) {
+    raf = 0;
+    if (document.hidden) return;
+    readLive();
+    if (pendingOn.length) {
+      pendingOn.forEach(function (el) { el.classList.add('on'); });
+      pendingOn = [];
+    }
+    if (mouse.dirty && mouse.on) { lightAround(mouse.x, mouse.y, now); mouse.dirty = false; }
+    if (now >= nextSpawn) {
+      spawn(now);
+      nextSpawn = now + (docW < 600 ? 320 : 210) + rand() * 260;
+    }
+    active.forEach(function (cell, key) {
+      if (cell.until > now && underFixed(cell.x, cell.y)) cell.until = 0;
+      if (cell.until <= now) {
+        cell.el.classList.remove('on');
+        active.delete(key);
+        fading.push({ el: cell.el, at: now + 800 });
+      }
+    });
+    while (fading.length && fading[0].at <= now) pool.push(fading.shift().el);
+    raf = requestAnimationFrame(tick);
+  }
+  function start() {
+    if (!raf && !reduceMotion.matches && !document.hidden) raf = requestAnimationFrame(tick);
+  }
+
+  // Reduced motion: a still scattering of letters, no fades, no pointer response.
+  function seedStill() {
+    active.forEach(function (cell) { cell.el.classList.remove('on'); pool.push(cell.el); });
+    active.clear();
+    readLive();
+    var target = Math.max(10, Math.min(40, Math.round(docW * docH / 90000))), placed = 0;
+    for (var t = 0; t < target * 30 && placed < target; t++) {
+      var r = (rand() * rows) | 0, c = (rand() * cols) | 0;
+      if (!free[r * cols + c] || active.has(r * cols + c)) continue;
+      light(r, c, 0, Infinity);
+      placed++;
+    }
+    pendingOn.forEach(function (el) { el.classList.add('on'); });
+    pendingOn = [];
+  }
+
+  function track(e) {
+    if (reduceMotion.matches) return;
+    mouse.cx = e.clientX; mouse.cy = e.clientY;
+    mouse.x = e.pageX; mouse.y = e.pageY;
+    mouse.on = true; mouse.dirty = true;
+  }
+  document.addEventListener('pointermove', function (e) { if (e.pointerType !== 'touch') track(e); }, { passive: true });
+  document.addEventListener('pointerdown', track, { passive: true });
+  root.addEventListener('pointerleave', function () { mouse.on = false; }, { passive: true });
+  window.addEventListener('scroll', function () {
+    if (reduceMotion.matches) {
+      // No animation loop here: just hide still cells while they sit under the header or a column.
+      readLive();
+      active.forEach(function (cell) { cell.el.classList.toggle('on', !underFixed(cell.x, cell.y)); });
+      return;
+    }
+    if (!mouse.on) return;
+    mouse.x = mouse.cx + window.scrollX; mouse.y = mouse.cy + window.scrollY; mouse.dirty = true;
+  }, { passive: true });
+
+  var rebuildTimer = 0;
+  function rebuildSoon() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(build, 150); }
+
+  readLive();
+  build();
+  start();
+  if ('ResizeObserver' in window) new ResizeObserver(rebuildSoon).observe(body);
+  else window.addEventListener('resize', rebuildSoon);
+  window.addEventListener('load', rebuildSoon);
+  setTimeout(build, 1300);                                // after the hero's entrance has settled
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(rebuildSoon);
+  document.addEventListener('visibilitychange', start);
+  reduceMotion.addEventListener('change', function () { build(); start(); });
+  // Quarto swaps the whole stylesheet on the theme switch and marks the body;
+  // the lattice is drawn in the theme's line colour, so it is redrawn then.
+  new MutationObserver(function () { setTimeout(drawHalo, 50); })
+    .observe(body, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>

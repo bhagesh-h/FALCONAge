@@ -1,6 +1,7 @@
 ---
 title: "FALCONAge"
 subtitle: "Biological age and aging-clock scoring from multiomic data, in Python and R, on CPU or GPU."
+body-classes: falcon-home
 ---
 
 FALCONAge computes biological age scores from molecular data. It reads what a laboratory actually

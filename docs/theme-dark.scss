@@ -8,9 +8,9 @@
 // measurement on the page and the layout visibly grew. One base, one set of
 // layout rules in _falcon-shared.scss, and this file changes colour only.
 //
-// Same hue as the light theme, lifted for contrast: #e06000 on a dark ground
-// is 3.0:1 and unreadable as body text; #ff8c42 is 7.4:1 on #1c1c1e. The
-// values are the dark interface tokens (plot/colorscheme.yaml, _tokens.scss).
+// The dark side of the author's site: a near-black ground with a light grain,
+// a lifted orange (#f07a1e, 6.8:1 on #0e1014) and a pale navy. The values are
+// the dark interface tokens (plot/colorscheme.yaml, _tokens.scss).
 @import "tokens";
 
 $falcon-orange:  $falcon-dark-brand;
@@ -23,11 +23,11 @@ $falcon-dim:     $falcon-dark-muted;
 $web-font-path:          false;
 $font-family-sans-serif: $falcon-font-sans;
 
-$primary:    $falcon-orange;
+$primary:    $falcon-dark-accent;
 $body-bg:    $falcon-bg;
 $body-color: $falcon-fg;
-$link-color: $falcon-orange;
-$link-hover-color: lighten($falcon-orange, 8%);
+$link-color: $falcon-dark-accent;
+$link-hover-color: lighten($falcon-dark-accent, 8%);
 
 // Cosmo is a light theme, so every surface Bootstrap paints has to be told
 // otherwise. Missing one shows up as a white card on a dark page.
@@ -48,58 +48,44 @@ $input-border-color: $border-color;
 $input-placeholder-color: $falcon-dim;
 $table-color:        $falcon-fg;
 $table-border-color: $border-color;
-$code-color:         #ff9d5c;
+$code-color:         $falcon-dark-navy;
 $code-bg:            rgba(255, 255, 255, 0.07);
 $pre-color:          $falcon-fg;
 $hr-color:           $border-color;
 
-$navbar-bg: $falcon-surface;
+$navbar-bg: $falcon-bg;
 $navbar-fg: $falcon-fg;
-$navbar-light-color: $falcon-fg;
-$navbar-light-hover-color: $falcon-orange;
-$navbar-light-active-color: $falcon-orange;
-$navbar-light-brand-color: $falcon-orange;
+$navbar-light-color: $falcon-dim;
+$navbar-light-hover-color: $falcon-fg;
+$navbar-light-active-color: $falcon-fg;
+$navbar-light-brand-color: $falcon-fg;
 
 $font-family-monospace: $falcon-font-mono;
 
 // The names _falcon-shared.scss reads.
 $falcon-brand:    $falcon-orange;
-$falcon-accent:   $falcon-orange;
+$falcon-accent:   $falcon-dark-accent;
 $falcon-hairline: $falcon-dark-line;
 $falcon-wash:     rgba(255, 255, 255, 0.08);
-$falcon-invert:   $falcon-bg;
+$falcon-invert:   $falcon-dark-panel;
+$falcon-paper:    $falcon-bg;
+$falcon-text:     $falcon-fg;
+$falcon-muted:    $falcon-dim;
+$falcon-navy:     $falcon-dark-navy;
+// The paper grain: light speckle at low alpha over the dark ground.
+$falcon-grain-matrix: "0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .3 0 0 0 -.125";
+$falcon-film-opacity: 0.85;
+$falcon-shadow-rgb:   "0 0 0";
+$falcon-nt: (a: #f07a1e, t: #34466b, g: #b9802f, c: #3a404c);
+$falcon-nt-opacity: 0.6;
 
 /*-- scss:rules --*/
 @import "falcon-shared";
-
-// Surfaces cosmo paints light in its own rules rather than through a variable.
-body,
-#quarto-content,
-.quarto-container,
-main.content {
-  background-color: $falcon-bg;
-  color: $falcon-fg;
-}
-
-#quarto-sidebar,
-#quarto-margin-sidebar,
-.sidebar-navigation {
-  background-color: $falcon-bg;
-  color: $falcon-fg;
-}
 
 // Tables need a visible edge on a dark ground or they dissolve into the page.
 main table th { border-bottom: 1px solid rgba(255, 255, 255, 0.22); }
 main table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 main table > :not(caption) > * > * { background-color: transparent; }
-
-// Code blocks, which cosmo gives a near-white fill.
-div.sourceCode,
-pre.sourceCode,
-pre:not(.sourceCode) {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: $border-color;
-}
 
 // The right-hand "On this page" list and the search box.
 #TOC, .toc-actions, #quarto-search .aa-Form {

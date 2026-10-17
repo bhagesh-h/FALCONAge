@@ -67,8 +67,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # build_docs.py, build_gallery.py), which run in this image too.
 RUN pip install --no-cache-dir quartodoc "griffe<2" pyyaml
 
-# Fail the build rather than at first render if either tool is broken.
-RUN quarto --version && python -c "import quartodoc, yaml"
-
 WORKDIR /work
 CMD ["quarto", "--help"]

@@ -35,9 +35,5 @@ FROM mcr.microsoft.com/playwright/python:v1.49.0-noble
 
 RUN pip install --no-cache-dir playwright==1.49.0
 
-# Fail at build rather than on the first page if the browser is not usable.
-RUN python -c "from playwright.sync_api import sync_playwright; \
-p = sync_playwright().start(); b = p.chromium.launch(); b.close(); p.stop()"
-
 WORKDIR /work
 CMD ["python", "test/responsive_check.py"]

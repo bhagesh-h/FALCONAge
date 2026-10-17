@@ -4,25 +4,38 @@
 // The colours and fonts are the interface tokens in plot/colorscheme.yaml,
 // written to _tokens.scss by docs/build_tokens.py; the reports read the same
 // block, so a page of the documentation and a page FALCONAge writes look like
-// one thing. #e06000, the brand, is the logo, sampled: 88% of the non-grey
+// one thing. The neutrals, the navy and the typefaces are the author's site
+// (bhagesh-h.github.io): a paper ground with a fine grain, white cards, near
+// black ink. #e06000, the brand, is the logo, sampled: 88% of the non-grey
 // pixels in logo.png are within one quantisation step of it, hue 26.
 @import "tokens";
 
 $falcon-orange:      $falcon-light-brand;
-$falcon-orange-dark: $falcon-light-accent;   // 5.9:1 on white -- the one safe for body links
+$falcon-orange-dark: $falcon-light-accent;   // 5.0:1 on the paper -- the one safe for body links
 $falcon-ink:         $falcon-light-ink;
 
-// The system font stack, as the reports use, instead of cosmo's Source Sans Pro
-// from Google Fonts: one typeface across the site and the reports, and no
-// request to a third party on every page view.
+// Bricolage Grotesque and IBM Plex Mono, served from docs/assets/fonts by the
+// @font-face rules in assets/brand.css, instead of cosmo's Source Sans Pro from
+// Google Fonts: no request to a third party on any page view.
 $web-font-path:          false;
 $font-family-sans-serif: $falcon-font-sans;
 
-// Links take the darker shade. The logo orange is 3.6:1 on white, which passes
-// for large text and fails for a sentence, and most links sit in sentences.
+// Links take the darker shade. The logo orange is 3.3:1 on the paper, which
+// passes for large text and fails for a sentence, and most links sit in
+// sentences.
 $primary:    $falcon-orange-dark;
+$body-bg:    $falcon-light-bg;
 $body-color: $falcon-ink;
 $link-color: $falcon-orange-dark;
+
+$border-color:      $falcon-light-line;
+$secondary-color:   $falcon-light-muted;
+$card-bg:           $falcon-light-panel;
+$dropdown-bg:       $falcon-light-panel;
+$dropdown-link-color: $falcon-ink;
+$dropdown-border-color: $falcon-light-line;
+$code-color:        $falcon-light-navy;
+$hr-color:          $falcon-light-line;
 
 $navbar-bg: $falcon-light-bg;
 $navbar-fg: $falcon-ink;
@@ -35,8 +48,20 @@ $font-family-monospace: $falcon-font-mono;
 $falcon-brand:    $falcon-orange;
 $falcon-accent:   $falcon-orange-dark;
 $falcon-hairline: $falcon-light-line;
-$falcon-wash:     $falcon-light-panel;
-$falcon-invert:   $falcon-light-bg;
+$falcon-wash:     rgba($falcon-light-ink, 0.05);
+$falcon-invert:   $falcon-light-ink;
+$falcon-paper:    $falcon-light-bg;
+$falcon-surface:  $falcon-light-panel;
+$falcon-text:     $falcon-light-ink;
+$falcon-muted:    $falcon-light-muted;
+$falcon-navy:     $falcon-light-navy;
+// The paper grain: dark speckle at low alpha over the flat ground.
+$falcon-grain-matrix: "0 0 0 0 .07 0 0 0 0 .08 0 0 0 0 .11 .42 0 0 0 -.17";
+$falcon-film-opacity: 0.6;
+$falcon-shadow-rgb:   "18 21 27";
+// Nucleotide fills for the home page's hex field: A orange, T navy, G gold, C ink.
+$falcon-nt: (a: #ee6f0f, t: $falcon-light-navy, g: #c8893b, c: $falcon-light-ink);
+$falcon-nt-opacity: 0.55;
 
 /*-- scss:rules --*/
 @import "falcon-shared";
