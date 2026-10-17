@@ -1,0 +1,57 @@
+/* The parts of the site's look that point at files: the two typefaces and the
+   logo sticker.
+
+   WHY A PLAIN STYLESHEET AND NOT THE THEME. Quarto compiles theme SCSS into
+   site_libs/bootstrap/ and resolves a url() in it against the filesystem root,
+   so `url("logo.png")` there failed the render on `lstat '/logo.png'`, and the
+   logo used to be embedded as 67 kB of base64 in both themes. A stylesheet
+   listed under `css:` is copied as a file, here to assets/brand.css, and a
+   url() in it resolves against that one fixed path from every page at every
+   depth. Colours come from the custom properties each theme defines, so this
+   file serves light and dark alike.
+
+   The faces are the author's site's (bhagesh-h.github.io): Bricolage Grotesque,
+   a variable font with an optical-size axis, and IBM Plex Mono. Both are under
+   the SIL Open Font License; fonts/LICENSE-OFL.txt carries both notices. */
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("fonts/bricolage-grotesque-opsz.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/ibm-plex-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/ibm-plex-mono-500.woff2") format("woff2");
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The sticker beside every page title (the layout is in _falcon-shared.scss).
+   Three sizes, and the browser takes the one its pixel density needs: 360 px
+   covers the inner pages' mark at any density up to 1.8, 840 px the home
+   page's at 2x.
+
+   The second selector is the quartodoc reference pages, whose title block is
+   empty and whose title is the first section's <h1>; the mark sits beside
+   that heading instead. */
+#title-block-header.quarto-title-block:not(:empty)::after,
+#title-block-header.quarto-title-block:empty ~ section.level1:first-of-type > h1:first-child::after {
+  background-image: url("falconage-logo-560.webp");
+  background-image: image-set(url("falconage-logo-360.webp") 1x,
+                              url("falconage-logo-840.webp") 2x);
+}
+.falcon-home #title-block-header.quarto-title-block:not(:empty)::after {
+  background-image: url("falconage-logo-560.webp");
+  background-image: image-set(url("falconage-logo-560.webp") 1x,
+                              url("falconage-logo-840.webp") 2x);
+}
