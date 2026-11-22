@@ -22,7 +22,7 @@ for any neural clock are redistributable, so this is a scaffold in exactly the
 sense :class:`PCLinearClock` is: implemented, tested on synthetic weights, and
 usable the day a user supplies a file.
 
-WHY SAFETENSORS AND NOT A PICKLE. ``torch.load`` on an untrusted file executes
+WHY SAFETENSORS AND NOT A PICKLE. Loading a pickled file executes
 arbitrary code during unpickling. A clock's weights arrive by download from a
 third party, which is precisely the threat model, and at least one widely used
 aging-clock package accepts pickles today. ``safetensors`` is a flat tensor
@@ -37,7 +37,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError, ScoringError, WeightsUnavailableError
 from ..registry.registry import Clock
 from . import ops
@@ -90,7 +90,7 @@ def read_neural_weights(path: str | Path, *, features: list[str] | None = None,
     if p.suffix.lower() != ".safetensors":
         raise ScoringError(
             f"{p.name}: neural weights must be .safetensors.\n"
-            "  torch.load executes arbitrary code while unpickling, and a clock's "
+            "  Unpickling a file executes arbitrary code, and a clock's "
             "weights arrive by download from a third party. That is the threat "
             "model, not a hypothetical one.")
     try:
@@ -156,14 +156,7 @@ class NeuralClock:
     the plainest one that fits published aging networks: dense layers, one
     activation, no dropout at inference, no batch norm state to get wrong.
 
-    THE ONE ARCHITECTURE HERE WHERE A GPU EARNS ITS TRANSFER. A linear clock is
-    a single dot product over a few thousand features, and ``docs/dev/gpu.qmd``
-    measures the card losing to the CPU on those by up to 4.6x because moving
-    the matrix costs more than multiplying it. A network is a chain of dense
-    layers with real depth: AltumAge is 20,318 inputs, so the arithmetic per
-    byte transferred is an order of magnitude higher and the transfer amortises.
-    The whole pass therefore runs through the ``xp`` handle, activations
-    included, and honours ``device=`` like the linear path does.
+    The whole pass runs through the ``xp`` handle, activations included.
     """
 
     clock: Clock
@@ -178,9 +171,7 @@ class NeuralClock:
         """Apply the activation through the backend handle.
 
         Written against the op catalogue rather than against ``np`` directly.
-        ``relu`` as ``clip(low=0)`` reuses the one place that already knows
-        numpy spells it ``clip`` and torch spells it ``clamp``, so this stays a
-        single implementation instead of a second branch to keep in step.
+        ``relu`` as ``clip(low=0)`` reuses the op that already exists.
         """
         a = self.weights.activation
         if a == "relu":
@@ -202,7 +193,7 @@ class NeuralClock:
             return x
         raise ScoringError(f"unknown activation {a!r}")
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         al = align(data, self.weights.features, imputation=imputation,
                    reference=self.reference)
@@ -219,11 +210,8 @@ class NeuralClock:
         x = spec.asarray(al.matrix)
         if self.scale is not None:
             mu, sd = self.scale
-            # The zero-variance guard is computed in numpy, on the host, before
-            # anything moves: a constant feature has no scale to divide by and
-            # substituting 1.0 leaves it centred, which is what the training
-            # code did. Doing it on the device would be one kernel for a
-            # decision that is already made.
+            # A constant feature has no scale to divide by; substituting 1.0
+            # leaves it centred, which is what the training code did.
             safe_sd = np.where(np.asarray(sd) == 0, 1.0, np.asarray(sd))
             x = (x - spec.asarray(mu)[None, :]) / spec.asarray(safe_sd)[None, :]
 

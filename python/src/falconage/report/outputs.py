@@ -45,7 +45,7 @@ class Output:
 STEPS: tuple[Step, ...] = (
     Step(0, "Provenance",
          "What ran, on which data, with which coefficients: the package and registry "
-         "versions, the SHA-256 of every coefficient file used, the device and every "
+         "versions, the SHA-256 of every coefficient file used, the precision and every "
          "warning. Enough to reproduce each number below."),
     Step(1, "Input and quality control",
          "Whether the measurements are fit to score: missing values, the shape of the "
@@ -84,7 +84,7 @@ STEPS: tuple[Step, ...] = (
 OUTPUTS: tuple[Output, ...] = (
     Output("run_manifest.json", 0, "json", "Run manifest",
            "Versions, configuration, the coefficient file and SHA-256 behind each clock, "
-           "the device each clock ran on, and every warning."),
+           "the precision each clock ran in, and every warning."),
 
     Output("qc_per_sample.csv", 1, "table", "Quality control, per sample",
            "Fraction of missing values, and the mean and SD of each sample's betas. A "

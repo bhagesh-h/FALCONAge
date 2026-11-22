@@ -26,24 +26,31 @@ site:
   # deliberately does NOT repeat it -- the sidebar is on that page too, and the
   # same sentence twice above the fold reads as a templating mistake.
   description: >-
-    Biological age and aging-clock scoring from multiomic data, in Python and R,
-    on CPU or GPU.
+    Biological age and aging-clock scoring from multiomic data, in Python and R.
   url: https://bhagesh-h.github.io/FALCONAge/
   repo: https://github.com/bhagesh-h/FALCONAge
 
 groups:
+  - title: Start here
+    desc: >-
+      The functions a first analysis uses, in the order it uses them: read the
+      data, prepare it, score it, and ask how far each number can be trusted.
+      Everything else on this page builds on these.
+    python: [read, read_betas, prepare, score, FalconResult, technical_se,
+             conformal_interval, acceleration, consensus, report.run_report,
+             demo_data]
+    r: [read_betas, prepare, score, as.data.frame.falcon_result, interpretation,
+        technical_se, conformal_interval, acceleration, consensus, run_report]
+
   - title: Reading data
     desc: >-
       Every reader returns the same container, so nothing downstream can tell
       which format the data arrived in.
-    python: [read, read_betas, read_series_matrix, read_clinical, read_rrbs_dir,
-             read_bedmethyl, read_bedmethyl_dir, read_panel,
-             read_computage_bench, list_computage_bench,
-             preprocess.read_olink, preprocess.read_somascan,
-             preprocess.read_counts, read_nightingale,
-             FalconData]
-    r: [read_betas, read_series_matrix, read_clinical, read_rrbs_dir,
-        falcon_data, obs, write_h5ad]
+    python: [read_series_matrix, read_clinical, read_rrbs_dir, read_bedmethyl,
+             read_bedmethyl_dir, read_panel, read_computage_bench,
+             list_computage_bench, preprocess.read_olink, preprocess.read_somascan,
+             preprocess.read_counts, read_nightingale, FalconData]
+    r: [read_series_matrix, read_clinical, read_rrbs_dir, falcon_data, obs, write_h5ad]
 
   - title: Raw arrays
     desc: >-
@@ -64,14 +71,12 @@ groups:
       identifiers, values in the beta range, a known platform. The EPIC v2 step
       is mandatory rather than optional -- without it a v2 dataset overlaps
       almost nothing and the clocks score imputed values.
-    python: [prepare, prepare_clinical, qc, probe_loss,
-             preprocess.aggregate_replicate_probes, preprocess.impute,
-             fit_batch_reference, apply_batch_reference,
-             preprocess.BatchReference,
-             preprocess.prepare_proteomic, preprocess.prepare_transcriptomic,
-             preprocess.rle_normalise, preprocess.yugene,
-             preprocess.median_centre, preprocess.horvath_normalise]
-    r: [prepare, horvath_normalise, qc, probe_loss, fit_batch_reference, apply_batch_reference]
+    python: [prepare_clinical, qc, probe_loss, preprocess.aggregate_replicate_probes,
+             preprocess.impute, fit_batch_reference, apply_batch_reference,
+             preprocess.BatchReference, preprocess.prepare_proteomic,
+             preprocess.prepare_transcriptomic, preprocess.rle_normalise,
+             preprocess.yugene, preprocess.median_centre, preprocess.horvath_normalise]
+    r: [horvath_normalise, qc, probe_loss, fit_batch_reference, apply_batch_reference]
 
   - title: Uncertainty
     desc: >-
@@ -79,10 +84,9 @@ groups:
       truth. Two different questions with two different answers, kept apart on
       purpose: technical replicates of the same DNA differ by up to nine years
       on prominent clocks, and a point estimate says nothing about either.
-    python: [technical_se, interval, conformal_interval, icc_from_replicates,
-             uncertainty.load_probe_icc, uncertainty.probe_icc_source,
-             uncertainty.load_conformal]
-    r: [technical_se, interval, conformal_interval, icc_from_replicates]
+    python: [interval, icc_from_replicates, uncertainty.load_probe_icc,
+             uncertainty.probe_icc_source, uncertainty.load_conformal]
+    r: [interval, icc_from_replicates]
 
   - title: Study design
     desc: >-
@@ -90,14 +94,13 @@ groups:
       many samples an effect needs, given the clock's own reliability; and
       whether a difference that turned up survives the multi-clock rule that a
       re-analysis of six intervention datasets says it must.
-    python: [power, detectable_effect, consensus, registry.evidence]
-    r: [power_n, consensus]
+    python: [power, detectable_effect, registry.evidence]
+    r: [power_n]
 
   - title: Scoring
     desc: The predict loop, its result object, and the provenance it carries.
-    python: [score, combine, FalconResult]
-    r: [score, combine, coverage, manifest, interpretation, write_results,
-        as.data.frame.falcon_result]
+    python: [combine]
+    r: [combine, coverage, manifest, write_results]
 
   - title: The clock catalogue
     desc: >-
@@ -107,8 +110,8 @@ groups:
       and which bundled clocks answer the same question.
     python: [registry.load, registry.ClockRegistry, registry.Clock,
              registry.register_local_weights]
-    r: [list_clocks, clock_info, cite_clock, compatible_clocks,
-        register_local_weights, import_pc_clocks, import_dunedinpace]
+    r: [list_clocks, clock_info, cite_clock, compatible_clocks, register_local_weights,
+        import_pc_clocks, import_dunedinpace]
 
   - title: Analysis
     desc: >-
@@ -116,10 +119,18 @@ groups:
       models, reliability, and the AA1/AA2 benchmark. Each is gated on the
       clock's scale type -- acceleration on a pace-of-aging clock is a units
       error, not a conservative choice.
-    python: [acceleration, cell_composition, associate, cox_hazard, agreement,
-             icc, run_benchmark, leave_one_marker_out, fit_clock]
-    r: [acceleration, cell_composition, associate, cox_hazard, agreement,
-        icc, run_benchmark]
+    python: [cell_composition, associate, cox_hazard, agreement, icc, run_benchmark,
+             leave_one_marker_out]
+    r: [cell_composition, associate, cox_hazard, agreement, icc, run_benchmark]
+
+  - title: Your own clocks
+    desc: >-
+      Compare learners on your own cohort, fit the one you choose, combine
+      several clocks into one score, and add any of them to the catalogue for
+      a session so it is scored like a published clock. Every reported number
+      is out of fold.
+    python: [compare_learners, fit_clock, stack_clocks, add_clock]
+    r: [compare_learners, fit_clock, stack_clocks, add_clock, clock_to_file]
 
   - title: Clinical references
     desc: >-
@@ -136,9 +147,8 @@ groups:
       entirely, one age per cell from a methylome that is 99% missing. All of
       these are implemented and tested against synthetic weights, and all of
       them work the day a user supplies a file.
-    python: [models.AggregationClock, models.NeuralClock,
-             models.read_neural_weights, models.PCLinearClock,
-             models.read_rotation, models.ScAgeReference,
+    python: [models.AggregationClock, models.NeuralClock, models.read_neural_weights,
+             models.PCLinearClock, models.read_rotation, models.ScAgeReference,
              models.fit_scage_reference, models.scage]
     r: []
 
@@ -152,28 +162,23 @@ groups:
     python: [plot.ba_vs_ca, plot.bland_altman, plot.calibration,
              plot.acceleration_density, plot.acceleration_by_group,
              plot.acceleration_heatmap, plot.forest, plot.kaplan_meier, plot.volcano,
-             plot.clock_corr, plot.clock_radar, plot.clock_chord,
-             plot.clock_pca, plot.clock_atlas,
-             plot.coverage_bar, plot.missingness, plot.beta_density,
-             plot.platform_comparison, plot.study_comparison,
-             plot.benchmark_bars, plot.benchmark_error_bias,
-             plot.benchmark_heatmap,
+             plot.clock_corr, plot.clock_radar, plot.clock_chord, plot.clock_pca,
+             plot.clock_atlas, plot.coverage_bar, plot.missingness, plot.beta_density,
+             plot.platform_comparison, plot.study_comparison, plot.benchmark_bars,
+             plot.benchmark_error_bias, plot.benchmark_heatmap,
              plot.reliability_forest, plot.score_interval, plot.platform_bias,
-             plot.consensus_plot,
-             plot.palette, plot.save_all, report.write_report,
-             report.run_report, report.write_quarto_report]
+             plot.consensus_plot, plot.palette, plot.save_all, report.write_report,
+             report.write_quarto_report]
     # pkgdown refuses to build when an exported topic is in no group, so this
     # list is not optional documentation -- it is a build dependency. The
     # coverage check in build_docs.py compares it against r/man/*.Rd and fails
     # first, with a better message than pkgdown's.
-    r: [plot_ba_vs_ca, plot_bland_altman, plot_calibration,
-        plot_acceleration, plot_acceleration_by_group, plot_acceleration_heatmap,
-        plot_forest,
+    r: [plot_ba_vs_ca, plot_bland_altman, plot_calibration, plot_acceleration,
+        plot_acceleration_by_group, plot_acceleration_heatmap, plot_forest,
         plot_agreement, plot_clock_radar, plot_clock_chord, plot_clock_pca,
-        plot_clock_atlas,
-        plot_coverage, plot_by_platform, plot_kaplan_meier, plot_volcano,
-        plot_benchmark, plot_benchmark_error_bias, plot_benchmark_heatmap,
-        falcon_palette, falcon_scheme, falcon_theme, report, run_report,
+        plot_clock_atlas, plot_coverage, plot_by_platform, plot_kaplan_meier,
+        plot_volcano, plot_benchmark, plot_benchmark_error_bias,
+        plot_benchmark_heatmap, falcon_palette, falcon_scheme, falcon_theme, report,
         quarto_report]
 
   - title: Downloading public data
@@ -186,8 +191,7 @@ groups:
 
   - title: Configuration and setup
     desc: What resolved, on this machine, in this environment.
-    python: [config, configure, core.resolve, core.describe, FalconConfig,
-             RunManifest]
+    python: [config, configure, core.resolve, core.describe, FalconConfig, RunManifest]
     r: [falconage_install, falconage_config, falconage_available]
 
 # =============================================================================
@@ -208,8 +212,23 @@ groups:
 # is information too: it is how a reader learns that `obs()` has no Python
 # counterpart because Python reaches the same field as an attribute.
 pairs:
-  Reading data:
+  Your own clocks:
+    - [compare_learners, compare_learners]
+    - [fit_clock, fit_clock]
+    - [stack_clocks, stack_clocks]
+    - [add_clock, add_clock]
+  Start here:
+    - [as.data.frame.falcon_result, FalconResult]
     - [read_betas, read_betas]
+    - [prepare, prepare]
+    - [technical_se, technical_se]
+    - [conformal_interval, conformal_interval]
+    - [consensus, consensus]
+    - [score, score]
+    - [interpretation, FalconResult.interpretation]
+    - [acceleration, acceleration]
+    - [run_report, report.run_report]
+  Reading data:
     - [read_series_matrix, read_series_matrix]
     - [read_clinical, read_clinical]
     - [read_rrbs_dir, read_rrbs_dir]
@@ -217,26 +236,20 @@ pairs:
     - [obs, FalconData.obs]
     - [write_h5ad, FalconData.write_h5ad]
   Preprocessing:
-    - [prepare, prepare]
+    - [horvath_normalise, preprocess.horvath_normalise]
     - [qc, qc]
     - [probe_loss, probe_loss]
     - [fit_batch_reference, fit_batch_reference]
     - [apply_batch_reference, apply_batch_reference]
   Uncertainty:
-    - [technical_se, technical_se]
     - [interval, interval]
-    - [conformal_interval, conformal_interval]
     - [icc_from_replicates, icc_from_replicates]
   Study design:
     # power_n, not power: `power` is base R's exponent helper and shadowing it
     # in a package a user has attached is a worse trade than one differing name.
     - [power_n, power]
-    - [consensus, consensus]
   Scoring:
-    - [score, score]
     - [combine, combine]
-    - [as.data.frame.falcon_result, FalconResult]
-    - [interpretation, FalconResult.interpretation]
     - [coverage, FalconResult.coverage]
     - [manifest, FalconResult.manifest]
     - [write_results, FalconResult.write]
@@ -249,7 +262,6 @@ pairs:
     - [cite_clock, registry.Clock.cite]
     - [compatible_clocks, registry.ClockRegistry.compatible_with]
   Analysis:
-    - [acceleration, acceleration]
     - [cell_composition, cell_composition]
     - [associate, associate]
     - [cox_hazard, cox_hazard]
@@ -281,7 +293,6 @@ pairs:
     - [plot_benchmark_heatmap, plot.benchmark_heatmap]
     - [falcon_palette, plot.palette]
     - [report, report.write_report]
-    - [run_report, report.run_report]
     - [quarto_report, report.write_quarto_report]
   Downloading public data:
     - [download, download]
@@ -294,35 +305,32 @@ pairs:
 # The reading order of the site
 # =============================================================================
 #
-# WHY THIS EXISTS. The navbar used to carry three menus: "About", "Guides", and
-# "Background". The first two were fine and the third was a drawer holding the
-# literature review, the internals document, the figure gallery, the clock
-# catalogue and the GPU measurements -- five things with five different
-# audiences, filed together because none of them was a guide. A reader could
-# not tell what to read first, what followed it, or whether they had finished.
+# Ordered parts, in the order somebody learns the material: what the tool is,
+# using it, the clocks, the science, the API, the internals. Each part belongs
+# to one navbar section, and each section has its own sidebar, so a reader sees
+# where they are at the top and what is near them on the left.
 #
-# Ordered parts fix that, and they are what a technical book does: a spine down
-# the left, in the order somebody learns the material, so the position of a page
-# is itself information. The parts run from what the tool is, through using it,
-# to the science it rests on, to the API, to the internals -- roughly the order
-# in which a reader stops needing each one.
-#
-# `book` is the source for the Quarto sidebar and for the compact navbar menu
-# shown at widths where the sidebar is not. `articles` and `pages` below are
-# kept because pkgdown's own navbar is generated from them and it groups by
-# kind rather than by reading order.
+# `book` is the source for the navbar, the sidebars, the compact menu shown on
+# narrow screens, and the downloadable PDF. `articles` and `pages` below are
+# kept because pkgdown's own navbar is generated from them.
 book:
-  - part: 1. Start
+  # `section` names the navbar entry the part belongs to; every section gets
+  # its own sidebar (see `sections` below), so a page shows only its section.
+  - part: Start here
+    section: start
     chapters:
-      - title: What FALCONAge is
+      - title: Overview
         file: index.qmd
       - title: Install
         file: start/install.qmd
-      - title: Getting started
+      - title: Your first run
         file: start/quickstart.qmd
+      - title: About and design
+        file: start/about.qmd
       - title: Using FALCONAge from Claude
         file: start/claude.qmd
-  - part: 2. Your data
+  - part: Your data
+    section: guide
     chapters:
       - title: Loading your data
         file: data/loading.qmd
@@ -330,15 +338,8 @@ book:
         file: data/preprocessing.qmd
       - title: Raw arrays to betas
         file: data/raw-arrays.qmd
-  - part: 3. Clocks
-    chapters:
-      - title: Choosing a clock
-        file: clocks/choosing.qmd
-      - title: What a score means
-        file: clocks/meaning.qmd
-      - title: Clock catalogue
-        file: clocks/catalogue.qmd
-  - part: 4. Analysis
+  - part: Analysis
+    section: guide
     chapters:
       - title: Age acceleration
         file: analysis/acceleration.qmd
@@ -354,27 +355,43 @@ book:
         file: analysis/reporting.qmd
       - title: Figure gallery
         file: analysis/figures.qmd
-  - part: 5. Methods
+  - part: Your own clocks
+    section: guide
     chapters:
-      - title: The science of aging clocks
-        file: methods/index.qmd
-      - title: Biology and measurement
-        file: methods/biology.qmd
-      - title: Algorithm families
-        file: methods/algorithms.qmd
+      - title: Build a clock
+        file: own/compare.qmd
+      - title: Add a clock
+        file: own/add.qmd
+      - title: Stack clocks
+        file: own/stack.qmd
+  - part: Clocks
+    section: clocks
+    chapters:
+      - title: Choosing a clock
+        file: clocks/choosing.qmd
+      - title: What a score means
+        file: clocks/meaning.qmd
+      - title: Clock catalogue
+        file: clocks/catalogue.qmd
+      - title: Known discrepancies
+        file: clocks/discrepancies.qmd
+  - part: Methods
+    section: methods
+    chapters:
       - title: Published formulas
         file: methods/formulas.qmd
-      - title: The clocks, by family
-        file: methods/clocks.qmd
-      - title: Genotype and structure
-        file: methods/genetics.qmd
+      - title: From raw arrays to betas
+        file: methods/raw-arrays.qmd
+      - title: Uncertainty, specimen and platform
+        file: methods/uncertainty.qmd
+      - title: Downstream statistics
+        file: methods/downstream.qmd
+      - title: Benchmarking and validation
+        file: methods/benchmarking.qmd
       - title: Building a clock
         file: methods/building.qmd
-      - title: Failure modes and the frontier
-        file: methods/failure-modes.qmd
-      - title: Datasets and resources
-        file: methods/resources.qmd
-  - part: 6. Reference
+  - part: Reference
+    section: api
     chapters:
       - title: Python reference
         file: reference/index.qmd
@@ -383,9 +400,10 @@ book:
       # What the bracketed numbers on every other page point at.
       - title: References
         file: references.qmd
-  # Last: what a contributor reads, not what a user needs. The original design
-  # document is here, split into what exists and the plan it was built from.
-  - part: 7. Developer notes
+  # What a contributor reads, not what a user needs. Its own navbar entry and
+  # sidebar, and left out of the downloadable PDF.
+  - part: Developer notes
+    section: dev
     chapters:
       - title: Architecture
         file: dev/index.qmd
@@ -399,14 +417,30 @@ book:
         file: dev/r-package.qmd
       - title: Docker, testing and CI
         file: dev/operations.qmd
-      - title: GPU support
-        file: dev/gpu.qmd
+      - title: Testing against the public corpus
+        file: dev/testing.qmd
       - title: Design history
         file: dev/history.qmd
       - title: Other software
         file: dev/software.qmd
       - title: Appendices
         file: dev/appendices.qmd
+
+# The navbar, in order. Each entry links to the first page of its section, and
+# each section has its own sidebar holding only its own parts.
+sections:
+  - id: start
+    title: Get started
+  - id: guide
+    title: Guide
+  - id: clocks
+    title: Clocks
+  - id: methods
+    title: Methods
+  - id: api
+    title: API
+  - id: dev
+    title: Developers
 
 articles:
   - title: Getting started
@@ -423,18 +457,12 @@ articles:
 # r/vignettes/ -- which would put them in the CRAN tarball, where a reference
 # manual is welcome and a literature review is not.
 pages:
-  - title: The science of aging clocks
-    file: methods/index.qmd
-    desc: >-
-      What the field knows to 2026: the biology each score encodes, the
-      chemistry of every input layer, every algorithm with its equations, the
-      published constants, and every place the registry records a paper
-      disagreeing with its own circulating implementation.
-  - title: Architecture
-    file: dev/index.qmd
-    desc: >-
-      Which file computes what, why each decision went the way it did, and an
-      explicit accounting of where the specification is wider than v1.0.
+  - title: Your first run
+    file: start/quickstart.qmd
+    desc: Run the demo, read what a run writes, then run your own data.
+  - title: Published formulas
+    file: methods/formulas.qmd
+    desc: The exact formulas FALCONAge implements, each checked against its source.
   - title: Figure gallery
     file: analysis/figures.qmd
     desc: >-
@@ -443,17 +471,9 @@ pages:
   - title: Clock catalogue
     file: clocks/catalogue.qmd
     desc: All 178 entries, generated from the registry that scores them.
-  - title: Beyond the clock score
-    file: analysis/beyond.qmd
-    desc: >-
-      Entropy, drift, the noise barometer, repertoire structure and coefficient
-      mass. What a methylation matrix answers when the question is about
-      variance rather than about level.
-  - title: GPU support
-    file: dev/gpu.qmd
-    desc: >-
-      What was verified on real hardware, what had to be installed, and why
-      device="auto" resolves to CPU.
+  - title: Architecture
+    file: dev/index.qmd
+    desc: Which file computes what, and why.
 
 # The offline copies docs/build_downloads.py produces. Listed here so the
 # navbar and the build agree on the filenames -- a Download menu whose links

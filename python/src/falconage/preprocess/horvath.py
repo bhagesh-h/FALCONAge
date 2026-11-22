@@ -56,9 +56,9 @@ output of code run on older R: Knight et al.'s test dataset gives 37.3665,
 remaining 0.002 is their k-nearest-neighbour imputation of 51 missing
 values), and 37.372, 38.343 and 39.338 with today's draw.
 
-MEASURED EFFECT. On 120 EPIC v1 whole-blood samples the Horvath 2013 age
-moves by -1.87 years on average (SD 1.15) against the same betas unnormalised,
-and this port reproduces R's result on them to 2e-8 years.
+MEASURED EFFECT. The step mostly moves the level of Horvath 2013 age, not the
+ranking of samples, and this port reproduces R's result to 2e-8 years on the
+fixture in ``python/tests/data``.
 """
 
 from __future__ import annotations
@@ -633,6 +633,8 @@ def horvath_normalise(data: FalconData, *, absent: str = "drop",
         R's ``sample.kind`` for the 20,000-probe draw: ``"Rejection"`` (R 3.6.0
         and later, the default) or ``"Rounding"`` (earlier R).
 
+    Notes
+    -----
     Only gold-standard probes are calibrated; other columns pass through
     unchanged. A missing value is set to its gold-standard value first. Both
     counts are in ``uns["horvath_normalisation"]``.

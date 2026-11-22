@@ -21,7 +21,6 @@
 # because there is no leading slash to anchor; the per-directory rules below
 # still apply inside what is re-admitted.
 *
-!colorscheme.yaml
 !docker/
 !python/
 !r/

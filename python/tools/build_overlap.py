@@ -67,7 +67,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DATA = HERE / "data"
 ROOT = HERE.parent.parent
-OUT = ROOT / "overlap.csv"
+OUT = ROOT / "docs" / "clocks" / "overlap.csv"
 
 TRANSLAGE_URL = "https://www.translage.io/data/datatables/clock_metadata.csv"
 BIOLEARN_TREE = "https://api.github.com/repos/bio-learn/biolearn/git/trees/master?recursive=1"
@@ -132,7 +132,7 @@ def population_class(pop: str) -> str:
 
 #: Training target to the class that decides what a score means. The split that
 #: matters most is chronological_age against everything else: a clock fitted to
-#: age is fitted to a quantity you already know, and §5.2 of the science page is
+#: age is fitted to a quantity you already know, and the published-formulas page is
 #: the argument for why that is a weaker thing to have measured.
 #: Order is significant: the first rule that matches wins, so the specific
 #: categories come before the general ones. ``disease`` in particular has to
@@ -557,9 +557,14 @@ def _all_numeric(values: list[str]) -> bool:
 def _crossref_registered(doi: str, timeout: float = 20.0) -> bool:
     """Is this DOI registered, independently of whether the publisher serves it?"""
     try:
+        # Crossref's polite pool asks for a contact address. None is written
+        # into the code: set FALCONAGE_CONTACT to one if you want to give it.
+        import os
+        contact = os.environ.get("FALCONAGE_CONTACT", "").strip()
+        agent = "falconage-overlap/1.0" + (f" (mailto:{contact})" if contact else "")
         req = urllib.request.Request(
             f"https://api.crossref.org/works/{doi}",
-            headers={"User-Agent": "falconage-overlap/1.0 (mailto:bhunakun@uni-bonn.de)"})
+            headers={"User-Agent": agent})
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return r.status == 200
     except Exception:  # noqa: BLE001

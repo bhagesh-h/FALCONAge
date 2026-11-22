@@ -13,7 +13,7 @@ from dataclasses import dataclass, field, replace
 import numpy as np
 import pandas as pd
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError
 from ..registry.registry import Clock
 from . import ops
@@ -100,8 +100,7 @@ def align(data, features: list[str], *, imputation: str = "reference",
     # One reindex, not a loop over features. The obvious per-feature
     # `X.iloc[:, i]` costs a pandas indexing call each time: profiling a
     # 4096-sample, eight-clock run showed 2,666 of them consuming 76% of the
-    # total, against 0.5% for the arithmetic they fed. That is also why the GPU
-    # looked barely worth using -- the device was never the bottleneck.
+    # total, against 0.5% for the arithmetic they fed.
     #
     # reindex yields an all-NaN column for a feature the data lacks, which is
     # exactly the representation the imputation step below already expects.
@@ -221,7 +220,7 @@ class LinearClock:
                 f"{self.clock.id}: {len(self.features)} features but "
                 f"{len(self.coefficients)} coefficients")
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         steps = tuple(self.clock.preprocess)
         whole = [s for s in steps if s.get("op") in ops.DATASET_PREPROCESS]

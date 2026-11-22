@@ -14,7 +14,7 @@
 #   2. r-universe -- no gatekeeper, one packages.json in a <user>.r-universe.dev
 #      repository, and R users get install.packages() with binaries for Windows,
 #      macOS and Linux. Nothing in this workflow is needed for it, which is why
-#      it is documented in PUBLISHING.md rather than automated here.
+#      it is documented in .github/PUBLISHING.md rather than automated here.
 #   3. PyPI and CRAN or Bioconductor. PyPI needs a trusted-publisher claim
 #      configured on the project before the job below can be enabled; CRAN and
 #      Bioconductor are human-reviewed submissions that cannot be automated.

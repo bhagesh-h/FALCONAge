@@ -155,7 +155,7 @@ def test_the_mean_form_is_the_mean(registry, rng):
                          coefficients=np.ones(len(feats)), statistic="mean")
     from falconage.core.backend import resolve
 
-    got, _ = m.predict(d, resolve("cpu", None, requires_fp64=False), min_coverage=0.0)
+    got, _ = m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.0)
     assert np.allclose(got.to_numpy(), d.X[feats].to_numpy().mean(axis=1))
 
 
@@ -168,7 +168,7 @@ def test_the_percentile_form_is_taken_across_probes_within_a_sample(registry, rn
                          coefficients=np.ones(len(feats)), statistic="quantile", q=0.95)
     from falconage.core.backend import resolve
 
-    got, _ = m.predict(d, resolve("cpu", None, requires_fp64=False), min_coverage=0.0)
+    got, _ = m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.0)
     want = np.nanquantile(d.X[feats].to_numpy(), 0.95, axis=1)
     assert np.allclose(got.to_numpy(), want)
     # And it is emphatically not the mean.
@@ -183,7 +183,7 @@ def test_the_weighted_form_uses_the_weights(registry, rng):
                          coefficients=w, statistic="weighted_mean")
     from falconage.core.backend import resolve
 
-    got, _ = m.predict(d, resolve("cpu", None, requires_fp64=False), min_coverage=0.0)
+    got, _ = m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.0)
     want = (d.X[feats].to_numpy() * w).sum(axis=1) / w.sum()
     assert np.allclose(got.to_numpy(), want)
 
@@ -196,7 +196,7 @@ def test_the_mean_form_ignores_the_weight_column(registry, rng):
     d = _data(rng, feats)
     from falconage.core.backend import resolve
 
-    spec = resolve("cpu", None, requires_fp64=False)
+    spec = resolve(None, requires_fp64=False)
     ones = AggregationClock(clock=_clock(registry, "epitoc1"), features=feats,
                             coefficients=np.ones(len(feats)), statistic="mean")
     junk = AggregationClock(clock=_clock(registry, "epitoc1"), features=feats,
@@ -217,7 +217,7 @@ def test_a_partial_probe_set_is_refused(registry, rng):
     from falconage.core.backend import resolve
 
     with pytest.raises(FeatureCoverageError, match="different probe set"):
-        m.predict(d, resolve("cpu", None, requires_fp64=False), min_coverage=0.8)
+        m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.8)
 
 
 def test_a_zero_weight_file_is_refused(registry, rng):
@@ -228,7 +228,7 @@ def test_a_zero_weight_file_is_refused(registry, rng):
     from falconage.core.backend import resolve
 
     with pytest.raises(ScoringError, match="non-zero weights"):
-        m.predict(d, resolve("cpu", None, requires_fp64=False), min_coverage=0.0)
+        m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -287,7 +287,7 @@ def test_an_absent_probe_is_left_out_not_filled(registry, rng, statistic, q):
     m = AggregationClock(clock=_clock(registry, "stemtoc" if q else "epitoc1"),
                          features=feats, coefficients=np.ones(len(feats)),
                          statistic=statistic, q=q)
-    spec = resolve("cpu", None, requires_fp64=False)
+    spec = resolve(None, requires_fp64=False)
     got, al = m.predict(d, spec, min_coverage=0.8)
     obs = X[feats[:90]].to_numpy()
     want = np.nanmean(obs, axis=1) if q is None else np.nanquantile(obs, q, axis=1)

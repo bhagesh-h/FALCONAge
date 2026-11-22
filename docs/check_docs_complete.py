@@ -230,7 +230,7 @@ def main() -> int:
         # committed exactly that way. Two .html files here are genuinely source
         # -- the include-after-body fragments -- so the check is a subtraction
         # rather than a blanket ban.
-        SOURCE_HTML = {"docs/table-scroll.html"}
+        SOURCE_HTML = {"docs/table-scroll.html", "docs/nucleotides.html"}
         try:
             listed = subprocess.run(
                 ["git", "ls-files", "--", "docs/*.html", "docs/guide/*.html"],
@@ -247,34 +247,6 @@ def main() -> int:
                 f"{', '.join(sorted(SOURCE_HTML))} are source. Untrack with "
                 f"`git rm --cached {stray[0]}`.")
 
-    # 9 -- the GPU page's coverage table agrees with the code.
-    #
-    # docs/dev/gpu.qmd tells a reader which model classes `device="cuda"` reaches.
-    # For a year it implied all of them, and three shipping clocks plus two
-    # architectures ignored the device entirely. That was invisible because
-    # nothing tied the sentence to the classes. The declaration is one attribute
-    # now, so the page can be checked against it rather than reviewed.
-    gpu_md = (ROOT / "docs" / "dev" / "gpu.qmd").read_text(encoding="utf-8")
-    classes = {"LinearClock": fa.models.LinearClock,
-               "PCLinearClock": fa.models.PCLinearClock,
-               "AggregationClock": fa.models.AggregationClock,
-               "NeuralClock": fa.models.NeuralClock,
-               "ClinicalClock": fa.models.ClinicalClock}
-    for name, cls in classes.items():
-        row = next((ln for ln in gpu_md.splitlines()
-                    if ln.startswith(f"| `{name}`")), None)
-        if row is None:
-            problems.append(
-                f"docs/dev/gpu.qmd has no coverage row for {name}. A model class a "
-                "reader cannot look up is one they will assume uses the device.")
-            continue
-        says_no = "**no" in row.lower()
-        if says_no != bool(getattr(cls, "CPU_ONLY", False)):
-            problems.append(
-                f"docs/dev/gpu.qmd says {name} "
-                f"{'declines' if says_no else 'reaches'} the device; the class "
-                f"says {'CPU_ONLY' if not says_no else 'it uses the spec'}.")
-
     # 10 -- the architecture page's list of shipped workflows is the real one.
     #
     # Section 12.1 specifies nine workflows and four exist. That is fine and
@@ -287,7 +259,7 @@ def main() -> int:
     # specification table's rows begin "|". That prefix is the whole
     # discrimination, and it is why the two can share a section safely.
     on_disk = {p.name for p in (ROOT / ".github" / "workflows").glob("*.y*ml")}
-    note = ops.split("### 12.1 Workflows")[1].split("### 12.2")[0]
+    note = ops.split("### Workflows")[1].split("### The version guard")[0]
     claimed = set(re.findall(r"^> \| `([A-Za-z0-9_-]+\.ya?ml)` \|", note, re.M))
     if not claimed:
         problems.append(

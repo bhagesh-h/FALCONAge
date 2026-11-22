@@ -50,7 +50,7 @@ pak::pak("bhagesh-h/FALCONAge/r")
 ```{r}
 library(FALCONAge)
 falconage_install()   # creates a managed Python environment; a few minutes
-falconage_config()    # what resolved: versions, devices, registry size
+falconage_config()    # what resolved: versions, registry size
 ```
 
 `falconage_install()` fetches the Python core from the same GitHub tag this package was built
@@ -67,7 +67,6 @@ are usable:
 FALCONAge 1.0.0
   registry     1.1.0 (161 clocks)
   tiers        A 35 ship - B 98 need a traced source - C 28 scaffold only
-  devices      cpu
 ```
 
 ## Scoring
@@ -87,7 +86,7 @@ request should never be dropped quietly.
 
 ```{r}
 coverage(res)     # per-clock feature coverage and skip reasons
-manifest(res)     # versions, device, and the SHA-256 of every coefficient file used
+manifest(res)     # versions, precision, and the SHA-256 of every coefficient file used
 ```
 
 ## Age acceleration, and which convention you mean

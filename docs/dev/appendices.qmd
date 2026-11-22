@@ -412,7 +412,7 @@ registry.
 
 ### Postprocess (runs on the scalar model output)
 
-Listed in the transform table in §4.20. Fifteen distinct forms, of which `identity`,
+Listed in the transform table in [Transform reference table](../methods/formulas.qmd). Fifteen distinct forms, of which `identity`,
 `anti_log_linear` and `cox_to_years` cover the large majority.
 
 ### What FALCONAge implements of this

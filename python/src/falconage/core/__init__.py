@@ -1,6 +1,6 @@
-"""Device resolution, the data container, units, config, manifest and errors."""
+"""Precision, the data container, units, config, manifest and errors."""
 
-from .backend import DeviceSpec, describe, resolve, torch_available
+from .backend import ComputeSpec, describe, resolve
 from .config import FalconConfig
 from .container import FalconData
 from .errors import (
@@ -8,7 +8,7 @@ from .errors import (
     ChecksumMismatchError,
     ClockNotFoundError,
     DataError,
-    DeviceError,
+    ConfigError,
     DownloadError,
     FalconError,
     FeatureCoverageError,
@@ -25,10 +25,9 @@ from .manifest import RunManifest, file_sha256
 
 __all__ = [
     "AnalysisError", "ChecksumMismatchError", "ClockNotFoundError", "DataError",
-    "DeviceError", "DeviceSpec", "DownloadError", "FalconConfig", "FalconData",
+    "ComputeSpec", "ConfigError", "DownloadError", "FalconConfig", "FalconData",
     "FalconError", "FeatureCoverageError", "IllegalOperationError", "PlatformError",
     "RegistryError", "RunManifest", "ScoringError", "UnitConversionError",
     "UnitsNotDeclaredError", "WarningCollector", "WeightsUnavailableError",
     "configure", "describe", "file_sha256", "get_logger", "quiet", "resolve",
-    "torch_available",
 ]

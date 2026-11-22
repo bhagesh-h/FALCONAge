@@ -38,7 +38,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError
 from ..registry.registry import Clock
 from .linear import Alignment, align_present
@@ -160,7 +160,7 @@ class PaceClock:
     clock: Clock
     model: PaceModel
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         # The authors' own threshold, not FALCONAge's floor: 0.7 on EPIC v2.
         proportion = 0.7 if data.platform == "EPICv2" else 0.8

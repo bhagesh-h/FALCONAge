@@ -20,11 +20,7 @@ perturbs a component slightly instead of removing a term outright.
 
 WHAT THIS COSTS, AND WHY IT MATTERS HERE. The rotation is the model. PCHorvath1
 carries 78,464 CpGs against Horvath2013's 353, and the matrices run from 78 MB
-to about 1.2 GB. That is two things at once: the first architecture in this
-package where a GPU should actually earn its transfer cost (see docs/dev/gpu.qmd,
-where the shipping clocks are *slower* on CUDA because a 2,340-feature matmul is
-a rounding error next to the alignment that feeds it), and the reason a
-coefficient CSV cannot express one.
+to about 1.2 GB, which is the reason a coefficient CSV cannot express one.
 
 STATUS. The architecture is implemented and tested against synthetic rotations.
 No PC clock ships coefficients: the published rotations are research-use-only
@@ -39,7 +35,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError, RegistryError
 from ..registry.registry import Clock
 from . import ops
@@ -109,7 +105,7 @@ class PCLinearClock:
     clock: Clock
     rotation: PCRotation
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         feats = self.rotation.features
         al = align(data, feats, imputation=imputation)

@@ -24,7 +24,6 @@ clocks from `CalcAllPCClocks.RData` (`import_pc_clocks(path)`).
 
 ## Training targets, and what a score means
 
-![Three quantities that all get called "biological age", and the units that keep them apart](../images/three-quantities.png)
 
 Chronological age is elapsed time, and it is known without measuring anything. Biological age is
 an estimate of how worn a body is for that elapsed time. Pace of aging is a rate, years of wear
@@ -61,7 +60,6 @@ Reporting all six as "biological age" discards the information needed to interpr
 
 ## Scale types and permitted operations
 
-![Six of the nine scales, and the four operations most often applied to them without checking](../images/scale-types-and-legal-operations.png)
 
 Reading down the acceleration column is the shortest statement of the problem. Only an age in
 years with a fixed origin admits it. A pace is already a rate, a division count is not elapsed
@@ -101,12 +99,12 @@ pace_ratio (biological years per chronological year).
   error, not a conservative choice.
 ```
 
-## 8. Output types and units
+## Output types and units
 
 A tool that returns a bare number is dangerous. Every prediction needs at least six attached
 fields.
 
-### 8.1 The output record
+### The output record
 
 `res.long()` returns one row per sample per clock:
 
@@ -117,10 +115,10 @@ coverage, mass_coverage, n_imputed, availability, registry_version, falconage_ve
 
 Acceleration is computed separately (`fa.acceleration`, with the convention recorded), the
 missing features and the fill used are in `res.coverage`, and the coefficient files' SHA-256,
-the device and the package versions are in `res.manifest`. pyaging writes the value into
+the precision and the package versions are in `res.manifest`. pyaging writes the value into
 `adata.obs[clock]` and its metadata and missingness into `adata.uns`.
 
-### 8.2 Scale types and what you may do with them
+### Scale types and what you may do with them
 
 | Scale type | Example clocks | Legal operations |
 |---|---|---|
@@ -161,7 +159,7 @@ filled by the dataset's mean its median was 0.38. The authors' own `PoAmProjecto
 absent probe with its Dunedin cohort mean, which gives 0.85 on the same data. FALCONAge now fills
 from those means too.
 
-### 8.3 Aggregate outputs
+### Aggregate outputs
 
 FALCONAge returns the first, second and last of these; the composite score and the per-system
 profile are not built.

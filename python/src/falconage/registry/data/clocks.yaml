@@ -5279,8 +5279,8 @@ clocks:
     doi: "https://doi.org/10.1186/s13073-019-0667-1"
     notes: "High-dimensional chronological-age predictor using best linear unbiased prediction across the full quality-controlled set of 319,607 methylation probes."
     coefficient_source:
-      file: "coefficients/zhangblup.csv"
-      sha256: "8d3dca6222c40ce95f022a0f4176fa643d43d875d68ac83198fdedcd725a8858"
+      file: "coefficients/zhangblup.csv.gz"
+      sha256: "b43eb6873024cad7296c860cd16a4d081adfc3c91d670117f720ace6f1b0a4c0"
       provenance: "Zhang et al. 2019, authors' repository qzhang314/DNAm-based-age-predictor, blup.coef at commit 18f20a4; identical to this file, intercept included"
       primary_source_traced: true
       redistributable: true

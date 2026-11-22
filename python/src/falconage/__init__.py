@@ -70,6 +70,10 @@ from .disorder import drift, entropy, noise_barometer, variable_sites
 from .immune import repertoire_diversity, simulate_clonality
 from .models.single_cell import mosaic
 from .analysis.elasticnet import fit_clock
+from .analysis.learners import compare_learners
+from .analysis.stacking import stack_clocks
+from .registry import add_clock
+from .demo import demo_data
 from .models.clinical import blood_count_ratios
 from .registry import coefficient_mass
 from .score import FalconResult, combine, score
@@ -79,7 +83,7 @@ from .uncertainty import (conformal_interval, icc_from_replicates, interval,
 __all__ = [
     "FalconConfig", "FalconData", "FalconError", "FalconResult", "REGISTRY_VERSION",
     "RunManifest", "WeightsUnavailableError", "__version__", "acceleration",
-    "apply_batch_reference", "cell_composition", "fit_batch_reference",
+    "add_clock", "apply_batch_reference", "cell_composition", "compare_learners", "demo_data", "fit_batch_reference",
     "idat_to_betas", "read_idat_dir",
     "agreement", "analysis", "associate", "combine", "configure",
     "conformal_interval", "consensus",
@@ -97,25 +101,28 @@ __all__ = [
     "report",
     "read_clinical", "read_nightingale", "read_panel",
     "read_rrbs_dir", "read_series_matrix", "registry", "run_benchmark", "score",
+    "stack_clocks",
     "technical_se", "uncertainty",
     "write_results",
 ]
 
 
 def config() -> dict:
-    """What this installation resolved to: versions, devices, registry size.
+    """What this installation resolved to: versions, registry size.
 
     Backs ``falconage config`` and ``FALCONAge::falconage_config()``; the same
     dict crosses the reticulate bridge, so both languages report identically.
     """
     reg = registry.load()
-    tiers = {t: len(reg.filter(availability=t))
+    shipped = [c for c in reg if c.origin == "registry"]
+    tiers = {t: sum(c.availability == t for c in shipped)
              for t in ("bundled", "untraced", "licensed")}
     return {
         "falconage": __version__,
         "registry_version": reg.version,
         "registry_path": str(reg.path),
-        "n_clocks": len(reg),
+        "n_clocks": len(shipped),
+        "user_clocks": sorted(c.id for c in reg if c.origin == "user"),
         "clocks_by_availability": tiers,
         "runnable_offline": tiers["bundled"],
         **describe(),

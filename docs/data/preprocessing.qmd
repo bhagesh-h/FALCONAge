@@ -2,9 +2,9 @@
 title: "Preprocessing, imputation and coverage"
 ---
 
-## 6. Preprocessing, imputation, missing features
+## Preprocessing, imputation, missing features
 
-### 6.1 The canonical input contract
+### The canonical input contract
 
 Rows = samples, columns = features. This is the pyaging convention and it should be the new
 tool's too. Feature names must be the exact identifiers the clock coefficients use:
@@ -16,18 +16,17 @@ and later the predictions, `adata.uns` holds per-clock metadata and missingness 
 `adata.obsm["X_<clock>"]` is the transient per-clock feature slice
 ([pyaging _pred.py](https://github.com/lucascamillomd/pyaging)).
 
-### 6.2 EPIC v2 probe aggregation
+### EPIC v2 probe aggregation
 
 EPIC v2 column names look like `cg00000029_TC21`. Split on `_`, group by CpG prefix, and average
 duplicated probes before anything else
 ([pyaging `epicv2_probe_aggregation`](https://github.com/lucascamillomd/pyaging)).
 Skipping this means every EPIC v2 clock silently sees zero overlapping features.
 
-### 6.3 Two distinct imputation stages
+### Two distinct imputation stages
 
 **Stage 1 - dataset-level, before the clock.** `df_to_adata(imputer_strategy=...)` with `mean`,
-`median`, `constant` (0), or `knn` (default). KNN is expensive on wide matrices and is the first
-thing to move to GPU.
+`median`, `constant` (0), or `knn` (default). KNN is expensive on wide matrices.
 
 **Stage 2 - clock-level, for features the dataset does not contain at all.** pyaging preallocates
 the clock's feature matrix, fills present features by index lookup, and fills absent features with
@@ -63,21 +62,12 @@ packages differ by a constant
 where `w_j` is the coefficient and `f_j`, `g_j` are the two fills. For Horvath's clocks the
 constant is multiplied by 21 above the adult age of 20, where the anti-log transform is linear.
 
-Measured on 858 EPIC v1 whole-blood samples from one cohort, on QC-filtered betas, FALCONAge minus
-each package:
-
-| Clock | Absent CpGs | vs methylclock 1.16.0 | vs dnaMethyAge 0.2.0 | After matching the fill |
-|---|---:|---:|---:|---:|
-| DNAm PhenoAge | 13 | −0.50 y | −2.87 y | 0.0000 y |
-| Horvath 2013 | 27 | −8.61 y | −6.86 y | 0.0000 y |
-| Hannum | 9 | +11.57 y | −1.39 y | 0.0000 y |
-| Skin & Blood | 12 | −2.01 y | not run | 0.0000 y |
-
-With the absent CpGs filled as the other package fills them, FALCONAge reproduces every sample's
-score from each package it was compared with, to four decimal places. The coefficients and intercepts agree (DNAm
-PhenoAge's 60.664 is in all three), and the whole offset is the fill. The same betas can therefore
-put Hannum ages 13 years apart in two established packages with no disagreement about the clock.
-The offsets belong to a dataset's missing CpGs, not to the clocks, so the registry does not carry
+On a dataset that lacks some of a clock's CpGs, the packages in circulation fill them
+differently (methylclock and dnaMethyAge among them), and that alone can move the same clock's age
+by several years between packages that agree on every coefficient and intercept. Given identical
+complete input there is no difference to explain: the conformance suite in `test/conformance/`
+scores 75 clock-package pairs on the same filled matrix, and every difference left over is traced
+to a coefficient copy that departs from its primary source. The offsets belong to a dataset's missing CpGs, not to the clocks, so the registry does not carry
 them as per-clock discrepancies. The coverage record (`res.coverage[clock_id]`) gives the number
 of values filled (`n_imputed`) and the method (`imputation`). Neither 0 nor a pooled mean is a published value for a CpG, which is why a
 per-CpG reference from each clock's own training data is the better fill.
@@ -89,11 +79,8 @@ in Additional file 22 ([Genome Biology, CC BY 2.0](https://doi.org/10.1186/gb-20
 after absent probes are set to those means. dnaMethyAge 0.2.0 runs it by default for
 `HorvathS2013` (`simple_mode = TRUE` skips it), methylclock 1.16.0 does not (`normalize = FALSE`),
 and FALCONAge offers it as an opt-in step, `fa.preprocess.horvath_normalise()` (R:
-`horvath_normalise()`). Run unmodified on 120 of the same EPIC v1 blood samples, it
-lowered Horvath 2013 age by a mean 1.87 years (SD 1.15 across samples, −4.6 to +3.3) and left the
-correlation with chronological age at 0.89; raw and normalised ages correlated at 0.9993. The step
-moves the level and barely the ranking, so a comparison across packages has to say whether it
-ran.
+`horvath_normalise()`). The step mostly moves the level of Horvath 2013 age rather than the
+ranking of samples, so a comparison across packages has to say whether it ran.
 
 `horvath_normalise()` is a port of `BMIQcalibration`. The R code fits its beta mixtures on
 20,000 probes drawn by `set.seed(1); sample(...)` and stops its optimisers early (Nelder-Mead
@@ -114,7 +101,7 @@ is their k-nearest-neighbour imputation of 51 missing values. Only the 21,368 go
 are changed, and a missing value is set to its gold-standard value first, as Horvath's code does
 for a single sample; both counts are recorded in `uns["horvath_normalisation"]`.
 
-### 6.4 Imputation options used for benchmarking
+### Imputation options used for benchmarking
 
 ComputAge exposes three and treats the choice as part of the model config
 ([ComputAge benchmarking.py:323](https://github.com/ComputationalAgingLab/ComputAge)):
@@ -125,7 +112,7 @@ ComputAge exposes three and treats the choice as part of the model config
 
 Reporting the imputation method alongside a score is not optional; it changes the answer.
 
-### 6.5 Preprocessing steps that live inside a model
+### Preprocessing steps that live inside a model
 
 These are per-clock and must run *after* feature selection, not before:
 
@@ -179,7 +166,7 @@ Three rows of the table for the EPIC v2 series in the test corpus (GSE330325). `
 has nine of its ten CpGs, 90% by count, and the one it lacks carries 23% of its weight.
 
 `bias_years` is filled in when the platform is one the shift has been measured on; see
-[what probe loss costs](../analysis/uncertainty.qmd#probe-loss-priced). `NaN` there means *not measured*, never
+[what probe loss costs](../methods/uncertainty.qmd#probe-loss-priced). `NaN` there means *not measured*, never
 *no bias*.
 
 A clock at 96% feature coverage and 61% weight coverage has kept nearly all its probes and lost

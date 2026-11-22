@@ -1,0 +1,60 @@
+---
+title: "Downstream statistics on an aging score"
+subtitle: "Association, mortality, morbidity, group comparison and reliability"
+---
+
+### Association with chronological age
+
+Pearson r, Spearman ρ, MAE, MedAE, RMSE, and the regression slope of BA on CA. The slope is the
+diagnostic: penalised regression compresses predictions toward the training mean, so slopes < 1
+are normal and produce the well-documented systematic underestimation in older subjects. Report
+the slope, not just r.
+
+### Mortality
+
+Cox proportional hazards with the standardised score plus CA and sex as covariates:
+
+```r
+coxph(Surv(time, status) ~ scale(BA_advance) + age + gender, data)
+```
+
+Report the HR per SD with 95% CI. BioAge standardises the advance within sex so the effect size
+means "one sex-specific SD of biological age advancement"
+([BioAge table_surv.R](https://github.com/dayoonkwon/BioAge)). Observed HRs from BioAge's NHANES IV
+tables run 1.21–1.61 per SD across measures and subgroups, with KDM advance, PhenoAge advance and
+homeostatic dysregulation broadly comparable
+([BioAge README](https://github.com/dayoonkwon/BioAge)).
+
+Additional model families worth supporting: time-dependent ROC/AUC, Harrell's C-index, competing
+risks (Fine–Gray), and SuperLearner ensembles with out-of-fold predictions (the
+TwinGene/UK Biobank pipeline uses 10-fold CV, optionally repeated across seeds).
+
+### Morbidity and phenotype
+
+Logistic or Poisson models for prevalent and incident disease; multimorbidity counts; frailty
+index; intrinsic capacity; grip strength and gait speed; cognitive scores. Interaction tests for
+BA × (BMI, sex, smoking, education) are standard in the epidemiological literature.
+
+### Group comparison and intervention response
+
+The ComputAgeBench formulation, which is the cleanest published statement of the problem
+([ComputAge benchmarking.py:339–397](https://github.com/ComputationalAgingLab/ComputAge)):
+
+- **AA2**: is the age acceleration in an aging-accelerating condition (AAC) cohort greater than
+  in healthy controls from the same study? One-sided Welch's t-test if Δ is assumed normal, else
+  one-sided Mann–Whitney U.
+- **AA1**: is the age acceleration in an AAC cohort greater than zero, with no control group?
+  One-sided one-sample t-test, else one-sided Wilcoxon signed-rank.
+- Benjamini–Hochberg FDR correction is applied **per model across datasets**, then thresholded at
+  0.05.
+
+For paired intervention designs, use paired tests on within-subject deltas and report both the
+absolute change and the change relative to the measurement's own ICC.
+
+### Reliability
+
+Intraclass correlation coefficient on technical replicates (same DNA, two arrays) and on
+biological replicates (same person, short interval). Pool across studies with Fisher-Z. The
+result to remember is from Sehgal et al. (bioRxiv 2025.10.13.682176), on the TranslAGE platform: **technical reproducibility does not predict
+biological reliability**, and PCGrimAge was the only clock reaching ICC > 0.75 for biological
+reliability. A tool should surface each clock's published ICC next to its prediction.

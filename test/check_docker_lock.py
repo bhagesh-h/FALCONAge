@@ -3,10 +3,9 @@
 
 WHY THIS EXISTS. ``uv.lock`` carries a ``revision`` field, and a uv older than
 the one that wrote it refuses the whole file: ``Failed to parse `uv.lock` ``,
-a TOML parse error, and a build that dies at the dependency layer. Both images
+a TOML parse error, and a build that dies at the dependency layer. The image
 pinned ``uv==0.5.18`` while the lock moved to revision 3, so from some
-regeneration onward neither ``docker/Dockerfile.cpu`` nor
-``docker/Dockerfile.cuda`` built at all. Six minutes of build time to find out,
+regeneration onward ``docker/Dockerfile.cpu`` did not build at all. Six minutes of build time to find out,
 and the first instruction in ``README.md`` is one of those builds.
 
 Nothing caught it. There is no workflow that builds an image, and the two
@@ -14,8 +13,7 @@ images that existed locally had been built when the lock was older. A stale
 artefact hides the breakage that would have produced it.
 
 WHAT THIS CHECKS, AND WHAT IT CANNOT. It compares the pinned uv against a
-recorded floor per lock revision, and asserts both Dockerfiles agree on the
-pin. It does not run uv, so it cannot discover the floor for a revision nobody
+recorded floor per lock revision, and reads the pin from the Dockerfile. It does not run uv, so it cannot discover the floor for a revision nobody
 has tested: a new revision fails here with instructions rather than passing
 silently, which is the right way round. Finding the floor is one command, and
 it is in the failure message.
@@ -33,7 +31,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "python" / "uv.lock"
-DOCKERFILES = ("docker/Dockerfile.cpu", "docker/Dockerfile.cuda")
+DOCKERFILES = ("docker/Dockerfile.cpu",)
 
 #: lock ``revision`` -> the oldest uv that can read it, measured rather than
 #: read off a changelog. Revision 3: 0.5.18 fails, 0.6.17 succeeds, and 0.6.17
@@ -84,7 +82,7 @@ def main() -> int:
             f"        'pip install -q uv==X.Y.Z && uv export --frozen "
             f"--no-dev --no-emit-project \\\n"
             f"         --extra methylation --extra plot --extra anndata "
-            f"--extra cli --format requirements-txt >/dev/null'")
+            f"--format requirements-txt >/dev/null'")
     else:
         for rel, pin in pins.items():
             if _parts(pin) < floor:

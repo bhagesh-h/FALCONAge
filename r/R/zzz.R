@@ -12,8 +12,7 @@
   defaults <- list(
     # Mirrors FALCONAGE_VERBOSE on the Python side, so a script translated
     # between the languages behaves the same way.
-    falconage.verbose = Sys.getenv("FALCONAGE_VERBOSE", "inform"),
-    falconage.device  = Sys.getenv("FALCONAGE_DEVICE", "auto")
+    falconage.verbose = Sys.getenv("FALCONAGE_VERBOSE", "inform")
   )
   toset <- !(names(defaults) %in% names(op))
   if (any(toset)) options(defaults[toset])

@@ -8,7 +8,6 @@ aliases:
 There is no best clock. There is a clock that answers the question you asked, and a much larger
 number that answer a different one in the same units.
 
-![Five generations of clock, and what the output of each one actually is](../images/clock-generations.png)
 
 The generations are not successive improvements on one measurement. Each was trained against a
 different target, so each returns a different quantity: a predicted age whose signal is the
@@ -112,7 +111,6 @@ fa.probe_loss(d, clocks="scoreable")
 #> horvath2013   coverage 0.9632   mass_coverage 0.6117   cg16867657 (14.1%), ...
 ```
 
-![Horvath 2013 on one EPIC v2 array: probes present against model weight present](../images/coverage-vs-coefficient-mass.png)
 
 Ninety-six per cent of probes present, sixty-one per cent of the model. The scoring floor applies
 to both, so this is refused with the heaviest absent probes named rather than scored into a
@@ -120,7 +118,7 @@ confident number. The gap opens because elastic-net coefficients are far from un
 of probes carry a disproportionate share of the total weight, and losing four per cent of the
 probes loses thirty-five per cent of the model when the missing four per cent are those.
 
-→ [The science, §19.5](../analysis/uncertainty.qmd#probe-loss-priced) prices the same loss in years, per clock
+→ [Probe loss, priced](../methods/uncertainty.qmd#probe-loss-priced) prices the same loss in years, per clock
 per platform, and explains why the PC clocks barely move where first-generation clocks shift by
 double digits.
 
@@ -138,7 +136,7 @@ often used to claim an intervention worked. `res.interpretation()` carries both 
 `None` meaning "not established" rather than "fine".
 
 **The rule:** measuring change within a person, prefer a clock with a published biological ICC, or
-a principal-component version. → [The science, §17.7](../methods/failure-modes.qmd#reliability-and-why-it-governs-everything-above).
+a principal-component version. → [Reliability, and why it governs everything above](discrepancies.qmd).
 
 ### Measure it on your own cohort
 
@@ -160,7 +158,7 @@ se.diagnostics[["median_se", "se_over_sd", "implied_cohort_icc"]]
 For scale: on this package's test corpus Horvath 2013 comes out at ±1.58 years, DunedinPoAm38 is
 least repeatable at 0.72, and the 319,607-probe BLUP clock reaches 1.00. With technical duplicates,
 `fa.icc_from_replicates(data, "subject")` replaces the published per-probe table with your own
-plates. → [The science, §19.2](../analysis/uncertainty.qmd#propagating-measurement-error) for the propagation
+plates. → [Propagating measurement error](../methods/uncertainty.qmd#propagating-measurement-error) for the propagation
 itself.
 
 ### Then ask how many samples you need
@@ -174,7 +172,6 @@ says so. It refuses to default the standard deviation, because n scales with its
 
 ## Specimen type
 
-![The same 91 donors, scored from saliva and from buffy coat](../images/tissue-mismatch.png)
 
 Saliva clock ages ran **3.83–16.46 years above buffy coat in the same 91 people**, while still
 correlating with them at Spearman 0.45–0.69. A correlation check passes and the output is a decade
@@ -188,7 +185,7 @@ clock was fitted on. Pan-tissue clocks say nothing, most warn with the measured 
 twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
 warning saying the check did not run.
 
-→ [The science, §19.4](../analysis/uncertainty.qmd#specimen-type-is-not-metadata) for the twelve refusals and
+→ [Specimen type is not metadata](../methods/uncertainty.qmd#specimen-type-is-not-metadata) for the twelve refusals and
 the measurements behind each. Reliability, technical against biological, is [[39]](../references.qmd#ref-39).
 
 ## Availability
@@ -260,3 +257,53 @@ score(d, clocks = "grimage2")
 ```
 
 :::
+
+## Which clocks were trained on data like mine
+
+[`overlap.csv`](overlap.csv) is one row per clock, 39 columns, built to answer the question the
+catalogue answers backwards: *which clocks were fitted on the kind of data I have?*
+
+```python
+import pandas as pd
+
+d = pd.read_csv("https://bhagesh-h.github.io/FALCONAge/clocks/overlap.csv")
+d[(d.tissue_class == "whole_blood")
+  & (d.species == "Homo sapiens")
+  & (d.population_class.isin(["adults", "older_adults"]))
+  & (d.target_class == "chronological_age")
+  & (d.ships_coefficients == "yes")][["clock_id", "n_features", "verify_url"]]
+```
+
+Read it with a CSV parser rather than `awk -F,` or `cut`: citations and several
+metadata fields contain commas, so a naive split silently shifts the columns.
+
+[`overlap_col_desc.csv`](overlap_col_desc.csv) is the data dictionary: one row per column with its
+description, where the value came from, its closed vocabulary where it has one, how many cells are
+blank, and **what a blank means**. Five columns use an empty cell to carry information, and in
+each case the wrong reading is the plausible one: a blank `feature_overlap_jaccard` means the
+features are not distributed, not that the overlap is zero, and a blank `training_cohort_note`
+means nothing was written down, not that the cohort was healthy. Both files are generated
+together, and a test asserts the dictionary describes exactly the columns the table has.
+
+`tissue_class`, `population_class` and `target_class` are coarsenings of the registry's own
+vocabulary, with the raw value kept beside each one. `profile_key` groups clocks fitted on the same
+kind of data, and `peers_same_profile` names them.
+
+Two senses of overlap are in the file. **Training overlap** is registry metadata and exact.
+**Feature overlap** is the literal shared CpGs between two clocks as a Jaccard index, computable
+for the clocks that ship coefficients; the rest are blank rather than zero, because *shares no
+CpGs* and *we cannot see this clock's CpGs* are different facts. Nearby clocks come out where they
+should: `leerobust` and `leerefinedrobust` share 395 probes at J = 0.71.
+
+Every row carries a `verify_url`, and every one is checked. 66 clocks are cross-referenced against
+[TranslAGE](https://www.translage.io), [biolearn](https://github.com/bio-learn/biolearn) and
+[methylCIPHER](https://github.com/HigginsChenLab/methylCIPHER), so the training target can be
+checked against someone who is not us.
+
+**One column is deliberately absent.** Health status of the training cohort is not a registry
+field and is not recoverable from one: 4 of 178 entries mention it in free text. There is no
+"trained on healthy individuals" column, because the honest value for nearly every row would be
+*unstated*. `target_class == disease` identifies the clocks fitted on a disease endpoint, which is
+the part that is knowable; for the rest, read the paper behind `verify_url`.
+
+Regenerate with `python python/tools/build_overlap.py --check-urls`.

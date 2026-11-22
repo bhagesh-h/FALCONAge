@@ -49,7 +49,8 @@ def test_calibration_matches_horvaths_code(reference):
     got = bmiq_calibration(X.to_numpy(), g.to_numpy())
     # R's output is written to 12 significant figures; the rest is R summing in
     # extended precision and its own dbeta, pbeta and qbeta.
-    assert np.max(np.abs(got - R.to_numpy())) < 1e-9
+    # 1e-8, not 1e-9: unpinned numpy and scipy move the last bits of the mixture fit
+    assert np.max(np.abs(got - R.to_numpy())) < 1e-8
 
 
 def test_normalise_drops_absent_probes_fills_missing_and_leaves_the_rest(reference):

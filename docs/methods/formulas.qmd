@@ -2,9 +2,9 @@
 title: "Published formulas and constants"
 ---
 
-## 5. Exact published formulas and constants
+## Exact published formulas and constants
 
-### 5.1 PhenoAge (Levine 2018), clinical-biomarker version
+### PhenoAge (Levine 2018), clinical-biomarker version
 
 The paper prints the model to four decimals in Table 1 and Supplementary Table S1, with γ and the
 inversion to years in Supplement 1. BioAge carries the same fit at full precision. **Both are in
@@ -84,9 +84,9 @@ the paper, records BioAge's choice as a known discrepancy, and offers
 to predict the clinical PhenoAge. pyaging exposes both, `phenoage` (clinical, blood chemistry)
 and `dnamphenoage` (methylation).
 
-### 5.2 pyaging generalised PhenoAge postprocess
+### pyaging generalised PhenoAge postprocess
 
-The torch implementation with λ = 0.0192 (pyaging's `PhenoAge.postprocess` in
+pyaging's implementation with λ = 0.0192 (pyaging's `PhenoAge.postprocess` in
 [`src/pyaging/models/_models.py`](https://github.com/lucascamillomd/pyaging), commit `e7267e9`):
 
 ```
@@ -94,7 +94,7 @@ mortality = 1 − exp( −exp(x) · (exp(120λ) − 1) / λ )
 age       = 141.50225 + ln( −0.00553 · ln(1 − mortality) ) / 0.090165
 ```
 
-### 5.3 BiT age (*C. elegans*) second correction
+### BiT age (*C. elegans*) second correction
 
 The published biological ages are rescaled to account for truncation of the lifespan distribution.
 With median lifespan 372 h (15.5 d) and SD 192/3 h (8/3 d)
@@ -108,10 +108,10 @@ Lifespan fold-change with error propagation uses `uncertainties.ufloat` with a 5
 bias and 0.5 d age-reporting bias; biological age is rescaled as
 `chronological_age × 15.5 / reported_median_lifespan`.
 
-### 5.4 Zhang 2019 predictors
+### Zhang 2019 predictors
 
 514 elastic-net probes or 319,607 BLUP probes, trained on 13,566 samples. Per-sample z-scoring of
-probes is mandatory (§4.1). Missing values are filled with the per-probe mean across individuals;
+probes is mandatory ([Penalised linear regression, the field's default](formulas.qmd)). Missing values are filled with the per-probe mean across individuals;
 probes that are NA across all individuals are dropped
 ([DNAm-based-age-predictor pred.R](https://github.com/qzhang314/DNAm-based-age-predictor)). BLUP degrades more gracefully with
 missing probes than EN. RMSE reported as 2.04 y, the most accurate chronological clock, and the

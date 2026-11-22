@@ -25,7 +25,7 @@ take them, because each step is only as reliable as the ones before it:
 
 | Step | What it holds |
 |---|---|
-| 0. Provenance | versions, the coefficient file and SHA-256 behind each clock, device, warnings |
+| 0. Provenance | versions, the coefficient file and SHA-256 behind each clock, precision, warnings |
 | 1. Input and quality control | per-sample missingness and beta distribution; the QC figures |
 | 2. Coverage | per-clock coverage by feature count and by coefficient weight; clocks not scored, and why |
 | 3. Scores | the scores, what each category of clock measures, and how the clocks relate |
@@ -79,9 +79,9 @@ Where Quarto is installed, `run_report()` renders it directly, and `quarto_repor
 (R) or `fa.report.write_quarto_report("results/", render=True)` (Python) rewrites the report for
 a directory that already exists.
 
-## 10. Plots
+## Plots
 
-### 10.1 The standard set
+### The standard set
 
 1. **BA vs CA scatter, faceted by clock, coloured by sex**, with a fitted line, the identity line,
    and Pearson r annotated in the corner. This is `plot_ba`
@@ -121,7 +121,7 @@ a directory that already exists.
 14. **Missingness bar chart** per clock, percent of features absent, drawn before the results so
     the user sees which clocks are untrustworthy for their platform.
 
-### 10.2 Plotting conventions worth adopting
+### Plotting conventions worth adopting
 
 - Always draw the identity line on BA-vs-CA plots.
 - Never plot rate clocks (DunedinPACE) on the same axis as age clocks.
@@ -129,14 +129,14 @@ a directory that already exists.
 - Annotate every panel with n, r and the missingness fraction.
 - Colour by group, shape by platform; keep the palette stable across the whole report.
 
-### 10.3 What FALCONAge draws, and against which of the above
+### What FALCONAge draws, and against which of the above
 
 Thirty-one figures in Python, twenty of them also in R, drawn alike because both languages read
 their colours, titles, subtitles and one-line descriptions from the same `colorscheme.yaml`. The
 table lists those that answer the principles above; the [gallery](figures.qmd) shows every one. Every function returns its
 data frame as well as its figure, which is how two rendering engines draw the same numbers.
 
-| Figure | Answers | From §10.1 |
+| Figure | Answers | From [The standard set](#the-standard-set) |
 |---|---|---|
 | `ba_vs_ca` | does this clock track age here, and with what bias | 1 |
 | `bland_altman` | is the error age-dependent (regression dilution made visible) | - |

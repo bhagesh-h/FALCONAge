@@ -108,7 +108,6 @@ def metabohealth(X: pd.DataFrame) -> pd.Series:
 class MetabolomicsClock:
     """The two NMR scores behind the formula interface the clinical clocks use."""
 
-    CPU_ONLY = True
 
     clock: object
 

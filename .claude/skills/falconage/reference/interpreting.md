@@ -7,7 +7,7 @@ res.scores            # samples x clocks
 res.long()            # one row per sample per clock, carrying the scale
 res.coverage          # per clock: feature coverage, mass coverage, skip reason
 res.interpretation()  # scale, unit, legal operations, reliability, caveats
-res.manifest          # versions, device, SHA-256 of every coefficient file, every warning
+res.manifest          # versions, precision, SHA-256 of every coefficient file, every warning
 ```
 
 Read `coverage` before `scores`. A clock absent from the table was refused, and the reason is
@@ -63,7 +63,7 @@ square, so a guessed SD is a guessed answer printed to three significant figures
 | A cohort-centred clock given one sample | Centring one row against itself zeroes every feature; the model returns its intercept for anybody. |
 | `predicted − chronological` on DamAge or AdaptAge | Slope against age is 0.967, but the offset swings 162 years between cohorts against Horvath's 15. |
 | A clock below the coverage **or** the coefficient-mass floor | 96% of probes present can be 61% of the model. |
-| A `.pt` file of neural weights | `torch.load` executes arbitrary code while unpickling. Safetensors only. |
+| A `.pt` or pickled file of neural weights | Unpickling a file executes arbitrary code. Safetensors only. |
 | An interval on a clock with no established reliability | It would be invented rather than measured. `None` means "not established", never "fine". |
 
 When a refusal appears, report the reason. Working around it with `min_coverage=0`, by dropping the

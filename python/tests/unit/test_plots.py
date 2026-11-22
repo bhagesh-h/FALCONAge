@@ -238,25 +238,13 @@ def test_volcano_runs_on_a_real_associate_result(synthetic_betas):
     assert len(out) == 3
 
 
-def test_the_two_colorscheme_copies_have_not_drifted():
-    """`colorscheme.yaml` exists twice and nothing kept them in step.
-
-    The repository root copy is the one a user edits and the one the README
-    points at; `plot/colorscheme.yaml` is the one that ships in the wheel and
-    the only one `spec.load()` reads. They were byte-identical and maintained
-    by hand, so adding a plot to the root copy changed nothing at runtime --
-    which is precisely how the volcano plot came to raise KeyError from its own
-    text lookup while the text sat in the file next to it.
-    """
+def test_there_is_one_colorscheme_and_it_is_the_packaged_one():
+    """`colorscheme.yaml` used to exist twice, maintained by hand, and the copy
+    people edited was not the one that loaded. Only the packaged copy exists."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[3] / "colorscheme.yaml"
-    packaged = Path(fa.plot.spec.PACKAGED)
-    assert root.exists(), f"no colour scheme at {root}"
-    assert root.read_bytes() == packaged.read_bytes(), (
-        "colorscheme.yaml and python/src/falconage/plot/colorscheme.yaml have "
-        "drifted. The packaged copy is the one that loads; copy the root one "
-        "over it.")
+    assert not (Path(__file__).resolve().parents[3] / "colorscheme.yaml").exists()
+    assert Path(fa.plot.spec.PACKAGED).is_file()
 
 
 def test_every_plot_function_has_text_defined():

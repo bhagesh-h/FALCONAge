@@ -8,8 +8,6 @@ falconage_install(
   envname = "r-falconage",
   method = c("auto", "virtualenv", "conda"),
   extras = c("methylation", "plot", "anndata"),
-  gpu = FALSE,
-  cuda = "cu124",
   version = NULL,
   ...
 )
@@ -22,20 +20,7 @@ other reticulate project on the machine.}
 
 \item{extras}{Optional extras to install alongside the core.
 \code{"methylation"} adds the parquet reader; \code{"plot"} adds matplotlib;
-\code{"anndata"} adds the \code{.h5ad} reader. Note that \code{"gpu"} is deliberately
-\emph{not} in this list -- see \code{gpu} below.}
-
-\item{gpu}{Install CUDA torch as well. Off by default, and not merely out of
-caution: on the clocks that ship today the GPU is slower than the CPU
-(0.58 s against 3.74 s at 16,384 samples on an RTX 4060), because a linear
-clock over a few thousand features is too small a matrix multiplication to
-pay for the transfer. It earns its place on the PC clocks and on neural
-architectures, none of which are bundled yet.}
-
-\item{cuda}{CUDA version for the torch wheel index, e.g. \code{"cu124"}. The
-\code{gpu} extra alone is not enough: pip's default index serves a CUDA build on
-Linux and a CPU-only build on Windows under the same name, so the wheel has
-to be requested from PyTorch's own index explicitly.}
+\code{"anndata"} adds the \code{.h5ad} reader.}
 
 \item{version}{Git ref to install from. A version number such as \code{"1.0.0"}
 becomes the tag \code{v1.0.0}; anything else -- \code{"main"}, a branch, a commit
@@ -75,7 +60,6 @@ rather than as version skew.
 \dontrun{
 falconage_install()
 falconage_install(extras = c("plot", "anndata"))
-falconage_install(gpu = TRUE, cuda = "cu124")
 falconage_install(version = "main")   # track the development branch
 }
 }

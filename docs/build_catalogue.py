@@ -450,10 +450,10 @@ def render_index() -> str:
     return text[:start] + scale_table() + text[end + len(SCALE_END):]
 
 
-# The known-discrepancy table (science §15.2, now methods/failure-modes.qmd). Hand-written, it listed
+# The known-discrepancy table (clocks/discrepancies.qmd). Hand-written, it listed
 # eleven clocks when the registry carried notes for twenty-two, while the page
 # said the list was generated from the registry. Now it is.
-SCIENCE = HERE / "methods" / "failure-modes.qmd"
+SCIENCE = HERE / "clocks" / "discrepancies.qmd"
 DISC_BEGIN = "<!-- BEGIN GENERATED: discrepancies -->"
 DISC_END = "<!-- END GENERATED: discrepancies -->"
 
@@ -480,11 +480,11 @@ def discrepancy_table() -> str:
 
 
 def render_science() -> str:
-    """docs/methods/failure-modes.qmd with the discrepancy block replaced."""
+    """docs/clocks/discrepancies.qmd with the discrepancy block replaced."""
     text = SCIENCE.read_text(encoding="utf-8")
     start, end = text.find(DISC_BEGIN), text.find(DISC_END)
     if start == -1 or end == -1:
-        raise SystemExit(f"docs/methods/failure-modes.qmd has no {DISC_BEGIN} block")
+        raise SystemExit(f"docs/clocks/discrepancies.qmd has no {DISC_BEGIN} block")
     return text[:start] + discrepancy_table() + text[end + len(DISC_END):]
 
 
@@ -523,7 +523,7 @@ def main(argv=None) -> int:
                   + " is stale; run docs/build_catalogue.py")
             return 1
         print("docs/clocks/catalogue.qmd, meaning.qmd, choosing.qmd and "
-              "docs/methods/failure-modes.qmd are current")
+              "docs/clocks/discrepancies.qmd are current")
         return 0
 
     for p, want in pairs:

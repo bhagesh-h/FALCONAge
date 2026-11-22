@@ -18,7 +18,7 @@ falconage_config()
 A named list, invisibly when printing.
 }
 \description{
-Versions, available compute devices, and the size and version of the clock
+Versions and the size and version of the clock
 registry. The same information \verb{falconage config} prints on the command line
 and \code{falconage.config()} returns in Python -- one function, three surfaces,
 so a bug report from any of them is comparable.

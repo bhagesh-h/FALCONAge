@@ -2,14 +2,13 @@
 title: "4. Algorithms, the complete operation catalogue"
 ---
 
-![The four parts every clock has, and where implementations disagree](../images/clock-anatomy.png)
 
 The shape is the field's, not this package's: the reviews that survey it describe
 the same four parts [[59]](../references.qmd#ref-59) [[60]](../references.qmd#ref-60).
 
 Every clock in the registry is expressible as
 `select features → preprocess ops → architecture forward → postprocess ops`, with ten exceptions
-that need their own forward pass (§4.3). The ops are the vocabulary; implementing all of them is
+that need their own forward pass ([Model classes](#model-classes)). The ops are the vocabulary; implementing all of them is
 what makes adding a clock a YAML edit rather than a code change.
 
 The weights are the part everybody agrees on, because they are published. The
@@ -29,15 +28,12 @@ contradict their own paper carry the discrepancy as a warning at score time.
 > is wrong in a way nobody will notice. They are kept here because the vocabulary is the point:
 > when a coefficient set does arrive, adding the clock stays a registry edit.
 
-## 4.1 Preprocess ops
+## Preprocess ops
 
 `falconage/models/ops.py`, dispatched through `PREPROCESS` and applied by `apply_chain()`.
 
-They are plain functions of `(x, xp, **params)`, not `nn.Module` subclasses as originally
-specified. `xp` is the array module the device resolver handed back, numpy or torch, so one
-implementation serves both backends and the CPU path never imports torch. An `nn.Module` would
-have forced torch on every install for a 500-CpG dot product that numpy finishes before torch has
-finished importing. All are batched and vectorised; none contains a Python loop over samples.
+They are plain functions of `(x, xp, **params)`, where `xp` is numpy, handed over by the
+precision resolver so every op computes at the precision the manifest records. All are batched and vectorised; none contains a Python loop over samples.
 Source for each is
 [Appendix E](appendices.qmd#appendix-e---preprocess-and-postprocess-operation-inventory).
 
@@ -61,7 +57,7 @@ two passes over column blocks that never hold the standardised matrix, and refus
 holds less than `min_coverage` of the 319,607 probes the models were fitted on. The per-sample
 mean and SD of a subset are not the array's. It is the `scale_row` row of the table below, with
 the row statistics taken over the array as the authors' `pred.R` takes them, not over the model's
-inputs; [formulas §5.4](../methods/formulas.qmd#zhang-2019-predictors) gives what the narrower
+inputs; [Zhang 2019 predictors](../methods/formulas.qmd#zhang-2019-predictors) gives what the narrower
 scope does to the elastic-net estimate.
 
 | Op | Computation | Stored params | Clocks |
@@ -86,40 +82,40 @@ Three of these need care.
 
 **`quantile_normalize_gold`.** The DunedinPACE gold standard is 20,000 probes, of which only 173
 are scored; the other 19,827 exist to define the sample's rank distribution
-([the science notes, §4.8](../methods/index.qmd)). Dropping them produces a plausible wrong number, so the op raises
+([DunedinPACE and DunedinPoAm](../methods/formulas.qmd)). Dropping them produces a plausible wrong number, so the op raises
 `FeatureMismatchError` when background coverage falls below a configurable 90%. Vectorised form:
 
 ```python
-sorted_gold = torch.sort(gold)[0]                                  # [20000]
-q_idx = torch.linspace(0, len(sorted_gold) - 1, x.shape[1]).long()
-order = torch.argsort(x, dim=1)                                    # [B, F]
-out = torch.empty_like(x)
-out.scatter_(1, order, sorted_gold[q_idx].expand_as(x))
-return out[:, self.scoring_idx]
+sorted_gold = np.sort(gold)                                        # [20000]
+q_idx = np.linspace(0, len(sorted_gold) - 1, x.shape[1]).astype(int)
+order = np.argsort(x, axis=1)                                      # [B, F]
+out = np.empty_like(x)
+np.put_along_axis(out, order, sorted_gold[q_idx][None, :], axis=1)
+return out[:, scoring_idx]
 ```
 
-One `argsort` and one `scatter_` per batch, replacing pyaging's per-row Python loop
+One `argsort` and one scatter per batch, replacing pyaging's per-row Python loop
 ([`pyaging/models/_models.py`:255](https://github.com/lucascamillomd/pyaging)).
 
 **`median_fill_rank`.** Average ranks with tie handling. pyaging's implementation is a nested
 `while` loop per row and is the slowest path in that package. The vectorised form uses the
-double-argsort identity for ordinal ranks and a segment-mean over `unique_consecutive` for ties:
+double-argsort identity for ordinal ranks and a segment mean over runs of equal values for ties:
 
 ```python
-order = torch.argsort(x, dim=1)
-ordinal = torch.empty_like(order)
-ordinal.scatter_(1, order, torch.arange(x.shape[1], device=x.device).expand_as(order))
+order = np.argsort(x, axis=1)
+ordinal = np.empty_like(order)
+np.put_along_axis(ordinal, order, np.arange(x.shape[1])[None, :], axis=1)
 # tie correction: for each run of equal sorted values, replace with the run's mean rank
 ```
 
 **`autosomal_zscore`.** Mean and SD over autosomal probes only, computed per sample with NaN
-masking, then applied to all probes including the sex chromosomes ([the science notes, §3.1](../methods/index.qmd)).
+masking, then applied to all probes including the sex chromosomes (DNA methylation).
 
-## 4.2 Postprocess transforms
+## Postprocess transforms
 
 `falconage/models/ops.py`, dispatched through `POSTPROCESS`. Scalar in, scalar out, applied
 elementwise over the batch.
-Constants come from [the science notes §4.20](../methods/index.qmd) and §5.
+Constants come from [Transform reference table](../methods/formulas.qmd) and [Download module](modules.qmd#download-module).
 
 | Op | Formula | Params | Clocks |
 |---|---|---|---|
@@ -151,7 +147,7 @@ always lives in the linear bias, and `add_constant` is reserved for genuine post
 the source publishes separately. The registry records `intercept_source: bias | transform` for
 each imported clock so the normalisation is auditable.
 
-## 4.3 Model classes
+## Model classes
 
 `falconage/models/`
 
@@ -209,7 +205,7 @@ ship, `build()` returns a `ScaffoldClock`, and calling it raises `WeightsUnavail
 the laboratory to ask, the licence that applies, and the open clocks that answer the same
 question. A silent skip would leave a results table with a column quietly missing.
 
-## 4.4 The ten special forward passes
+## The ten special forward passes
 
 Each gets an explicit implementation and its own gold-standard vector.
 
@@ -231,7 +227,7 @@ is not a mistake in the source; both scalers are stored.
 **4. DNAmFitAge.** Split the batch by sex, run `GaitF/GaitM`, `GripF/GripM` and a shared `VO2Max`,
 standardise each with the published sex-specific offset and slope, then a sex-specific
 Klemera–Doubal layer, then recombine in the original row order. The eight constants
-([the science notes, §4.17](../methods/index.qmd)) live in the registry, not in code.
+([Ensembling and stacking](../methods/formulas.qmd)) live in the registry, not in code.
 
 **5. Mammalian clocks** (`models/species.py`). Input is `[CpGs | species_one_hot]` with the
 one-hot width declared per clock (1,756 for clock-2 variants, 1,707 for clock-3). The species
@@ -248,7 +244,7 @@ clock 3:  m̂ = 5 (gestation / maturity)^0.38
 
 A species not in the AnAge table raises rather than falling back to a default.
 
-**6. SystemsAge** (`models/composite.py`). Seven steps ([the science notes, §4.16](../methods/index.qmd)): centre and rotate
+**6. SystemsAge** (`models/composite.py`). Seven steps ([SystemsAge](../methods/formulas.qmd)): centre and rotate
 125,175 CpGs → project onto the system vector → 11 per-system linear modules → a separate
 PC→age model with a quadratic correction then `/12` → concat the 12-vector → optional composite
 PCA layer → affine calibration `((raw − c₀)/c₁)·c₃ + c₂` → `/12`. Twelve registry entries share
@@ -261,7 +257,7 @@ the authors' own, `projectCellType_CP` from FlowSorted.Blood.EPIC with `nonnegat
 lessThanOne = FALSE`: per sample, non-negative least squares over the CpGs it observes
 (`scipy.optimize.nnls`), rounded to four decimals, with no sum-to-one constraint. The simplex
 projection is a different estimator, and on real blood it moved every cell type by about 0.006
-([methods §4.10](../methods/algorithms.qmd#deconvolution-as-a-model) gives the comparison).
+([Deconvolution as a model](../methods/formulas.qmd) gives the comparison).
 
 ```python
 table = registry.deconvolution_table(cid, data.platform, present=data.X.columns)
@@ -278,7 +274,6 @@ run as one frame.
 **8. epiTOC2 / epiTOC3.** `tnsc = (2/k) Σ_c (β_c − β₀_c) / (δ_c(1 − β₀_c))`, with per-CpG `δ` and
 `β₀` vectors stored as weights and a guard against `δ(1−β₀) == 0`.
 
-![The division model inverted per site, then averaged](../images/epitoc2-inversion.png)
 
 This is not a weighted sum with a different name. Each site is inverted on its
 own: the drift observed since the ground state is divided by that site's drift
@@ -296,7 +291,7 @@ estimation is a preprocessing need as much as a clock.
 **10. PastaMouse.** Expand the mouse feature vector into the full 8,113-gene human space using
 reference values for human-only genes, then run the shared Pasta forward.
 
-## 4.5 Clinical chemistry clocks
+## Clinical chemistry clocks
 
 `falconage/models/clinical.py`. These are not methylation clocks and do not share the tensor
 path; they operate on a tabular biomarker frame and are implemented in a way that mirrors
@@ -313,7 +308,7 @@ def phenoage(
 ) -> pd.DataFrame                                # phenoage, mortality_score, phenoage_advance, clamped
 ```
 
-The two coefficient sets and their Gompertz constants are in [the science notes §5.1](../methods/index.qmd) and are stored in
+The two coefficient sets and their Gompertz constants are in [PhenoAge (Levine 2018), clinical-biomarker version](../methods/formulas.qmd#phenoage-levine-2018-clinical-biomarker-version) and are stored in
 the registry, not in code. `units` has no default because the SI and conventional
 parameterisations are not interconvertible by scaling the inputs, the coefficients differ too.
 The `0.090165` constant is the corrected one; BioAge's April 2026 commit fixed a widespread
@@ -328,14 +323,14 @@ def kdm(df: pd.DataFrame, ref: KDMReference, age_col: str = "age",
         max_missing: int | None = 2) -> pd.Series
 ```
 
-The math is [the science notes §4.4](../methods/index.qmd), transcribed from
+The math is [Klemera–Doubal method (KDM)](../methods/formulas.qmd), transcribed from
 [`BioAge/R/kdm_calc.R`](https://github.com/dayoonkwon/BioAge) including the details
 that matter: per-marker regressions on the rows carrying each marker, `r_char` from the ratio of
 two weighted sums, `s_r` from the age range and biomarker count, `s_BA²` estimated on the
 reference and kept with the fit, and the rule that a sample with more than two missing
 biomarkers returns NA rather than a partial score. Fitting by sex is the caller's choice: fit one
 reference per sex, as BioAge does. The result reproduces BioAge's shipped `kdm0` to 0.0007 years
-(§4.4), and `kdm_bioage()` scores on that scale from a packaged NHANES III fit.
+([The ten special forward passes](#the-ten-special-forward-passes)), and `kdm_bioage()` scores on that scale from a packaged NHANES III fit.
 
 **Homeostatic dysregulation.** Mahalanobis distance from a young reference cohort:
 
@@ -347,10 +342,10 @@ def hd(data, biomarkers, fit=None, log=True, by_sex=True) -> pd.DataFrame
 `hd_fit` standardises the reference by its own mean and SD, then stores the covariance. It checks
 the condition number and raises when the covariance is near-singular. BioAge only warns on a
 single-row reference, which is the degenerate case rather than the common one. The reference
-cohort must be young, non-pregnant and within the clinical windows in [the science notes §3.5](../methods/index.qmd); the
+cohort must be young, non-pregnant and within the clinical windows in Clinical chemistry and haematology; the
 packaged NHANES III fit satisfies this and is the default.
 
-## 4.6 Op composition and validation
+## Op composition and validation
 
 At load time the registry entry's `preprocess` and `postprocess` lists are compiled into an
 `nn.Sequential`, and the composition is validated:
@@ -363,11 +358,11 @@ At load time the registry entry's `preprocess` and `postprocess` lists are compi
 These checks run in `registry/validate.py` in CI and again at load time, so a malformed registry
 entry fails before it produces a number.
 
-## 4.7 Scaffold-only clocks
+## Scaffold-only clocks
 
 Forty clocks are `licensed` (tier C): their architecture is described in a published paper and is
 implemented here in full, but their coefficients are not ours to distribute. For these FALCONAge
-ships **the scaffold and nothing else** - the model class, the feature list, the preprocess and
+ships **the scaffold and nothing else**: the model class, the feature list, the preprocess and
 postprocess chain, the shape and dtype of every expected tensor, and a loader that accepts a
 coefficient file the user supplies.
 
@@ -500,13 +495,13 @@ an untested-against-truth implementation of a correctly-described architecture.
 
 ### Could they be reimplemented from scratch instead?
 
-For the architecture, yes, and that is what §4.4 already specifies, the GrimAge two-stage
+For the architecture, yes, and that is what [The ten special forward passes](#the-ten-special-forward-passes) already specifies, the GrimAge two-stage
 structure, the PC rotation and SystemsAge's seven-step pass are all described well enough in
 their papers to write independently, and are written here.
 
 For the coefficients, no. They are the output of an elastic net fit to cohorts that are not
 public. Framingham, the Women's Health Initiative, the Dunedin Study. Refitting the same
 architecture on different data produces a different clock that must not carry the same name.
-That path is real and is scoped as a v1.5 milestone (§13), where a FALCONAge-native mortality
+That path is real and is scoped as a v1.5 milestone ([Prior implementations](software.qmd#prior-implementations)), where a FALCONAge-native mortality
 clock trained on the open ComputAgeBench split would be a new contribution rather than a
 substitute.

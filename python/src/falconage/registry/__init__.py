@@ -18,3 +18,12 @@ def register_local_weights(clock_id: str, path, sha256: str | None = None) -> st
     >>> fa.registry.register_local_weights("grimage2", "~/licensed/grimage2.csv")
     """
     return load().register_local_weights(clock_id, path, sha256)
+
+
+def add_clock(path, *, replace: bool = False) -> str:
+    """Add a clock from a YAML entry and its coefficient file, for this session.
+
+    Convenience wrapper over ``load().add_clock``; see that method for the
+    entry format. ``falconage run --clocks-dir`` does the same for a folder.
+    """
+    return load().add_clock(path, replace=replace)

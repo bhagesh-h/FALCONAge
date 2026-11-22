@@ -17,11 +17,6 @@
 # package claims, only what is verified; broadening that is real work -- an
 # unpinned resolution per version and a policy for moving floors -- and belongs
 # in its own change.
-#
-# There is no GPU job. GitHub's hosted runners have no CUDA device, so a GPU job
-# could only ever assert that torch reports no GPU, which is not a test of
-# anything. `test/gpu_check.py` is run by hand against real hardware and its
-# output is in docs/gpu.md.
 on:
   push:
     branches: [main]
@@ -58,7 +53,7 @@ jobs:
       - name: Install
         run: |
           uv export --frozen --no-dev --no-emit-project --no-hashes \
-            --extra methylation --extra plot --extra anndata --extra cli \
+            --extra methylation --extra plot --extra anndata \
             --directory python --format requirements-txt > /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps ./python
@@ -99,7 +94,6 @@ jobs:
           python docs/build_catalogue.py --check
           python docs/build_gallery.py --check
           python docs/build_tokens.py --check
-          python docs/check_content_preserved.py --check
 
       # The three derived data artefacts. Each needs an input CI does not have
       # -- a 72 MB published spreadsheet for the reliability table, the 586 MB
@@ -266,7 +260,7 @@ jobs:
       - name: Install with no lock
         run: |
           python -m pip install --upgrade pip
-          pip install "./python[methylation,plot,anndata,cli]" pytest
+          pip install "./python[methylation,plot,anndata]" pytest
 
       - name: What resolved
         run: pip list | grep -Ei "^(numpy|pandas|scipy|pyarrow|matplotlib) "

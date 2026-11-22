@@ -22,8 +22,7 @@ template:
     in_header: <link rel="icon" type="image/png" href="/FALCONAge/favicon.png">
 home:
   title: FALCONAge for R
-  description: Biological age and aging-clock scoring from multiomic data, in Python and R,
-    on CPU or GPU.
+  description: Biological age and aging-clock scoring from multiomic data, in Python and R.
 navbar:
   structure:
     left:
@@ -42,24 +41,36 @@ navbar:
     background:
       text: Background
       menu:
-      - text: The science of aging clocks
-        href: https://bhagesh-h.github.io/FALCONAge/methods/index.html
-      - text: Architecture
-        href: https://bhagesh-h.github.io/FALCONAge/dev/index.html
+      - text: Your first run
+        href: https://bhagesh-h.github.io/FALCONAge/start/quickstart.html
+      - text: Published formulas
+        href: https://bhagesh-h.github.io/FALCONAge/methods/formulas.html
       - text: Figure gallery
         href: https://bhagesh-h.github.io/FALCONAge/analysis/figures.html
       - text: Clock catalogue
         href: https://bhagesh-h.github.io/FALCONAge/clocks/catalogue.html
-      - text: Beyond the clock score
-        href: https://bhagesh-h.github.io/FALCONAge/analysis/beyond.html
-      - text: GPU support
-        href: https://bhagesh-h.github.io/FALCONAge/dev/gpu.html
+      - text: Architecture
+        href: https://bhagesh-h.github.io/FALCONAge/dev/index.html
 reference:
+- title: Start here
+  desc: 'The functions a first analysis uses, in the order it uses them: read the data, prepare
+    it, score it, and ask how far each number can be trusted. Everything else on this page
+    builds on these.'
+  contents:
+  - read_betas
+  - prepare
+  - score
+  - as.data.frame.falcon_result
+  - interpretation
+  - technical_se
+  - conformal_interval
+  - acceleration
+  - consensus
+  - run_report
 - title: Reading data
   desc: Every reader returns the same container, so nothing downstream can tell which format
     the data arrived in.
   contents:
-  - read_betas
   - read_series_matrix
   - read_clinical
   - read_rrbs_dir
@@ -71,7 +82,6 @@ reference:
     in the beta range, a known platform. The EPIC v2 step is mandatory rather than optional
     -- without it a v2 dataset overlaps almost nothing and the clocks score imputed values.'
   contents:
-  - prepare
   - horvath_normalise
   - qc
   - probe_loss
@@ -83,9 +93,7 @@ reference:
     of the same DNA differ by up to nine years on prominent clocks, and a point estimate says
     nothing about either.'
   contents:
-  - technical_se
   - interval
-  - conformal_interval
   - icc_from_replicates
 - title: Study design
   desc: The commands that come before the first array and after the last one. How many samples
@@ -94,17 +102,13 @@ reference:
     it must.
   contents:
   - power_n
-  - consensus
 - title: Scoring
   desc: The predict loop, its result object, and the provenance it carries.
   contents:
-  - score
   - combine
   - coverage
   - manifest
-  - interpretation
   - write_results
-  - as.data.frame.falcon_result
 - title: The clock catalogue
   desc: '178 clocks in three availability groups: 69 bundled, 52 untraced and 57 licensed
     scaffolds whose coefficients are research-use-only or have no public source FALCONAge
@@ -123,13 +127,22 @@ reference:
     and the AA1/AA2 benchmark. Each is gated on the clock's scale type -- acceleration on
     a pace-of-aging clock is a units error, not a conservative choice.
   contents:
-  - acceleration
   - cell_composition
   - associate
   - cox_hazard
   - agreement
   - icc
   - run_benchmark
+- title: Your own clocks
+  desc: Compare learners on your own cohort, fit the one you choose, combine several clocks
+    into one score, and add any of them to the catalogue for a session so it is scored like
+    a published clock. Every reported number is out of fold.
+  contents:
+  - compare_learners
+  - fit_clock
+  - stack_clocks
+  - add_clock
+  - clock_to_file
 - title: Clinical references
   desc: 'KDM and homeostatic dysregulation have no fixed coefficients: both are defined relative
     to a reference cohort, and the manifest records which.'
@@ -165,7 +178,6 @@ reference:
   - falcon_scheme
   - falcon_theme
   - report
-  - run_report
   - quarto_report
 - title: Downloading public data
   desc: Accession in, files and a normalised sample table out. Credentialed archives are documented

@@ -54,7 +54,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError, RegistryError
 from ..core.logging import get_logger
 from ..registry.registry import Clock
@@ -106,7 +106,7 @@ class DivisionClock:
     coefficients: np.ndarray
     ground_state: np.ndarray
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         # The mean runs over the sites present, as the docstring says and as
         # Teschendorff's epiTOC2/epiTOC3 code does (colMeans over the matched

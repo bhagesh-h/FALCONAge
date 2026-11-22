@@ -1,7 +1,7 @@
 """Single source of truth for the package version.
 
 r/DESCRIPTION and the git tag must agree with this string; the release workflow
-refuses to publish when they do not (see PUBLISHING.md).
+refuses to publish when they do not (see .github/PUBLISHING.md).
 """
 
 __version__ = "1.0.0"

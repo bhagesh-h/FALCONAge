@@ -10,7 +10,6 @@
 score(
   data,
   clocks = "compatible",
-  device = "auto",
   dtype = NULL,
   imputation = c("reference", "mean", "none"),
   min_coverage = 0.8,
@@ -29,16 +28,6 @@ reports the rest as skipped with a reason. \code{"all"} attempts every clock of
 the right modality and fails loudly on the ones that cannot run. A
 character vector names them explicitly, and then every name must work -- an
 explicit request is never silently dropped.}
-
-\item{device}{\code{"auto"}, \code{"cpu"}, \code{"cuda"} or \code{"mps"}. Naming a device that is
-not present is an error rather than a silent downgrade: a run that was
-asked for a GPU and quietly used a CPU looks like a very slow success.
-\code{"auto"} is CPU even where CUDA exists, which is measured rather than
-cautious: on the clocks that ship, the transfer costs more than the dot
-product it feeds. A named device is not granted to every clock either --
-the three clinical formulas compute in numpy whatever is asked, because
-nine markers are not worth a kernel launch. \code{manifest(res)$compute} records
-what each clock actually used.}
 
 \item{dtype}{\code{NULL} (float64), \code{"float64"} or \code{"float32"}. Clocks flagged
 \code{requires_fp64} in the registry override a float32 request, with a warning.}
@@ -73,6 +62,6 @@ Score a dataset against one or more clocks
 \examples{
 \dontrun{
 res <- score(d, clocks = "compatible")
-res <- score(d, clocks = c("horvath2013", "dnamphenoage"), device = "cuda")
+res <- score(d, clocks = c("horvath2013", "dnamphenoage"))
 }
 }

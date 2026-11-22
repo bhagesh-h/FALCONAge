@@ -13,7 +13,7 @@
 #   2. It has to keep working when FALCONAge is broken. Fetching a fixture is
 #      the first thing you do when debugging a failure, and it must not be the
 #      second thing the failure takes down.
-#   3. It is tiny. No torch, no anndata, no 2 GB of weights -- four small R
+#   3. It is tiny. No anndata, no weights -- four small R
 #      packages, one Python package, and the standard library.
 #
 # It shares the python:3.12-slim-bookworm base and the CRAN apt setup with

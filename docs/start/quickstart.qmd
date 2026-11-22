@@ -1,32 +1,126 @@
 ---
-title: "Getting started"
-subtitle: "Install, score, interpret, in both languages"
+title: "Your first run"
+subtitle: "Run the demo, read what it writes, then run your own data"
 aliases:
   - ../guide/FALCONAge.html
 ---
 
-FALCONAge scores DNA methylation, clinical chemistry and NMR metabolomics data against a catalogue
-of 178 published aging clocks. It also reads and normalises proteomic and transcriptomic data, and
-`fa.fit_clock` fits a clock to them, but the catalogue holds no published clock for either yet. The numerical work happens in one Python core; the R
-package calls it through reticulate, so an R result and a Python result are the same bits rather
-than two implementations that agree approximately.
+This page assumes the image is installed ([Install](install.qmd)). Every command is run from the
+folder that holds your data, and everything it writes lands in that same folder.
 
-::: {.callout-tip title="How to read this page"}
-Blocks with a **copy button** are things to run. Blocks tagged **Output** are what you should see
-back. Reading them is the point; pasting one into a terminal only produces an error.
+## 1. Run the demo
 
 ```bash
-this is a command: copy it
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu demo
 ```
+
+It writes a small synthetic dataset (40 samples, labelled as synthetic in every file), runs the
+whole pipeline on it, and prints:
 
 ::: {.falcon-output}
 ```
-this is what it printed
+read 40 sample(s) x 325375 feature(s) on 450K
+scored 53 clock(s); 119 skipped
+  consensus: unsupported
+  31 figure(s)
+49 note(s) about individual clocks: falconage_demo/results/warnings.csv
+
+done. Open falconage_demo/results/report.html
 ```
 :::
-:::
 
-## Quick start
+The values are random draws with an age trend, so the ages in the report are not meaningful.
+The point is to see every output before your own data goes in.
+
+## 2. What a run writes
+
+| File | What it holds |
+|---|---|
+| `report.html` | The report: open this first. Scores, uncertainty, acceleration, the figures, and every note |
+| `scores.csv` | One row per sample per clock, with the clock's scale and unit |
+| `scores_wide.csv` | The same scores as a table, samples by clocks |
+| `technical_se.csv` | How much of each score is measurement noise (a standard error per score) |
+| `conformal_interval.csv` | A prediction interval per score, for clocks with a published calibration |
+| `acceleration.csv` | Age acceleration per sample, where the sample sheet gives age and the clock's scale allows it |
+| `consensus.csv`, `consensus_verdict.txt` | Whether a difference between groups holds across clocks, when there is a `group` column |
+| `interpretation.csv` | What each clock measures, its unit, and which arithmetic its scale permits |
+| `evidence.csv` | Published reliability and validation results for each clock, with DOIs |
+| `qc.csv`, `qc_per_sample.csv` | Feature coverage per clock and quality checks per sample |
+| `skipped_clocks.csv` | Every clock not scored, with the reason |
+| `warnings.csv` | Notes about individual clocks: tissue mismatches, imputed probes, known paper discrepancies |
+| `run_manifest.json` | Versions, the SHA-256 of every coefficient file used, and the settings: enough to reproduce the run |
+| `figures/` | Every figure in the report as its own PNG |
+
+## 3. Run your own data
+
+Put the data in the current folder and name it on the command line:
+
+```bash
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu run betas.csv --samples samples.csv
+```
+
+The results land in `betas_falconage/`. `--outdir results` names the folder yourself.
+
+**The data** can be any of:
+
+| You have | Give `run` |
+|---|---|
+| A beta matrix (samples by probes, or probes by samples) | `betas.csv`, `.tsv`, `.parquet` or `.h5ad` |
+| Raw Illumina arrays | the folder holding the `*_Grn.idat` and `*_Red.idat` files |
+| A GEO series matrix | `GSE12345_series_matrix.txt.gz` |
+| Clinical chemistry | `labs.csv --kind clinical` ([units](../data/loading.qmd) are declared in the file) |
+| A Nightingale NMR export | `nmr.xlsx` |
+
+**The sample sheet** is optional but worth having. Its first column is the sample id, exactly as
+in the data, and any of these columns are used:
+
+```
+sample_id,age,sex,tissue,group
+S001,34.5,F,whole blood,control
+S002,61.0,M,whole blood,case
+```
+
+| Column | Enables |
+|---|---|
+| `age` | Age acceleration, and agreement of each clock with age |
+| `tissue` | The check that each clock was fitted on your specimen type |
+| `group` | The test of whether a group difference holds across clocks |
+| `sex` | Sex-specific clocks and the sex check on X-linked probes |
+
+Without a sample sheet the run still scores every clock; it says which steps it skipped and why.
+
+**Choosing clocks.** By default `run` scores every clock your data supports. To score named ones:
+
+```bash
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu \
+  run betas.csv --samples samples.csv --clocks horvath2013,hannum,dnamphenoage
+```
+
+`falconage clocks list` shows every id, and [Choosing a clock](../clocks/choosing.qmd) helps pick.
+
+## 4. In a pipeline
+
+`run` is built to be called unattended by a workflow manager such as Nextflow or Snakemake:
+
+```bash
+falconage run betas.csv --samples samples.csv --outdir results --format tsv \
+  --threads 4 --log-file results.log
+falconage versions --process FALCONAGE_RUN > versions.yml
+```
+
+| Option or behaviour | What it gives a pipeline |
+|---|---|
+| `--threads N` | Caps the numerical thread pools at the CPUs the task was given |
+| `--format tsv` | Tab-separated output tables |
+| `--log-level {quiet,info,debug}`, `--log-file` | Progress on stdout, log records on stderr and in the file |
+| Exit status | 0 success, 1 internal error, 2 usage error, 3 input data error, 4 scoring or analysis error |
+| `falconage versions --process NAME` | The YAML a `versions.yml` takes |
+| The image | Passes an absolute-path command (`/bin/bash .command.sh`) straight through, ships `ps` for task metrics, and runs as any user id |
+
+An error prints one line naming the cause, for example
+`falconage: error: input not found: betas.csv`; `--log-level debug` adds the traceback.
+
+## The same in Python or R
 ::: {.panel-tabset}
 
 ### Python
@@ -66,7 +160,7 @@ exactly zero rather than approximate agreement.
 ## Scoring
 
 Every Python and R snippet from here on runs unchanged in three places: inside the Docker image
-(`docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python`, or `... R`), in a
+(`docker run --rm -it -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu python`, or `... R`), in a
 native install, or in the CLI-free path below. Only the way you open the session differs.
 
 ::: {.panel-tabset}
@@ -81,7 +175,7 @@ res.summary()
 res.scores               # samples x clocks
 res.long()               # one row per sample per clock, with the scale
 res.qc()                 # per-clock feature coverage and skip reasons
-res.manifest             # versions, device, SHA-256 of every coefficient file
+res.manifest             # versions, precision, SHA-256 of every coefficient file
 ```
 
 ### R
@@ -94,7 +188,7 @@ summary(res)
 as.data.frame(res)                  # samples x clocks
 as.data.frame(res, form = "long")   # one row per sample per clock, with the scale
 coverage(res)                       # per-clock feature coverage and skip reasons
-manifest(res)                       # versions, device, and every coefficient checksum
+manifest(res)                       # versions, precision, and every coefficient checksum
 ```
 
 :::

@@ -1,0 +1,125 @@
+---
+title: "Testing against the public corpus"
+subtitle: "Fetch the public datasets, verify them, and score every clock against every dataset"
+---
+
+The unit tests need no data. This page is for the end-to-end run: every bundled clock against a
+corpus of public datasets (GEO, ComputAgeBench, NHANES), which is what the tables in
+`test/README.md` and the figure gallery are generated from. All commands run from a clone of the
+repository:
+
+```bash
+git clone https://github.com/bhagesh-h/FALCONAge.git
+cd FALCONAge
+```
+
+## Inspect the corpus before downloading it
+A second, deliberately tiny image fetches the test corpus. It is separate on purpose: fetching a
+fixture is the first thing you do when the package itself is broken, so it must not need the
+package.
+
+```bash
+docker build -f docker/Dockerfile.testdata -t falconage-testdata:1.0.0 .
+```
+
+Now the dry run. **This transfers nothing.** It prints every group, file count and byte total so
+you can decide before committing to half a gigabyte:
+
+```bash
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 plan
+```
+
+You should see:
+
+```
+group          files        size   what it is for
+------------------------------------------------------------------------------
+bench             14    549.8 MB   ComputAgeBench case/control methylation
+clinical           3      5.4 MB   NHANES blood chemistry with mortality linkage
+gestational        1     50.8 MB   Umbilical cord blood with gestational age
+epicv2             1     41.2 MB   EPIC v2 probe-suffix handling
+idat               8     60.4 MB   Raw IDATs, EPIC v1 and EPIC v2
+mammalian          4      9.3 MB   Mammalian methylation array, three species
+mouse              5     50.2 MB   Mouse blood RRBS across the lifespan
+------------------------------------------------------------------------------
+selected          36    767.1 MB
+```
+
+## Download and verify
+```bash
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 python
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 verify
+```
+
+The first fetches 36 files from GEO and Hugging Face into `test/data/` on your own disk, never
+inside the image, so rebuilding never re-downloads. The second re-computes every SHA-256 against
+`checksums.sha256` and fails loudly on a single wrong byte.
+
+Only smaller pieces, if 767 MB is too much:
+
+```bash
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 python --groups clinical
+```
+
+::: {.callout-tip}
+
+### Fetching the corpus from R
+Not decoration: the R fetcher writes a byte-identical `checksums.sha256`, so the two languages
+are shown to agree on the input before any clock is scored.
+
+```bash
+docker run --rm -v "$PWD/test/data:/data" falconage-testdata:1.0.0 R
+```
+:::
+
+## Score it
+::: {.panel-tabset}
+
+### Python
+
+```bash
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu \
+  python test/run_all.py
+```
+
+Every clock against every dataset. It writes one folder per input under `test/output/`, every
+figure under `test/output_figures/`, and rewrites the generated tables in `test/README.md`, so
+the numbers in that document are the numbers the code just produced and cannot drift from them.
+
+To check the code without the corpus, run the unit suite instead, a minute or two, no data
+needed. The image does not carry pytest, so it is installed for the one run, and
+`FALCONAGE_SOURCE` makes the container test the checkout rather than the installed copy:
+
+```bash
+docker run --rm -v "$PWD:/work" -e FALCONAGE_SOURCE=/work bhagesh/falconage:1.0.0-cpu \
+  bash -c 'pip install --user -q pytest hypothesis && python -m pytest python/tests -q'
+```
+
+### R
+
+The same image. R calls the same Python core through reticulate, so these are the same numbers,
+not a second implementation that agrees approximately.
+
+```bash
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu \
+  Rscript -e 'testthat::test_local("r")'
+```
+
+That suite includes the R-versus-Python conformance tests, which assert equality at tolerance
+exactly zero.
+
+Scoring from R interactively:
+
+```bash
+docker run --rm -it -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu R
+```
+
+```r
+library(FALCONAge)
+falconage_config()
+d   <- read_betas("test/data/bench/GSE40279.csv")
+res <- score(prepare(d), clocks = "compatible")
+summary(res)
+```
+
+:::

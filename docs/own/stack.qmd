@@ -1,0 +1,76 @@
+---
+title: "Stack clocks"
+subtitle: "Combine several clocks into one score, and see whether the combination helps"
+---
+
+A stack learns weights for several clocks' scores, out of fold, and reports the result next to
+the best single clock and the plain mean measured the same way, so the gain (or its absence) is
+visible.
+
+## 1. Fit a stack
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+res = fa.score(d, clocks="compatible")
+st  = fa.stack_clocks(res, target="age",
+                      clocks=["horvath2013", "hannum", "dnamphenoage", "zhangen"],
+                      method="nnls")
+
+st.weights        # one weight per clock, on standardised scores
+st.metrics        # out-of-fold MAE, MedAE, r, slope
+st.comparison     # each clock alone, and the plain mean, measured the same way
+```
+
+### R
+
+```r
+res <- score(d, clocks = "compatible")
+st  <- stack_clocks(res, target = "age",
+                    clocks = c("horvath2013", "hannum", "dnamphenoage", "zhangen"),
+                    method = "nnls")
+st$weights
+st$comparison
+```
+
+:::
+
+## 2. Choose a method
+
+| `method` | What it does | Allowed when |
+|---|---|---|
+| `"mean"` | The plain average of the scores | Every clock has the same scale type |
+| `"nnls"` | Non-negative weights on standardised scores (default) | Always |
+| `"ridge"` | Ridge-penalised weights on standardised scores | Always |
+| `"cox"` | A Cox model on the scores; `target` is follow-up time and `event_col` the event | You have survival data |
+
+A plain mean of years and a pace has no unit, so it is refused; the learned methods standardise
+each clock and take the scale of the target. First-generation clocks are strongly correlated with
+each other, which is why the weights come from non-negative least squares or ridge.
+
+## 3. Save it as a clock
+
+```python
+st.to_clock("mystack", "my_clocks/")
+```
+
+When every clock in the stack is a weighted sum of CpGs followed by constant shifts and
+scalings, the stack is itself a weighted sum over all their CpGs. It is written as one
+coefficient file that [Add a clock](add.qmd) scores like any other, with coverage checks and a
+technical standard error. A stack containing a clock with a nonlinear output (Horvath's
+anti-log, a sigmoid) stays in the session: use `st.predict(res)`.
+
+One difference to know: a CpG your data lacks, and that no clock in the stack publishes a
+reference value for, is filled with the mean of the present CpGs. For the combined clock that
+mean is taken over all of its CpGs rather than each clock's own, so on data missing such CpGs
+the collapsed clock and `st.predict(res)` can differ slightly. `warnings.csv` names every such
+fill.
+
+## Do not test a group difference on the samples the stack was fitted on
+
+A stack fitted on the same samples you then compare between groups has already seen the answer.
+Fit it on one set and test on another. To ask whether a group difference holds across clocks,
+use `fa.consensus()` instead ([Age acceleration](../analysis/acceleration.qmd)): it tests rather
+than fits.

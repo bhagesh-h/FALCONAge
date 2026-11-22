@@ -18,7 +18,7 @@ from ..core.errors import FalconError, FeatureCoverageError, ScoringError, Weigh
 from ..core import preanalytical
 from ..core.logging import WarningCollector, get_logger
 from ..core.manifest import RunManifest
-from ..models import build, effective_spec
+from ..models import build
 from ..models.linear import EXCLUDED
 from ..preprocess import BIAS_WARN, QC_REMOVED_WARN, observed_features, qc_removed
 from ..preprocess.manifest import cached_manifest_probes
@@ -304,7 +304,7 @@ def _tissue_verdict(clock, specimens: Sequence[str]) -> tuple[str, str]:
 
 
 def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
-          device: str = "auto", dtype: str | None = None,
+          dtype: str | None = None,
           imputation: str = "reference", min_coverage: float = 0.8,
           reference=None, registry=None, caller: str = "python") -> FalconResult:
     """Score a dataset against one or more clocks.
@@ -334,8 +334,8 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
     Returns
     -------
     FalconResult
-        Scores, per-clock coverage, and a manifest recording the device, the
-        dtype, every coefficient digest and every warning.
+        Scores, per-clock coverage, and a manifest recording the
+        precision, every coefficient digest and every warning.
     """
     reg = registry if registry is not None else load_registry()
     warns = WarningCollector()
@@ -373,14 +373,12 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
             category="tissue")
 
     # Resolved once, before any clock, so an impossible request fails on the
-    # first line rather than after twenty minutes of alignment. Per-clock
-    # narrowing happens below; this is the ceiling.
-    requested = resolve(device, dtype)
-    manifest.device_requested = requested.device
+    # first line rather than after twenty minutes of alignment.
+    resolve(dtype)
 
     for cid in wanted:
         c = reg.get(cid)
-        spec = resolve(device, dtype, requires_fp64=c.requires_fp64)
+        spec = resolve(dtype, requires_fp64=c.requires_fp64)
 
         # A cohort-centred clock has no answer for one sample, and the failure
         # is silent: centring a single row against itself makes every value
@@ -433,11 +431,6 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
 
         try:
             model = build(reg, cid)
-            # What this model will actually compute in, which is not always
-            # what was asked for: a CPU_ONLY class stays in numpy on a CUDA
-            # run. Asked before predict so the manifest can record the fact
-            # rather than the request. See falconage.models.effective_spec.
-            spec = effective_spec(model, spec)
             values, alignment = model.predict(
                 data, spec, imputation=imputation, min_coverage=min_coverage
             ) if not c.formula else model.predict(data, spec, reference=reference)
@@ -641,11 +634,7 @@ def combine(results: Iterable[FalconResult], *, keys: Sequence[str] | None = Non
     obs = obs.reindex(scores.index)
 
     m = RunManifest(caller=results[0].manifest.caller)
-    m.device_requested = results[0].manifest.device_requested
-    # Merged from every contributing run, not copied from the first. Datasets
-    # in a benchmark are often scored on whatever machine was free, and a
-    # combined manifest that reports the first one's device for all of them
-    # says something untrue about the rest.
+    # Merged from every contributing run, not copied from the first.
     for r, n in zip(results, names):
         for cid, comp in r.manifest.compute.items():
             m.compute[f"{n}:{cid}"] = comp

@@ -773,12 +773,9 @@ main video {
 // reported clean while the page was wrong. test/responsive_check.py now counts
 // them instead.
 //
-// The sidebar is the one to drop. Its drawer would otherwise sit behind a
-// control that looks exactly like the real menu next to it, offering the same
-// contents twice. The navigation is not lost: the navbar's single "Contents"
-// menu carries the identical list, generated from the same `book:` block, and
-// the rule below hides that menu above this breakpoint so the two are never on
-// screen together. The mark is unaffected, being in the navbar; the citation
+// The sidebar is the one to drop. The navigation is not lost: the navbar's
+// single "Contents" menu carries every page, grouped by section, generated
+// from the same `book:` block. The mark is unaffected, being in the navbar; the citation
 // is on the home page.
 @media (max-width: 991.98px) {
   #quarto-sidebar,
@@ -952,23 +949,22 @@ mjx-container[display="true"],
   }
 }
 
-// ONE CONTENTS LIST, WHICHEVER FITS.
+// ONE NAVIGATION, WHICHEVER FITS.
 //
-// The site's reading order lives in the sidebar spine. Below 992px that column
-// is hidden (see the block above), and the navbar's collapsed "Contents" menu
-// stands in for it. Above 992px the spine is on screen, so the navbar copy is
-// removed: two identical lists a centimetre apart is the duplication the
-// sidebar was emptied to avoid, only in the other direction.
-//
-// `.me-auto` is Quarto's left-hand navbar list, and build_docs.py puts exactly
-// one item in it: the Contents menu. The `#nav-menu-contents` id is Quarto's
-// own, slugged from the menu text, and is here so the rule still bites if a
-// later change adds a second left item and the list selector stops being
-// specific enough. The right-hand list, `.ms-auto`, carries Download and the
-// GitHub icon and stays at every width.
+// Above 992px the navbar shows the section links (Get started, Guide, Clocks,
+// Methods, API, Developers) and the sidebar shows the pages of the current
+// section. Below 992px the sidebar is hidden (see the block above) and the
+// navbar's single "Contents" menu, grouped by section, is the navigation; the
+// section links are hidden there because the menu already carries them.
+// `#nav-menu-contents` is Quarto's own id, slugged from the menu text.
 @media (min-width: 992px) {
-  #quarto-header .navbar-nav.me-auto,
-  #quarto-header #nav-menu-contents {
+  #quarto-header .navbar-nav.me-auto > li.nav-item:has(#nav-menu-contents) {
     display: none;
   }
 }
+@media (max-width: 991.98px) {
+  #quarto-header .navbar-nav.me-auto > li.nav-item:not(.dropdown) {
+    display: none;
+  }
+}
+

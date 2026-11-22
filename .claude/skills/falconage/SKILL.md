@@ -1,6 +1,6 @@
 ---
 name: falconage
-description: Score biological aging clocks from DNA methylation, clinical chemistry, proteomic or transcriptomic data using FALCONAge via Docker. Use when asked to compute epigenetic age, DNAm age, biological age, age acceleration, pace of aging, or a named clock (Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE, ...); to process raw Illumina IDATs; or to answer questions about what an aging clock measures, which clock answers a given question, and how far a clock score can be trusted.
+description: Score biological aging clocks from DNA methylation, clinical chemistry or NMR metabolomics data using FALCONAge via Docker. Use when asked to compute epigenetic age, DNAm age, biological age, age acceleration, pace of aging, or a named clock (Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE, ...); to process raw Illumina IDATs; to build, add or combine (stack) a clock on one's own cohort; to run FALCONAge inside a Nextflow or Snakemake pipeline; or to answer which clock answers a given question and how far a clock score can be trusted.
 ---
 
 # FALCONAge
@@ -42,18 +42,22 @@ On Windows PowerShell write `"${PWD}"` wherever `"$PWD"` appears below; on `cmd.
 
 ## The one-command path
 
-An HTML report with 31 figures, no code written. The entrypoint is the CLI, so the verb goes
-straight after the image name with no `falconage` in front of it:
+Scores, uncertainty, age acceleration, 31 figures and an HTML report, no code written. The
+entrypoint is the CLI, so the verb goes straight after the image name with no `falconage` in
+front of it:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
-  report betas.csv --outdir results/
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu run betas.csv --samples samples.csv
 ```
+
+The sample sheet is optional (first column the sample id, then any of `age`, `sex`, `tissue`,
+`group`); without `age` there is no acceleration and without `tissue` no specimen check. To show
+someone the outputs before their data is ready, `demo` runs the same pipeline on synthetic data.
 
 ## The scripted path
 
 ```bash
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
+docker run --rm -it -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu python
 ```
 
 ```python
@@ -99,9 +103,39 @@ individual-level claim: a raw ICC on a cohort spanning decades mostly reports th
 tracks age, which was never in question. With one draw per visit and no technical replicates,
 `var_state` holds day-to-day and assay variance together and `var_tech` is NaN; `design` says so.
 
-R is the same verbs in the same image: `docker run --rm -it -v "$PWD:/work" -w /work
+R is the same verbs in the same image: `docker run --rm -it -v "$PWD:/work"
 bhagesh/falconage:1.0.0-cpu R`, then `prepare()`, `score()`, `interpretation()`. Both languages call one
 numerical core, so the results are bit-identical rather than approximately equal.
+
+## Your own clocks
+
+```python
+cmp = fa.compare_learners(d, target="age", groups="person")   # several learners, out of fold
+cmp.selected          # the nested error of "pick the best": the number to report
+fit = fa.fit_clock(d, target="age", learner="pc_elasticnet", groups="person")
+fit.to_clock("mycohortclock", "my_clocks/")                  # yaml + csv
+fa.add_clock("my_clocks/mycohortclock.yaml")                 # score it like a catalogue clock
+st = fa.stack_clocks(res, target="age", method="nnls")       # combine clocks, out of fold
+st.comparison         # against each clock alone and the plain mean
+```
+
+`groups=` keeps a person's repeated visits on one side of every split. Quote `cmp.selected`,
+never the best row of `cmp.table`. A plain mean across scale types is refused; never fit a stack
+on the samples you then compare between groups. On the command line, `run --clocks-dir
+my_clocks` scores user clocks alongside the catalogue.
+
+## In a pipeline (Nextflow, Snakemake)
+
+```bash
+falconage run betas.csv --samples samples.csv --outdir results --format tsv \
+  --threads ${task.cpus} --log-file results.log
+falconage versions --process "${task.process}" > versions.yml
+```
+
+Exit status: 0 success, 1 internal error, 2 usage error, 3 input data error, 4 scoring or analysis
+error (5 only from `consensus --fail-unsupported`). Errors print one line to stderr;
+`--log-level debug` adds the traceback. The image passes `/bin/bash .command.sh` straight through,
+has `ps`, and runs as any user id. Everything runs on the CPU.
 
 ## Rules to hold to
 
@@ -124,8 +158,8 @@ numerical core, so the results are bit-identical rather than approximately equal
 ## Reference
 
 - `reference/docker.md`, the full command set: IDATs, GEO accessions, batch correction,
-  benchmarking, GPU, and the native pip/R install for anyone who wants it.
-- `reference/clocks.md`, what a clock is, the six families, which one answers which question,
+  benchmarking, and the native pip/R install for anyone who wants it.
+- `reference/clocks.md`, the clock families, which one answers which question,
   the nine scale types, and the traps.
 - `reference/interpreting.md`, reading the outputs, every refusal and the measurement behind
   it, and what the package deliberately does not do.

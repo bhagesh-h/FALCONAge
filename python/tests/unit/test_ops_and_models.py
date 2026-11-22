@@ -194,7 +194,7 @@ def test_the_mass_floor_rejects_what_the_feature_floor_would_pass(synthetic_beta
     al = fa.models.align(d, m.features, coefficients=m.coefficients)
     assert al.coverage > al.mass_coverage    # the whole point
 
-    spec = resolve("cpu")
+    spec = resolve()
     floor = 0.5 * (al.coverage + al.mass_coverage)   # between the two measures
     with pytest.raises(FeatureCoverageError, match="total .coefficient."):
         m.predict(d, spec, min_coverage=floor)
@@ -202,7 +202,7 @@ def test_the_mass_floor_rejects_what_the_feature_floor_would_pass(synthetic_beta
 
 def test_feature_order_does_not_change_the_score(synthetic_betas):
     """A clock's answer must not depend on the column order of the input."""
-    spec = resolve("cpu")
+    spec = resolve()
     m = fa.models.LinearClock.from_registry(fa.registry.load(), "horvath2013")
     a, _ = m.predict(synthetic_betas, spec)
 
@@ -216,7 +216,7 @@ def test_feature_order_does_not_change_the_score(synthetic_betas):
 def test_duplicating_a_sample_duplicates_its_score(synthetic_betas):
     import pandas as pd
 
-    spec = resolve("cpu")
+    spec = resolve()
     m = fa.models.LinearClock.from_registry(fa.registry.load(), "hannum")
     base, _ = m.predict(synthetic_betas, spec)
 
@@ -262,7 +262,7 @@ def test_scaffold_architecture_is_testable_without_real_coefficients(tmp_path):
     d = fa.FalconData(X=X, obs=pd.DataFrame(index=["a", "b"]),
                       modality="dna_methylation")
     model = fa.models.build(reg, cid)
-    got, _ = model.predict(d, resolve("cpu"))
+    got, _ = model.predict(d, resolve())
     assert got["a"] == pytest.approx(1.0)   # 0.5 * 2.0, identity postprocess
     assert got["b"] == pytest.approx(0.5)   # 0.25 * 2.0
 
@@ -395,7 +395,7 @@ def test_pc_clock_computes_the_published_form(synthetic_betas):
     rot = _synthetic_rotation(feats)
     m = PCLinearClock(clock=reg.get("pchorvath2013"), rotation=rot)
 
-    got, al = m.predict(synthetic_betas, resolve("cpu"))
+    got, al = m.predict(synthetic_betas, resolve())
 
     x = synthetic_betas.X[feats].to_numpy(dtype=np.float64)
     want = ((x - rot.centre) @ rot.rotation) @ rot.coefficients
@@ -415,7 +415,7 @@ def test_pc_clock_reports_no_coefficient_mass(synthetic_betas):
     feats = list(synthetic_betas.features[:200])
     m = PCLinearClock(clock=reg.get("pchorvath2013"),
                       rotation=_synthetic_rotation(feats))
-    _, al = m.predict(synthetic_betas, resolve("cpu"))
+    _, al = m.predict(synthetic_betas, resolve())
     assert al.mass_coverage is None
 
 
@@ -453,4 +453,4 @@ def test_pc_clock_enforces_the_feature_floor(synthetic_betas):
     m = PCLinearClock(clock=reg.get("pchorvath2013"),
                       rotation=_synthetic_rotation(feats))
     with pytest.raises(FeatureCoverageError, match="below the"):
-        m.predict(synthetic_betas, resolve("cpu"), min_coverage=0.8)
+        m.predict(synthetic_betas, resolve(), min_coverage=0.8)

@@ -1,0 +1,92 @@
+---
+title: "Build a clock"
+subtitle: "Compare learners on your own data, choose one on an honest error, and fit it"
+---
+
+When no published clock fits your assay or your question, fit one to your cohort. FALCONAge
+compares several learners first, every number out of fold, and then fits the one you choose.
+
+## 1. Compare learners
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+import falconage as fa
+
+d   = fa.prepare(fa.read_betas("betas.csv"))      # obs must hold the target, e.g. "age"
+cmp = fa.compare_learners(d, target="age", groups="person")
+
+cmp.table          # one row per learner: MAE, MedAE, r, slope, bias by thirds, seconds
+cmp.selected       # the nested error of "pick the best": the number to report
+cmp.best           # the learner with the lowest out-of-fold MAE
+```
+
+### R
+
+```r
+library(FALCONAge)
+
+d   <- prepare(read_betas("betas.csv"))
+cmp <- compare_learners(d, target = "age", groups = "person")
+
+cmp$table
+cmp$selected
+```
+
+:::
+
+`groups` names a sample-sheet column whose members always stay on the same side of a split:
+the person, when there are repeated visits, or the batch or cohort, for leave-one-group-out.
+Without it, a person's second visit is predicted by a model that was trained on their first.
+
+## 2. The learners
+
+| Name | What it is | Writes a clock file | Needs |
+|---|---|---|---|
+| `elasticnet` | glmnet's elastic net, alpha 0.5, lambda by inner cross-validation | yes | nothing extra |
+| `lasso`, `ridge` | the same with alpha 1 and 0 | yes | nothing extra |
+| `screened_elasticnet` | the 2,000 CpGs most correlated with the target, then elastic net; the screen runs inside each training part | yes | nothing extra |
+| `pc_elasticnet` | principal components, then elastic net; maps back to one weight per CpG | yes | nothing extra |
+| `random_forest`, `gradient_boosting`, `svr`, `mlp` | scikit-learn regressors | no | `pip install "falconage[learn]"` (in the Docker image already) |
+
+Pass `transform="horvath"` to fit Horvath's log-linear transform of age and invert it, which
+matters when the cohort includes children.
+
+## 3. Read the comparison honestly
+
+- **Quote `selected`, not the best row of `table`.** Picking the best of several learners is
+  itself a fitted choice, so the winner's own error is optimistic. `selected` repeats the pick
+  inside each outer fold and measures it on samples the pick never saw.
+- **Look at the slope and the bias by thirds**, not only MAE. Every penalised model pulls
+  predictions towards the mean, so the old read young and the young read old.
+- **The most accurate age predictor is not necessarily the best biomarker.** Test the residual
+  against an outcome on a cohort the model was not fitted on.
+
+## 4. Fit the chosen learner and save it
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fit = fa.fit_clock(d, target="age", learner="pc_elasticnet", groups="person")
+fit.metrics                        # out-of-fold MAE, MedAE, r, slope
+fit.to_clock("mycohortclock", "my_clocks/")
+```
+
+### R
+
+```r
+fit <- fit_clock(d, target = "age", learner = "pc_elasticnet", groups = "person")
+fit$metrics
+clock_to_file(fit, "mycohortclock", "my_clocks/")
+```
+
+:::
+
+`to_clock` writes `mycohortclock.yaml`, its coefficients and its reference values into
+`my_clocks/`. [Add a clock](add.qmd) scores it like any catalogue clock.
+
+→ **Why it works this way:** [Building a clock](../methods/building.qmd)

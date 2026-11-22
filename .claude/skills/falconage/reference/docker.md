@@ -16,33 +16,44 @@ git clone https://github.com/bhagesh-h/FALCONAge.git && cd FALCONAge
 docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu .
 ```
 
-One image carries Python, R, the CLI and all 43 bundled weight files: 42 coefficient
-tables and AltumAge's safetensors network. Prove it, with no
-clone needed, against the source the image was built from:
+One image carries Python, R, the CLI and every bundled weight file. `bhagesh/falconage:1.0.0-py`
+is a smaller Python-only image (no R, no parquet or `.h5ad` reader). Check either with:
 
 ```bash
-docker run --rm bhagesh/falconage:1.0.0-cpu python -m pytest /opt/falconage/src/python/tests -q
+docker run --rm bhagesh/falconage:1.0.0-cpu config
 ```
 
-452 tests, all passing. The R suite is 52 more:
-`Rscript -e 'testthat::test_local("/opt/falconage/src/r")'` in the same image.
+## The two commands most people need
+
+```bash
+# the whole pipeline on synthetic data, to see every output: about a minute
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu demo
+
+# the whole pipeline on real data: scores, uncertainty, acceleration, figures, report.html
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu run betas.csv --samples samples.csv
+```
+
+`run` takes a beta matrix (`.csv`, `.tsv`, `.parquet`, `.h5ad`), a GEO series matrix, a folder of
+IDATs, a clinical table (`--kind clinical`) or a Nightingale `.xlsx`. The sample sheet is optional:
+first column the sample id, then any of `age`, `sex`, `tissue`, `group`. Results land in
+`<input>_falconage/`; per-clock notes go to `warnings.csv` rather than the console.
 
 ## Three ways in
 
 The entrypoint **is** the `falconage` CLI, so a verb goes straight after the image name. Writing
 `... bhagesh/falconage:1.0.0-cpu falconage score ...` runs `falconage falconage score` and fails.
-`python`, `R`, `Rscript`, `pytest` and `bash` are the exceptions, passed through as given.
+`python`, `R`, `Rscript`, `sh` and `bash` are the exceptions, passed through as given.
 
 ```bash
 # a session
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python
-docker run --rm -it -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu R
+docker run --rm -it -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu python
+docker run --rm -it -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu R
 
 # a single CLI command: the verb, with no `falconage` in front of it
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu report betas.csv --outdir results/
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu report betas.csv --outdir results/
 
 # a script in the working tree
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python my_analysis.py
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu python my_analysis.py
 ```
 
 The mount is what makes this work: `-v "$PWD:/work"` puts the current directory inside the
@@ -51,10 +62,14 @@ written outside `/work` disappears when the container exits.
 
 ## CLI verbs
 
-Ten verbs, and `--help` on any of them is authoritative:
+Thirteen verbs, and `--help` on any of them is authoritative. Every verb also takes
+`--threads N`, `--log-level {quiet,info,debug}` and `--log-file PATH`:
 
 ```bash
-falconage config                       # versions, devices, registry size; run this first when confused
+falconage demo                         # everything, on synthetic data
+falconage run betas.csv --samples samples.csv   # everything, on your data
+falconage versions                     # versions as YAML (a pipeline's versions.yml)
+falconage config                       # versions, registry size; run this first when confused
 falconage clocks list --tier bundled   # browse the registry; list, info and cite are the actions
 falconage clocks list --search mortality
 falconage clocks info horvath2013
@@ -169,25 +184,6 @@ fa.score(d, clocks=["grimage2"])
 
 Never commit such a file to a repository. That is exactly the redistribution the licence forbids.
 
-## GPU
-
-```bash
-docker pull bhagesh/falconage:1.0.0-cuda
-docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cuda python test/gpu_check.py
-```
-
-14.6 GB against the CPU image's 2.5 GB, because it carries torch built against CUDA 12.4. To
-build it instead: `docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.0.0-cuda .`
-
-Measured, and worth knowing: **CUDA is slower** for the linear clocks that ship today. The
-transfer dominates a dot product. The GPU path exists for the neural architectures.
-
-`device="cuda"` does not put every clock on the card. The linear, PC, aggregation and neural
-classes go there; the three clinical clocks (PhenoAge, KDM, homeostatic dysregulation) declare
-`CPU_ONLY` because nine markers are not worth a kernel launch. A run is therefore allowed to be
-mixed, and `manifest.compute` records device, dtype and backend per clock rather than one value
-for the run. Read `manifest.compute_summary()` for the one-line version.
-
 ## Native install, if Docker is not available
 
 ```bash
@@ -206,7 +202,7 @@ delegates all arithmetic to the Python core, so it needs a Python environment ei
 
 Every run writes `run_manifest.json`: package and registry versions, the SHA-256 of every
 coefficient file, the array manifest that decoded the IDATs, the reliability table behind the
-intervals, device and floating-point precision, the imputation policy, and every warning raised.
+intervals, the floating-point precision, the imputation policy, and every warning raised.
 Two runs reporting the same score either used the same coefficients or the manifest says they
 did not. Keep it with the results.
 

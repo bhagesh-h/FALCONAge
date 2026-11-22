@@ -16,7 +16,7 @@ manifest(x)
 A named list.
 }
 \description{
-Versions, device, dtype, the SHA-256 of every coefficient file used, per-clock
+Versions, precision, the SHA-256 of every coefficient file used, per-clock
 coverage, and every warning raised. Two runs reporting the same score either
 used the same coefficients or the manifest says they did not.
 }

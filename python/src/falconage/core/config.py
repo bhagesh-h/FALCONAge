@@ -39,7 +39,6 @@ def default_config_path() -> Path:
 
 @dataclass
 class FalconConfig:
-    device: str = "auto"
     dtype: str = "float64"
     verbose: str = "inform"
     #: Pinning this is what makes a result reproducible across package
@@ -66,7 +65,6 @@ class FalconConfig:
                     setattr(cfg, k, Path(v) if k == "cache_dir" else v)
 
         for env_key, attr, cast in (
-            ("FALCONAGE_DEVICE", "device", str),
             ("FALCONAGE_DTYPE", "dtype", str),
             ("FALCONAGE_VERBOSE", "verbose", str),
             ("FALCONAGE_REGISTRY_VERSION", "registry_version", str),

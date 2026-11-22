@@ -31,7 +31,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError
 from ..registry.registry import Clock
 from .linear import Alignment, align_present
@@ -65,7 +65,7 @@ class DeconvolutionClock:
     clock: Clock
     registry: object
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         table = self.registry.deconvolution_table(
             self.clock.id, data.platform, present=data.X.columns)

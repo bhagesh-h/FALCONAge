@@ -2,9 +2,9 @@
 title: "Download, preprocessing, scoring and reports"
 ---
 
-## 5. Download module
+## Download module
 
-### 5.1 Contract
+### Contract
 
 One verb, one accession, files plus a normalised sample table.
 
@@ -37,7 +37,7 @@ normalised is not reproducible. `dry_run=True` returns the same object with `fil
 sizes filled but nothing transferred, which is how a user finds out that a series is 12 GB before
 committing to it.
 
-### 5.2 Source dispatch
+### Source dispatch
 
 `falconage/download/resolve.py` recognises the accession by pattern and returns the right
 `Downloader`. Unrecognised input raises with the list of recognised patterns rather than guessing.
@@ -60,7 +60,7 @@ committing to it.
 | `EGAD\d+`, `EGAS\d+` | EGA | documented, credentialed | later |
 | `phs\d+` | dbGaP | documented, not automated | - |
 
-### 5.3 GEO, in detail
+### GEO, in detail
 
 GEO is where most of the traffic goes, and it has three shapes that need different handling.
 
@@ -89,7 +89,7 @@ class GEOSeriesInfo:
 
 The three shapes:
 
-1. **IDATs present** - roughly 40% of methylation series. Download the `_Grn.idat.gz` and
+1. **IDATs present**: roughly 40% of methylation series. Download the `_Grn.idat.gz` and
    `_Red.idat.gz` pairs plus the platform manifest, and hand off to the preprocess module. This
    is the only path that yields a reproducible beta matrix.
 2. **Series matrix only.** Parse the `!Sample_` header block for metadata and the tab-delimited
@@ -100,7 +100,7 @@ The three shapes:
    `read_betas` sniffs orientation, delimiter, and whether values are betas in `[0,1]` or
    M-values, and asks rather than guesses when it cannot tell.
 
-### 5.4 Metadata normalisation
+### Metadata normalisation
 
 `falconage/download/metadata.py`. The hardest part of the download module is not transfer: it is
 that the GEO `characteristics_ch1` field is free text and every submitter writes age differently.
@@ -141,7 +141,7 @@ WARNING  age extracted for 41/120 samples (34%) from field 'characteristics_ch1'
 No LLM, no fuzzy matching that might silently mis-assign. A wrong age is worse than a missing one
 because age acceleration is computed against it.
 
-### 5.5 Transfer, cache, credentials
+### Transfer, cache, credentials
 
 `transfer.py` - HTTP range requests for resume, parallel connections capped at `n_jobs`, SHA-256
 verification against the published checksum where one exists and against a recorded one on
@@ -175,7 +175,7 @@ raise CredentialsRequiredError(
 Credentials come from a file or the environment, never from a function argument that would land
 in a shell history or a notebook.
 
-### 5.6 CLI
+### CLI
 
 ```bash
 falconage download GSE40279 --dest data/ --what raw
@@ -188,9 +188,9 @@ As shipped, `--dry-run` is what answers "what is in this series?": it prints eve
 count and transfers nothing. The specification also had a separate `probe` verb for that; it was
 not built, because it would have been the same code behind a second name.
 
-## 6. Preprocess module
+## Preprocess module
 
-### 6.1 Contract
+### Contract
 
 Raw or public data in, a `FalconData` the scoring module accepts out. One entry point per
 modality, all converging on samples by features with exact feature identifiers and declared
@@ -206,15 +206,14 @@ def preprocess_methylation(
     aggregate_epicv2: bool = True,
     imputation: str = "none",           # dataset-level; clock-level is separate
     sample_table: pd.DataFrame | None = None,
-    device: str = "auto",
 ) -> FalconData
 ```
 
 Analogous `preprocess_clinical`, plus `preprocess_expression` and `preprocess_proteomics`.
 
-### 6.2 Methylation
+### Methylation
 
-**IDAT to beta.** The chain is [the science notes](../methods/index.qmd) section 3.1:
+**IDAT to beta.** The chain is [the science notes](../methods/formulas.qmd) section DNA methylation:
 
 ```
 IDAT pair (Grn, Red)
@@ -230,7 +229,7 @@ IDAT pair (Grn, Red)
 Implementation route: `methylprep` for IDAT parsing and noob, a native BMIQ port (beta-mixture
 quantile normalisation is around 150 lines, and having it in-tree avoids an R dependency inside
 the Python core), and SeSAMe through `rpy2` only when the user asks for it. The pipeline choice
-is recorded in the manifest because it changes the answer, [the science notes](../methods/index.qmd) section 3.1 notes that
+is recorded in the manifest because it changes the answer, [the science notes](../methods/formulas.qmd) section DNA methylation notes that
 `noob + BMIQ` and SeSAMe both perform well but are not interchangeable, and funnorm is preferred
 when global methylation differs between groups.
 
@@ -247,7 +246,7 @@ raises `PlatformMismatchError` when the best overlap is under 50% rather than pr
 wrong manifest.
 
 **EPIC v2 aggregation.** Split each column name on `_`, group by the CpG prefix, average
-replicates. Mandatory, [the science notes](../methods/index.qmd) section 16 records that skipping it means every clock sees
+replicates. Mandatory, [the science notes](../methods/formulas.qmd) section [Failure modes](../clocks/discrepancies.qmd) records that skipping it means every clock sees
 zero overlapping features. When `detect_platform` says EPIC v2 and `aggregate_epicv2=False`, the
 module raises rather than producing a silently empty result.
 
@@ -260,7 +259,7 @@ probes says so.
 the normalisation the submitter already applied, with `normalisation: submitter-reported` in the
 manifest.
 
-### 6.3 Clinical chemistry
+### Clinical chemistry
 
 ```python
 def preprocess_clinical(
@@ -274,13 +273,13 @@ def preprocess_clinical(
 Three steps: map column names to canonical marker names through a synonym table, so `ALB`,
 `albumin` and `Albumin (g/dL)` all resolve to `albumin`; convert every marker to the canonical
 unit the clocks expect; validate against physiological ranges. The ranges are the BioAge
-clinically-healthy windows ([the science notes](../methods/index.qmd) section 3.5) for the reference-cohort case, and wider
+clinically-healthy windows ([the science notes](../methods/formulas.qmd) section Clinical chemistry and haematology) for the reference-cohort case, and wider
 physiological bounds for the general case, a CRP of 40 mg/L is outside the healthy window but is
 a real measurement, so it warns rather than nulls by default.
 
-### 6.4 Imputation, kept in three distinct places
+### Imputation, kept in three distinct places
 
-[the science notes](../methods/index.qmd) section 6.3 separates three stages that are routinely conflated. Keeping them
+[the science notes](../methods/formulas.qmd) section [Two distinct imputation stages](../data/preprocessing.qmd#two-distinct-imputation-stages) separates three stages that are routinely conflated. Keeping them
 separate is what makes the missingness report meaningful.
 
 | Stage | Where | Options | Recorded as |
@@ -289,8 +288,7 @@ separate is what makes the missingness report meaningful.
 | Clock-level | `models.linear.align` | the clock's `reference_values` for an absent feature; the mean of its present features where there is none; a present feature's own cohort mean for its missing values | `coverage[clock]`: `n_from_reference`, `n_pooled`, `reference` |
 | Model-internal | inside the clock | the model's own stored statistic | `imputation.model` |
 
-Dataset-level KNN is the expensive one and is GPU-accelerated when a device is available:
-`cuml.KNNImputer` when RAPIDS is installed, a chunked CuPy distance otherwise, sklearn on CPU.
+Dataset-level KNN is the expensive one; it runs in chunks so a wide matrix fits in memory.
 
 Clock-level filling uses `reference_values` from the registry, built by
 `python/tools/build_references.py`: the authors' published per-CpG values for Horvath 2013,
@@ -302,7 +300,7 @@ the count and the share of the model's |coefficient| involved. Below `min_covera
 0.8, of the features or of the coefficient mass, scoring raises `FeatureCoverageError` rather
 than returning a number nobody should use.
 
-### 6.5 QC report
+### QC report
 
 ```python
 @dataclass
@@ -325,7 +323,7 @@ class QCReport:
 61% of its features gets to decide whether to proceed; a user who discovers it afterwards has
 already written the number down.
 
-### 6.6 CLI
+### CLI
 
 ```bash
 falconage preprocess methylation data/GSE40279/ --out prepared.h5ad --pipeline noob_bmiq
@@ -337,17 +335,15 @@ The specification had a separate `qc` verb writing its own HTML. Not built: `pre
 prints the QC summary, and `report` embeds the full set of QC figures, so a third path to the same
 numbers was a third thing to keep in step.
 
-## 7. Scoring, analysis, plots, report
+## Scoring, analysis, plots, report
 
-### 7.1 score()
+### score()
 
 ```python
 def score(
     data: FalconData,
     clocks: str | Sequence[str] | Literal["all", "compatible"] = "compatible",
-    device: str = "auto",
     dtype: str = "float64",
-    batch_size: int | None = None,
     max_missing: float = 0.30,
     imputation: str = "reference",
     sex_unknown: str = "error",
@@ -367,13 +363,12 @@ Loop, per clock:
 3. Align features into `obsm[f"X_{clock}"]`, filling absences from `reference_values`. Record
    `percent_na` and the missing-feature list. Raise at 100% missing, or above `max_missing`.
 4. Promote dtype if `requires_fp64`.
-5. Batch through the model under `torch.inference_mode()`.
+5. Run the model's forward pass in numpy at the resolved precision.
 6. Write predictions to `obs[clock]` and metadata to `uns[f"{clock}_metadata"]`.
 7. Range-check against `plausible_range`; flag, never clip.
-8. Free the `obsm` slice unless `keep_features`, then `gc.collect()` and
-   `torch.cuda.empty_cache()`.
+8. Free the `obsm` slice unless `keep_features`.
 
-### 7.2 FalconResult
+### FalconResult
 
 ```python
 class FalconResult:
@@ -389,7 +384,7 @@ class FalconResult:
     def to_h5ad(self, path) -> None
 ```
 
-The long table carries every provenance field from [the science notes](../methods/index.qmd) section 8.1:
+The long table carries every provenance field from [the science notes](../methods/formulas.qmd) section [The output record](../clocks/meaning.qmd#the-output-record):
 
 ```
 sample_id, clock, clock_version, registry_version, value, unit, scale_type,
@@ -403,13 +398,13 @@ flags, citation, doi
 `high_missingness`, `clamped`, `dtype_promoted`, `platform_mismatch`, `known_discrepancy`,
 `extrapolated_age_range`, `sex_imputed`.
 
-### 7.3 Age acceleration
+### Age acceleration
 
 ```python
 def acceleration(result, method="both", within=None, covariates=None) -> pd.DataFrame
 ```
 
-Three conventions ([the science notes](../methods/index.qmd) section 1.1), all guarded by `scale_type`:
+Three conventions ([the science notes](../methods/formulas.qmd) section [The three quantities](../methods/formulas.qmd)), all guarded by `scale_type`:
 
 - `absolute` - `value − chronological_age`. Legal only for `scale_type` in `{age_years,
   age_months, age_days, age_hours, gestational_weeks}`. Attempting it on `rate`, `log_hazard`,
@@ -425,7 +420,7 @@ Three conventions ([the science notes](../methods/index.qmd) section 1.1), all g
 `method="both"` returns absolute and relative side by side, and omits absolute for scales where
 it is illegal rather than emitting NaN.
 
-### 7.4 Survival, association, reliability, benchmark
+### Survival, association, reliability, benchmark
 
 ```python
 # survival.py
@@ -456,7 +451,7 @@ sex-specific SD - the BioAge convention
 ([BioAge table_surv.R](https://github.com/dayoonkwon/BioAge)), which is what makes effect sizes
 comparable across clocks with different variances.
 
-The benchmark functions implement the ComputAgeBench methodology ([the science notes](../methods/index.qmd) section 11.1):
+The benchmark functions implement the ComputAgeBench methodology ([the science notes](../methods/formulas.qmd) section [ComputAgeBench, the reference methodology](../methods/benchmarking.qmd#computagebench-the-reference-methodology)):
 
 ```
 AA2:   one-sided Welch t-test (normal) or Mann-Whitney U (none), AAC against HC
@@ -472,7 +467,7 @@ prints the total on its own.
 `run_benchmark(..., dataset="computage")` fetches the 65-study benchmark set from Hugging Face
 and runs the whole thing, so a user can place their own clock on the published leaderboard.
 
-### 7.5 Agreement
+### Agreement
 
 ```python
 def clock_correlation(result, method="spearman", cluster=True) -> pd.DataFrame
@@ -484,11 +479,11 @@ def concordance(result, reference_clock: str) -> pd.DataFrame
 pyaging Figure 1a analysis: telomere predictors cluster together, and chronological predictors
 separate from mortality predictors.
 
-### 7.6 Plots
+### Plots
 
 Every plotting function returns the figure and has a parallel `*_data()` function returning the
 frame it plotted, so the R side renders the same numbers with ggplot2 rather than passing
-matplotlib figures across the bridge. The fourteen from [the science notes](../methods/index.qmd) section 10:
+matplotlib figures across the bridge. The fourteen from [the science notes](../methods/formulas.qmd) section [Plots](../analysis/reporting.qmd#plots):
 
 | Function | Figure |
 |---|---|
@@ -524,7 +519,7 @@ clocks never share an axis with age clocks; facets are ordered by clock generati
 alphabetically; every panel is annotated with n, r and missingness; colour encodes group and
 shape encodes platform, with one palette across a whole report.
 
-### 7.7 Report
+### Report
 
 ```python
 def report(result, path: Path, sections="all", embed_data=True) -> Path
@@ -535,7 +530,7 @@ run manifest, the QC block, the results table, the standard figures, and the cav
 to the clocks that actually ran. `embed_data=True` attaches the results CSV as a data URI so the
 report is a complete record.
 
-### 7.8 CLI
+### CLI
 
 > **The command lines in this section, in 5.5, 5.6 and 6.6, are the specified interface and
 > several of them do not parse against the shipped one.** The verbs are right; the argument shapes
@@ -551,7 +546,7 @@ report is a complete record.
 
 ```bash
 falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out results/
-falconage score prepared.h5ad --clocks compatible --device cuda --dtype float32
+falconage score prepared.h5ad --clocks compatible --dtype float32
 falconage bench results/ --condition-col condition --control HC
 falconage report results/ --out report.html
 falconage clocks --tier bundled --search mortality
@@ -566,12 +561,12 @@ be named. And `clocks` took `list`/`info`/`cite` sub-verbs in the specification;
 one verb with flags, because the three did the same lookup and differed only in what they printed.
 `power` and `consensus` are new since the specification was written.
 
-## 15. The layer that says what a score is worth
+## The layer that says what a score is worth
 
-Sections 1–14 describe the architecture that computes a score. This one describes the layer that says how much that score is worth. It is deliberately a *layer*: nothing below
+Sections [Scope, decisions and repository layout](index.qmd#scope-decisions-and-repository-layout)–14 describe the architecture that computes a score. This one describes the layer that says how much that score is worth. It is deliberately a *layer*: nothing below
 changed, no score moved, and every new artefact is reported rather than applied.
 
-### 15.1 New modules
+### New modules
 
 | Module | What it holds |
 |---|---|
@@ -582,7 +577,7 @@ changed, no score moved, and every new artefact is reported rather than applied.
 | `falconage.models.ops.DERIVATIVE` | an analytic derivative per transform, and an explicit refusal for the four that destroy the information |
 | `python/tools/` | the three derivation scripts for the shipped data artefacts |
 
-### 15.2 New registry artefacts
+### New registry artefacts
 
 Each is derived by a script in `python/tools/`, digest-checked, and carries its provenance into
 the run manifest. None can be regenerated in CI, two need the 586 MB corpus, one needs a 72 MB
@@ -597,7 +592,7 @@ instead, and the local `--check` catches staleness before a commit.
 | `references/*.csv`, `*.csv.gz` | 29,149 in five files | the authors' published per-CpG values (Horvath 2013, DunedinPoAm38, CorticalClock, AltumAge); healthy adult whole blood in this corpus | `build_references.py` |
 | `evidence.yaml` | 18 | multi-clock comparison studies | hand-curated, DOI enforced at load |
 
-### 15.3 Where the checks fire
+### Where the checks fire
 
 The registry already declared three properties that scoring enforced. Two more were added late, and they
 use the same shape, a declared property of the clock, checked in `score()`, refusing when the
@@ -619,7 +614,7 @@ asked for, so the distinction in the data model was never read. It is now:
 `absolute` and `both` need `acceleration`, `residual` and `within_group` need
 `residual`.
 
-### 15.4 Figure inventory, updated
+### Figure inventory, updated
 
 Twenty-six figure types, four of them new:
 
@@ -634,7 +629,7 @@ Twenty-six figure types, four of them new:
 computes all three per dataset, so the gallery figures come from real public data rather than a
 synthetic demonstration.
 
-### 15.5 What did not change
+### What did not change
 
 No score. The earlier numbers are bit-identical for any dataset whose clocks were legal to
 score in the first place, the two integration tests that changed did so because they were

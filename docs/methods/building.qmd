@@ -5,7 +5,7 @@ title: "23. Building a clock of your own"
 The catalogue is other people's clocks. This is the arithmetic of fitting one,
 with the numbers the published clocks actually used.
 
-## 23.1 The objective
+## The objective
 
 With $n$ samples and $p$ CpGs, $p \gg n$ always. Horvath had 8,000 samples
 against 21,369 candidate probes; a modern EPIC study has 850,000 columns and a
@@ -40,11 +40,11 @@ ten missing values. That produced the 353 sites.
 Rerun the same fit with a slightly different $\lambda$, a different fold split,
 or a different subset of samples, and a different CpG set comes out with almost
 identical accuracy. The correlated groups are interchangeable to the optimiser.
-This is one mechanism behind the discrepancies listed in section 15.2, and it is
+This is one mechanism behind the discrepancies listed in section [Where the paper and the coefficients disagree](../clocks/discrepancies.qmd), and it is
 why two faithful implementations of the same clock can disagree on membership.
 :::
 
-## 23.2 Choosing the penalty honestly
+## Choosing the penalty honestly
 
 $\lambda$ comes from $k$-fold cross-validation: fit on $k-1$ folds, measure on
 the held-out one, take the $\lambda$ minimising mean cross-validated error, or
@@ -55,7 +55,7 @@ their correlation with age on the full dataset and then cross-validating the fit
 on those CpGs leaks the held-out fold into the selection, and the reported error
 is optimistic by an amount that cannot be recovered afterwards.
 
-## 23.3 The age transform
+## The age transform
 
 Methylation changes quickly in childhood and slowly afterwards, so a model
 linear in age fits adults and misses the first two decades. Horvath regresses a
@@ -77,11 +77,11 @@ $F$; the reported age is $F^{-1}$ of the linear predictor. Applying the inverse
 twice, or omitting it, is invisible in an adult cohort because the branches
 nearly agree there, and badly wrong in a paediatric one.
 
-## 23.4 Feature selection is not settled
+## Feature selection is not settled
 
 Elastic net is the default rather than the optimum. Benchmarked on the Hannum
 blood data (GSE40279, 656 samples, 473,035 CpGs, 10-fold cross-validation,
-80/20 split):
+80/20 split) by Li et al. 2022 ([doi:10.1371/journal.pcbi.1009938](https://doi.org/10.1371/journal.pcbi.1009938)):
 
 | Method | CpGs kept | R² | Median error |
 |---|---:|---:|---|
@@ -100,7 +100,7 @@ a handful of sites. And an unfiltered elastic net over all 473,035 probes was
 beaten by five selection strategies, which is the opposite of the usual
 intuition: past a point the extra probes contribute noise rather than signal.
 
-## 23.5 Two metrics that disagree, and both are needed
+## Two metrics that disagree, and both are needed
 
 $$
 \text{MedAE} = \operatorname{median}_i\left|\hat{y}_i - y_i\right|, \qquad r = \operatorname{corr}(\hat{y}, y)
@@ -119,24 +119,24 @@ to the mean, a property of the estimator rather than a defect of the cohort, and
 it leaves the residual correlated with age unless the slope is corrected. It is
 why [age acceleration](../analysis/acceleration.qmd) is a residual on chronological age.
 
-## 23.6 The step that gets skipped
+## The step that gets skipped
 
 A model fitted to chronological age will correlate with chronological age.
 Reporting that as validation is circular. The claim worth making is about the
 residual: whether age acceleration associates with disease, mortality or an
 intervention, on a cohort that was not used to fit the model. Everything in
-section 11 applies to a clock you fitted exactly as it applies to a published
+section [Benchmarking and validation](benchmarking.qmd) applies to a clock you fitted exactly as it applies to a published
 one.
 
-## 23.7 What to publish
+## What to publish
 
 Feature list, weights, intercept, the preprocessing chain and the postprocess,
 together and in the order they apply. A clock published without its postprocess
-is the commonest source of the disagreements in section 15, because the next
+is the commonest source of the disagreements in section [The layer that says what a score is worth](../dev/modules.qmd#the-layer-that-says-what-a-score-is-worth), because the next
 implementer has to guess whether an anti-log was already applied, and a
 plausible wrong guess produces plausible wrong ages.
 
-## 23.8 Fitting one here
+## Fitting one here
 
 `fa.fit_clock(data, target="age")` fits an elastic net to one cohort and reports only
 predictions made out of fold: the cohort is split into outer folds, lambda is chosen by
@@ -149,4 +149,15 @@ returned lambdas can differ slightly, because its internal fold fits differ from
 calls by about 1e-4 in MSE. A missing value is filled with its feature's mean in the training part it
 falls in. The model fitted on everyone is returned for new samples, and its accuracy is the
 out-of-fold one, not its fit. The result is a model of this cohort and is labelled as one.
+
+Beyond the elastic net, `fa.compare_learners()` puts several learners side by side on the same
+outer folds (ridge, lasso, CpG pre-screening, principal components, and with scikit-learn a
+random forest, gradient boosting, support vector regression and a small neural network), and
+reports the error of choosing among them with the choice repeated inside each outer fold. That
+nested error is the honest one (Varma and Simon 2006, doi:10.1186/1471-2105-7-91); the best
+row of the table is not. `groups=` keeps a person's repeated visits, or a batch, on one side of
+every split. A linear model, whichever learner produced it, is written out with
+`ClockFit.to_clock()` and scored through the catalogue like any other clock; see
+[Build a clock](../own/compare.qmd), [Add a clock](../own/add.qmd) and
+[Stack clocks](../own/stack.qmd).
 

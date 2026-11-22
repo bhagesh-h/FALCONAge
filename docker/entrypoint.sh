@@ -10,11 +10,10 @@
 #   1. Let a mounted checkout take precedence over the installed copy, so an
 #      edit-run cycle does not need a rebuild.
 #   2. Treat a bare invocation as a help request rather than an error.
-#   3. Step out of the way when the first argument is an interpreter, so the
-#      test suite and the GPU check can be run without --entrypoint. Both need
-#      the image's environment and neither is a `falconage` subcommand, and
-#      `docker run --entrypoint python img -m pytest` puts the image name
-#      between the entrypoint and its arguments, which nobody remembers.
+#   3. Step out of the way when the first argument is an interpreter, a shell,
+#      an absolute path or `falconage` itself, so `docker run img python`,
+#      `docker run img R` and a workflow manager's `/bin/bash .command.sh`
+#      all work without --entrypoint.
 # -----------------------------------------------------------------------------
 set -eu
 
@@ -37,11 +36,13 @@ if [ -n "${FALCONAGE_SOURCE:-}" ]; then
   echo "FALCONAge: running mounted source at ${FALCONAGE_SOURCE}" >&2
 fi
 
-# `docker run falconage:1.0.0-cpu` with no arguments is somebody finding out
+# `docker run bhagesh/falconage:1.0.0-cpu` with no arguments is somebody finding out
 # what the image does, not a malformed command.
 case "${1:-}" in
   ""|-h|--help) exec falconage --help ;;
-  python|python3|pytest|R|Rscript|sh|bash) exec "$@" ;;
+  python|python3|R|Rscript|sh|bash) exec "$@" ;;
+  falconage) exec "$@" ;;
+  /*) exec "$@" ;;    # an absolute path: Nextflow and Snakemake run /bin/bash .command.sh
 esac
 
 exec falconage "$@"

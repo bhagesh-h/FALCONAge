@@ -86,8 +86,8 @@ class WeightsUnavailableError(RegistryError):
 # ---------------------------------------------------------------------------
 # compute
 # ---------------------------------------------------------------------------
-class DeviceError(FalconError):
-    """The requested compute device is unavailable or unusable."""
+class ConfigError(FalconError):
+    """A configuration value is not one this version understands."""
 
 
 class ScoringError(FalconError):

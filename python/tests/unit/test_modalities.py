@@ -187,7 +187,7 @@ def test_negative_values_are_not_counts(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_a_pickle_is_refused_by_extension(tmp_path):
-    """torch.load executes arbitrary code while unpickling, and weights arrive
+    """Unpickling a file executes arbitrary code, and weights arrive
     by download from a third party."""
     p = tmp_path / "weights.pt"
     p.write_bytes(b"not really a pickle")
@@ -229,7 +229,7 @@ def test_a_two_layer_network_computes_the_forward_pass(tmp_path, registry, rng):
     model = fa.models.NeuralClock(clock=registry.get("horvath2013"), weights=weights)
     from falconage.core.backend import resolve
 
-    got, _ = model.predict(d, resolve("cpu", None, requires_fp64=False),
+    got, _ = model.predict(d, resolve(None, requires_fp64=False),
                            min_coverage=0.0)
 
     h = np.maximum(X.to_numpy() @ w0.T.astype(np.float64) + b0, 0.0)

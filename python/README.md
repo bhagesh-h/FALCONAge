@@ -1,6 +1,6 @@
 # FALCONAge (Python)
 
-Biological age and aging-clock scoring from multiomic data, in Python and R, on CPU or GPU.
+Biological age and aging-clock scoring from multiomic data, in Python and R.
 
 Not on PyPI. This package is the `python/` subdirectory of the FALCONAge repository, which is what
 the `#subdirectory=python` fragment below selects:

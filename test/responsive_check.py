@@ -415,7 +415,9 @@ def main(argv=None) -> int:
                 elif s["blurbAboveSpine"] is False:
                     failures.append(f"@{width}px: the blurb is below the book "
                                     "spine; the flex ordering has broken")
-                elif s["openSections"] != 1:
+                # A section whose sidebar is a flat list has no parts to open;
+                # one with parts must show exactly the part holding the page.
+                elif s["sections"] and s["openSections"] != 1:
                     failures.append(
                         f"@{width}px: {s['openSections']} of {s['sections']} "
                         "parts of the spine are open, expected exactly 1. "

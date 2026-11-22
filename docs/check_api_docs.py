@@ -190,7 +190,7 @@ def _check_cli_commands() -> list[str]:
         # The developer notes (docs/dev/) hold the design record, written
         # before the code and deliberately wider than it. Its command lines are
         # the specified interface, several of which the shipped parser does not
-        # implement, and §7.8 says so. Checking them would fail on the gap the
+        # implement, and the developer notes say so. Checking them would fail on the gap the
         # pages exist to document.
         if rel.as_posix().startswith("docs/dev/"):
             continue
@@ -204,6 +204,11 @@ def _check_cli_commands() -> list[str]:
                 argv = shlex.split(filled)
             except ValueError:
                 continue
+            # The command ends at a shell redirection or pipe.
+            for i, tok in enumerate(argv):
+                if tok in (">", ">>", "|", "2>", "&&", ";") or tok.startswith((">", "|")):
+                    argv = argv[:i]
+                    break
             err = io.StringIO()
             try:
                 with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):

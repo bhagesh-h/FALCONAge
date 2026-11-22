@@ -142,7 +142,7 @@ def test_the_field_s_best_known_clocks_have_an_alias():
 
 @pytest.fixture(scope="module")
 def table():
-    path = ROOT / "overlap.csv"
+    path = ROOT / "docs" / "clocks" / "overlap.csv"
     if not path.exists():
         pytest.skip("overlap.csv absent; run python/tools/build_overlap.py")
     with path.open(newline="", encoding="utf-8") as fh:
@@ -180,7 +180,7 @@ def test_feature_overlap_is_blank_where_features_are_not_distributed(table):
 
 @pytest.fixture(scope="module")
 def dictionary():
-    path = ROOT / "overlap_col_desc.csv"
+    path = ROOT / "docs" / "clocks" / "overlap_col_desc.csv"
     if not path.exists():
         pytest.skip("overlap_col_desc.csv absent; run python/tools/build_overlap.py")
     with path.open(newline="", encoding="utf-8") as fh:

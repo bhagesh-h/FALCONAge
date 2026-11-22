@@ -81,6 +81,10 @@ def run_report(data: Any, outdir: str | Path, *, clocks: Any = "compatible",
             log(f"  consensus unavailable: {exc}")
 
     res.write(out)
+    pd.DataFrame(res.manifest.warnings or [],
+                 columns=["clock", "category", "message"]).to_csv(
+        out / "warnings.csv", index=False)
+    written["warnings"] = out / "warnings.csv"
     res.interpretation().to_csv(out / "interpretation.csv")
     res.evidence().to_csv(out / "evidence.csv", index=False)
 

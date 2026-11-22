@@ -7,8 +7,7 @@ the same core, a chain can be printed and audited without reading code, and a
 constant that is wrong is wrong in one visible place.
 
 Each op takes and returns an array. They are written against the ``xp`` module
-handle from :mod:`falconage.core.backend`, so the same source runs on numpy and
-on torch without a branch.
+handle from :mod:`falconage.core.backend`, so the precision is set in one place.
 """
 
 from __future__ import annotations
@@ -72,9 +71,9 @@ def exp_op(x, xp=np):
 
 def clip(x, low: float | None = None, high: float | None = None, xp=np):
     if low is not None:
-        x = xp.clip(x, low, None) if xp is np else xp.clamp(x, min=low)
+        x = xp.clip(x, low, None)
     if high is not None:
-        x = xp.clip(x, None, high) if xp is np else xp.clamp(x, max=high)
+        x = xp.clip(x, None, high)
     return x
 
 
@@ -157,7 +156,7 @@ def beta_to_m(x, alpha: float = 1e-6, xp=np):
     defensive programming -- it is the difference between a number and a NaN
     that propagates through the whole dot product.
     """
-    b = xp.clip(x, alpha, 1.0 - alpha) if xp is np else xp.clamp(x, alpha, 1.0 - alpha)
+    b = xp.clip(x, alpha, 1.0 - alpha)
     return xp.log2(b / (1.0 - b))
 
 

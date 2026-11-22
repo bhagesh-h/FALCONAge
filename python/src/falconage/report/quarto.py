@@ -593,7 +593,7 @@ def _manifest_html(path: Path) -> str:
 
     m = json.loads(path.read_text(encoding="utf-8"))
     keys = ("falconage_version", "registry_version", "started_utc", "finished_utc",
-            "caller", "python", "platform", "device_requested", "device", "dtype")
+            "caller", "python", "platform", "dtype")
     run = pd.DataFrame([{"field": k.replace("_", " "), "value": str(m.get(k, ""))}
                         for k in keys if k in m])
     weights = pd.DataFrame([

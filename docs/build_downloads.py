@@ -63,16 +63,17 @@ DEFAULT_OUT = HERE / "_site" / "downloads"
 # The API reference is a lookup table, and a lookup table wants search, which
 # is what the website gives it. What is worth having on a plane is the
 # narrative: what the thing is, how to use it, how to choose a clock, and the
-# methods and the developer notes: the book spine, less the API reference.
+# methods: the book spine, less the API reference and the developer notes.
 def front() -> list[str]:
-    """Every chapter of the site's book spine, in order, less the API reference.
+    """Every user-facing chapter, in order: no API reference, no developer notes.
 
     Read from reference-groups.yml, the file the sidebar is generated from, so
     the manual binds the same chapters in the same order as the site shows.
     """
     spec = yaml.safe_load(GROUPS.read_text(encoding="utf-8"))
     return [ch["file"] for part in spec["book"] for ch in part["chapters"]
-            if ch.get("file") and not ch["file"].startswith("reference/")]
+            if part.get("section") != "dev"
+            and ch.get("file") and not ch["file"].startswith("reference/")]
 
 FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.S)
 # `[text](#anchor)` -> `text`. Every page carries a hand-written contents list

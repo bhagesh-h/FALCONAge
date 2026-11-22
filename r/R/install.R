@@ -25,18 +25,7 @@
 #' @param method `"auto"`, `"virtualenv"` or `"conda"`, passed to reticulate.
 #' @param extras Optional extras to install alongside the core.
 #'   `"methylation"` adds the parquet reader; `"plot"` adds matplotlib;
-#'   `"anndata"` adds the `.h5ad` reader. Note that `"gpu"` is deliberately
-#'   *not* in this list -- see `gpu` below.
-#' @param gpu Install CUDA torch as well. Off by default, and not merely out of
-#'   caution: on the clocks that ship today the GPU is slower than the CPU
-#'   (0.58 s against 3.74 s at 16,384 samples on an RTX 4060), because a linear
-#'   clock over a few thousand features is too small a matrix multiplication to
-#'   pay for the transfer. It earns its place on the PC clocks and on neural
-#'   architectures, none of which are bundled yet.
-#' @param cuda CUDA version for the torch wheel index, e.g. `"cu124"`. The
-#'   `gpu` extra alone is not enough: pip's default index serves a CUDA build on
-#'   Linux and a CPU-only build on Windows under the same name, so the wheel has
-#'   to be requested from PyTorch's own index explicitly.
+#'   `"anndata"` adds the `.h5ad` reader.
 #' @param version Git ref to install from. A version number such as `"1.0.0"`
 #'   becomes the tag `v1.0.0`; anything else -- `"main"`, a branch, a commit
 #'   SHA -- is used verbatim. Defaults to the version of this R package.
@@ -47,30 +36,17 @@
 #' \dontrun{
 #' falconage_install()
 #' falconage_install(extras = c("plot", "anndata"))
-#' falconage_install(gpu = TRUE, cuda = "cu124")
 #' falconage_install(version = "main")   # track the development branch
 #' }
 #' @export
 falconage_install <- function(envname = "r-falconage",
                               method = c("auto", "virtualenv", "conda"),
                               extras = c("methylation", "plot", "anndata"),
-                              gpu = FALSE, cuda = "cu124",
                               version = NULL, ...) {
   method <- match.arg(method)
   version <- version %||% as.character(utils::packageVersion("FALCONAge"))
   # A bare version number names a release tag; anything else is already a ref.
   ref <- if (grepl("^[0-9]+\\.[0-9]+", version)) paste0("v", version) else version
-
-  # torch first, and from PyTorch's own index. Pip's default index serves a
-  # CUDA build of torch on Linux and a CPU-only build on Windows under the same
-  # version, so a plain `falconage[gpu]` silently gives half the machines an
-  # environment where device="cuda" cannot resolve.
-  if (isTRUE(gpu)) {
-    idx <- paste0("https://download.pytorch.org/whl/", cuda)
-    message("installing torch from ", idx)
-    reticulate::py_install("torch", envname = envname, method = method, pip = TRUE,
-                           pip_options = c("--index-url", idx), ...)
-  }
 
   spec <- sprintf(
     "falconage%s @ git+https://github.com/bhagesh-h/FALCONAge.git@%s#subdirectory=python",
@@ -85,7 +61,7 @@ falconage_install <- function(envname = "r-falconage",
 
 #' What this installation resolved to
 #'
-#' Versions, available compute devices, and the size and version of the clock
+#' Versions and the size and version of the clock
 #' registry. The same information `falconage config` prints on the command line
 #' and `falconage.config()` returns in Python -- one function, three surfaces,
 #' so a bug report from any of them is comparable.
@@ -112,12 +88,8 @@ print.falcon_config <- function(x, ...) {
   cat("  availability ", t$bundled, " bundled - ", t$untraced, " untraced - ",
       t$licensed, " licensed\n", sep = "")
   cat("  numpy        ", x$numpy, "\n", sep = "")
-  cat("  torch        ", x$torch %||% "not installed (the CPU path needs none)", "\n", sep = "")
-  cat("  devices      ", paste(unlist(x$devices), collapse = ", "), "\n", sep = "")
-  if (!is.null(x$cuda_devices)) {
-    cat("  cuda         ", x$cuda_version, ": ",
-        paste(unlist(x$cuda_devices), collapse = ", "), "\n", sep = "")
-  }
+  cat("  cpu cores    ", x$cpu_count, "
+", sep = "")
   cat("  python       ", tryCatch(reticulate::py_config()$python,
                                   error = function(e) "unknown"), "\n", sep = "")
   invisible(x)

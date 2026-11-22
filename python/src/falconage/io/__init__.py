@@ -132,9 +132,23 @@ def read_nightingale(path: str | Path, *, index_col: int | str = 0,
     return FalconData(X=X.astype(float), obs=obs, modality="metabolomics_nmr")
 
 def read(path: str | Path, **kw) -> FalconData:
-    """Dispatch on the filename. Convenience, not magic -- it says what it chose."""
+    """Dispatch on the filename. Convenience, not magic -- it says what it chose.
+
+    A directory holding ``*_Grn.idat`` / ``*_Red.idat`` pairs is read as raw
+    Illumina arrays; an ``.xlsx`` file as a Nightingale NMR export.
+    """
     p = Path(path)
     name = p.name.lower()
+    if p.is_dir():
+        if any(p.glob("*_Grn.idat*")):
+            from ..preprocess.idat import read_idat_dir
+            return read_idat_dir(p, **kw)
+        raise DataError(
+            f"{p} is a folder without IDAT files.\n"
+            "  A folder is read as raw Illumina arrays (*_Grn.idat and *_Red.idat "
+            "pairs). For other folders call read_rrbs_dir or read_bedmethyl_dir.")
+    if name.endswith((".xlsx", ".xls")):
+        return read_nightingale(p, **kw)
     if name.endswith(".h5ad"):
         return FalconData.read_h5ad(p)
     if "series_matrix" in name:

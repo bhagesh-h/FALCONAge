@@ -80,13 +80,12 @@ table is quoted from a paper; those carry a DOI at the point of use instead.
 | Gestational clocks against recorded days-not-weeks | [below](#gestational-clocks) | `python test/run_all.py --groups gestational` |
 | PhenoAge / KDM / HD on blood chemistry | [below](#clinical-chemistry) | `python test/run_all.py --groups clinical` (synthetic); the R suite runs the real 15,160-sample NHANES III |
 | Registry counts: 178 clocks, 69 bundled / 52 untraced / 57 licensed | [below](#the-registry) | `python test/run_all.py --groups registry` |
-| Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [science §19.2](../docs/analysis/uncertainty.qmd) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
-| `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [science §19.5](../docs/analysis/uncertainty.qmd) | `python python/tools/build_platform_bias.py` |
-| Conformal interval widths per clock | [science §19.3](../docs/analysis/uncertainty.qmd) | `python python/tools/build_conformal.py` |
-| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [science §19.6](../docs/analysis/uncertainty.qmd) | `pytest python/tests/unit/test_batch.py` |
-| Dye bias moves the median beta by **+0.10 to +0.12** | [science §20.4](../docs/data/raw-arrays.qmd) | `python test/run_all.py --groups idat` |
-| R and Python agree at tolerance **exactly zero** | [architecture §8](../docs/dev/r-package.qmd) | `Rscript -e 'testthat::test_local("r")'` |
-| GPU speed table, including where CUDA is slower | [docs/dev/gpu.qmd](../docs/dev/gpu.qmd) | `python test/gpu_check.py` on a CUDA machine |
+| Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [Propagating measurement error](../docs/methods/uncertainty.qmd#propagating-measurement-error) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
+| `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [Probe loss, priced](../docs/methods/uncertainty.qmd#probe-loss-priced) | `python python/tools/build_platform_bias.py` |
+| Conformal interval widths per clock | [Prediction error](../docs/methods/uncertainty.qmd#prediction-error-is-a-different-larger-question) | `python python/tools/build_conformal.py` |
+| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [Uncertainty](../docs/analysis/uncertainty.qmd) | `pytest python/tests/unit/test_batch.py` |
+| Dye bias moves the median beta by **+0.10 to +0.12** | [From raw arrays to betas](../docs/methods/raw-arrays.qmd) | `python test/run_all.py --groups idat` |
+| R and Python agree at tolerance **exactly zero** | [R package](../docs/dev/r-package.qmd) | `Rscript -e 'testthat::test_local("r")'` |
 | No page scrolls sideways at 320--1280 px | the rendered site | `python test/responsive_check.py` |
 | Every documented `fa.*` name and CLI verb exists | all 129 prose files, including the Claude skill | `python docs/check_api_docs.py` |
 | The documentation describes *this* release, not the last one | landing page, catalogue, architecture, guide, parity table | `python docs/check_docs_complete.py` |
@@ -98,35 +97,22 @@ The tables on this page are what the package *produces*. The assertions about wh
 artefact of somebody's laptop:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python -m pytest python/tests -q
-docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu Rscript -e 'testthat::test_local("r")'
+docker run --rm -v "$PWD:/work" -e FALCONAGE_SOURCE=/work bhagesh/falconage:1.0.0-cpu \
+  bash -c 'pip install --user -q pytest hypothesis && python -m pytest python/tests -q'
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu Rscript -e 'testthat::test_local("r")'
 ```
 
-**565 Python tests** and **52 R tests**, all passing, with 5 skipped where torch is absent. The R suite contains the conformance test that asserts R and Python scores are
+**565 Python tests** and **52 R tests**, all passing. The R suite contains the conformance test that asserts R and Python scores are
 bit-identical at tolerance exactly zero, not approximately equal, which is what a second
 implementation would give and is the reason there is only one.
 
 Neither suite needs the 767 MB corpus. The integration tests skip themselves when it is absent
 rather than failing, so a contributor can run the whole thing on a fresh clone.
 
-### GPU
-
-Reproduces every number in [../docs/dev/gpu.qmd](../docs/dev/gpu.qmd): device resolution, CPU-versus-GPU
-agreement, the speed table and the profile behind it. It stops after the first step with an
-explanation on a machine with no CUDA device:
-
-```bash
-docker pull bhagesh/falconage:1.0.0-cuda
-docker run --rm --gpus all -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cuda \
-  python test/gpu_check.py
-```
-
-Or build it: `docker build -f docker/Dockerfile.cuda -t bhagesh/falconage:1.0.0-cuda .`
-
 ### Without Docker
 
 Every script above runs against a local install unchanged. Drop the `docker run ...` prefix:
-`python test/run_all.py`, `python -m pytest python/tests`, `python test/gpu_check.py`,
+`python test/run_all.py`, `python -m pytest python/tests`,
 `Rscript -e 'testthat::test_local("r")'`. The results should be identical; if they are not, the
 `run_manifest.json` beside each output says which coefficient files, versions and dtype each run
 used, and that is the first place to look.
@@ -633,7 +619,5 @@ methylCIPHER's `calcIntrinClock` raises an error on this input.
   suite with synthetic coefficients; they cannot produce a number without a licensed file.
 - **FP64 gold-standard vectors.** The ComputAgeBench parquets are float32. Double-precision
   reference values have to come from the papers' own worked examples.
-- **GPU.** No CUDA device in the test environment. The device resolution path is unit-tested;
-  the kernels are not exercised.
 - **Plate-level normalisation.** Four IDATs is not a plate.
 

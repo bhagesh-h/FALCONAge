@@ -2,188 +2,53 @@
 title: "Docker, testing, documentation and CI"
 ---
 
-## 9. Docker
+## Docker
 
-Two images from one Dockerfile family, following the cyRAVEN pattern in
-its `inst/scripts/Dockerfile`: pinned base, dependency
-layer copied before source, and dependencies read from the declaration rather than a second list.
-The images carry no build-time checks, to keep them light; the test suite runs in the image on
-demand (`python -m pytest /opt/falconage/src/python/tests`).
+One Dockerfile, `docker/Dockerfile.cpu`, with two build targets. The files themselves carry the
+reasoning in their comments; this section summarises them rather than copying them, so there is
+one copy to keep current.
 
-### 9.1 Images
+### Images
 
-| Tag | Base | Contains |
-|---|---|---|
-| `falconage:1.0.0-cpu` | `python:3.12-slim-bookworm` | Python core, R, `FALCONAge`, CLI |
-| `falconage:1.0.0-cuda` | `nvidia/cuda:12.4.1-runtime-ubuntu22.04` | the same plus the CUDA torch build |
-| `falconage:1.0.0-slim` | `python:3.12-slim-bookworm` | Python core and CLI only, no R |
+| Tag | Target | Contains | Size |
+|---|---|---|---|
+| `bhagesh/falconage:1.0.0-cpu`, `latest` | `full` (default) | Python core with every reader, R and the `FALCONAge` package, the CLI | 1.55 GB |
+| `bhagesh/falconage:1.0.0-py` | `py` | Python core with plotting and spreadsheets, the CLI; no R, no parquet or `.h5ad` | 0.84 GB |
 
-### 9.2 Dockerfile.cpu, annotated
+Sizes are uncompressed, as `docker images` reports them.
 
-```dockerfile
-# =============================================================================
-# FALCONAge - reproducible CPU environment
-# =============================================================================
-#
-# WHY A PINNED BASE. Clock coefficients are fixed, but the arithmetic around
-# them is not: a different BLAS changes the last bits of a 78,464-dimensional
-# PC rotation, and a different scikit-learn changes what SimpleImputer stores.
-# Neither moves a published age by a year, but both make two runs of the same
-# data disagree in the seventh decimal, which is exactly what the gold-standard
-# tests assert on. `latest` would silently re-roll that on a rebuild.
-#
-# Versions this image reproduces:
-#   Python 3.12.8 . torch 2.6.0 (CPU) . numpy 2.2.1 . pandas 2.2.3
-#   anndata 0.11.3 . scikit-learn 1.6.1 . R 4.4.3 . reticulate 1.40.0
-#
-# BUILD, from the repository root:
-#   docker build -f docker/Dockerfile.cpu -t falconage:1.0.0-cpu .
-#
-# RUN. Nothing is baked in: no data, no cohort, no credentials.
-#   docker run --rm \
-#     -v "$PWD/data:/data:ro" -v "$PWD/results:/results" \
-#     falconage:1.0.0-cpu \
-#     score --input /data/prepared.h5ad --clocks compatible --outdir /results
-#
-#   On Windows PowerShell replace "$PWD" with "${PWD}".
-#
-# ITERATING WITHOUT REBUILDING. Mount a checkout and set FALCONAGE_SOURCE; the
-# entrypoint runs that tree instead of the installed copy. A rebuild is still
-# needed when the source starts requiring a package the image does not have.
-#     -v "$PWD:/src:ro" -e FALCONAGE_SOURCE=/src
-# -----------------------------------------------------------------------------
-FROM python:3.12-slim-bookworm AS base
+### How the image is built
 
-LABEL org.opencontainers.image.title="FALCONAge" \
-      org.opencontainers.image.description="Multiomic biological age and aging clock scoring" \
-      org.opencontainers.image.source="https://github.com/bhagesh-h/FALCONAge" \
-      org.opencontainers.image.licenses="GPL-3.0-or-later"
+- **A pinned base and a lock file.** `python:3.12-slim-bookworm`, and Python packages from
+  `python/uv.lock` installed with `--require-hashes`, so a rebuild resolves the same versions.
+  The dependency layer is copied before the source, so editing the source does not re-download
+  anything.
+- **R in two stages.** Some R packages compile on install, which needs a C compiler and headers
+  (about 0.5 GB). They are installed in an `r-build` stage, from a dated Posit binary snapshot,
+  and only the finished library in `/usr/local/lib/R/site-library` is copied into the image.
+  `docker/install_deps.R` reads `r/DESCRIPTION`, so the image can never install a different set
+  than the package declares.
+- **The CRAN signing key by fingerprint**, as published on CRAN's Debian page, never by short ID.
+- **No build-time checks and no test tools** in the published image. The test suite is run on
+  demand (see [Testing against the public corpus](testing.qmd)).
+- **A non-root user**, `falcon` (uid 1000), so files written to a mounted folder stay deletable.
 
-ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    # torch and numpy are OpenMP-threaded. Unset they take every core on the
-    # host, which is antisocial on a shared machine and causes thermal
-    # throttling on a laptop. Override with -e OMP_NUM_THREADS=8.
-    OMP_NUM_THREADS=4 \
-    # Weights land here. Mount a host directory over it to keep them between
-    # runs instead of re-downloading a gigabyte each time.
-    HF_HOME=/opt/falconage/cache \
-    FALCONAGE_CACHE=/opt/falconage/cache \
-    LANG=C.UTF-8
+### entrypoint.sh
 
-# Each library is here because a specific wheel needs it, not as a blanket
-# build-essential block.
-#   libhdf5      -> h5py, which anndata writes .h5ad through
-#   libcurl/ssl  -> the download module
-#   libxml2      -> lxml, used by the GEO MINiML parser
-#   libgomp1     -> OpenMP runtime for torch and numpy
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        libhdf5-dev libcurl4-openssl-dev libssl-dev libxml2-dev \
-        libgomp1 zlib1g-dev libbz2-dev liblzma-dev ca-certificates curl \
-    && rm -rf /var/lib/apt/lists/*
+Three jobs: a mounted checkout named by `FALCONAGE_SOURCE` takes precedence over the installed
+copy, so an edit-run cycle needs no rebuild; a bare `docker run` prints help; and `python`, `R`,
+`Rscript`, `sh` and `bash` as the first argument run that program instead of a `falconage` verb.
 
-WORKDIR /opt/falconage
+### docker-compose.yml
 
-# ---- dependency layer ------------------------------------------------------
-# Only the declaration, before any source. This layer costs several minutes and
-# rebuilding it on every edit to src/ is the single biggest waste in a naive
-# Dockerfile.
-COPY python/pyproject.toml python/uv.lock /opt/falconage/python/
-RUN pip install --no-cache-dir uv \
- && cd python && uv export --frozen --no-dev --format requirements-txt > /tmp/req.txt \
- && pip install --no-cache-dir -r /tmp/req.txt
+Three services: `falconage` (the published image, with a `build:` to reproduce it), `falconage-dev`
+(the same image with the checkout mounted and `FALCONAGE_SOURCE` set) and `testdata` (the small
+image that fetches the public test corpus). A named volume keeps downloaded manifests and data
+between runs.
 
-# ---- R layer ---------------------------------------------------------------
-FROM base AS with-r
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        r-base r-base-dev libfontconfig1-dev libfreetype6-dev libpng-dev \
-    && rm -rf /var/lib/apt/lists/*
+## Testing
 
-# install_deps.R parses r/DESCRIPTION instead of repeating the package list, so
-# the image can never install a different set than the package declares.
-COPY r/DESCRIPTION docker/install_deps.R /opt/falconage/r/
-RUN Rscript /opt/falconage/r/install_deps.R /opt/falconage/r/DESCRIPTION
-
-# ---- source ----------------------------------------------------------------
-FROM with-r AS final
-COPY . /opt/falconage/src
-RUN pip install --no-cache-dir --no-deps /opt/falconage/src/python \
- && R CMD INSTALL --no-multiarch --with-keep.source /opt/falconage/src/r \
- && cp /opt/falconage/src/docker/entrypoint.sh /opt/falconage/entrypoint.sh \
- && chmod +x /opt/falconage/entrypoint.sh
-
-# reticulate must find the interpreter that already has the core installed,
-# rather than trying to build an environment inside a read-only container.
-ENV RETICULATE_PYTHON=/usr/local/bin/python
-
-VOLUME ["/results", "/opt/falconage/cache"]
-WORKDIR /work
-ENTRYPOINT ["/opt/falconage/entrypoint.sh"]
-CMD ["--help"]
-```
-
-`Dockerfile.cuda` differs only in the base image and the torch index URL.
-
-### 9.3 entrypoint.sh
-
-Same indirection as cyRAVEN's: run the installed copy by default, or a mounted source tree when
-`FALCONAGE_SOURCE` is set, so routine edits need no rebuild.
-
-```sh
-#!/bin/sh
-set -e
-
-if [ -n "${FALCONAGE_SOURCE}" ]; then
-  # -e is deliberately editable-install-free: prepending to PYTHONPATH is
-  # instant and leaves the image's site-packages untouched, which matters
-  # because most run configurations mount the filesystem read-only.
-  PYTHONPATH="${FALCONAGE_SOURCE}/python/src:${PYTHONPATH}"
-  export PYTHONPATH
-fi
-
-# `falconage` with no recognised verb is a help request, not an error.
-case "$1" in
-  ""|-h|--help) exec falconage --help ;;
-esac
-
-exec falconage "$@"
-```
-
-### 9.4 docker-compose.yml
-
-```yaml
-services:
-  falconage:
-    image: falconage:1.0.0-cpu
-    volumes:
-      - ./data:/data:ro
-      - ./results:/results
-      - falconage-cache:/opt/falconage/cache
-    environment:
-      OMP_NUM_THREADS: 8
-
-  falconage-gpu:
-    image: falconage:1.0.0-cuda
-    deploy:
-      resources:
-        reservations:
-          devices: [{driver: nvidia, count: all, capabilities: [gpu]}]
-    volumes:
-      - ./data:/data:ro
-      - ./results:/results
-      - falconage-cache:/opt/falconage/cache
-
-volumes:
-  falconage-cache:
-```
-
-The named cache volume is not cosmetic: the PC clocks are several hundred megabytes each and
-re-downloading them on every container start is the difference between a two-minute run and a
-twenty-minute one.
-
-## 10. Testing
-
-### 10.1 Gold-standard vectors
+### Gold-standard vectors
 
 The load-bearing test. For every clock: an input matrix and the output the reference
 implementation produces, stored under `tests/vectors/<clock>/`, asserted to `1e-6` in FP64, and
@@ -222,20 +87,20 @@ Oracles are therefore ranked, and each vector records which tier it used:
 | 2 | The authors' own reference implementation, run in a pinned environment | most clocks with an author repository |
 | 3 | Hand computation from the published equation, for clocks small enough | PhenoAge, Weidner, Vidal-Bralo, Bocklandt, Garagnani, ZhangMortality |
 | 4 | An independent third-party package, with at least two agreeing | the remainder |
-| 5 | Synthetic weights, architecture only | licensed clocks with no published worked example (§4.7) |
+| 5 | Synthetic weights, architecture only | licensed clocks with no published worked example ([Scaffold-only clocks](algorithms.qmd#scaffold-only-clocks)) |
 
 A rank-4 vector where pyaging and biolearn disagree is not a vector; it is an open question, and
 it goes to `registry/diffs/` rather than to `tests/vectors/`.
 
-### 10.2 Cross-implementation comparison
+### Cross-implementation comparison
 
 A separate, non-blocking job compares FALCONAge against pyaging, biolearn, computage,
 methylCIPHER and BioAge on shared clocks, and writes a table of agreements and disagreements to
-`docs/comparison.md`. Disagreements are published rather than hidden, [the science notes §15.2](../methods/failure-modes.qmd#where-the-paper-and-the-coefficients-disagree) shows
+`docs/comparison.md`. Disagreements are published rather than hidden, [Where the paper and the coefficients disagree](../clocks/discrepancies.qmd) shows
 the field already carries several, and a user comparing a FALCONAge number to a pyaging number
 deserves to know which ones differ and why.
 
-### 10.3 Property tests
+### Property tests
 
 Hypothesis in Python, `testthat` with generated inputs in R.
 
@@ -251,14 +116,14 @@ Hypothesis in Python, `testthat` with generated inputs in R.
 | FP32 and FP64 agree within the registry's per-clock tolerance | every clock |
 | scale-type guards reject illegal operations | `acceleration(absolute)` on a rate clock |
 
-### 10.4 Unit and integration
+### Unit and integration
 
 Unit tests per op with hand-computed expected values, the 15 preprocess ops and 15 postprocess
 transforms each get one, because these are where an off-by-one in a quantile index or a wrong
 constant hides. Integration tests run the full path (download a small cached fixture, preprocess,
 score, analyse, report) on both a methylation and a clinical fixture.
 
-### 10.5 R/Python conformance
+### R/Python conformance
 
 A CI gate, not an aspiration.
 
@@ -280,34 +145,34 @@ so anything other than bit equality means the bridge is doing something it shoul
 round-tripping a float through a string.
 
 A second conformance test asserts API symmetry: every function in the Python public namespace has
-an R export with the matching name and argument set, checked against the table in §8.4.
+an R export with the matching name and argument set, checked against the table in [Public API - one-to-one with Python](r-package.qmd#public-api---one-to-one-with-python).
 
-### 10.6 Performance regression
+### Performance regression
 
 Benchmarks on a fixed synthetic dataset, run nightly, with results committed so a slowdown is
 visible in the history rather than discovered later. Tracked: per-clock scoring throughput at
-1,024 / 8,192 / 32,768 samples on CPU and CUDA; KNN imputation on a 500 by 400,000 matrix; IDAT
+1,024 / 8,192 / 32,768 samples; KNN imputation on a 500 by 400,000 matrix; IDAT
 parsing throughput; peak memory for the largest PC clock.
 
-### 10.7 Coverage targets
+### Coverage targets
 
 90% line coverage on `models/`, `score/` and `registry/`, which are where a wrong number comes
 from; 75% elsewhere. Coverage on `download/` is deliberately lower because most of it is network
 error handling exercised by mocks rather than by real transfers.
 
-## 11. Documentation
+## Documentation
 
-### 11.1 One site, two languages
+### One site, two languages
 
 A single Quarto site at `docs/`, with the Python API rendered by `quartodoc` and the R API by
-`pkgdown`, sharing a theme and navigation. Section titles are identical on both sides (§8.9), so
+`pkgdown`, sharing a theme and navigation. Section titles are identical on both sides ([pkgdown reference groups](r-package.qmd#pkgdown-reference-groups)), so
 a reader moving between them sees the same structure.
 
 ```
 docs/
 ├── _quarto.yml
 ├── index.qmd                    # what it is, in four paragraphs
-├── installation.qmd             # pip, R, Docker, GPU
+├── installation.qmd             # pip, R, Docker
 ├── quickstart.qmd               # the same analysis in both languages, side by side
 ├── guide/
 │   ├── concepts.qmd             # BA, AA, generations, units - from [the science notes](science.qmd) 1 and 8
@@ -317,7 +182,6 @@ docs/
 │   ├── choosing-a-clock.qmd
 │   ├── analysis.qmd
 │   ├── benchmarking.qmd
-│   ├── gpu.qmd
 │   ├── reproducibility.qmd
 │   └── caveats.qmd              # [the science notes](science.qmd) 16, compressed
 ├── clocks/
@@ -328,7 +192,7 @@ docs/
 └── _extensions/
 ```
 
-### 11.2 _quarto.yml
+### _quarto.yml
 
 ```yaml
 project:
@@ -386,7 +250,7 @@ produces, which is why the two sides can share section titles and `desc` paragra
 Quarto version is pinned in CI and in the Docker image, because Quarto 2 is a full rewrite due
 late 2026 and a documentation build should not break on a toolchain upgrade nobody asked for.
 
-### 11.3 Bilingual examples
+### Bilingual examples
 
 Every guide page shows the same operation in both languages with Quarto tabsets:
 
@@ -419,7 +283,7 @@ head(as.data.frame(res))
 A CI job extracts both blocks from every page and runs them, so an example that has drifted from
 the API fails the docs build rather than misleading a reader.
 
-### 11.4 Generated clock pages
+### Generated clock pages
 
 `scripts/build_clock_pages.py` turns each registry YAML into a page carrying: what it predicts and
 in what unit, the platform and species it applies to, the feature count, the architecture, the
@@ -428,7 +292,7 @@ DOI, any known discrepancies, and a runnable example. The index is a searchable,
 over all of them. This is generated, never hand-written, so the docs cannot drift from the
 registry.
 
-### 11.5 Docstring conventions
+### Docstring conventions
 
 numpydoc in Python, roxygen2 in R, deliberately parallel:
 
@@ -445,9 +309,9 @@ numpydoc in Python, roxygen2 in R, deliberately parallel:
 Both carry the same rationale text where a function exists in both languages, so a reader gets
 the same explanation whichever site they land on.
 
-## 12. CI/CD and publishing
+## CI/CD and publishing
 
-### 12.1 Workflows
+### Workflows
 
 > **FALCONAge runs four workflows, not nine, and the difference is a decision rather than a backlog.**
 > The table below is the specification. What `.github/workflows/` actually holds:
@@ -463,12 +327,10 @@ the same explanation whichever site they land on.
 > workflows of their own: they share a checkout and an install with the suite they belong to, and
 > splitting them would pay for that twice to gain a second badge saying the same thing.
 >
-> `docker.yaml` and `benchmark.yaml` do not exist. Nothing publishes an image to a registry;
-> `README.md` tells a user to build `docker/Dockerfile.cpu` locally, and the `falconage:1.0.0-cpu`
-> tag it names is the one that build produces. The nightly benchmark would commit timings from a
+> `docker.yaml` and `benchmark.yaml` do not exist. Images are built from `docker/Dockerfile.cpu`
+> and pushed to Docker Hub by hand at release. The nightly benchmark would commit timings from a
 > shared runner whose neighbours decide the numbers, which is a regression detector that cries
-> wolf; the measurements that exist were taken on known hardware and are in
-> [GPU support](gpu.qmd).
+> wolf.
 >
 > The `python-test.yaml` row below is the one to disregard outright. There is no matrix and no
 > Codecov upload, and the workflow's own header explains at length why: the lock file pins one
@@ -484,12 +346,12 @@ the same explanation whichever site they land on.
 | `conformance.yaml` | push, PR | R/Python parity across every clock; API symmetry |
 | `registry-validate.yaml` | push to `registry/**` | schema, vocabulary, checksums, gold-standard presence |
 | `docs.yaml` | push to main | Quarto site including pkgdown, examples executed, deployed to gh-pages |
-| `docker.yaml` | push to main, tags | build and push cpu/cuda/slim to GHCR, multi-arch on cpu |
+| `docker.yaml` | push to main, tags | build and push the full and Python-only images |
 | `release-pypi.yaml` | tag `v*` | version guard, build sdist and wheel, publish via trusted publishing |
 | `release-r.yaml` | tag `v*` | version guard, `R CMD build`, `--as-cran`, attach tarball to the release |
 | `benchmark.yaml` | nightly | performance regression, results committed |
 
-### 12.2 The version guard
+### The version guard
 
 Borrowed directly from cyRAVEN's `release.yaml`, extended to four files. A tag and a version that
 disagree cannot be repaired afterwards, because the tag is what a citation points at.
@@ -508,35 +370,35 @@ disagree cannot be repaired afterwards, because the tag is what a citation point
     echo "all versions agree at $TAG"
 ```
 
-### 12.3 R CMD check without Python
+### R CMD check without Python
 
 The second job in `r-cmd-check.yaml` is the one that matters for CRAN. It runs on a machine with
 no Python core at all and asserts that `library(FALCONAge)` succeeds, `falconage_available()`
 returns `FALSE`, every example is skipped rather than erroring, and the check reports no ERROR or
-WARNING. The `delay_load` in `.onLoad` (§8.3) is what makes this possible, and this job is what
+WARNING. The `delay_load` in `.onLoad` ([The bridge](r-package.qmd#the-bridge)) is what makes this possible, and this job is what
 stops it from silently regressing.
 
-### 12.4 Publishing
+### Publishing
 
-`PUBLISHING.md` carries the same honest gap table cyRAVEN uses, per target.
+`.github/PUBLISHING.md` carries the same honest gap table cyRAVEN uses, per target.
 
-**PyPI** - trusted publishing, no long-lived token. `sdist` plus a pure-Python wheel; no compiled
+**PyPI**: trusted publishing, no long-lived token. `sdist` plus a pure-Python wheel; no compiled
 extensions, so no cibuildwheel. Test on TestPyPI first for the initial release.
 
-**r-universe** - the first R route, no review. Add the repository to a `packages.json` in
+**r-universe**: the first R route, no review. Add the repository to a `packages.json` in
 `bhagesh-h.r-universe.dev`, and binaries for Windows, macOS and Linux appear within minutes.
 
-**CRAN** - needs, beyond the above: `cran-comments.md` naming platforms checked and explaining
+**CRAN**: needs, beyond the above: `cran-comments.md` naming platforms checked and explaining
 every NOTE; `\value` on every exported function; runnable examples; total runtime under 10
 minutes; no writing outside `tempdir()`; win-builder and macOS results. The reticulate dependency
-is the reviewable point, and the answer is the no-Python check job in §12.3 plus
+is the reviewable point, and the answer is the no-Python check job in [Web tools and databases](software.qmd#web-tools-and-databases) plus
 `SystemRequirements`.
 
-**Bioconductor** - the better long-term home given the `biocViews` and the audience. Needs
+**Bioconductor**: the better long-term home given the `biocViews` and the audience. Needs
 version `0.99.x` at submission, `BiocCheck` clean, a `BiocStyle` vignette, package under 5 MB
 (satisfied, since no weights ship), no `sapply` or `1:n` in package code, and a support-site
 subscription.
 
-**Docker** - GHCR on every main push and tag; Docker Hub mirror for the release tags.
+**Docker**: GHCR on every main push and tag; Docker Hub mirror for the release tags.
 
-**Zenodo** - DOI minted from each GitHub release, which is what a methods section cites.
+**Zenodo**: DOI minted from each GitHub release, which is what a methods section cites.

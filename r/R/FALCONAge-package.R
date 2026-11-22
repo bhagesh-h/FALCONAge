@@ -19,7 +19,7 @@
 #' \preformatted{
 #' library(FALCONAge)
 #' falconage_install()          # one-off: creates the managed Python env
-#' falconage_config()           # what resolved: versions, devices, registry
+#' falconage_config()           # what resolved: versions, registry
 #'
 #' data <- read_betas("betas.csv")
 #' res  <- score(data, clocks = "compatible")

@@ -243,6 +243,9 @@ class Clock:
     reference_values: ReferenceSource | None = None
     #: Set for the reference-based cell-type deconvolution entries.
     deconvolution: Deconvolution | None = None
+    #: ``"registry"`` for an entry that ships with the package, ``"user"`` for
+    #: one added at run time with :meth:`ClockRegistry.add_clock`.
+    origin: str = "registry"
 
     @property
     def legal_operations(self) -> set[str]:
@@ -304,6 +307,57 @@ def _tuple(v: Any) -> tuple:
     return (v,)
 
 
+def _clock_from_entry(cid: str, e: dict[str, Any], origin: str = "registry") -> Clock:
+    """One registry entry, as the YAML spells it, to a :class:`Clock`."""
+    cs = e.get("coefficient_source") or {}
+    return Clock(
+        id=cid,
+        name=e.get("name") or cid,
+        year=e.get("year"),
+        species=e.get("species") or "Homo sapiens",
+        data_type=e.get("data_type") or "dna_methylation",
+        generation=e.get("generation") or "other",
+        tissue=_tuple(e.get("tissue")),
+        platform=_tuple(e.get("platform")),
+        predicts=_tuple(e.get("predicts")),
+        training_target=_tuple(e.get("training_target")),
+        unit=_tuple(e.get("unit")),
+        scale_type=e.get("scale_type") or "relative_score",
+        model_type=e.get("model_type") or "linear",
+        population=e.get("population") or "",
+        n_features=e.get("n_features"),
+        requires_fp64=bool(e.get("requires_fp64", False)),
+        availability=normalise_availability(e.get("availability")),
+        citation=e.get("citation") or "",
+        doi=e.get("doi") or "",
+        notes=e.get("notes") or "",
+        coefficient_source=CoefficientSource(
+            file=cs.get("file"), url=cs.get("url"), sha256=cs.get("sha256"),
+            provenance=cs.get("provenance") or "",
+            primary_source_traced=bool(cs.get("primary_source_traced", False)),
+            redistributable=cs.get("redistributable"),
+            why=cs.get("why") or "", obtain=cs.get("obtain") or "",
+            alternatives=_tuple(cs.get("alternatives")),
+        ),
+        preprocess=tuple(e.get("preprocess") or ()),
+        postprocess=tuple(e.get("postprocess") or ()),
+        formula=e.get("formula"),
+        requires_covariates=_tuple(e.get("requires_covariates")),
+        requires_reference=bool(e.get("requires_reference", False)),
+        requires_cohort=bool(e.get("requires_cohort", False)),
+        min_samples=int(e.get("min_samples", 1) or 1),
+        tissue_policy=_tissue_policy(cid, e),
+        known_discrepancies=_tuple(e.get("known_discrepancies")),
+        reliability=Reliability(**{
+            k: v for k, v in (e.get("reliability") or {}).items()
+            if k in ("technical_icc", "biological_icc", "source", "note")
+        }),
+        reference_values=_reference_source(e.get("reference_values")),
+        deconvolution=_deconvolution(e.get("deconvolution")),
+        origin=origin,
+    )
+
+
 class ClockRegistry:
     """Loaded catalogue. Immutable except for user-registered local weights."""
 
@@ -333,54 +387,8 @@ class ClockRegistry:
             )
         version = str(doc.get("registry_version", REGISTRY_VERSION))
 
-        clocks: dict[str, Clock] = {}
-        for cid, e in (doc.get("clocks") or {}).items():
-            cs = e.get("coefficient_source") or {}
-            clocks[cid] = Clock(
-                id=cid,
-                name=e.get("name") or cid,
-                year=e.get("year"),
-                species=e.get("species") or "Homo sapiens",
-                data_type=e.get("data_type") or "dna_methylation",
-                generation=e.get("generation") or "other",
-                tissue=_tuple(e.get("tissue")),
-                platform=_tuple(e.get("platform")),
-                predicts=_tuple(e.get("predicts")),
-                training_target=_tuple(e.get("training_target")),
-                unit=_tuple(e.get("unit")),
-                scale_type=e.get("scale_type") or "relative_score",
-                model_type=e.get("model_type") or "linear",
-                population=e.get("population") or "",
-                n_features=e.get("n_features"),
-                requires_fp64=bool(e.get("requires_fp64", False)),
-                availability=normalise_availability(e.get("availability")),
-                citation=e.get("citation") or "",
-                doi=e.get("doi") or "",
-                notes=e.get("notes") or "",
-                coefficient_source=CoefficientSource(
-                    file=cs.get("file"), url=cs.get("url"), sha256=cs.get("sha256"),
-                    provenance=cs.get("provenance") or "",
-                    primary_source_traced=bool(cs.get("primary_source_traced", False)),
-                    redistributable=cs.get("redistributable"),
-                    why=cs.get("why") or "", obtain=cs.get("obtain") or "",
-                    alternatives=_tuple(cs.get("alternatives")),
-                ),
-                preprocess=tuple(e.get("preprocess") or ()),
-                postprocess=tuple(e.get("postprocess") or ()),
-                formula=e.get("formula"),
-                requires_covariates=_tuple(e.get("requires_covariates")),
-                requires_reference=bool(e.get("requires_reference", False)),
-                requires_cohort=bool(e.get("requires_cohort", False)),
-                min_samples=int(e.get("min_samples", 1) or 1),
-                tissue_policy=_tissue_policy(cid, e),
-                known_discrepancies=_tuple(e.get("known_discrepancies")),
-                reliability=Reliability(**{
-                    k: v for k, v in (e.get("reliability") or {}).items()
-                    if k in ("technical_icc", "biological_icc", "source", "note")
-                }),
-                reference_values=_reference_source(e.get("reference_values")),
-                deconvolution=_deconvolution(e.get("deconvolution")),
-            )
+        clocks = {cid: _clock_from_entry(cid, e)
+                  for cid, e in (doc.get("clocks") or {}).items()}
         return cls(clocks, version, p)
 
     # -- lookup ------------------------------------------------------------
@@ -527,6 +535,119 @@ class ClockRegistry:
         self._local[clock_id] = (p, digest)
         return digest
 
+    #: Fields a clock added at run time must state. Each one is read by the
+    #: scoring code: the scale type decides which arithmetic is legal, the
+    #: tissue drives the specimen check, the training target is what the score
+    #: estimates.
+    USER_REQUIRED = ("id", "name", "data_type", "tissue", "training_target",
+                     "scale_type", "unit", "coefficients")
+
+    def add_clock(self, path: str | Path, *, replace: bool = False) -> str:
+        """Add a clock to this registry from a YAML entry and its coefficients.
+
+        ``path`` is the YAML file, or a folder holding exactly one. The entry
+        uses the registry's own field names plus ``id`` and ``coefficients``,
+        the coefficient file's path relative to the YAML::
+
+            id: mycohortclock
+            name: Cohort clock fitted on our blood samples
+            data_type: dna_methylation
+            tissue: [whole blood]
+            platform: [EPICv1]
+            training_target: [chronological age]
+            scale_type: age_years
+            unit: [years]
+            coefficients: mycohortclock.csv
+            reference: mycohortclock_reference.csv   # optional
+
+        ``reference`` is an optional ``feature_id,value`` file of fill values
+        for CpGs a dataset lacks (the training means, for a fitted clock).
+        The coefficient file is checked the way a licensed copy is (two
+        columns, unique feature ids, finite values), the preprocessing and
+        postprocessing steps must name operations FALCONAge implements, and the
+        id may not shadow a clock that ships with the package. The clock is then
+        scored like any other: coverage, the specimen check, technical standard
+        errors, and a manifest entry recording ``origin: user`` and the file's
+        SHA-256.
+
+        Returns the clock id.
+        """
+        from ..models import ops
+
+        p = Path(path).expanduser()
+        if p.is_dir():
+            found = sorted(p.glob("*.yaml")) + sorted(p.glob("*.yml"))
+            if len(found) != 1:
+                raise RegistryError(
+                    f"{p}: expected one .yaml clock entry in the folder, found "
+                    f"{len(found)}. Pass the YAML file itself.")
+            p = found[0]
+        if not p.is_file():
+            raise RegistryError(f"no such file: {p}")
+        entry = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        missing = [k for k in self.USER_REQUIRED if not entry.get(k)]
+        if missing:
+            raise RegistryError(f"{p}: missing {', '.join(missing)}. A user clock "
+                                f"states all of: {', '.join(self.USER_REQUIRED)}.")
+        cid = str(entry.pop("id")).strip()
+        if cid in self._clocks:
+            if self._clocks[cid].origin != "user":
+                raise RegistryError(
+                    f"{cid!r} is a clock that ships with FALCONAge; choose another id.")
+            if not replace:
+                raise RegistryError(f"{cid!r} was already added; pass replace=True.")
+        if entry["scale_type"] not in LEGAL_OPS:
+            raise RegistryError(
+                f"{p}: scale_type {entry['scale_type']!r} is not one of "
+                f"{', '.join(sorted(LEGAL_OPS))}.")
+        known = set(ops.PREPROCESS) | set(getattr(ops, "DATASET_PREPROCESS", {}))
+        for kind, table in (("preprocess", known), ("postprocess", set(ops.POSTPROCESS))):
+            for step in entry.get(kind) or ():
+                name = step.get("op") if isinstance(step, dict) else step
+                if name not in table:
+                    raise RegistryError(
+                        f"{p}: {kind} step {name!r} is not an operation FALCONAge "
+                        f"implements. Known: {', '.join(sorted(table))}.")
+        if entry.get("formula"):
+            raise RegistryError(f"{p}: formula clocks cannot be added at run time.")
+
+        coef = (p.parent / entry.pop("coefficients")).resolve()
+        if not coef.is_file():
+            raise RegistryError(f"{p}: coefficient file {coef} does not exist")
+        digest = hashlib.sha256(coef.read_bytes()).hexdigest()
+        if entry.get("sha256") and entry["sha256"] != digest:
+            raise RegistryError(f"{coef}: SHA-256 is {digest}, the entry says "
+                                f"{entry['sha256']}")
+        feats, coefs = _read_coefficients(coef)
+        if len(feats) != len(set(feats)):
+            raise RegistryError(f"{coef}: duplicate feature ids")
+        if not np.isfinite(coefs).all():
+            raise RegistryError(f"{coef}: contains non-finite coefficients")
+        n = len(_split_intercept(feats, coefs)[0])
+        if entry.get("n_features") and int(entry["n_features"]) != n:
+            raise RegistryError(f"{coef}: {n} coefficients, the entry declares "
+                                f"{entry['n_features']}")
+
+        if entry.get("reference"):
+            ref = (p.parent / entry.pop("reference")).resolve()
+            if not ref.is_file():
+                raise RegistryError(f"{p}: reference file {ref} does not exist")
+            _read_reference(str(ref))        # validates the header and values
+            entry["reference_values"] = {
+                "file": str(ref), "sha256": hashlib.sha256(ref.read_bytes()).hexdigest(),
+                "label": f"{cid}'s reference values", "provenance": f"user file {ref}"}
+
+        entry.setdefault("n_features", n)
+        entry["availability"] = BUNDLED
+        cs = dict(entry.pop("coefficient_source", None) or {})
+        cs.update(file=str(coef), sha256=digest,
+                  provenance=cs.get("provenance") or f"user clock added from {p}",
+                  primary_source_traced=bool(cs.get("primary_source_traced", False)))
+        entry["coefficient_source"] = cs
+        entry.pop("sha256", None)
+        self._clocks[cid] = _clock_from_entry(cid, entry, origin="user")
+        return cid
+
     def register_local_reference(self, clock_id: str, values) -> None:
         """Fill values for the absent features of a clock whose weights the user
         supplied, as the clock's authors publish them (a mapping or a two-column
@@ -633,7 +754,10 @@ class ClockRegistry:
                     "  There is no per-feature coefficient to return. Use "
                     f"feature_ids({clock_id!r}) for the probe order, or "
                     "models.build() for the model itself.")
-            return _read_coefficients(p)
+            # A clock added with add_clock() may carry an (Intercept) row; the
+            # shipped files do not. Either way it is not a feature.
+            feats, coefs, _ = _split_intercept(*_read_coefficients(p))
+            return feats, coefs
 
         raise WeightsUnavailableError(clock_id, self.unavailable_message(clock_id))
 
@@ -816,7 +940,8 @@ class ClockRegistry:
             p, digest = self._local[clock_id]
             return {"source": "user_supplied", "path": str(p), "sha256": digest,
                     "tier": c.availability}
-        return {"source": "bundled", "path": c.coefficient_source.file or "",
+        return {"source": "user_clock" if c.origin == "user" else "bundled",
+                "path": c.coefficient_source.file or "",
                 "sha256": c.coefficient_source.sha256 or "", "tier": c.availability,
                 "provenance": c.coefficient_source.provenance,
                 "primary_source_traced": c.coefficient_source.primary_source_traced}
@@ -855,9 +980,15 @@ class ClockRegistry:
 
 
 def _read_coefficients(path: Path) -> tuple[list[str], np.ndarray]:
+    import gzip
+
     feats: list[str] = []
     vals: list[float] = []
-    with open(path, newline="", encoding="utf-8-sig") as fh:
+    # The largest coefficient sets ship gzipped (zhangblup is 9.9 MB as text
+    # and 3.8 MB compressed); the digest in the registry is of the file as it
+    # ships, so a compressed file is checked byte for byte like any other.
+    opener = gzip.open if str(path).endswith(".gz") else open
+    with opener(path, "rt", newline="", encoding="utf-8-sig") as fh:
         rdr = csv.reader(fh)
         header = next(rdr, None)
         if header is None:

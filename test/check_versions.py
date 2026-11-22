@@ -88,14 +88,14 @@ def image_label_versions() -> list[tuple[str, str]]:
     """``org.opencontainers.image.version`` from each Dockerfile.
 
     A published image carries its labels wherever it is pulled from, and on a
-    registry they are often the only provenance a reader gets. Both files said
+    registry they are often the only provenance a reader gets. The file said
     ``1.0.0`` for the whole of the 1.0.0 cycle, so pushing them would have put
     an image labelled as the previous release on Docker Hub. It went unnoticed
     because a label is not executed and nothing read it; reading it here costs
     nothing and makes it one more thing that has to agree before a tag.
     """
     out = []
-    for rel in ("docker/Dockerfile.cpu", "docker/Dockerfile.cuda"):
+    for rel in ("docker/Dockerfile.cpu",):
         text = (ROOT / rel).read_text(encoding="utf-8")
         m = re.search(r"""org\.opencontainers\.image\.version=["']([^"']+)["']""",
                       text)

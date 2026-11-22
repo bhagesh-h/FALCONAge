@@ -38,7 +38,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from ..core.backend import DeviceSpec
+from ..core.backend import ComputeSpec
 from ..core.errors import FeatureCoverageError, ScoringError
 from ..registry.registry import Clock
 from . import ops
@@ -92,7 +92,7 @@ class AggregationClock:
     statistic: str
     q: float | None = None
 
-    def predict(self, data, spec: DeviceSpec, *, imputation: str = "reference",
+    def predict(self, data, spec: ComputeSpec, *, imputation: str = "reference",
                 min_coverage: float = 0.8) -> tuple[pd.Series, Alignment]:
         # The mean and percentile forms are defined over the probes the data
         # carries. Teschendorff's reference code (EpiMitClocks: epiTOC1,
@@ -114,11 +114,7 @@ class AggregationClock:
                 "over a different probe set.")
 
         # The reduction goes through the backend handle like every other
-        # forward pass. It will not repay a GPU on its own -- a mean over a few
-        # hundred probes is less arithmetic than the transfer that feeds it --
-        # but a model that accepts a device and quietly computes somewhere else
-        # makes the manifest's device field a fiction, and that field is what
-        # the reproducibility claim rests on.
+        # forward pass, so the precision recorded in the manifest is the one used.
         xp = spec.xp()
         x = spec.asarray(al.matrix)                     # samples x features
         if self.statistic == "mean":

@@ -2,22 +2,22 @@
 title: "Other software"
 ---
 
-## 12. Existing software landscape
+## Existing software landscape
 
-### 12.1 Python
+### Python
 
-| Package | Scope | GPU | Notes |
-|---|---|---|---|
-| **pyaging** | 173 clocks, 5 data types, 5 species | Yes. PyTorch, CUDA auto-detect, optional CuPy | The most complete. Weights on Hugging Face `lucascamillomd/pyaging-data`, one `.pt` per clock. AnnData-native. |
-| **biolearn** | 39 biomarkers + data library (GEO/NHANES/Framingham) | No | The consortium's reference implementation; strongest on data harmonisation. |
-| **computage** | Benchmarking + de novo clock training (KDM, PLS) | No | The AA1/AA2 methodology and the 10,404-sample benchmark set. |
-| **organage** | Oh 2023 organ proteomic clocks (SomaScan) | No | |
-| **spatial-aging-clock** | 18 mouse brain cell-type spatial clocks | No | SquidPy-based. |
-| **scAge** | Single-cell methylation age | No | |
-| **CpGPT** | Foundation model, imputation + fine-tuned heads | Yes | |
-| **racpy** | RNAAgeCalc port | No | |
+| Package | Scope | Notes |
+|---|---|---|
+| **pyaging** | 173 clocks, 5 data types, 5 species | The most complete. Weights on Hugging Face `lucascamillomd/pyaging-data`, one `.pt` per clock. AnnData-native. |
+| **biolearn** | 39 biomarkers + data library (GEO/NHANES/Framingham) | The consortium's reference implementation; strongest on data harmonisation. |
+| **computage** | Benchmarking + de novo clock training (KDM, PLS) | The AA1/AA2 methodology and the 10,404-sample benchmark set. |
+| **organage** | Oh 2023 organ proteomic clocks (SomaScan) | |
+| **spatial-aging-clock** | 18 mouse brain cell-type spatial clocks | SquidPy-based. |
+| **scAge** | Single-cell methylation age | |
+| **CpGPT** | Foundation model, imputation + fine-tuned heads | |
+| **racpy** | RNAAgeCalc port | |
 
-### 12.2 R
+### R
 
 | Package | Scope | Notes |
 |---|---|---|
@@ -33,29 +33,28 @@ title: "Other software"
 | **scImmuAging** | 5 PBMC cell-type clocks | |
 | **RNAAgeCalc** (Bioconductor) | GTEx transcriptomic age | |
 
-### 12.3 Web tools and databases
+### Web tools and databases
 
 - **ClockBase** (clockbase.org) - 11 clock models reprocessed over >300,000 GEO samples, with an
   R package and interactive analysis.
 - **TACO** (app.gladyshevlab.org/TACO). Transcriptomic Age Calculator Online; the reference
   application whose behaviour tAge mirrors.
 - **DNA Methylation Age Calculator** (dnamage.clockfoundation.org). Horvath, SkinBlood, GrimAge.
-- **Open Genes** - 2,402 age-related genes from >1,700 publications, 6 study types, 12 criteria,
+- **Open Genes**: 2,402 age-related genes from >1,700 publications, 6 study types, 12 criteria,
   API + download.
 - **Aging Atlas**, **AGEMAP**, **Digital Ageing Atlas**, **Human Ageing Genomic Resources**
   (GenAge, AnAge, LongevityMap, DrugAge, GenDR), **JenAge**.
-- **aging.ai** - blood-biomarker DNN age.
-- **Longevity World Cup** - open-source PhenoAge calculator and leaderboard.
+- **aging.ai**: blood-biomarker DNN age.
+- **Longevity World Cup**: open-source PhenoAge calculator and leaderboard.
 
-### 12.4 The gap this project fills
+### The gap this project fills
 
 No package today does all of: (a) methylation *and* transcriptomics *and* proteomics *and*
-clinical chemistry in one API; (b) Python *and* R with identical numerics; (c) GPU acceleration
-beyond pyaging's methylation focus; (d) built-in benchmarking against ComputAgeBench-style AAC
-data; (e) reliability-aware reporting. pyaging is closest on (a) and (c); computage owns (d);
+clinical chemistry in one API; (b) Python *and* R with identical numerics; (c) built-in benchmarking against ComputAgeBench-style AAC
+data; (d) reliability-aware reporting. pyaging is closest on (a); computage owns (c);
 methylCIPHER and BioAge own the R side.
 
-## 13. Prior implementations
+## Prior implementations
 Sixteen public codebases were read against the papers while this package was written. They are
 listed because a citation to a paper says what a method *is*, and a citation to an implementation
 says what its authors actually *did*, and where the two disagree, which they do in eleven

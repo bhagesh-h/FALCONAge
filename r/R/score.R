@@ -10,15 +10,6 @@
 #'   the right modality and fails loudly on the ones that cannot run. A
 #'   character vector names them explicitly, and then every name must work -- an
 #'   explicit request is never silently dropped.
-#' @param device `"auto"`, `"cpu"`, `"cuda"` or `"mps"`. Naming a device that is
-#'   not present is an error rather than a silent downgrade: a run that was
-#'   asked for a GPU and quietly used a CPU looks like a very slow success.
-#'   `"auto"` is CPU even where CUDA exists, which is measured rather than
-#'   cautious: on the clocks that ship, the transfer costs more than the dot
-#'   product it feeds. A named device is not granted to every clock either --
-#'   the three clinical formulas compute in numpy whatever is asked, because
-#'   nine markers are not worth a kernel launch. `manifest(res)$compute` records
-#'   what each clock actually used.
 #' @param dtype `NULL` (float64), `"float64"` or `"float32"`. Clocks flagged
 #'   `requires_fp64` in the registry override a float32 request, with a warning.
 #' @param imputation How to fill a clock feature the data does not carry.
@@ -39,10 +30,10 @@
 #' @examples
 #' \dontrun{
 #' res <- score(d, clocks = "compatible")
-#' res <- score(d, clocks = c("horvath2013", "dnamphenoage"), device = "cuda")
+#' res <- score(d, clocks = c("horvath2013", "dnamphenoage"))
 #' }
 #' @export
-score <- function(data, clocks = "compatible", device = "auto", dtype = NULL,
+score <- function(data, clocks = "compatible", dtype = NULL,
                   imputation = c("reference", "mean", "none"),
                   min_coverage = 0.8, reference = NULL) {
   imputation <- match.arg(imputation)
@@ -50,7 +41,7 @@ score <- function(data, clocks = "compatible", device = "auto", dtype = NULL,
     data$py,
     clocks = if (length(clocks) == 1L && clocks %in% c("compatible", "all"))
       clocks else reticulate::r_to_py(as.list(clocks)),
-    device = device, dtype = or_none(dtype), imputation = imputation,
+    dtype = or_none(dtype), imputation = imputation,
     min_coverage = min_coverage, reference = or_none(reference),
     caller = "R"))
   new_falcon_result(py)
@@ -116,7 +107,7 @@ coverage.falcon_result <- function(x) as_df(x$py$qc(), row_names = FALSE)
 
 #' The run manifest
 #'
-#' Versions, device, dtype, the SHA-256 of every coefficient file used, per-clock
+#' Versions, precision, the SHA-256 of every coefficient file used, per-clock
 #' coverage, and every warning raised. Two runs reporting the same score either
 #' used the same coefficients or the manifest says they did not.
 #'

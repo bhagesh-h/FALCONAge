@@ -2,7 +2,7 @@
 title: "8. R package"
 ---
 
-## 8.1 What "identical" means here
+## What "identical" means here
 
 `FALCONAge` is not a reimplementation. Every number it returns is computed by the Python core
 through `reticulate`, so the R and Python answers are the same bytes because they are the same
@@ -15,7 +15,7 @@ This is the design tAge uses ([`tAge/R/predict.R`](https://github.com/Gladyshev-
 with one difference: tAge asks the user to set `RETICULATE_PYTHON` by hand, and FALCONAge manages
 the environment itself.
 
-## 8.2 Environment management
+## Environment management
 
 `R/install.R`
 
@@ -23,16 +23,15 @@ the environment itself.
 falconage_install(method = c("auto", "uv", "virtualenv", "conda"),
                   envname = "r-falconage",
                   version = NULL,        # NULL = the version matching this R package
-                  gpu = FALSE,
                   force = FALSE)
 
-falconage_config()      # what Python, what version, what device, what registry
+falconage_config()      # what Python, what version, what registry
 falconage_available()   # logical, does a working core exist
 falconage_update()
 ```
 
 `method = "auto"` prefers `uv` when it is on the PATH, because it resolves in seconds rather than
-minutes, and falls back to `virtualenv`. `gpu = TRUE` installs the CUDA torch build.
+minutes, and falls back to `virtualenv`.
 
 `version = NULL` pins the Python core to the exact version that matches the R package, read from
 `DESCRIPTION`'s `Config/falconage/python-version` field. This is the mechanism that stops an R
@@ -44,14 +43,12 @@ from a Python user carry comparable information:
 ```
 FALCONAge 1.0.0 (R)
   python core   1.0.0  /home/x/.virtualenvs/r-falconage/bin/python
-  torch         2.6.0  CUDA 12.4
-  device        cuda:0  NVIDIA RTX A4000, 16 GB
   dtype         float64
   registry      1.1.0  (178 clocks)
   cache         /home/x/.cache/falconage  (2.1 GB)
 ```
 
-## 8.3 The bridge
+## The bridge
 
 `R/zzz.R` and `R/bridge.R`
 
@@ -112,10 +109,10 @@ A `MissingUnitsError` from Python becomes an R condition of class
 one-sentence remedy rather than a 40-line traceback. The Python traceback stays available as
 `parent`.
 
-## 8.4 Public API - one-to-one with Python
+## Public API - one-to-one with Python
 
 Every Python verb has an R counterpart with the same name in snake_case and the same argument
-names. This table is the contract the conformance tests enforce (§10.5).
+names. This table is the contract the conformance tests enforce ([R/Python conformance](operations.qmd#rpython-conformance)).
 
 | Python | R | Returns |
 |---|---|---|
@@ -140,7 +137,7 @@ Plotting is the one place the two diverge deliberately. Python returns matplotli
 the Python `*_data()` function to get the frame and renders it with ggplot2, so an R user gets a
 `ggplot` object they can modify. The data is identical; the rendering is native to each language.
 
-## 8.5 S3 classes
+## S3 classes
 
 `R/classes.R`
 
@@ -179,7 +176,7 @@ plot.falcon_qc
   grimage2 is research-use-only.
 ```
 
-## 8.6 DESCRIPTION
+## DESCRIPTION
 
 The file as it ships, not as it was specified: the differences are noted below it:
 
@@ -242,7 +239,7 @@ Four departures from the specification, each deliberate:
 Every example and every test that needs the core is wrapped in
 `skip_if_not(falconage_available())`, so `R CMD check` passes on a machine with no Python.
 
-## 8.7 Roxygen conventions
+## Roxygen conventions
 
 Following the cyRAVEN register, see
 `R/thresholds.R` in that package for the model. Every exported function
@@ -277,8 +274,6 @@ Worked example:
 #'   [preprocess_clinical()].
 #' @param clocks Clock identifiers, or `"compatible"` (default) to select
 #'   automatically, or `"all"`. See [list_clocks()].
-#' @param device `"auto"`, `"cpu"`, `"cuda"`, or a specific device such as
-#'   `"cuda:1"`. `"auto"` uses CUDA when it is available.
 #' @param dtype `"float64"` (default) or `"float32"`. Clocks whose registry
 #'   entry requires double precision are promoted regardless, with a warning.
 #' @param max_missing Largest fraction of a clock's features that may be absent
@@ -309,12 +304,12 @@ Worked example:
 #' Horvath S (2013). DNA methylation age of human tissues and cell types.
 #' Genome Biology 14:R115. \doi{10.1186/gb-2013-14-10-r115}
 #' @export
-score <- function(data, clocks = "compatible", device = "auto",
+score <- function(data, clocks = "compatible",
                   dtype = "float64", max_missing = 0.30,
                   sex_unknown = "error", ...) { }
 ```
 
-## 8.8 Command-line front end
+## Command-line front end
 
 `inst/scripts/falconage.R`, invoked the cyRAVEN way:
 
@@ -327,9 +322,9 @@ Options are built in `R/cli-options.R` with `optparse`, and the flag names match
 exactly, so a script written against one runs against the other with only the interpreter
 changed.
 
-## 8.9 pkgdown reference groups
+## pkgdown reference groups
 
-`r/_pkgdown.yml`. Group titles are identical to the quartodoc sections in §11, which is what
+`r/_pkgdown.yml`. Group titles are identical to the quartodoc sections in [Documentation](operations.qmd#documentation), which is what
 makes the two sites navigable as one.
 
 ```yaml
@@ -392,5 +387,5 @@ articles:
   contents: [download, clinical, clocks]
 - title: Going further
   navbar: Going further
-  contents: [gpu, benchmarking]
+  contents: [benchmarking]
 ```

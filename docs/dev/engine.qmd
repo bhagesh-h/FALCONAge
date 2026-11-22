@@ -2,64 +2,36 @@
 title: "Core engine and clock registry"
 ---
 
-## 2. Core engine
+## Core engine
 
-### 2.1 Device and dtype
+### Precision
 
-`falconage/core/device.py`
+`falconage/core/backend.py`
 
 ```python
 @dataclass(frozen=True)
-class DeviceSpec:
-    device: torch.device          # cpu | cuda:N | mps
-    dtype:  torch.dtype           # float64 | float32
-    batch_size: int
-    backend: Literal["torch", "numpy"]
+class ComputeSpec:
+    dtype: str = "float64"        # "float64" | "float32"
 
-def resolve_device(
-    device: str = "auto",         # "auto" | "cpu" | "cuda" | "cuda:1" | "mps"
-    dtype:  str = "float64",      # "float64" | "float32"
-    batch_size: int | None = None,
-) -> DeviceSpec
+def resolve(dtype: str | None = None, *, requires_fp64: bool = False) -> ComputeSpec
 ```
 
-`auto` picks CUDA when `torch.cuda.is_available()`, then MPS, then CPU, and logs the choice,
-mirroring pyaging's `set_torch_device`
-([`pyaging/predict/_pred_utils.py`:398](https://github.com/lucascamillomd/pyaging)).
-`batch_size` defaults to 1024 on CPU and is raised to fill available VRAM on CUDA, capped so that
-the largest PC rotation (125,175 × k for SystemsAge) fits.
-
-> **FALCONAge diverges here in four ways, three of them deliberate.** The module is
-> `core/backend.py`, the function is `resolve()`, and `DeviceSpec` carries plain strings with no
-> `batch_size` field: nothing shipping is large enough to need batching, and a field that is
-> always its default is a field that is wrong the first time it matters.
->
-> The substantive difference is `auto`. It resolves to **CPU even when a CUDA device is present**,
-> because on the clocks that ship the card loses: a 2,340-feature dot product is a rounding error
-> against the pandas alignment that feeds it, and the transfer is pure cost. Measured at 4.6×
-> slower on an RTX 4060 at 16,384 samples. Picking CUDA because one exists would make the common
-> case several times worse on every machine that has one, silently, so the GPU is opt-in via
-> `device="cuda"` or `FALCONAGE_DEVICE=cuda`. The numbers are in [GPU support](gpu.qmd).
->
-> `resolve()` also refuses a device it cannot provide rather than falling back. A run asked for a
-> GPU and quietly given a CPU looks like a very slow success, and the user finds out hours later.
+Everything runs in numpy on the CPU. `resolve()` fixes the floating-point precision once per
+clock and the manifest records it per clock. An unknown precision is refused rather than
+silently replaced.
 
 FP64 is the default because that is what pyaging uses and what the gold-standard vectors are
-generated at. FP32 roughly doubles throughput on consumer GPUs, which have poor FP64 rates, and
-is opt-in. Clocks whose registry entry sets `requires_fp64: true` are promoted back to FP64 for
+generated at. FP32 is opt-in. Clocks whose registry entry sets `requires_fp64: true` are promoted back to FP64 for
 their own forward pass and a warning is emitted; this covers the PC clocks, whose 78,464- and
-125,175-dimensional centring and rotation is ill-conditioned ([the science notes, §14.3, §16](../methods/index.qmd)).
+125,175-dimensional centring and rotation is ill-conditioned ([Failure modes and the frontier](../clocks/discrepancies.qmd)).
 
 ```python
-def check_dtype_safety(clock: ClockMeta, spec: DeviceSpec) -> DeviceSpec:
+def check_dtype_safety(clock: ClockMeta, spec: ComputeSpec) -> ComputeSpec:
     """Promote to FP64 for clocks that need it. Returns a possibly-modified spec."""
 ```
 
-Memory guard: before a clock runs, estimate `n_samples × n_features × itemsize` plus the rotation
-matrix, and either lower the batch size or raise `InsufficientMemoryError` with the required
-figure, rather than letting CUDA OOM mid-run.
 
-### 2.2 The data container
+### The data container
 
 `falconage/core/container.py`
 
@@ -105,7 +77,7 @@ FalconData.write_h5ad(path)
 `obs`, and preserves `df.index` as sample identifiers. This is the same signature as pyaging's
 `df_to_adata` minus the imputation, which moves to the preprocess module where it belongs.
 
-### 2.3 Run manifest
+### Run manifest
 
 `falconage/core/manifest.py`
 
@@ -121,10 +93,7 @@ class RunManifest:
     python_version:     str
     r_version:          str | None      # set when the call came through reticulate
     platform:           str             # OS, arch
-    device:             str
     dtype:              str
-    torch_version:      str
-    cuda_version:       str | None
     timestamp:          str             # ISO 8601, UTC
     command:            str             # the resolved call
     config:             dict            # fully resolved, defaults expanded
@@ -136,7 +105,7 @@ class RunManifest:
 `ClockRun.weights_sha256` is what makes a result auditable: two runs that report the same score
 for the same clock either used the same weights or the manifest says they did not.
 
-### 2.4 Logging and verbosity
+### Logging and verbosity
 
 `falconage/core/logging.py`
 
@@ -152,7 +121,7 @@ Progress bars via `rich` on a TTY, plain line output otherwise, suppressed entir
 `none`. Every message goes through the logger, so `logging.disable()` in Python and
 `suppressMessages()` in R both work.
 
-### 2.5 Configuration
+### Configuration
 
 `falconage/core/config.py`
 
@@ -161,9 +130,7 @@ Precedence, lowest to highest: packaged defaults → user config file
 
 ```yaml
 # ~/.config/falconage/config.yaml
-device: auto
 dtype: float64
-batch_size: 1024
 verbose: inform
 cache_dir: ~/.cache/falconage
 registry_version: "1.1.0"        # pin to make a project reproducible
@@ -171,12 +138,12 @@ hf_token: null
 max_download_gb: 50
 ```
 
-### 2.6 Units
+### Units
 
 `falconage/core/units.py`
 
 The single most common source of wrong answers in this field is a clinical biomarker in the wrong
-unit ([the science notes, §16](../methods/index.qmd)). The unit registry makes that a hard error.
+unit ([Failure modes](../clocks/discrepancies.qmd)). The unit registry makes that a hard error.
 
 ```python
 class UnitRegistry:
@@ -201,7 +168,7 @@ absurd mg/dL, and guessing is how the 88× error happens. Conversions carried:
 | uric acid | µmol/L ↔ mg/dL | ×59.48 |
 | bilirubin | µmol/L ↔ mg/dL | ×17.1 |
 
-### 2.7 Error hierarchy
+### Error hierarchy
 
 `falconage/core/errors.py`
 
@@ -232,9 +199,9 @@ FalconError
 Every error carries `.remedy`, a one-sentence statement of what to do about it, which the R
 bridge surfaces as the condition message and the CLI prints after the traceback.
 
-## 3. Clock registry
+## Clock registry
 
-### 3.1 Why the registry is a separate artefact
+### Why the registry is a separate artefact
 
 The registry is versioned independently of the package, packaged into both language
 distributions, and validated in its own CI job. That separation exists because adding a clock and
@@ -242,7 +209,7 @@ releasing software are different events with different risk profiles: a user pin
 `registry_version: "1.0.0"` gets the same coefficients in a year regardless of package upgrades,
 and a registry fix does not require a PyPI release.
 
-### 3.2 Schema
+### Schema
 
 > **v1.0 stores this differently.** All 178 entries live in one file,
 > `python/src/falconage/registry/data/clocks.yaml`, loaded into frozen dataclasses by
@@ -305,7 +272,7 @@ features:
 
 architecture:
   kind: multi_stage_cox
-  sub_models:                      # order is load-bearing, see §4.3
+  sub_models:                      # order is load-bearing, see [Model classes](algorithms.qmd#model-classes)
     - {name: GDF15,     n_features: 138}
     - {name: B2M,       n_features: 92}
     - {name: CystatinC, n_features: 88}
@@ -358,9 +325,9 @@ gold_standard:
 known_discrepancies: []
 ```
 
-### 3.3 The discrepancy field is load-bearing
+### The discrepancy field is load-bearing
 
-[The science, §15.2](../methods/failure-modes.qmd#where-the-paper-and-the-coefficients-disagree) documents the eleven clocks where the published paper and the coefficient set in
+[Where the paper and the coefficients disagree](../clocks/discrepancies.qmd) documents the eleven clocks where the published paper and the coefficient set in
 circulation disagree. Every implementation in the field silently inherits one side of each
 disagreement. FALCONAge records both and warns at score time:
 
@@ -387,7 +354,7 @@ The nine to encode at minimum: `bohlin` (96 vs 251), `cvdwesterman` (1,305 vs 23
 Warning behaviour is a config knob: `discrepancy_warnings: once | always | never`, defaulting to
 `once` per clock per session.
 
-### 3.4 Controlled vocabulary
+### Controlled vocabulary
 
 `registry/vocabulary.yaml` fixes the allowed values for `data_type`, `species`, `tissue`,
 `platform`, `population`, `generation`, `predicts`, `training_target`, `unit`, `scale_type` and
@@ -397,7 +364,7 @@ audit that collapsed 94 free-text tissue strings to 30 controlled terms
 `registry/validate.py` fails CI on any value outside the vocabulary, any missing required field,
 any weight URI without a checksum, and any clock without a gold-standard vector.
 
-### 3.5 Registry API
+### Registry API
 
 `falconage/registry/registry.py`
 
@@ -421,7 +388,7 @@ dataset and it returns the clocks whose species, platform and feature coverage a
 sorted by coverage. This replaces the current field practice of running everything and reading
 the missingness column afterwards.
 
-### 3.6 Coefficient provenance and the three availability tiers
+### Coefficient provenance and the three availability tiers
 
 A clock is two things: an **architecture**, which is a procedure described in a paper, and a
 **coefficient set**, which is data produced by fitting that procedure to a cohort. FALCONAge
@@ -441,13 +408,13 @@ them*. Surveying pyaging's 173 notebooks for the URL each one fetches gives the 
 | No public primary source | 13 | no |
 | Embedded inline, small enough to read off the paper | 6 | yes |
 
-The 37 in the fourth row are the reason the eleven discrepancies in §3.3 exist. epiTOC2's
+The 37 in the fourth row are the reason the eleven discrepancies in [The discrepancy field is load-bearing](#the-discrepancy-field-is-load-bearing) exist. epiTOC2's
 coefficients in pyaging are a file lifted from biolearn's repository; the McCartney scores and
 most of the deconvolution panels are the same story. Copying a copy is how a transcription error
 becomes a field-wide convention, and tracing each back to its supplement is the only way to find
 out which reading is right.
 
-### 3.7 The three tiers
+### The three tiers
 
 Every registry entry carries `availability`, one of three values. This governs what ships, what
 is fetched, and what the user has to do.
@@ -473,7 +440,7 @@ where the primary source has not yet been traced. The scaffold ships; the number
 use. Forty-eight of these are author repositories whose licences have not been individually
 reviewed and will move to A as each is checked.
 
-Tier C is the subject of §4.7.
+Tier C is the subject of [Scaffold-only clocks](algorithms.qmd#scaffold-only-clocks).
 
 ```yaml
 # in every registry entry
@@ -493,7 +460,7 @@ coefficient_source:
 `primary_source_traced: false` is a visible debt, counted in the registry validation report, and
 `falconage clocks list --untraced` prints them.
 
-### 3.8 Coefficient extraction
+### Coefficient extraction
 
 `registry/extractors/`. One small script per clock, or per family where the format is shared.
 Each reads the primary source in whatever shape it was published, xlsx, csv, a zip of csvs, an
@@ -536,19 +503,19 @@ beyond 1e-9, and a verdict. Disagreements are published rather than resolved sil
 what turns the eleven known discrepancies from inherited folklore into a documented finding, and
 it is expected to surface more.
 
-### 3.9 Weight loading
+### Weight loading
 
 `falconage/registry/weights.py`
 
 ```python
 def resolve_weights(meta: ClockMeta, cache_dir: Path | None = None) -> Path
-def load_weights(meta: ClockMeta, spec: DeviceSpec) -> dict[str, torch.Tensor]
+def load_weights(meta: ClockMeta, spec: ComputeSpec) -> dict[str, np.ndarray]
 def register_local_weights(clock_id: str, path: Path, sha256: str | None = None) -> None
 ```
 
 Rules:
 
-- **safetensors only.** `torch.load(weights_only=False)`, which pyaging uses
+- **safetensors only.** Loading a pickled weights file, which pyaging does
   ([`pyaging/predict/_pred_utils.py`:90](https://github.com/lucascamillomd/pyaging)),
   executes arbitrary code from a downloaded file. Architecture lives in the registry YAML and in
   `models/`; tensors live in safetensors; nothing pickled is ever loaded.
@@ -563,6 +530,6 @@ Rules:
   fetch. Tier C prints the obtain-it-yourself instructions.
 
 > **As shipped.** Bundled coefficients ship inside the package and are checked against the
-> registry's SHA-256 before use; untraced clocks are not fetched (§3.7), so the cache and the
+> registry's SHA-256 before use; untraced clocks are not fetched ([The three tiers](#the-three-tiers)), so the cache and the
 > licence line for tier B were not built. Licensed clocks print the obtain-it-yourself
 > instructions, as above.

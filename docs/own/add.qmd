@@ -1,0 +1,82 @@
+---
+title: "Add a clock"
+subtitle: "Score a clock you fitted, combined, or took from a paper, exactly like a catalogue clock"
+---
+
+A clock of your own is a YAML entry and a coefficient file. Added to a run, it gets everything a
+catalogue clock gets: the coverage check, the specimen check, a technical standard error, a row
+in the report, and a manifest entry recording that it is yours and the SHA-256 of its file.
+
+## 1. Write the entry
+
+`my_clocks/mycohortclock.yaml`:
+
+```yaml
+id: mycohortclock
+name: Cohort clock fitted on our blood samples
+data_type: dna_methylation
+tissue: [whole blood]
+platform: [EPICv1]
+training_target: [chronological age]
+scale_type: age_years
+unit: [years]
+coefficients: mycohortclock.csv
+reference: mycohortclock_reference.csv    # optional
+```
+
+`my_clocks/mycohortclock.csv`:
+
+```
+feature_id,coefficient
+(Intercept),31.47
+cg16867657,22.1
+cg06639320,-14.8
+```
+
+[Build a clock](compare.qmd) and [Stack clocks](stack.qmd) write both files for you.
+
+| Field | Why it is required |
+|---|---|
+| `scale_type` | Decides which arithmetic is legal: `age_years` permits acceleration, a pace or a relative score does not |
+| `tissue` | Drives the check that your samples are the specimen the clock was fitted on |
+| `training_target`, `unit` | What the score estimates, and in what |
+| `coefficients` | One weight per feature, with an optional `(Intercept)` row |
+
+Optional: `platform`, `reference` (a `feature_id,value` file of fill values for CpGs a dataset
+lacks), `preprocess` and `postprocess` steps by the names in the registry, `citation`, `notes`.
+
+## 2. Score it
+
+From the command line, point `run` at the folder:
+
+```bash
+docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu \
+  run betas.csv --samples samples.csv --clocks-dir my_clocks
+```
+
+From Python or R, add it for the session:
+
+::: {.panel-tabset}
+
+### Python
+
+```python
+fa.add_clock("my_clocks/mycohortclock.yaml")
+res = fa.score(d, clocks=["mycohortclock", "horvath2013"])
+```
+
+### R
+
+```r
+add_clock("my_clocks/mycohortclock.yaml")
+res <- score(d, clocks = c("mycohortclock", "horvath2013"))
+```
+
+:::
+
+## What is checked, and what a clock of your own does not get
+
+The coefficient file must have two columns, unique feature ids and finite values; processing
+steps must name operations FALCONAge implements; and the id may not replace a clock that ships
+with the package. A clock of your own has no published calibration, so it gets no prediction
+interval until you supply one, and no published reliability, so `interpretation()` says so.
