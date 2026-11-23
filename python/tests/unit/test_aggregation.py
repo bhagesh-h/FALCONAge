@@ -8,7 +8,7 @@ import pytest
 
 import falconage as fa
 from falconage.core.errors import FeatureCoverageError, ScoringError
-from falconage.models.aggregation import AggregationClock, is_aggregation, parse_statistic
+from falconage.models.aggregation import AggregationClock, parse_statistic
 
 #: Six, not the five the model_type tally suggests at a glance: `hypoclock` is
 #: declared "mean aggregation" without the word methylation, and it is one --

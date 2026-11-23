@@ -12,7 +12,6 @@ import falconage as fa
 from falconage.core.errors import (
     FeatureCoverageError,
     IllegalOperationError,
-    WeightsUnavailableError,
 )
 
 

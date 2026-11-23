@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import falconage as fa
-from falconage.core.errors import ClockNotFoundError, RegistryError, WeightsUnavailableError
+from falconage.core.errors import ClockNotFoundError, RegistryError
 from falconage.registry.registry import AVAILABILITY, DATA_DIR, LEGAL_OPS
 
 

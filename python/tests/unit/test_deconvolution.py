@@ -19,7 +19,7 @@ import pytest
 import falconage as fa
 from falconage.core.errors import RegistryError
 from falconage.models.deconvolution import project
-from falconage.registry.registry import DATA_DIR, ClockRegistry
+from falconage.registry.registry import DATA_DIR
 
 SIX = {"deconvolutebloodepiccd8tcell": "CD8T", "deconvolutebloodepiccd4tcell": "CD4T",
        "deconvolutebloodepicnkcell": "NK", "deconvolutebloodepicbcell": "Bcell",

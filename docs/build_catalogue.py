@@ -316,14 +316,8 @@ def question_table() -> str:
         cs = buckets[q]
         if not cs:
             continue
-        # Three columns because they ask three different things of the reader:
-        # nothing, a licence, or a coefficient source nobody has traced yet.
-        # This compared against the retired letter "A" after the availability
-        # groups were renamed, and reported for months that no clock at all
-        # was ready to score.
+        # Every clock in the registry is bundled, so the table names them all.
         ready = [c for c in cs if c.availability == "bundled"]
-        licensed = [c for c in cs if c.availability == "licensed"]
-        untraced = [c for c in cs if c.availability == "untraced"]
         scales = sorted({c.scale_type for c in cs})
 
         def names(items, limit=8):
