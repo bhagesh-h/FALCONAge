@@ -35,9 +35,9 @@ sys.path.insert(0, str(ROOT / "python" / "src"))
 import falconage as fa                      # noqa: E402
 from falconage import registry              # noqa: E402
 
-#: Inputs the raw-array chain added. Naming them on the landing page is the difference between
-#: a reader knowing the tool reads their data and assuming it does not.
-V11_INPUTS = ("olink", "somascan", "nanopore", "bedmethyl", "rna-seq", "idat")
+#: The accepted inputs. Naming them on the landing page is the difference between a reader
+#: knowing the tool reads their data and assuming it does not.
+V11_INPUTS = ("beta matrix", "series matrix", "clinical chemistry", "nightingale")
 
 DASHES = {"—", "–", "-", ""}
 

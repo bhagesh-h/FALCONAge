@@ -20,8 +20,8 @@ from ..core.logging import WarningCollector, get_logger
 from ..core.manifest import RunManifest
 from ..models import build
 from ..models.linear import EXCLUDED
-from ..preprocess import BIAS_WARN, QC_REMOVED_WARN, observed_features, qc_removed
-from ..preprocess.manifest import cached_manifest_probes
+from ..preprocess import (BIAS_WARN, QC_REMOVED_WARN, observed_features, platform_probes,
+                          qc_removed)
 from ..preprocess import _load_platform_bias as _platform_bias
 from ..registry import load as load_registry
 
@@ -542,11 +542,11 @@ def score(data: FalconData, clocks: str | Sequence[str] = "compatible", *,
 
         # Probes the array carries that the data lacks were removed after
         # measurement, usually by an EWAS's probe QC, and scoring on the
-        # unfiltered matrix gets them back. Needs the platform manifest in the
-        # cache; without it the coverage warning above is all there is.
+        # unfiltered matrix gets them back. Needs a known platform; without one
+        # the coverage warning above is all there is.
         if alignment is not None and reg.has_coefficient_vector(cid):
             if qc_probes is None and data.modality == "dna_methylation":
-                qc_probes = cached_manifest_probes(data.platform) or frozenset()
+                qc_probes = platform_probes(data.platform) or frozenset()
                 qc_observed = observed_features(data) if qc_probes else frozenset()
             if qc_probes:
                 feats, coefs = reg.coefficients(cid)

@@ -38,11 +38,9 @@ bench             14    549.8 MB   ComputAgeBench case/control methylation
 clinical           3      5.4 MB   NHANES blood chemistry with mortality linkage
 gestational        1     50.8 MB   Umbilical cord blood with gestational age
 epicv2             1     41.2 MB   EPIC v2 probe-suffix handling
-idat               8     60.4 MB   Raw IDATs, EPIC v1 and EPIC v2
 mammalian          4      9.3 MB   Mammalian methylation array, three species
-mouse              5     50.2 MB   Mouse blood RRBS across the lifespan
 ------------------------------------------------------------------------------
-selected          36    767.1 MB
+selected          23    656.4 MB
 ```
 
 ## Download and verify

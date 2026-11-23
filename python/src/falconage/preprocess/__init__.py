@@ -1,18 +1,23 @@
-"""Turn raw or public data into something a clock can be scored on."""
+"""Light, per-dataset steps between a preprocessed matrix and a clock.
+
+FALCONAge expects data that is already normalised and quality controlled
+upstream. What is left here is what scoring itself needs: matching probe
+identifiers across array versions, collapsing EPIC v2 replicate probes,
+clipping betas, converting clinical units, Horvath's own normalisation for the
+clocks trained on it, and accounting for the clock CpGs a dataset lacks.
+"""
 
 from __future__ import annotations
+
+import functools
+import gzip
 
 import numpy as np
 import pandas as pd
 
 from ..core.container import FalconData
 from ..core.units import MARKERS, canonical_name, check_plausible, convert, require_units
-from .batch import BatchError, BatchReference, apply_batch_reference, fit_batch_reference
-from .bmiq import BetaMixture, bmiq, fit_beta_mixture
 from .horvath import horvath_normalise
-from .idat import RawSignal, dye_bias, idat_to_betas, noob, poobah, read_idat_dir
-from .manifest import cached_manifest_probes, fetch_manifest, load_manifest, manifest_record
-from .masks import apply_mask, load_mask, mask_report, masked_probes
 from .methylation import (
     QCReport,
     aggregate_replicate_probes,
@@ -22,23 +27,12 @@ from .methylation import (
     prepare,
     qc,
 )
-from .proteomic import prepare_proteomic, read_olink, read_somascan
-from .transcriptomic import (median_centre, prepare_transcriptomic, read_counts,
-                             rle_normalise, yugene)
 
 __all__ = [
-    "BatchError", "BatchReference", "BetaMixture", "QCReport", "RawSignal",
-    "bmiq", "fit_beta_mixture", "horvath_normalise",
-    "aggregate_replicate_probes",
-    "apply_batch_reference", "apply_mask", "clip_betas", "dye_bias", "ensure_platform",
-    "load_mask", "mask_report", "masked_probes",
-    "fetch_manifest", "fit_batch_reference",
-    "harmonise_probe_ids", "idat_to_betas", "impute", "load_manifest",
-    "manifest_record", "noob", "poobah",
-    "cached_manifest_probes", "prepare", "prepare_clinical", "probe_loss", "qc_removed",
-    "median_centre", "prepare_proteomic", "prepare_transcriptomic",
-    "qc", "read_counts", "read_idat_dir", "read_olink", "read_somascan",
-    "rle_normalise", "yugene",
+    "ARRAY_BITS", "QCReport", "aggregate_replicate_probes", "clip_betas", "ensure_platform",
+    "harmonise_probe_ids", "horvath_normalise", "impute", "observed_features",
+    "platform_probes", "prepare", "prepare_clinical", "probe_loss", "qc",
+    "qc_removed",
 ]
 
 
@@ -165,6 +159,40 @@ BIAS_WARN = 1.0
 QC_REMOVED_WARN = 0.01
 
 
+#: Bit per Illumina array in the ``arrays`` column of the bundled
+#: ``cpg_positions.csv.gz``. Keep in step with python/tools/build_cpg_positions.py.
+ARRAY_BITS = {"27K": 1, "450K": 2, "EPICv1": 4, "EPICv2": 8}
+
+
+@functools.lru_cache(maxsize=1)
+def _clock_arrays() -> pd.Series:
+    from ..registry.registry import DATA_DIR
+
+    with gzip.open(DATA_DIR / "cpg_positions.csv.gz", "rt", encoding="utf-8") as fh:
+        t = pd.read_csv(fh, usecols=["feature_id", "arrays"], index_col="feature_id")
+    return t["arrays"].fillna(0).astype("int64")
+
+
+def platform_probes(platform: str | None) -> frozenset[str] | None:
+    """The catalogue clock CpGs an Illumina array carries.
+
+    Read from the table bundled with the package, so it works offline. Returns
+    ``None`` for a platform that is not one of :data:`ARRAY_BITS`. Only clock
+    CpGs are listed: CpGs of a clock added at run time that no catalogue clock
+    shares are not covered.
+
+    Used to separate two kinds of absent clock CpG. One the array does not
+    carry is platform loss, which nothing recovers. One the array carries but
+    the data lacks was removed after measurement, usually by probe QC, and
+    scoring the unfiltered matrix recovers it.
+    """
+    bit = ARRAY_BITS.get(platform or "")
+    if bit is None:
+        return None
+    s = _clock_arrays()
+    return frozenset(s.index[(s.to_numpy() & bit) > 0].astype(str))
+
+
 def observed_features(data: FalconData) -> frozenset[str]:
     """Columns with at least one measured value. An all-NaN column is absent."""
     X = data.X
@@ -227,15 +255,13 @@ def probe_loss(data: FalconData, clocks: str | list[str] = "all",
     the column is computed from, so there is no honest value without them.
     ``n_removed_by_qc`` and ``qc_removed_mass`` count the clock CpGs the array
     carries but this data lacks, which were removed after measurement; they
-    need the platform's manifest in the cache (``fetch_manifest(platform)``)
-    and are empty without it.
+    are empty when the platform is unknown.
     """
     from ..models.linear import align
     from ..registry import load as _load
 
     reg = registry if registry is not None else _load()
-    # Only with the platform's manifest already cached: probe_loss is offline.
-    probes = cached_manifest_probes(data.platform) if data.modality == "dna_methylation" else None
+    probes = platform_probes(data.platform) if data.modality == "dna_methylation" else None
     observed = observed_features(data) if probes is not None else frozenset()
 
     if clocks == "all":

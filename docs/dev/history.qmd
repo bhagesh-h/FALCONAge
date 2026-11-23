@@ -17,7 +17,7 @@ against the running package rather than remembered. Where to look:
 
 | What the blueprint specified | Where it is documented now |
 |---|---|
-| Layered architecture, module boundaries | [What actually got laid down](index.qmd#what-actually-got-laid-down), the file tree |
+| Layered architecture, module boundaries | [Implemented layout](index.qmd#implemented-layout), the file tree |
 | Data model (`X`, `obs`, `var`, `uns`, multi-modality) | [Core engine](engine.qmd#core-engine), the shipped `FalconData`, AnnData-backed |
 | Clock registry schema | [Clock registry](engine.qmd#clock-registry), the schema as validated, field by field |
 | API surface, Python and R | [Getting started](../start/quickstart.qmd), and the [Python](../reference) and [R](../r/reference) references |
@@ -102,3 +102,8 @@ interchangeable. Defaulting to either makes results from the two paths incompara
 identical. Current plan is to require the choice explicitly on the first call and record it
 everywhere, with `noob_bmiq` as the documented default only because it is what most published
 clock coefficients were derived under.
+
+**Resolved (1.0.0): preprocessing moved upstream.** The IDAT reader, noob, BMIQ, probe masks,
+frozen-reference batch correction and the proteomic and transcriptomic readers were built and
+then removed. Array preprocessing and QC are done by a dedicated pipeline (methylarray, minfi or
+SeSAMe), and FALCONAge reads its beta matrix. The two open questions above no longer apply.

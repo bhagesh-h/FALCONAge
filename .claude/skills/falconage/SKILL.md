@@ -1,6 +1,6 @@
 ---
 name: falconage
-description: Score biological aging clocks from DNA methylation, clinical chemistry or NMR metabolomics data using FALCONAge via Docker. Use when asked to compute epigenetic age, DNAm age, biological age, age acceleration, pace of aging, or a named clock (Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE, ...); to process raw Illumina IDATs; to build, add or combine (stack) a clock on one's own cohort; to run FALCONAge inside a Nextflow or Snakemake pipeline; or to answer which clock answers a given question and how far a clock score can be trusted.
+description: Score biological aging clocks from DNA methylation, clinical chemistry or NMR metabolomics data using FALCONAge via Docker. Use when asked to compute epigenetic age, DNAm age, biological age, age acceleration, pace of aging, or a named clock (Horvath, Hannum, PhenoAge, GrimAge, DunedinPACE, ...) from a preprocessed beta matrix, GEO series matrix, clinical chemistry table or Nightingale NMR table; to build, add or combine (stack) a clock on one's own cohort; to run FALCONAge inside a Nextflow or Snakemake pipeline; or to answer which clock answers a given question and how far a clock score can be trusted.
 ---
 
 # FALCONAge
@@ -66,7 +66,7 @@ docker run --rm -it -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu python
 ```python
 import falconage as fa
 
-d = fa.read_betas("betas.csv")          # or fa.read_idat_dir("idats/")
+d = fa.read_betas("betas.csv")          # preprocessed, QC-passed betas
 d.obs["tissue"] = "whole blood"         # do not skip this
 d.obs["age"] = ages                     # needed for acceleration
 d = fa.prepare(d)
@@ -160,7 +160,7 @@ has `ps`, and runs as any user id. Everything runs on the CPU.
 
 ## Reference
 
-- `reference/docker.md`, the full command set: IDATs, GEO accessions, batch correction,
+- `reference/docker.md`, the full command set: accepted inputs, GEO accessions,
   benchmarking, and the native pip/R install for anyone who wants it.
 - `reference/clocks.md`, the clock families, which one answers which question,
   the nine scale types, and the traps.

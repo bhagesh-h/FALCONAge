@@ -5,8 +5,8 @@
 
 ## Added
 
-- **`falconage run`**: the whole pipeline in one command. Reads a beta matrix, a GEO series
-  matrix, a folder of IDATs, a clinical table or a Nightingale export; joins an optional sample
+- **`falconage run`**: the whole pipeline in one command. Reads a preprocessed beta matrix, a
+  GEO series matrix, a clinical chemistry table or a Nightingale NMR table; joins an optional sample
   sheet (`age`, `sex`, `tissue`, `group`); scores every clock the data supports; and writes the
   scores, technical standard errors, prediction intervals, age acceleration, the cross-clock
   consensus, the figures and `report.html`. Per-clock notes go to `warnings.csv`; the console
@@ -33,18 +33,19 @@
   the legend giving each clock's colour and coverage. It includes clocks you add, shows which
   CpGs clocks share, and cannot be switched off (`fa.plot.clock_coverage_manhattan`, R
   `plot_clock_coverage()`).
-- **Readers** for raw Illumina IDATs (27K, 450K, EPIC v1, EPIC v2, with pOOBAH detection, noob
-  background correction and optional BMIQ), beta matrices, GEO series matrices, RRBS, nanopore
-  bedMethyl, targeted panels, clinical chemistry with declared units, Nightingale NMR, Olink NPX,
-  SomaScan RFU, bulk RNA-seq counts and the ComputAgeBench studies.
+- **Readers** for preprocessed beta matrices (CSV, TSV, parquet, `.h5ad`), GEO series matrices,
+  targeted panels, clinical chemistry with declared units, Nightingale NMR and the ComputAgeBench
+  studies. Normalisation and QC are done upstream, for example by the methylarray pipeline.
+- **Clock CpGs removed by upstream probe QC are detected offline.** A bundled table records which
+  arrays (27K, 450K, EPIC v1, EPIC v2) carry each clock CpG (`fa.preprocess.platform_probes()`),
+  so `score()` warns when probe filters removed CpGs carrying at least 1% of a clock's weight.
 - **Uncertainty on every score**: `technical_se()` propagates published per-probe reliability
   through each clock's weights; `conformal_interval()` gives distribution-free prediction
   intervals; `icc_from_replicates()` and `variance_components()` measure reliability from the
   user's own replicates.
 - **Analysis**: age acceleration in three conventions, gated on each clock's scale type;
   association and Cox models; the AA1/AA2 benchmark; `consensus()`, which asks whether a group
-  difference holds across clocks; `power()` and `detectable_effect()` for study design; batch
-  correction against a frozen reference that leaves reported scores unchanged.
+  difference holds across clocks; `power()` and `detectable_effect()` for study design.
 - **Clinical clocks**: PhenoAge, Klemera-Doubal and homeostatic dysregulation reproducing BioAge,
   LinAge2, MetaboAge and MetaboHealth.
 - **Building a clock.** `fa.fit_clock()` fits an elastic net reproducing glmnet, or any of eight
@@ -92,6 +93,12 @@
   coefficients and 15 non-human clocks, with the PC-clock and DunedinPACE importers and the
   model classes only they used.
 
+- Raw-data preprocessing, which now belongs upstream: the IDAT reader and its chain (pOOBAH,
+  noob, dye bias, BMIQ, probe masks, Illumina manifest download), frozen-reference batch
+  correction, the RRBS and bedMethyl readers, the Olink, SomaScan and RNA-seq readers and their
+  preparation chains, and the SRA and PRIDE downloads. The `preprocess` verb is renamed
+  `prepare`. The array labelled EPIC v2 in the old manifest table was methylprep's extended EPIC
+  v1 manifest; EPIC v2 membership now comes from the Zhou lab InfiniumAnnotation manifest.
 - The unused `cli` extra (typer). The command line has always used argparse.
 - The content-preservation check, the developer Dockerfile and the duplicate colour scheme;
   the clock overlap tables moved to `docs/clocks/`.

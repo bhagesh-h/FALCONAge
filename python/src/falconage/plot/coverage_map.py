@@ -45,14 +45,17 @@ def clock_positions() -> pd.DataFrame:
     """Chromosome and position of every catalogue clock CpG (``feature_id`` index).
 
     Built by ``python/tools/build_cpg_positions.py`` from Illumina's EPIC v1,
-    450K and 27K manifests and shipped with the package, so the plot needs no
-    network.
+    450K and 27K manifests (GRCh37/hg19) and shipped with the package, so the
+    plot needs no network. CpGs without a position are left out.
     """
     from ..registry.registry import DATA_DIR
 
     p = DATA_DIR / "cpg_positions.csv.gz"
     with gzip.open(p, "rt", encoding="utf-8") as fh:
-        t = pd.read_csv(fh, dtype={"chr": str}, index_col="feature_id")
+        t = pd.read_csv(fh, dtype={"chr": str}, index_col="feature_id",
+                        usecols=["feature_id", "chr", "pos"])
+    t = t.dropna(subset=["pos"])
+    t["pos"] = t["pos"].astype("int64")
     return t
 
 
@@ -76,10 +79,16 @@ def _present_set(data, platform: str | None) -> tuple[set[str], str]:
             label += f" on {data.platform}"
         return set(map(str, cols)), label
     if platform:
-        from ..preprocess.manifest import load_manifest
+        from ..preprocess import platform_probes
 
-        return set(map(str, load_manifest(platform).index)), f"the {platform} array"
-    raise AnalysisError("give data, or a platform to measure coverage against")
+        probes = platform_probes(platform)
+        if probes is None:
+            from ..preprocess import ARRAY_BITS
+
+            raise AnalysisError(f"unknown array {platform!r}; expected one of "
+                                + ", ".join(ARRAY_BITS))
+        return set(probes), f"the {platform} array"
+    raise AnalysisError("pass data, or a platform to measure coverage against")
 
 
 def _compute(data, platform, registry, clocks):

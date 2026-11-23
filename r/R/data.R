@@ -69,30 +69,12 @@ read_clinical <- function(path, units = NULL) {
     units = if (is.null(units)) reticulate::py_none() else reticulate::r_to_py(units))))
 }
 
-#' Read RRBS coverage files
-#'
-#' @param paths Character vector of per-sample site files.
-#' @param min_coverage Minimum read depth for a site to be kept. A ratio from
-#'   four reads and one from four hundred are not the same measurement, and a
-#'   clock handed both without distinction reports sequencing depth as biology.
-#' @return A [falcon_data] with `modality = "rrbs"`.
-#' @examples
-#' \dontrun{
-#' d <- read_rrbs_dir(list.files("mouse", full.names = TRUE), min_coverage = 5)
-#' }
-#' @export
-read_rrbs_dir <- function(paths, min_coverage = 5L) {
-  new_falcon_data(py_do(fa()$read_rrbs_dir(
-    reticulate::r_to_py(as.list(path.expand(paths))),
-    min_coverage = as.integer(min_coverage))))
-}
-
 #' Build a dataset from an R matrix or data frame
 #'
 #' @param x Samples in rows, features in columns. Row names are the sample ids
 #'   and are load-bearing: every join downstream is on them.
 #' @param obs Per-sample annotation with matching row names.
-#' @param modality `"dna_methylation"`, `"clinical_chemistry"` or `"rrbs"`.
+#' @param modality `"dna_methylation"`, `"clinical_chemistry"` or `"metabolomics_nmr"`.
 #' @param platform Optional, e.g. `"450K"`. Detected from the probe identifiers
 #'   when omitted.
 #' @param species Which organism the samples came from. Checked, not assumed:

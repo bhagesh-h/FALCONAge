@@ -21,7 +21,7 @@
 # Usage:
 #   Rscript fetch_test_data.R --dry-run
 #   Rscript fetch_test_data.R
-#   Rscript fetch_test_data.R --groups bench,mouse
+#   Rscript fetch_test_data.R --groups bench,clinical
 #   Rscript fetch_test_data.R --verify
 #   Rscript fetch_test_data.R --self-test
 # =============================================================================

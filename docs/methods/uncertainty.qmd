@@ -286,45 +286,15 @@ only one of them is permanent. If the array does not carry it, nothing recovers
 it. If the array carries it and the data lacks it, it was measured and then
 removed, almost always by probe filters (SNP-affected, cross-reactive, failed
 detection) that belong to an epigenome-wide association study and not to clock
-scoring. With the platform's manifest in the cache, `probe_loss()` counts the
-second kind in `n_removed_by_qc` and `qc_removed_mass`, and `score()` warns
-(category `probe_qc`) once the removed CpGs carry 1% of a clock's
-|coefficient|. The manifest is never downloaded during scoring;
-`fetch_manifest(platform)` caches it once. On QC-filtered betas this separates
+scoring. A table bundled with the package records which arrays (27K, 450K,
+EPIC v1, EPIC v2) carry each clock CpG, built from the Illumina manifests and,
+for EPIC v2, the Zhou lab InfiniumAnnotation manifest. With it, `probe_loss()`
+counts the second kind in `n_removed_by_qc` and `qc_removed_mass`, and `score()`
+warns (category `probe_qc`) once the removed CpGs carry 1% of a clock's
+|coefficient|. Nothing is downloaded during scoring. On QC-filtered betas this separates
 CpGs removed by a filter from CpGs the array never carried, and for a clock such as
 DNAmTL the first kind can be most of what is missing. The remedy is to score clocks on
 normalised but unfiltered betas.
-
-### A reported score must not move when the next plate arrives
-
-ComBat estimates its location and scale from every sample at once. Add a batch,
-re-run, and every previously corrected value changes, measured directly on
-epigenetic ages as a mean shift of 0.077 to 0.39 years with a **maximum of 2.20
-years** ([iComBat, PMC12495439](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12495439/)).
-
-A 2.2-year retrospective change in someone's reported biological age, caused by
-a stranger's sample being run three months later, is not a rounding difference.
-The individual-level critique of these measures lists "longitudinal
-comparability without re-running all samples" as a prerequisite for any clinical
-use, and this is precisely it.
-
-`fit_batch_reference()` freezes the per-probe grand mean, covariate effects,
-pooled variance **and the empirical-Bayes hyperparameters** on a reference
-cohort. `apply_batch_reference()` standardises each later batch against those
-frozen values and estimates only that batch's own additive and multiplicative
-effects. A batch's corrected values then depend on that batch and the reference
-alone. There is no path through the arithmetic by which a new plate could move
-an old one, and the test asserts bit equality rather than closeness.
-
-Freezing the hyperparameters is the part that is easy to get wrong. Leave them
-free and adding a batch re-estimates the prior, which moves every other batch's
-shrunk estimate, and the whole exercise is ComBat with extra steps.
-
-Two designs are refused: a batch with fewer than eight samples, and one where
-the variable of interest is nested inside batch. The second matters because
-correcting a confounded design removes the effect along with the artefact and
-returns a clean-looking null, the one failure mode of batch correction that
-looks like success.
 
 ### Before the first array, and after the last
 

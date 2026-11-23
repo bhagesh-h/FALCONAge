@@ -6,8 +6,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 <!-- badges: end -->
 
-Biological age and aging-clock scoring from DNA methylation and clinical chemistry, against a
-catalogue of 178 published clocks.
+Biological age and aging-clock scoring from DNA methylation, clinical chemistry and NMR
+metabolomics, against a catalogue of 68 published human clocks. The input is data that is
+already preprocessed and quality controlled, such as the beta matrix from an array pipeline.
 
 This is the R half. It is a native R package: S3 classes, `data.frame` in and out, roxygen2
 documentation, ggplot2 figures, but it does not reimplement anything. Every number comes from one
@@ -16,7 +17,7 @@ the same bits**, and the test suite asserts that at tolerance exactly zero rathe
 decimals.
 
 That design decision is the reason this page exists in the form it does: if you are reading the R
-reference and something is unclear, [the Python reference](../reference/index.html) documents the
+reference and something is unclear, [the Python reference](https://bhagesh-h.github.io/FALCONAge/reference/index.html) documents the
 same computation, and the table below tells you which entry to look at.
 
 ## Install
@@ -90,45 +91,20 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | — | `fa.demo_data()` |
 | **Reading data** | `read_series_matrix()` | `fa.read_series_matrix()` |
 |  | `read_clinical()` | `fa.read_clinical()` |
-|  | `read_rrbs_dir()` | `fa.read_rrbs_dir()` |
 |  | `falcon_data()` | `fa.FalconData()` |
 |  | `obs()` | `data.obs` |
 |  | `write_h5ad()` | `data.write_h5ad()` |
-|  | — | `fa.read_bedmethyl()` |
-|  | — | `fa.read_bedmethyl_dir()` |
+|  | — | `fa.read_nightingale()` |
 |  | — | `fa.read_panel()` |
 |  | — | `fa.read_computage_bench()` |
 |  | — | `fa.list_computage_bench()` |
-|  | — | `fa.preprocess.read_olink()` |
-|  | — | `fa.preprocess.read_somascan()` |
-|  | — | `fa.preprocess.read_counts()` |
-|  | — | `fa.read_nightingale()` |
-| **Raw arrays** | — | `fa.idat_to_betas()` |
-|  | — | `fa.read_idat_dir()` |
-|  | — | `fa.preprocess.poobah()` |
-|  | — | `fa.preprocess.noob()` |
-|  | — | `fa.preprocess.dye_bias()` |
-|  | — | `fa.preprocess.bmiq()` |
-|  | — | `fa.preprocess.RawSignal()` |
-|  | — | `fa.preprocess.load_manifest()` |
-|  | — | `fa.preprocess.manifest_record()` |
-|  | — | `fa.preprocess.load_mask()` |
-|  | — | `fa.preprocess.mask_report()` |
-|  | — | `fa.preprocess.apply_mask()` |
-| **Preprocessing** | `horvath_normalise()` | `fa.preprocess.horvath_normalise()` |
+| **Preparing data** | `horvath_normalise()` | `fa.preprocess.horvath_normalise()` |
 |  | `qc()` | `fa.qc()` |
 |  | `probe_loss()` | `fa.probe_loss()` |
-|  | `fit_batch_reference()` | `fa.fit_batch_reference()` |
-|  | `apply_batch_reference()` | `fa.apply_batch_reference()` |
 |  | — | `fa.prepare_clinical()` |
 |  | — | `fa.preprocess.aggregate_replicate_probes()` |
+|  | — | `fa.preprocess.platform_probes()` |
 |  | — | `fa.preprocess.impute()` |
-|  | — | `fa.preprocess.BatchReference()` |
-|  | — | `fa.preprocess.prepare_proteomic()` |
-|  | — | `fa.preprocess.prepare_transcriptomic()` |
-|  | — | `fa.preprocess.rle_normalise()` |
-|  | — | `fa.preprocess.yugene()` |
-|  | — | `fa.preprocess.median_centre()` |
 | **Uncertainty** | `interval()` | `fa.interval()` |
 |  | `icc_from_replicates()` | `fa.icc_from_replicates()` |
 |  | — | `fa.uncertainty.load_probe_icc()` |
@@ -222,44 +198,36 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 
 ## What the R side does not have
 
-`download()` and the preprocessing entry points are thinner here than in Python, and a few things
-are Python-only by design rather than by omission, an R user reaches them through the same core,
-and wrapping every one in an S3 method would be surface area with no reader.
+`download()` and a few model architectures are Python-only by design: an R user reaches them
+through the same core, and an S3 wrapper for each would add surface area with no users.
 
-Where a group above shows a Python entry and no R counterpart: that is the reason.
+Where a group above shows a Python entry and no R counterpart, that is the reason.
 
 ## Where the numbers come from
 
-A clock is an architecture plus a coefficient set, and the two have very different licences.
-
-Every **architecture** here is written from its published description, no clock implementation is
-imported from another package. **Coefficients** are fitted data and cannot be written, only
-obtained, so the 178 clocks fall into three groups:
-
-| Availability | n | What you do |
-|---|---:|---|
-| `bundled` | 69 | Nothing. Coefficients ship inside the package, or the clock is a formula with none to ship. |
-| `untraced` | 52 | Catalogued, but no primary source has been traced, so no coefficients ship. |
-| `licensed` | 57 | Obtain a coefficient file and register it with `register_local_weights()`. The architecture is implemented and tested. |
+A clock is an architecture plus a coefficient set. Every architecture here is written from its
+published description; no clock implementation is imported from another package. All 68 clocks
+ship their coefficients inside the package, or are formulas with none to ship, and every one
+scores offline.
 
 ```r
-list_clocks(tier = "bundled")    # what runs offline, right now
-list_clocks(tier = "licensed")   # what needs a licence, and where to get it
-clock_info("grimage2")        # why, and which open clock answers the same question
+list_clocks()                    # the catalogue, with each clock's scale and source
+clock_info("horvath2013")        # one clock: features, scale, provenance, caveats
 ```
 
 ## Further reading
 
-- [Getting started](../guide/FALCONAge.html), the full walkthrough, both languages side by side
-- [Choosing a clock](../guide/clocks.html), by the question you asked, and by what the scale permits
-- [Clock catalogue](../clocks.html), all 178, generated from the registry that scores them
-- [The science of aging clocks](../science.html), the biology, the equations and the published constants
-- [Architecture](../architecture.html), which file computes what, and how much of it exists
-- [Python reference](../reference/index.html), the other half of the table above
+- [Your first run](https://bhagesh-h.github.io/FALCONAge/start/quickstart.html): the full walkthrough
+- [Loading your data](https://bhagesh-h.github.io/FALCONAge/data/loading.html): supported input formats
+- [Choosing a clock](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html): by research question and by what the scale permits
+- [Clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks/catalogue.html): all 68 clocks, generated from the registry
+- [Published formulas](https://bhagesh-h.github.io/FALCONAge/methods/formulas.html): the equations and the published constants
+- [Architecture](https://bhagesh-h.github.io/FALCONAge/dev/index.html): which file computes what
+- [Python reference](https://bhagesh-h.github.io/FALCONAge/reference/index.html): the other half of the table above
 
 ## Citation
 
 `citation("FALCONAge")`, or [CITATION.cff](https://github.com/bhagesh-h/FALCONAge/blob/main/CITATION.cff).
 
 The clock FALCONAge computed for you is somebody else's work, and citing FALCONAge does not cite
-it. `cite_clock("grimage2", "bibtex")` returns the reference for any clock in the registry.
+it. `cite_clock("horvath2013", "bibtex")` returns the reference for any clock in the registry.

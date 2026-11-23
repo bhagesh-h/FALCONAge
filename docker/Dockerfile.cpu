@@ -6,7 +6,7 @@
 #
 #   full (default)  Python, R and the falconage command. Tag: 1.0.0-cpu, latest
 #   py              Python and the falconage command; reads CSV and TSV beta
-#                   matrices, IDATs, GEO series and clinical tables, but not
+#                   matrices, GEO series, clinical and NMR tables, but not
 #                   parquet or .h5ad.                  Tag: 1.0.0-py
 #
 # BUILD, from the repository root (the context must be the root, not docker/):

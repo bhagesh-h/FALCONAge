@@ -44,16 +44,14 @@ committing to it.
 
 | Pattern | Source | Backend | Ships |
 |---|---|---|---|
-| `GSE\d+` | GEO series | GEOparse plus supplementary-file fetch; `methylprep` when the series has IDATs | now |
+| `GSE\d+` | GEO series | series matrix and supplementary processed files | now |
 | `GSM\d+` | GEO sample | same, single sample | now |
 | `GPL\d+` | GEO platform | manifest only | now |
 | `E-\w+-\d+` | ArrayExpress / BioStudies | BioStudies REST v1 | now |
-| `SR[PRXS]\d+`, `PRJNA\d+`, `ERP\d+`, `DRP\d+` | SRA / ENA | `pysradb` for metadata, ENA FTP or `fasterq-dump` for reads | now |
 | `10\.\d{4,}/.*` | Zenodo, Figshare, Dryad | DOI resolution then the host REST API | now |
 | numeric with `source="zenodo"` | Zenodo record | Zenodo REST | now |
 | `hf://owner/repo[/path]` | Hugging Face | `huggingface_hub` | now |
 | `TCGA-\w+`, GDC UUID | GDC | GDC files/data API | now |
-| `PXD\d+` | PRIDE | PRIDE REST | later |
 | `MTBLS\d+` | MetaboLights | MetaboLights REST | later |
 | `ST\d{6}` | Metabolomics Workbench | MW REST | later |
 | `syn\d+` | Synapse | `synapseclient`, credentialed | later |
@@ -89,9 +87,9 @@ class GEOSeriesInfo:
 
 The three shapes:
 
-1. **IDATs present**: roughly 40% of methylation series. Download the `_Grn.idat.gz` and
-   `_Red.idat.gz` pairs plus the platform manifest, and hand off to the preprocess module. This
-   is the only path that yields a reproducible beta matrix.
+1. **IDATs only.** FALCONAge does not read IDATs. Preprocess them in an array pipeline such as
+   [methylarray](https://github.com/bhagesh-h/methylarray), minfi or SeSAMe, then pass the beta
+   matrix.
 2. **Series matrix only.** Parse the `!Sample_` header block for metadata and the tab-delimited
    body for the value matrix. The values are whatever the submitter normalised, which is recorded
    in the manifest as `normalisation: submitter-reported` and carried into the result, so a
@@ -167,8 +165,8 @@ clear error explaining that access is granted per project and cannot be automate
 raise CredentialsRequiredError(
     "dbGaP accession phs000424 requires an approved data access request. "
     "FALCONAge cannot download it for you.",
-    remedy="Download via the dbGaP repository key and SRA Toolkit, then point "
-           "falconage preprocess at the resulting files.",
+    remedy="Download via the dbGaP repository key, preprocess the files upstream, "
+           "then read the beta matrix with falconage.io.read.",
 )
 ```
 
@@ -188,50 +186,22 @@ As shipped, `--dry-run` is what answers "what is in this series?": it prints eve
 count and transfers nothing. The specification also had a separate `probe` verb for that; it was
 not built, because it would have been the same code behind a second name.
 
-## Preprocess module
+## Preparation module
 
 ### Contract
 
-Raw or public data in, a `FalconData` the scoring module accepts out. One entry point per
-modality, all converging on samples by features with exact feature identifiers and declared
-units.
+Input: a preprocessed, quality-controlled matrix (beta matrix, GEO series matrix, clinical
+chemistry or Nightingale NMR table). Output: a `FalconData` the scoring module accepts, with exact
+feature identifiers and declared units. Normalisation, detection filtering, probe masking and
+sample QC are not performed; they belong to the upstream pipeline that produced the matrix.
 
 ```python
-def preprocess_methylation(
-    source: Path | pd.DataFrame | DownloadResult,
-    platform: str | None = None,        # None -> auto-detect
-    pipeline: str = "noob_bmiq",        # "noob_bmiq" | "sesame" | "noob" | "raw"
-    detection_p: float = 0.01,
-    mask_probes: bool = True,           # cross-reactive, SNP, sex-chromosome
-    aggregate_epicv2: bool = True,
-    imputation: str = "none",           # dataset-level; clock-level is separate
-    sample_table: pd.DataFrame | None = None,
-) -> FalconData
+def prepare(data: FalconData, *, aggregate_epicv2: bool = True,
+            clip: bool = True) -> FalconData
+def prepare_clinical(data: FalconData, units: dict[str, str]) -> FalconData
 ```
-
-Analogous `preprocess_clinical`, plus `preprocess_expression` and `preprocess_proteomics`.
 
 ### Methylation
-
-**IDAT to beta.** The chain is [the science notes](../methods/formulas.qmd) section DNA methylation:
-
-```
-IDAT pair (Grn, Red)
-  -> parse binary IDAT, match to platform manifest
-  -> out-of-band background correction and dye bias (noob)
-  -> probe-type bias correction (BMIQ), or SeSAMe as a single-step alternative
-  -> detection p-value filter
-  -> cross-reactive / SNP / sex-chromosome probe masking
-  -> beta = M / (M + U + 100)
-  -> beta matrix, samples by probes
-```
-
-Implementation route: `methylprep` for IDAT parsing and noob, a native BMIQ port (beta-mixture
-quantile normalisation is around 150 lines, and having it in-tree avoids an R dependency inside
-the Python core), and SeSAMe through `rpy2` only when the user asks for it. The pipeline choice
-is recorded in the manifest because it changes the answer, [the science notes](../methods/formulas.qmd) section DNA methylation notes that
-`noob + BMIQ` and SeSAMe both perform well but are not interchangeable, and funnorm is preferred
-when global methylation differs between groups.
 
 **Platform detection.**
 
@@ -255,9 +225,9 @@ both. The module reports the intersection size per clock before scoring, and rec
 `platform_native` alongside `platform_applied`, so a result computed on 340 of Horvath's 353
 probes says so.
 
-**Series matrix and beta CSV** paths run the same masking, aggregation and detection steps, minus
-the normalisation the submitter already applied, with `normalisation: submitter-reported` in the
-manifest.
+**Clock CpGs removed upstream.** A bundled table records which arrays carry each clock CpG.
+`score()` uses it to separate CpGs the array never carried from CpGs removed after measurement by
+probe filters, and warns when the latter carry at least 1% of a clock's weight.
 
 ### Clinical chemistry
 
@@ -326,12 +296,10 @@ already written the number down.
 ### CLI
 
 ```bash
-falconage preprocess methylation data/GSE40279/ --out prepared.h5ad --pipeline noob_bmiq
-falconage preprocess methylation betas.csv --platform illumina_450k --out prepared.h5ad
-falconage preprocess clinical labs.csv --units units.yaml --out prepared.h5ad
+falconage prepare --input betas.csv --output prepared.h5ad
 ```
 
-The specification had a separate `qc` verb writing its own HTML. Not built: `preprocess` already
+The specification had a separate `qc` verb writing its own HTML. Not built: `prepare` already
 prints the QC summary, and `report` embeds the full set of QC figures, so a third path to the same
 numbers was a third thing to keep in step.
 
@@ -573,7 +541,6 @@ changed, no score moved, and every new artefact is reported rather than applied.
 | `falconage.uncertainty` | `technical_se`, `interval`, `conformal_interval`, `icc_from_replicates`, and the loaders for the two calibration tables |
 | `falconage.core.tissue` | the specimen alias table, families, and the published discordance between them |
 | `falconage.core.preanalytical` | the recognised `obs` fields, their thresholds, and the manifest block |
-| `falconage.preprocess.batch` | `fit_batch_reference`, `apply_batch_reference`, `BatchReference` |
 | `falconage.models.ops.DERIVATIVE` | an analytic derivative per transform, and an explicit refusal for the four that destroy the information |
 | `python/tools/` | the three derivation scripts for the shipped data artefacts |
 

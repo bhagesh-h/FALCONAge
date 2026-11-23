@@ -318,59 +318,6 @@ def run_mammalian(records: dict) -> None:
         records["mammalian"] = pd.DataFrame(rows)
 
 
-def run_mouse(records: dict) -> None:
-    paths = sorted((DATA / "mouse").glob("GSM*.overlap.txt.gz"))
-    if not paths:
-        return
-    d = fa.read_rrbs_dir(paths, min_coverage=5)
-    dd = outdir("mouse", "GSE80672")
-    d.X.iloc[:, :2000].to_csv(dd / "betas_head.csv")
-
-    meta = fa.read_series_matrix(DATA / "mouse" / "GSE80672_series_matrix.txt.gz")
-    ages = pd.to_numeric(meta.obs["age_years"], errors="coerce")
-    rows = []
-    for cov in (1, 5, 20):
-        one = fa.io.read_rrbs(paths[0], min_coverage=cov)
-        rows.append({"min_coverage": cov, "sites_kept": len(one)})
-    tbl = pd.DataFrame(rows)
-    write_table(dd, "coverage_filter", tbl, index=False)
-
-    records["mouse"] = pd.DataFrame([{
-        "samples": d.n_samples,
-        "shared_sites": d.n_features,
-        "sites_at_cov1": int(tbl.loc[0, "sites_kept"]),
-        "sites_at_cov5": int(tbl.loc[1, "sites_kept"]),
-        "sites_at_cov20": int(tbl.loc[2, "sites_kept"]),
-        "series_age_field": "age (years)",
-        "series_age_min": float(ages.min()),
-        "series_age_max": float(ages.max()),
-    }])
-    log(f"  mouse/GSE80672: {d.n_samples} samples, {d.n_features} shared sites")
-
-
-def run_idat(records: dict) -> None:
-    rows = []
-    for sub in ("epicv1", "epicv2"):
-        grns = sorted((DATA / "idat" / sub).glob("*_Grn.idat.gz"))
-        for grn in grns:
-            red = grn.with_name(grn.name.replace("_Grn.", "_Red."))
-            if not red.exists():
-                continue
-            pair = fa.io.read_idat_pair(grn, red)
-            rows.append({
-                "platform": sub, "sample": grn.name.split("_")[0],
-                "addresses": int(pair["grn"].size),
-                "grn_median": float(np.median(pair["grn"])),
-                "red_median": float(np.median(pair["red"])),
-                "channels_identical": bool(np.array_equal(pair["grn"], pair["red"])),
-            })
-    if rows:
-        df = pd.DataFrame(rows)
-        write_table(outdir("idat", "raw"), "intensities", df, index=False)
-        records["idat"] = df
-        log(f"  idat: {len(rows)} pairs parsed")
-
-
 def run_clinical(records: dict) -> None:
     """Synthetic, because NHANES ships as .rda and Python does not read it.
 
@@ -620,7 +567,6 @@ def run_disorder(records: dict) -> None:
             records["disorder"]["clonality_worst_spread_years"] = worst["spread_at_2_clones"]
 
 
-
 # ---------------------------------------------------------------------------
 # the gallery
 # ---------------------------------------------------------------------------
@@ -790,7 +736,7 @@ def update_readme(records: dict) -> None:
                   "numpy on the CPU._")
 
     for key in ("registry", "bench_inputs", "benchmark", "benchmark_significant",
-                "epicv2", "gestational", "mammalian", "mouse", "idat", "clinical",
+                "epicv2", "gestational", "mammalian", "clinical",
                 "disorder", "coefficient_mass", "clonality", "gallery"):
         if key in records:
             v = records[key]
@@ -813,7 +759,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--groups", default="all",
                     help="comma-separated: bench, epicv2, gestational, mammalian, "
-                         "mouse, idat, clinical, registry, disorder")
+                         "clinical, registry, disorder")
     ap.add_argument("--no-readme", action="store_true")
     args = ap.parse_args(argv)
 
@@ -825,7 +771,7 @@ def main(argv=None) -> int:
     runners = {
         "registry": run_registry, "bench": run_bench, "epicv2": run_epicv2,
         "gestational": run_gestational, "mammalian": run_mammalian,
-        "mouse": run_mouse, "idat": run_idat, "clinical": run_clinical,
+        "clinical": run_clinical,
         "disorder": run_disorder,
     }
     wanted = list(runners) if args.groups == "all" else \

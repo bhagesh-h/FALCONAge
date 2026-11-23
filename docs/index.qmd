@@ -5,10 +5,12 @@ body-classes: falcon-home
 ---
 
 FALCONAge applies 68 published human aging clocks to DNA methylation, clinical chemistry and NMR
-metabolomics data. Every clock ships its coefficients and runs offline, and every score comes
-back with its unit, where its coefficients came from, and how much of it is measurement noise.
+metabolomics data. Every clock ships its coefficients and runs offline. Each score is reported
+with its unit, the source of its coefficients and its technical standard error.
 
-![**Clock coverage across the genome.** Every DNA methylation clock in FALCONAge, one track each, with its CpGs at their positions on the genome (hg19). Coloured where the EPIC v1 array carries the CpG, grey where it does not; the legend gives each clock's colour and the share of its CpGs on the array. CpGs that line up across tracks are shared between clocks. A run draws the same figure for your own data before any clock is scored.](figures/gallery/clock_coverage_across_the_genome.png){#fig-coverage-map}
+The input is data that is already preprocessed and quality controlled: a beta matrix from an
+array pipeline such as [methylarray](https://github.com/bhagesh-h/methylarray), a GEO series
+matrix, a clinical chemistry table or a Nightingale NMR table.
 
 ## Run it in three commands
 
@@ -37,31 +39,30 @@ docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu run betas.csv --samp
 Open `betas_falconage/report.html`. [Your first run](start/quickstart.qmd) explains every file the
 run writes and how to read the report.
 
-## What goes in
+## Input
 
 | Input | Reader | Notes |
 |---|---|---|
-| **Raw Illumina IDATs** | `read_idat_dir()` | 27K, 450K, EPIC v1, EPIC v2. Full chain to betas: pOOBAH detection, noob background correction, optional BMIQ |
-| Beta matrix (CSV, Parquet) | `read_betas()` | |
-| GEO series matrix | `read_series_matrix()` | |
-| **Nanopore bedMethyl** | `read_bedmethyl_dir()` | `modkit` output, with per-site coverage kept alongside; 5mC and 5hmC read separately |
-| RRBS coverage files | `read_rrbs_dir()` | |
-| **Targeted panels** | `read_panel()` | Pyrosequencing, EpiTYPER, amplicon. The declared CpG list is checked, not intersected |
-| **Olink NPX** | `read_olink()` | Proteomics. Already log2 and relative; the scale is left alone |
-| **SomaScan RFU** | `read_somascan()` | Proteomics, log2 by default because that is what the models were fitted on |
-| **Bulk RNA-seq counts** | `read_counts()` | Transcriptomics, with the full RLE → log10 → z → YuGene chain |
-| Clinical chemistry | `read_clinical()` | Units declared rather than guessed |
-| ComputAgeBench | `read_computage_bench()` | 65 harmonised case/control studies, pinned to a commit |
+| Beta matrix (CSV, TSV, Parquet, `.h5ad`) | `read_betas()` | Normalised betas in either orientation; EPIC v2 identifiers are harmonised |
+| GEO series matrix | `read_series_matrix()` | Sample characteristics become sample annotation |
+| Targeted panel | `read_panel()` | Pyrosequencing, EpiTYPER, amplicon; the declared CpG list is checked, not intersected |
+| ComputAgeBench study | `read_computage_bench()` | 65 harmonised case-control studies, pinned to a commit |
+| Clinical chemistry | `read_clinical()` | Units declared per column, never inferred |
+| Nightingale NMR | `read_nightingale()` | Column names translated to the names the scores were fitted with |
 
-## What comes out
+Raw IDATs, sequencing coverage files and proteomic or transcriptomic tables are not read.
+Normalisation, detection filtering and sample QC are done upstream.
 
-- One score per sample per clock, for as many of the 68 catalogued clocks as your features support
-- **A standard error on every score**, propagated from published per-probe reliability through each
-  clock's own weights, and a distribution-free prediction interval
-- A coverage figure per clock, and what the probes you are missing cost in *years*
-- A run manifest holding the package and registry versions, the SHA-256 of every coefficient file,
-  the array manifest that decoded your IDATs, the reliability table behind the intervals, the
-  floating-point precision, the imputation policy, and every warning raised
+## Output
+
+- One score per sample per clock, for every catalogued clock the input supports
+- **A technical standard error on every score**, propagated from published per-probe
+  reliability through each clock's weights, and a distribution-free prediction interval
+- A coverage map of every clock's CpGs across the genome, a coverage table per clock, and the
+  expected shift in years caused by missing probes
+- A run manifest recording the package and registry versions, the SHA-256 of every coefficient
+  file, the reliability table behind the intervals, the floating-point precision, the
+  imputation policy and every warning raised
 
 **Execution.** One numerical core in Python, called from R through reticulate, so a result is the same in either language.
 
@@ -74,8 +75,8 @@ clock. A cohort-centred clock given one sample. Each refusal names the measureme
 | You want to | Read |
 |---|---|
 | Install, including without Docker | [Install](start/install.qmd) |
-| Understand the output of a run | [Your first run](start/quickstart.qmd) |
-| Load IDATs, GEO series, clinical or NMR data | [Loading your data](data/loading.qmd) |
+| Read the output files of a run | [Your first run](start/quickstart.qmd) |
+| Load a beta matrix, GEO series, clinical or NMR data | [Loading your data](data/loading.qmd) |
 | Pick the right clock for your question | [Choosing a clock](clocks/choosing.qmd) |
 | Fit, add or combine clocks of your own | [Build a clock](own/compare.qmd) |
 | Know what the tool refuses to do, and why | [About and design](start/about.qmd) |

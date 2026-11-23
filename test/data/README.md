@@ -1,7 +1,7 @@
 # FALCONAge test corpus
 
 Public data for exercising every algorithm in the [clock catalogue](https://bhagesh-h.github.io/FALCONAge/clocks.html).
-**767 MB across 36 files**, against a 1 GB ceiling the fetcher refuses to cross.
+**656 MB across 23 files**, against a 1 GB ceiling the fetcher refuses to cross.
 
 Nothing here is committed. [datasets.yaml](datasets.yaml) holds the URLs, the expected sizes and
 the publishers' checksums; the two fetchers turn that into files on disk; [.gitignore](.gitignore)
@@ -56,13 +56,11 @@ RUN python3 /opt/testdata/fetch_test_data.py --self-test \
 | Group | Files | Size | Samples | Platform | Exercises |
 |---|---:|---:|---:|---|---|
 | [`bench`](#bench) | 14 | 549.8 MB | 358 | 27K, 450K, EPICv1 | the AA1/AA2 benchmark, the conformal calibration, and most of the 178 clocks |
-| [`idat`](#idat) | 8 | 60.4 MB | 4 | EPICv1, EPICv2 | the raw-IDAT chain end to end, and the betas it is validated against |
 | [`gestational`](#gestational) | 1 | 50.8 MB | 22 | 450K | the 7 gestational and paediatric clocks |
-| [`mouse`](#mouse) | 5 | 50.2 MB | 4 | RRBS | Petkovich, Meer, Stubbs, Thompson |
 | [`epicv2`](#epicv2) | 1 | 41.2 MB | 8 | EPICv2 | probe-suffix aggregation |
 | [`mammalian`](#mammalian) | 4 | 9.3 MB | 29 | MammalMethylChip40 | MammalianLifespan, MammalianFemale, EnsembleAge ×3 |
 | [`clinical`](#clinical) | 3 | 5.4 MB | tens of thousands | blood chemistry | PhenoAge, KDM, homeostatic dysregulation |
-| **total** | **36** | **767.1 MB** | | | |
+| **total** | **23** | **656.4 MB** | | | |
 
 Fetch a subset with `--groups bench,clinical`. Every group is on by default.
 
@@ -126,64 +124,15 @@ The exact snapshot is pinned. `falconage.io.bench` reads revision
 `3cf52681537b303a5b7e21df03a3ae0a94ed497e` of the Hugging Face dataset, not `main`, so a
 re-uploaded file changes the digest rather than the results.
 
-### idat
-
-Two EPIC v1 samples from GSE182991 and two EPIC v2 samples from GSE330325, Grn and Red channels
-each. Every other methylation file in the corpus is somebody else's beta matrix, normalised by a
-pipeline whose choices are not recorded. This is the only path FALCONAge controls end to end, and
-it is the one that decides whether two labs' numbers are comparable.
-
-Two samples per platform is enough for correctness and not enough for a normalisation that
-estimates parameters across a plate, funnorm on n=2 is not funnorm. The full `RAW.tar` for either
-series is several hundred megabytes and does not fit the budget.
-
-**What this group exercises, as of this release.** The whole chain, not just the parser. `read_idat_dir`
-decodes the binary to bead addresses with their Grn and Red means; `fetch_manifest` maps addresses
-to `cg########` ids and infers the platform from the address set; then pOOBAH detection masking,
-noob background correction with the out-of-band signal as the null, and optional BMIQ. The
-[science page §20](../../docs/science.qmd) sets out the chain and why its order matters.
-
-These four samples are also what the chain was **validated** against, which is the reason a
-two-sample-per-platform group earns its place: GSE182991 publishes processed betas for the same
-physical samples, so the comparison is against the same DNA rather than against a similar cohort.
-FALCONAge's betas correlate with the published ones at **r = 0.99928**, median |Δ| = 0.011, with
-99.7% of probes inside 0.05. Reproduce it with the `idat` group of `run_all.py`.
-
-Dye-bias correction ships switched off. On these same files it moves the median beta by +0.10 to
-+0.12, because a correct version needs the normalisation control probes and their addresses are
-not in the manifest that can be fetched. Measured and reported rather than shipped on.
-
 ### gestational
 
 GSE66459: 11 preterm and 11 term umbilical cord blood samples on 450K. A series matrix, so the
 characteristics and the betas arrive in one file, which also makes it the fixture for the
-series-matrix reader, the path roughly 60% of GEO methylation series need because they publish no
-IDATs.
+series-matrix reader, the input format roughly 60% of GEO methylation series publish.
 
 > **Days, not weeks.** Gestational age is recorded here in days (185–280); all seven gestational
 > clocks predict weeks. That silent factor of seven is exactly what
 > §2.6 refuses to guess at.
-
-### mouse
-
-Four whole-blood RRBS samples from GSE80672 (Petkovich), two at 0.67 and two at 35, plus the
-12.7 kB series matrix covering all 255 samples in the study.
-
-The mouse clocks are not array clocks: they key on genomic coordinate, not `cg` identifier, and
-no array file here can stand in. This is also the corpus's only sequencing input, so it is the
-only thing that exercises coverage-weighted beta estimation, a site read four times and one read
-four hundred times are not the same measurement.
-
-> **Months, labelled years.** GEO records the age field as `age (years)` and the values run 0.67
-> to 35. They are months. A mouse does not live 35 years, and a clock handed 35 as a year value
-> reports a 33-year acceleration and looks precise doing it. Best argument in the corpus for
-> declaring units instead of inferring them, and it is a real published series rather than a
-> contrived example.
-
-GSM2132960 is titled `M3503R` against `M3503` above it, with identical age, sex, strain, diet and
-genotype, a re-run of the same animal. GEO does not say so outright, so treat it as a
-near-duplicate rather than a certified technical replicate. It is still the only thing here that
-can put a number on a clock's own measurement noise instead of quoting the published ICC.
 
 ### epicv2
 
@@ -191,7 +140,7 @@ GSE330325, eight samples. EPIC v2 renamed its probes: `cg00000029` became `cg000
 a clock matching on exact identifiers finds zero of its features and returns a confident number
 computed entirely from imputed values. Suffix aggregation is mandatory, not an optimisation, and
 the replicate structure, some probes appear two or three times with different suffixes, cannot
-be faked convincingly. This file also carries the metadata for the two EPIC v2 IDAT pairs above.
+be faked convincingly.
 
 ### mammalian
 
@@ -250,14 +199,6 @@ Stated here rather than discovered later.
   licensed coefficient file with `register_local_weights()` and the same corpus scores them.
 - **FP64 gold-standard vectors.** The bench parquets are float32. Double-precision reference
   values come from the papers' own worked examples, not from here.
-- **Plate-level normalisation.** Four IDATs is not a plate. The frozen-reference batch correction
-  is unit-tested on synthetic plates instead, because the property that matters, that
-  an already-reported score does not move when the next plate arrives, is a statement about
-  determinism, not about biology.
-- **Transcriptomic and proteomic clocks.** The readers and preparation chains
-  (`read_olink`, `read_somascan`, `read_counts`, RLE, YuGene) are exercised by the unit suite on
-  synthetic matrices. No corpus group exists because no *clock* in either family is catalogued:
-  every published model is licence-restricted, so there is nothing here for real data to score.
 - **345 of 348 mammalian species.** See above.
 - **A second physical laboratory.** Everything here was produced by somebody else's lab, once.
   Between-laboratory reproducibility of the same DNA is the one property this corpus structurally
@@ -268,7 +209,7 @@ Stated here rather than discovered later.
 
 <!-- BEGIN GENERATED: inventory -->
 
-36 fetched files, 767.1 MB on disk, against the 767.1 MB the manifest declares.
+23 fetched files, 656.4 MB on disk, against the 656.4 MB the manifest declares.
 Digests are the first 12 characters of the SHA-256 in `checksums.sha256`; `verify` checks the full value.
 
 | File | Size | SHA-256 |
@@ -292,23 +233,10 @@ Digests are the first 12 characters of the SHA-256 in `checksums.sha256`; `verif
 | `clinical/NHANES4.rda` | 3.8 MB | `de407b8bae12` |
 | `epicv2/GSE330325_series_matrix.txt.gz` | 41.2 MB | `8593eae6e217` |
 | `gestational/GSE66459_series_matrix.txt.gz` | 50.8 MB | `89483980ed5b` |
-| `idat/epicv1/GSM5548192_204081560090_R03C01_Grn.idat.gz` | 7.4 MB | `508c6d7c9253` |
-| `idat/epicv1/GSM5548192_204081560090_R03C01_Red.idat.gz` | 7.5 MB | `7ca40f98d8b3` |
-| `idat/epicv1/GSM5548193_204081560090_R06C01_Grn.idat.gz` | 7.4 MB | `2f05e2252339` |
-| `idat/epicv1/GSM5548193_204081560090_R06C01_Red.idat.gz` | 7.5 MB | `da6ba3af4da5` |
-| `idat/epicv2/GSM9723838_207219750060_R05C01_Grn.idat.gz` | 7.7 MB | `80b867e3a279` |
-| `idat/epicv2/GSM9723838_207219750060_R05C01_Red.idat.gz` | 7.6 MB | `529d7a2e9acc` |
-| `idat/epicv2/GSM9723839_207219750060_R06C01_Grn.idat.gz` | 7.7 MB | `926a0d494aae` |
-| `idat/epicv2/GSM9723839_207219750060_R06C01_Red.idat.gz` | 7.6 MB | `f7a84584a895` |
 | `mammalian/GSE184222_datBetaNormalized.csv.gz` | 3.9 MB | `6d6f51b1f074` |
 | `mammalian/GSE184222_series_matrix.txt.gz` | 2.2 kB | `41ad11914d61` |
 | `mammalian/GSE184224_datBetaNormalized.csv.gz` | 5.4 MB | `cd82139aa8bc` |
 | `mammalian/GSE184224_series_matrix.txt.gz` | 2.1 kB | `8ff89ae99ff5` |
-| `mouse/GSE80672_series_matrix.txt.gz` | 12.7 kB | `bc57dca91e23` |
-| `mouse/GSM2132712_20D02.overlap.txt.gz` | 11.8 MB | `3d3a470a287a` |
-| `mouse/GSM2132713_20D03.overlap.txt.gz` | 12.9 MB | `7612eff16ece` |
-| `mouse/GSM2132959_M3503.overlap.txt.gz` | 13.2 MB | `50bb13e727ef` |
-| `mouse/GSM2132960_M3503R.overlap.txt.gz` | 12.3 MB | `f557a5a68f7f` |
 
 Alongside them, `provenance.json` (18.6 kB) is written by the fetcher rather than downloaded, so it carries no publisher digest and is not in `checksums.sha256`.
 
@@ -335,7 +263,7 @@ work.
 
 ```
 test/data/
-├── bench/  clinical/  epicv2/  gestational/  idat/  mammalian/  mouse/
+├── bench/  clinical/  epicv2/  gestational/  mammalian/
 ├── checksums.sha256     # sha256sum format, sorted; `sha256sum -c` works
 └── provenance.json      # URL, source, licence and both digests per file
 ```

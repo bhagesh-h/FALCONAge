@@ -9,22 +9,15 @@ from ..core.errors import DataError
 from .bench import computage_bench_meta, list_computage_bench, read_computage_bench
 from .methylation import (
     detect_platform,
-    read_bedmethyl,
-    read_bedmethyl_dir,
     read_betas,
-    read_idat_pair,
     read_panel,
-    read_rrbs,
-    read_rrbs_dir,
     read_series_matrix,
 )
 
 __all__ = [
     "computage_bench_meta", "detect_platform", "list_computage_bench",
-    "read", "read_bedmethyl", "read_bedmethyl_dir",
-    "read_betas", "read_clinical", "read_computage_bench", "read_idat_pair",
-    "read_nightingale", "read_panel",
-    "read_rrbs", "read_rrbs_dir", "read_series_matrix", "write_results",
+    "read", "read_betas", "read_clinical", "read_computage_bench",
+    "read_nightingale", "read_panel", "read_series_matrix", "write_results",
 ]
 
 
@@ -134,19 +127,18 @@ def read_nightingale(path: str | Path, *, index_col: int | str = 0,
 def read(path: str | Path, **kw) -> FalconData:
     """Dispatch on the filename. Convenience, not magic -- it says what it chose.
 
-    A directory holding ``*_Grn.idat`` / ``*_Red.idat`` pairs is read as raw
-    Illumina arrays; an ``.xlsx`` file as a Nightingale NMR export.
+    FALCONAge reads data that is already preprocessed and quality controlled:
+    a beta matrix, a GEO series matrix, an ``.h5ad``, a clinical chemistry
+    table (through :func:`read_clinical`, which needs the units) or a
+    Nightingale NMR export (``.xlsx``).
     """
     p = Path(path)
     name = p.name.lower()
     if p.is_dir():
-        if any(p.glob("*_Grn.idat*")):
-            from ..preprocess.idat import read_idat_dir
-            return read_idat_dir(p, **kw)
-        raise DataError(
-            f"{p} is a folder without IDAT files.\n"
-            "  A folder is read as raw Illumina arrays (*_Grn.idat and *_Red.idat "
-            "pairs). For other folders call read_rrbs_dir or read_bedmethyl_dir.")
+        hint = (" It holds IDAT files: preprocess them first (for example with "
+                "minfi, SeSAMe or the methylarray pipeline) and pass the beta "
+                "matrix." if any(p.glob("*.idat*")) else "")
+        raise DataError(f"{p} is a folder; FALCONAge reads one file.{hint}")
     if name.endswith((".xlsx", ".xls")):
         return read_nightingale(p, **kw)
     if name.endswith(".h5ad"):
@@ -158,7 +150,7 @@ def read(path: str | Path, **kw) -> FalconData:
     raise DataError(
         f"cannot tell what {p.name} is.\n"
         "  Call the specific reader: read_betas, read_series_matrix, "
-        "read_clinical, read_rrbs_dir, or FalconData.read_h5ad."
+        "read_clinical, read_nightingale, or FalconData.read_h5ad."
     )
 
 

@@ -24,7 +24,7 @@ falcon_data(
 
 \item{obs}{Per-sample annotation with matching row names.}
 
-\item{modality}{\code{"dna_methylation"}, \code{"clinical_chemistry"} or \code{"rrbs"}.}
+\item{modality}{\code{"dna_methylation"}, \code{"clinical_chemistry"} or \code{"metabolomics_nmr"}.}
 
 \item{platform}{Optional, e.g. \code{"450K"}. Detected from the probe identifiers
 when omitted.}

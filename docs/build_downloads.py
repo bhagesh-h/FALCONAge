@@ -36,6 +36,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import posixpath
 import re
 import shutil
 import subprocess
@@ -103,6 +104,53 @@ GUIDE_IMAGE = re.compile(r"(!\[[^\]]*\]\()\.\./((?:images|figures)/)")
 #: and the References chapter is in the same document with the same numbering,
 #: so the bracket is kept and the link is dropped.
 PDF_CITATION = re.compile(r"\[(\[\d+\])\]\((?:\.\./)?references\.qmd#ref-\d+\)")
+
+#: `[text](target)`, not an image. The target is group 2; a title after the
+#: target (`[t](x "title")`) is not used in these pages.
+PAGE_LINK = re.compile(r"(?<!!)(\[[^\]]*\])\(([^)\s]+)\)")
+
+#: A link target a PDF reader can follow: a web address, an e-mail address or
+#: a label inside the document.
+FOLLOWABLE = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|#chap-)", re.I)
+
+
+def chapter_label(page: str) -> str:
+    """The typst label of a bound chapter: `own/add.qmd` -> `chap-own-add`."""
+    return "chap-" + re.sub(r"[^a-z0-9]+", "-", page[:-4].lower()).strip("-")
+
+
+def resolve_links(text: str, page: str, bound: set[str], site_url: str,
+                  internal: bool) -> str:
+    """Make every relative link in one chapter work outside the website.
+
+    On the site `[Add a clock](../own/add.qmd)` is a link to another page. In a
+    single bound document that file does not exist, and a PDF reader shows the
+    raw `../own/add.qmd` as a dead link. A target that is a bound chapter becomes
+    a link to that chapter's label (``internal``, the PDF) or to its page on the
+    site (the markdown bundle, where heading labels are not portable); anything
+    else, such as a developer page, the API reference, the R reference or a CSV
+    download, becomes its address on the published site.
+    """
+    base = posixpath.dirname(page)
+
+    def fix(m: re.Match) -> str:
+        label, target = m.group(1), m.group(2)
+        if FOLLOWABLE.match(target) or target.startswith("#"):
+            return m.group(0)
+        path, _, anchor = target.partition("#")
+        resolved = posixpath.normpath(posixpath.join(base, path))
+        if internal and resolved in bound:
+            return f"{label}(#{chapter_label(resolved)})"
+        web = re.sub(r"\.qmd$", ".html", resolved)
+        return f"{label}({site_url}{web}{'#' + anchor if anchor else ''})"
+
+    return PAGE_LINK.sub(fix, text)
+
+
+def unresolved_links(text: str) -> list[str]:
+    """Link targets in the combined document that a PDF reader cannot follow."""
+    return sorted({m.group(2) for m in PAGE_LINK.finditer(text)
+                   if not FOLLOWABLE.match(m.group(2))})
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> None:
@@ -256,6 +304,11 @@ def soften_long_tokens(row: str) -> str:
 
     def fix(m: re.Match) -> str:
         token = m.group(0)
+        # Never touch a link target: a zero-width space inside one is invisible
+        # here and makes the PDF link point at a file name nobody wrote.
+        if "](" in token:
+            head, _, tail = token.partition("](")
+            return (fix(re.match(r".+", head, re.S)) if head else "") + "](" + tail
         # Never touch a URL: a zero-width space inside one is invisible here and
         # breaks the link if anybody copies it out of the PDF.
         if "://" in token:
@@ -494,7 +547,7 @@ def rotate_tables(markdown: str, soften: bool = True) -> tuple[str, int]:
     return "\n".join(out), count
 
 
-def combine(*, soften: bool = True) -> Path:
+def combine(*, soften: bool = True, internal_links: bool = True) -> Path:
     """Concatenate the chapters into one .qmd and return its path.
 
     ``soften`` inserts zero-width break points inside long identifiers so typst
@@ -543,6 +596,7 @@ def combine(*, soften: bool = True) -> Path:
         TYPST_PREAMBLE,
     ]
     rotated = 0
+    bound = set(chapters)
     for n, c in enumerate(chapters, start=1):
         text = (HERE / c).read_text(encoding="utf-8")
         fm = FRONTMATTER.match(text)
@@ -563,12 +617,19 @@ def combine(*, soften: bool = True) -> Path:
         if Path(c).parent != Path("."):
             text = GUIDE_IMAGE.sub(r"\1\2", text)
         text = PDF_CITATION.sub(r"\1", text)
-        body, k = rotate_tables(ANCHOR_LINK.sub(r"\1", demote(text)), soften)
+        text = resolve_links(ANCHOR_LINK.sub(r"\1", demote(text)), c, bound,
+                             site["url"], internal_links)
+        body, k = rotate_tables(text, soften)
         rotated += k
-        parts.append(f"\n\n{{{{< pagebreak >}}}}\n\n# Chapter {n}. {title}\n\n" + body)
+        anchor = f" {{#{chapter_label(c)}}}" if internal_links else ""
+        parts.append(f"\n\n{{{{< pagebreak >}}}}\n\n# Chapter {n}. {title}{anchor}\n\n" + body)
 
+    combined_text = "\n".join(parts)
+    dead = unresolved_links(combined_text.replace(ZWSP, ""))
+    if dead:
+        raise RuntimeError("links a PDF reader cannot follow: " + ", ".join(dead[:20]))
     combined = HERE / "_combined.qmd"
-    combined.write_text("\n".join(parts), encoding="utf-8", newline="\n")
+    combined.write_text(combined_text, encoding="utf-8", newline="\n")
     print(f"  combined {len(chapters)} chapters into {combined.name}, "
           f"{rotated} table(s) turned sideways")
     return combined
@@ -602,7 +663,7 @@ def build_markdown(out: Path) -> Path:
     shutil.rmtree(stage, ignore_errors=True)
     stage.mkdir(parents=True)
 
-    src = combine(soften=False)
+    src = combine(soften=False, internal_links=False)
     try:
         run(["quarto", "render", src.name, "--to", "gfm",
              "--output", "FALCONAge.md"], cwd=HERE)

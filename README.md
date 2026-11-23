@@ -12,8 +12,8 @@
 **F**ramework for **A**ging **CL**ocks, **O**mics **N**ormalisation and **Age** scoring.
 
 FALCONAge applies 68 published human aging clocks to DNA methylation, clinical chemistry and NMR
-metabolomics data, in Python and R. Every score comes back with its unit, where its coefficients
-came from, and how much of it is measurement noise.
+metabolomics data, in Python and R. Each score is reported with its unit, the
+source of its coefficients and its technical standard error.
 
 📖 **[Documentation](https://bhagesh-h.github.io/FALCONAge/)**
 
@@ -35,8 +35,10 @@ docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu run betas.csv --samp
 Then open `betas_falconage/report.html`. On Windows PowerShell write `"${PWD}"` for `"$PWD"`; on
 `cmd.exe`, `"%cd%"`.
 
-`run` takes a beta matrix (`.csv`, `.tsv`, `.parquet`, `.h5ad`), a GEO series matrix, a folder of
-raw Illumina IDATs, a clinical chemistry table (`--kind clinical`) or a Nightingale NMR export.
+`run` takes a preprocessed beta matrix (`.csv`, `.tsv`, `.parquet`, `.h5ad`), a GEO series
+matrix, a clinical chemistry table (`--kind clinical`) or a Nightingale NMR export
+(`--kind nightingale`). Raw IDATs are preprocessed upstream, for example by the
+[methylarray](https://github.com/bhagesh-h/methylarray) pipeline.
 The sample sheet is optional: its first column is the sample id, then any of `age`, `sex`,
 `tissue` and `group`.
 
@@ -44,7 +46,7 @@ The sample sheet is optional: its first column is the sample id, then any of `ag
 file a run writes. [Install](https://bhagesh-h.github.io/FALCONAge/start/install.html) covers
 Docker itself, the smaller Python-only image, and installing without Docker.
 
-## What you get
+## Output
 
 - A coverage map, drawn first: one genome track per clock, showing which of its CpGs your data
   carries and which it shares with other clocks
@@ -64,7 +66,7 @@ Docker itself, the smaller Python-only image, and installing without Docker.
 ```python
 import falconage as fa
 
-d   = fa.prepare(fa.read_betas("betas.csv"))   # or fa.read_idat_dir("idats/")
+d   = fa.prepare(fa.read_betas("betas.csv"))   # or fa.read_series_matrix(...)
 res = fa.score(d, clocks="compatible")
 res.interpretation()          # scale, unit, permitted arithmetic, reliability, caveats
 fa.technical_se(res, d)       # how much of each score is the assay
@@ -81,7 +83,7 @@ technical_se(res, d)
 The R package calls the same Python core, so R and Python give identical numbers, asserted at
 tolerance zero in CI.
 
-## What it refuses, and why
+## Refusals
 
 Each refusal is enforced in code and names the measurement behind it.
 
@@ -103,8 +105,8 @@ Each refusal is enforced in code and names the measurement behind it.
 | Not implemented | Why |
 |---|---|
 | Cross-platform liftover (`mLiftOver`) | Mapping tables encode concordance measured on paired samples; not derivable from array manifests |
-| Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
-| Proteomic or transcriptomic **clocks** | Readers and preparation chains ship, and `fit_clock` fits one; no published model may be redistributed |
+| Raw-data preprocessing (IDAT decoding, normalisation, probe and sample QC) | Done upstream by an array pipeline such as methylarray; FALCONAge reads the resulting beta matrix |
+| Proteomic or transcriptomic clocks | No published model may be redistributed, and these tables are not read |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
 | meQTL awareness at score time | A clock CpG under strong genetic control carries variance fixed at conception. `coefficient_mass()` now measures each clock's exposure against a meQTL list you supply, but the registry stores no meQTL status and no score is adjusted for it, so a number still cannot say which part of its spread is acquired |
 | Allele-specific methylation | A beta value averages both alleles, so an array cannot resolve it. Sequencing can; nothing here reads that |

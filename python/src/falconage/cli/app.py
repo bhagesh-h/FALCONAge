@@ -154,7 +154,7 @@ def cmd_download(args) -> int:
     return 0
 
 
-def cmd_preprocess(args) -> int:
+def cmd_prepare(args) -> int:
     import falconage as fa
 
     data = fa.read(args.input)
@@ -437,11 +437,12 @@ def cmd_demo(args) -> int:
 # ---------------------------------------------------------------------------
 EPILOG = """\
 examples:
-  falconage demo                                    everything, on synthetic data
-  falconage run betas.csv --samples samples.csv     everything, on your data
-  falconage run idats/ --samples samples.csv --outdir results --format tsv
-  falconage clocks list --tier bundled              which clocks score offline
-  falconage versions --process FALCONAGE_RUN        YAML for a pipeline's versions.yml
+  falconage demo                                    full pipeline on synthetic data
+  falconage run betas.csv --samples samples.csv     full pipeline on a beta matrix
+  falconage run GSE40279_series_matrix.txt.gz --outdir results --format tsv
+  falconage run chemistry.csv --kind clinical --samples samples.csv
+  falconage clocks list --tier bundled              list the clocks that score offline
+  falconage versions --process FALCONAGE_RUN        print versions.yml content for a pipeline
 
 exit status: 0 success, 1 internal error, 2 usage error, 3 input data error,
              4 scoring or analysis error, 5 consensus verdict 'unsupported'
@@ -493,12 +494,13 @@ def build_parser() -> argparse.ArgumentParser:
         return sub.add_parser(name, help=help, description=description or help,
                               parents=[common], formatter_class=_Fmt)
 
-    p = verb("run", "everything in one command: score, uncertainty, figures, report",
+    p = verb("run", "score all supported clocks; write uncertainty, figures and report.html",
              "Read the input, check it, score every clock it supports, estimate "
              "uncertainty and age acceleration, test group differences across "
              "clocks, draw the figures and write report.html, all into --outdir.")
-    p.add_argument("input", help="a beta matrix (.csv, .tsv, .parquet, .h5ad), a GEO "
-                   "series matrix, a folder of IDAT files, or a clinical or NMR table")
+    p.add_argument("input", help="a preprocessed beta matrix (.csv, .tsv, .parquet, "
+                   ".h5ad), a GEO series matrix, a clinical chemistry table "
+                   "(--kind clinical) or a Nightingale NMR table (--kind nightingale)")
     p.add_argument("--samples", default=None, metavar="CSV",
                    help="sample sheet: first column the sample id, then any of "
                         "age, sex, tissue, group")
@@ -524,7 +526,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="print every per-clock note as it happens")
     p.set_defaults(fn=cmd_run)
 
-    p = verb("demo", "run everything on a small synthetic dataset")
+    p = verb("demo", "run the full pipeline on a bundled synthetic dataset")
     p.add_argument("--outdir", default="falconage_demo", help="output folder")
     p.add_argument("--format", default="csv", choices=["csv", "tsv"],
                    help="format of the output tables")
@@ -536,16 +538,16 @@ def build_parser() -> argparse.ArgumentParser:
                    help="print every per-clock note as it happens")
     p.set_defaults(fn=cmd_demo)
 
-    p = verb("versions", "software versions, as YAML for a pipeline's versions.yml")
+    p = verb("versions", "print software versions, as YAML for a pipeline's versions.yml")
     p.add_argument("--process", default=None,
                    help="nest the versions under this process name, as nf-core does")
     p.set_defaults(fn=cmd_versions)
 
-    p = verb("config", "what this installation resolved to")
+    p = verb("config", "print the resolved installation settings")
     p.add_argument("--json", action="store_true", help="print as JSON")
     p.set_defaults(fn=cmd_config)
 
-    p = verb("clocks", "browse the clock catalogue")
+    p = verb("clocks", "list, describe or cite catalogue clocks")
     p.add_argument("action", choices=["list", "info", "cite"],
                    help="list clocks, show one, or print its citation")
     p.add_argument("clock", nargs="?", help="clock id, for info and cite")
@@ -563,7 +565,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="citation style, for cite")
     p.set_defaults(fn=cmd_clocks)
 
-    p = verb("download", "fetch public data by accession")
+    p = verb("download", "download public data by accession")
     p.add_argument("accession", help="e.g. GSE40279")
     p.add_argument("--want", choices=["matrix", "suppl", "both"],
                    help="the series matrix, the supplementary files, or both")
@@ -572,12 +574,17 @@ def build_parser() -> argparse.ArgumentParser:
                    help="say what would be fetched and how many bytes, fetch nothing")
     p.set_defaults(fn=cmd_download)
 
-    p = verb("preprocess", "raw or public data to a scoreable .h5ad")
-    p.add_argument("--input", required=True, help="a beta matrix, series matrix or IDAT folder")
+    p = verb("prepare", "harmonise probe ids of a beta matrix and write a .h5ad",
+             "Read a preprocessed beta matrix or GEO series matrix, harmonise "
+             "probe identifiers across array versions, collapse EPIC v2 "
+             "replicate probes, clip betas to [0, 1], report a summary and "
+             "write the result as .h5ad. No normalisation or probe filtering "
+             "is applied.")
+    p.add_argument("--input", required=True, help="a beta matrix or GEO series matrix")
     p.add_argument("--output", required=True, help="the .h5ad to write")
-    p.set_defaults(fn=cmd_preprocess)
+    p.set_defaults(fn=cmd_prepare)
 
-    p = verb("score", "score a dataset and write the score tables only")
+    p = verb("score", "score an input and write the score tables only")
     p.add_argument("--input", required=True, help="a beta matrix, series matrix or .h5ad")
     p.add_argument("--outdir", required=True, help="output folder")
     p.add_argument("--clocks", default="compatible",
@@ -607,7 +614,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--yes", action="store_true", help="remove without asking")
     p.set_defaults(fn=cmd_cache)
 
-    p = verb("power", "how many samples are needed to see an effect")
+    p = verb("power", "estimate the sample size needed to detect an effect")
     p.add_argument("--clock", required=True, help="clock id")
     p.add_argument("--effect", type=float, required=True,
                    help="the difference worth detecting, in the clock's own unit")
@@ -623,7 +630,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="coverage floor for --pilot")
     p.set_defaults(fn=cmd_power)
 
-    p = verb("consensus", "does a group difference hold up across clocks?")
+    p = verb("consensus", "test whether a group difference is consistent across clocks")
     p.add_argument("input", help="a beta matrix or .h5ad with a group column")
     p.add_argument("--group-col", default="condition", help="column holding the groups")
     p.add_argument("--reference", default=None, help="the comparison group")
@@ -636,7 +643,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="exit with status 5 when the verdict is 'unsupported'")
     p.set_defaults(fn=cmd_consensus)
 
-    p = verb("report", "read, check, score and write report.html (run is the simpler form)")
+    p = verb("report", "score an input and write report.html (run is the simpler form)")
     p.add_argument("input", help="a beta matrix, series matrix or .h5ad")
     p.add_argument("--outdir", default="falconage_report", help="output folder")
     p.add_argument("--clocks", default="compatible", help="'compatible' or a list")

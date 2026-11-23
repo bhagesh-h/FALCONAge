@@ -6,7 +6,7 @@ aliases:
 ---
 
 This page assumes the image is installed ([Install](install.qmd)). Every command is run from the
-folder that holds your data, and everything it writes lands in that same folder.
+folder that holds your data, and the output is written to that same folder.
 
 ## 1. Run the demo
 
@@ -30,9 +30,9 @@ done. Open falconage_demo/results/report.html
 :::
 
 The values are random draws with an age trend, so the ages in the report are not meaningful.
-The point is to see every output before your own data goes in.
+Its purpose is to show every output file before you run your own data.
 
-## 2. What a run writes
+## 2. Output files
 
 | File | What it holds |
 |---|---|
@@ -59,17 +59,16 @@ Put the data in the current folder and name it on the command line:
 docker run --rm -v "$PWD:/work" bhagesh/falconage:1.0.0-cpu run betas.csv --samples samples.csv
 ```
 
-The results land in `betas_falconage/`. `--outdir results` names the folder yourself.
+The output is written to `betas_falconage/`; `--outdir` sets another folder.
 
-**The data** can be any of:
+**The input** is preprocessed, quality-controlled data in one of these formats:
 
 | You have | Give `run` |
 |---|---|
 | A beta matrix (samples by probes, or probes by samples) | `betas.csv`, `.tsv`, `.parquet` or `.h5ad` |
-| Raw Illumina arrays | the folder holding the `*_Grn.idat` and `*_Red.idat` files |
 | A GEO series matrix | `GSE12345_series_matrix.txt.gz` |
 | Clinical chemistry | `labs.csv --kind clinical` ([units](../data/loading.qmd) are declared in the file) |
-| A Nightingale NMR export | `nmr.xlsx` |
+| A Nightingale NMR export | `nmr.xlsx --kind nightingale` |
 
 **The sample sheet** is optional but worth having. Its first column is the sample id, exactly as
 in the data, and any of these columns are used:

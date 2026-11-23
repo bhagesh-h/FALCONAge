@@ -126,15 +126,8 @@ clock_info("horvath2013")
 cite_clock("dnamphenoage", "bibtex")
 ```
 
-Forty clocks are `licensed` scaffolds: the model, the feature list, the transform chain and the
-expected shapes all ship, but the coefficients are research-use-only or have no public source
-FALCONAge may redistribute. `clock_info()` on one says why, where to obtain a file, and which open clocks answer
-the same question.
-
-```{r}
-register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
-score(d, clocks = "grimage2")
-```
+Every clock in the catalogue ships its coefficients and scores offline. A clock of your own is
+added with `fit_clock()` and scored alongside the catalogue.
 
 ## Clinical chemistry, and units
 

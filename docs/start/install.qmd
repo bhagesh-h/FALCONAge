@@ -46,7 +46,7 @@ That is the whole install. [Your first run](quickstart.qmd) is the next step.
 | Tag | Contains | Use it when |
 |---|---|---|
 | `1.0.0-cpu` (also `latest`) | Python, R, the command line, every reader | Almost always |
-| `1.0.0-py` | Python and the command line; no R, and no parquet or `.h5ad` reader | You only use Python or the command line, on CSV, TSV, IDAT, GEO or clinical files, and want a smaller download |
+| `1.0.0-py` | Python and the command line; no R, and no parquet or `.h5ad` reader | You only use Python or the command line, on CSV, TSV, GEO series, clinical or NMR files, and want a smaller download |
 
 ### Typing the commands
 
@@ -75,13 +75,12 @@ yourself by adding `-u "$(id -u):$(id -g)"` after `docker run --rm`.
 
 ### Keeping downloads between runs
 
-Nothing bundled needs the network. Two things are fetched on request: the Illumina manifest that
-decodes raw IDATs (12 to 26 MB each) and public data fetched with `falconage download`. Add a named
-volume so a new container does not fetch them again:
+Nothing bundled needs the network. Public data fetched with `falconage download` is cached. Add a
+named volume so a new container does not fetch it again:
 
 ```bash
 docker run --rm -v "$PWD:/work" -v falconage-cache:/opt/falconage/cache \
-  bhagesh/falconage:1.0.0-cpu run idats/ --samples samples.csv
+  bhagesh/falconage:1.0.0-cpu download GSE40279
 ```
 
 ### Building the image yourself

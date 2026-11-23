@@ -68,25 +68,25 @@ reference:
   - consensus
   - run_report
 - title: Reading data
-  desc: Every reader returns the same container, so nothing downstream can tell which format
-    the data arrived in.
+  desc: 'Input is data that is already normalised and quality controlled: a beta matrix, a
+    GEO series matrix, a clinical chemistry table or a Nightingale NMR table. Every reader
+    returns the same container.'
   contents:
   - read_series_matrix
   - read_clinical
-  - read_rrbs_dir
   - falcon_data
   - obs
   - write_h5ad
-- title: Preprocessing
-  desc: 'Getting a matrix into the shape every clock assumes: bare probe identifiers, values
-    in the beta range, a known platform. The EPIC v2 step is mandatory rather than optional
-    -- without it a v2 dataset overlaps almost nothing and the clocks score imputed values.'
+- title: Preparing data
+  desc: 'The light steps scoring needs on an input matrix: bare probe identifiers, EPIC v2
+    replicate probes collapsed, values in the beta range, a known platform, clinical units
+    converted. No normalisation or probe filtering; that belongs upstream. The EPIC v2 step
+    is not optional: without it a v2 dataset overlaps almost nothing and the clocks score
+    imputed values.'
   contents:
   - horvath_normalise
   - qc
   - probe_loss
-  - fit_batch_reference
-  - apply_batch_reference
 - title: Uncertainty
   desc: 'How much of a score is the assay, and how far it is likely to be from the truth.
     Two different questions with two different answers, kept apart on purpose: technical replicates

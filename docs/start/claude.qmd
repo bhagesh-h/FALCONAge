@@ -12,7 +12,7 @@ copy it into your personal skills folder with `cp -r .claude/skills/falconage ~/
 or on Windows PowerShell
 `Copy-Item -Recurse .claude\skills\falconage $HOME\.claude\skills\`.
 
-Then ask in plain language. "Score these IDATs and tell me which clocks you refused and why" is
+Then ask in plain language. "Score this beta matrix and tell me which clocks you refused and why" is
 enough; the skill supplies the rest.
 
 ::: {.callout-note title="Why the skill is checked by CI, and checked harder than the prose"}

@@ -1,16 +1,15 @@
 """Readers for the formats methylation data actually arrives in.
 
-Four paths, in descending order of how often you meet them:
+FALCONAge scores beta values that have already been preprocessed and quality
+controlled upstream (for example by an array pipeline such as methylarray).
+It reads them in three forms:
 
-1. a GEO **series matrix** -- metadata and betas in one gzipped text file, which
-   is what roughly 60% of GEO methylation series publish and nothing else;
-2. a plain **beta matrix** as CSV, TSV or parquet, orientation unknown;
-3. **IDATs**, the only path where the normalisation is ours rather than
-   somebody else's;
-4. **RRBS** coverage files, where a beta is a ratio of counts and the counts
-   matter.
+1. a GEO **series matrix**, metadata and betas in one gzipped text file;
+2. a plain **beta matrix** as CSV, TSV or parquet, in either orientation;
+3. a **targeted panel** of a few CpGs, in fractions or percentages.
 
-Every one of them returns the same :class:`~falconage.core.container.FalconData`,
+Raw IDATs and sequencing count files are not read: normalise and filter them
+first, then hand over the beta matrix. Every reader returns the same :class:`~falconage.core.container.FalconData`,
 because the scoring loop must not be able to tell which it came from.
 """
 
@@ -259,251 +258,11 @@ def _coerce_obs(obs: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def read_idat_pair(grn: str | Path, red: str | Path) -> dict[str, np.ndarray]:
-    """Parse one Grn/Red IDAT pair into raw intensities keyed by address.
-
-    Returns the address ids and the two channels. Turning addresses into probe
-    identifiers needs the platform manifest, which Illumina distributes
-    separately and which FALCONAge does not vendor -- see
-    :func:`falconage.preprocess.methylation.idat_to_betas` for that step and why
-    it is a separate one.
-    """
-    return {"illumina_ids": _read_idat(grn)["IlluminaID"],
-            "grn": _read_idat(grn)["Mean"],
-            "red": _read_idat(red)["Mean"]}
-
-
-_IDAT_FIELDS = {1000: "nSNPsRead", 102: "IlluminaID", 103: "SD", 104: "Mean", 107: "NBeads"}
-
-
-def _read_idat(path: str | Path) -> dict[str, np.ndarray]:
-    """Minimal IDAT reader: the four fields a beta needs, nothing else.
-
-    Illumina's format is undocumented but stable and widely reimplemented. Only
-    the field table, the bead ids, the means and the bead counts are read --
-    the run metadata blocks are skipped, which is what keeps this to eighty
-    lines instead of the eight hundred a full parser takes.
-    """
-    p = Path(path)
-    raw = gzip.open(p, "rb") if p.suffix == ".gz" else open(p, "rb")
-    with raw as fh:
-        buf = fh.read()
-
-    if buf[:4] != b"IDAT":
-        raise DataError(f"{p.name} is not an IDAT (magic is {buf[:4]!r})")
-    version = int.from_bytes(buf[4:12], "little")
-    if version != 3:
-        raise DataError(f"{p.name}: IDAT version {version}, only version 3 is supported")
-
-    n_fields = int.from_bytes(buf[12:16], "little")
-    offsets: dict[int, int] = {}
-    pos = 16
-    for _ in range(n_fields):
-        code = int.from_bytes(buf[pos:pos + 2], "little")
-        off = int.from_bytes(buf[pos + 2:pos + 10], "little")
-        offsets[code] = off
-        pos += 10
-
-    n = int.from_bytes(buf[offsets[1000]:offsets[1000] + 4], "little")
-    out: dict[str, np.ndarray] = {"nSNPsRead": np.array([n])}
-    for code, name in ((102, "IlluminaID"), (104, "Mean"), (103, "SD"), (107, "NBeads")):
-        if code not in offsets:
-            continue
-        o = offsets[code]
-        if name == "IlluminaID":
-            out[name] = np.frombuffer(buf, dtype="<i4", count=n, offset=o)
-        elif name == "NBeads":
-            out[name] = np.frombuffer(buf, dtype="<u1", count=n, offset=o)
-        else:
-            out[name] = np.frombuffer(buf, dtype="<u2", count=n, offset=o).astype(np.float64)
-    return out
-
-
-def read_rrbs(path: str | Path, *, min_coverage: int = 5,
-              sample_id: str | None = None) -> pd.Series:
-    """Read one RRBS site file into coverage-filtered betas.
-
-    Handles the two layouts these files actually come in:
-
-    * a header naming a ``...Percentage`` and a ``...Coverage`` column, keyed by
-      a site identifier in the first column -- the Petkovich/GSE80672 layout;
-    * four headerless columns of chromosome, position, methylated count and
-      total count, which is what most bisulfite pipelines emit.
-
-    Sites below ``min_coverage`` are dropped, not kept as noisy zeros and ones.
-    A ratio from four reads and a ratio from four hundred are not the same
-    measurement, and a clock handed both without distinction reports the
-    sequencing depth as if it were biology. This is the one preprocessing
-    decision an array pipeline never has to make.
-
-    Site identifiers are kept exactly as published. GSE80672 keys on NCBI ``gi``
-    accessions rather than ``chr:pos``; remapping them would need an assembly
-    and a decision about which one, and inventing that silently is how a
-    coordinate-keyed clock ends up matching nothing while looking like it
-    matched something.
-    """
-    p = Path(path)
-    comp = "gzip" if p.suffix == ".gz" else None
-    head = pd.read_csv(p, sep="\t", nrows=2, compression=comp)
-    cols = [str(c) for c in head.columns]
-    named = any(c.lower().endswith(("percentage", "coverage", "beta", "count"))
-                for c in cols)
-
-    if named:
-        df = pd.read_csv(p, sep="\t", index_col=0, low_memory=False, compression=comp)
-        pct = next((c for c in df.columns
-                    if str(c).lower().endswith(("percentage", "beta", "ratio"))), None)
-        cov = next((c for c in df.columns
-                    if str(c).lower().endswith(("coverage", "depth", "total"))), None)
-        if pct is None or cov is None:
-            raise DataError(
-                f"{p.name}: header is {cols}; expected a percentage/beta column and "
-                "a coverage/depth column")
-        beta = pd.to_numeric(df[pct], errors="coerce")
-        depth = pd.to_numeric(df[cov], errors="coerce")
-        # Percentages, not fractions -- 0-100 in this layout.
-        if float(np.nanmax(beta.to_numpy())) > 1.5:
-            beta = beta / 100.0
-        idx = df.index.astype(str)
-    else:
-        df = pd.read_csv(p, sep="\t", header=None, low_memory=False, compression=comp)
-        if df.shape[1] < 4:
-            raise DataError(
-                f"{p.name}: {df.shape[1]} headerless columns; expected chromosome, "
-                "position, methylated count, total count")
-        meth = pd.to_numeric(df.iloc[:, 2], errors="coerce")
-        depth = pd.to_numeric(df.iloc[:, 3], errors="coerce")
-        if (meth > depth).mean() > 0.5:      # columns the other way round
-            meth, depth = depth, meth
-        beta = meth / depth.replace(0, np.nan)
-        idx = (df.iloc[:, 0].astype(str).str.replace("^chr", "", regex=True) + ":"
-               + pd.to_numeric(df.iloc[:, 1], errors="coerce").astype("Int64").astype(str))
-
-    keep = depth.to_numpy() >= min_coverage
-    s = pd.Series(np.clip(beta.to_numpy()[keep], 0.0, 1.0),
-                  index=pd.Index(np.asarray(idx)[keep], name="site"),
-                  name=sample_id or p.stem.split("_")[0])
-    return s[~s.index.duplicated()]
-
-
-def read_rrbs_dir(paths, *, min_coverage: int = 5,
-                  obs: pd.DataFrame | None = None) -> FalconData:
-    """Assemble several RRBS files into one matrix on their shared sites."""
-    series = []
-    for p in paths:
-        sid = Path(p).name.split("_")[0]
-        series.append(read_rrbs(p, min_coverage=min_coverage, sample_id=sid))
-    X = pd.concat(series, axis=1).T
-    return FalconData(X=X, obs=obs if obs is not None else pd.DataFrame(index=X.index),
-                      modality="rrbs", platform="RRBS",
-                      uns={"min_coverage": min_coverage, "n_files": len(series)})
 
 
 # ---------------------------------------------------------------------------
-# nanopore and targeted panels
+# targeted panels
 # ---------------------------------------------------------------------------
-#: bedMethyl, as `modkit pileup` writes it. Columns 1-9 are BED9; modkit appends
-#: its own. Only four are needed here, and they are taken by position because
-#: bedMethyl has no header and the extended columns differ between callers.
-_BEDMETHYL = {"chrom": 0, "start": 1, "end": 2, "code": 3,
-              "score": 4, "strand": 5, "coverage": 9, "percent": 10}
-
-
-def read_bedmethyl(path, *, min_coverage: int = 10, sample_id: str | None = None,
-                   mod_code: str = "m", manifest: pd.DataFrame | None = None,
-                   probe_col: str = "feature_id", with_coverage: bool = False):
-    """One nanopore bedMethyl file as a per-site methylation fraction.
-
-    WHY THIS IS NOT JUST ANOTHER CSV READER. Long-read methylation arrives with
-    a coverage number per site, and coverage is information the array path never
-    had: a CpG read twelve times is measured worse than one read two hundred
-    times, and :func:`falconage.technical_se` can use that directly. Sites below
-    ``min_coverage`` are dropped rather than kept with a wide error bar, because
-    a fraction from three reads takes only four values.
-
-    Nanopore reads native DNA, so there is no bisulfite conversion and no
-    conversion-efficiency question -- but also no Illumina probe identifier. To
-    score an array-trained clock the sites must be mapped to probe ids, which
-    needs a ``manifest`` with genomic coordinates. Without one this returns
-    coordinate-keyed values, which are perfectly good for a clock trained on
-    sequencing and useless for one trained on an array. That is stated rather
-    than papered over: silently returning a matrix no clock can align to is how
-    a user ends up with a coverage error they cannot interpret.
-
-    Parameters
-    ----------
-    mod_code
-        The modification to take. ``"m"`` is 5mC. Nanopore calls 5hmC (``"h"``)
-        in the same file, and adding the two together is a different quantity
-        from what any array measured.
-    manifest
-        Optional frame with ``chrom``, ``pos`` and ``probe_col``, to map
-        coordinates onto probe identifiers.
-    with_coverage
-        Return ``(beta, coverage)`` rather than just ``beta``. A second return
-        value rather than ``Series.attrs``: pandas compares ``attrs`` for
-        equality when concatenating, and a Series stored in there makes
-        ``pd.concat`` raise on the ambiguous truth value.
-    """
-    p = Path(path)
-    df = pd.read_csv(p, sep=r"\s+", header=None, comment="#", engine="python")
-    if df.shape[1] < 11:
-        raise DataError(
-            f"{p.name}: {df.shape[1]} columns; bedMethyl from `modkit pileup` has "
-            "at least 11. A plain BED9 has no methylation percentage in it.")
-    out = pd.DataFrame({
-        "chrom": df[_BEDMETHYL["chrom"]].astype(str),
-        "pos": df[_BEDMETHYL["start"]].astype(int),
-        "code": df[_BEDMETHYL["code"]].astype(str),
-        "coverage": pd.to_numeric(df[_BEDMETHYL["coverage"]], errors="coerce"),
-        "percent": pd.to_numeric(df[_BEDMETHYL["percent"]], errors="coerce"),
-    })
-    out = out[out["code"] == mod_code]
-    if out.empty:
-        codes = sorted(set(df[_BEDMETHYL["code"]].astype(str)))
-        raise DataError(
-            f"{p.name}: no rows with modification code {mod_code!r}; the file "
-            f"carries {codes}. 5mC is 'm' and 5hmC is 'h'; they are different "
-            "measurements and must not be summed.")
-    out = out[out["coverage"] >= min_coverage]
-    beta = (out["percent"] / 100.0).clip(0.0, 1.0)
-
-    if manifest is not None:
-        key = manifest.set_index([manifest["chrom"].astype(str),
-                                  manifest["pos"].astype(int)])[probe_col]
-        idx = pd.MultiIndex.from_arrays([out["chrom"], out["pos"]])
-        mapped = key.reindex(idx)
-        beta = beta.to_numpy()[mapped.notna().to_numpy()]
-        index = mapped.dropna().astype(str)
-    else:
-        index = out["chrom"] + ":" + out["pos"].astype(str)
-
-    name = sample_id or p.name.split(".")[0]
-    idx = pd.Index(index, name="feature_id")
-    keep = ~idx.duplicated(keep="first")
-    s = pd.Series(np.asarray(beta, dtype=float)[keep], index=idx[keep], name=name)
-    if not with_coverage:
-        return s
-    cov = pd.Series(out["coverage"].to_numpy(dtype=float)[:len(idx)][keep],
-                    index=idx[keep], name=name)
-    return s, cov
-
-
-def read_bedmethyl_dir(paths, *, min_coverage: int = 10,
-                       obs: pd.DataFrame | None = None, **kw) -> FalconData:
-    """Several bedMethyl files as one matrix on their shared sites."""
-    pairs = [read_bedmethyl(p, min_coverage=min_coverage, with_coverage=True,
-                            sample_id=Path(p).name.split(".")[0], **kw)
-             for p in paths]
-    X = pd.concat([b for b, _ in pairs], axis=1).T
-    cov = pd.concat([c for _, c in pairs], axis=1).T
-    d = FalconData(X=X, obs=obs if obs is not None else pd.DataFrame(index=X.index),
-                   modality="dna_methylation", platform="nanopore",
-                   uns={"min_coverage": min_coverage, "n_files": len(pairs)})
-    # Kept alongside rather than folded in: coverage is a per-cell property and
-    # the container's X is the measurement, not its precision.
-    d.uns["site_coverage"] = cov
-    return d
 
 
 def read_panel(path, *, cpgs: Sequence[str] | None = None,

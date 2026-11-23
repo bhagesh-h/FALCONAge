@@ -20,11 +20,6 @@ from falconage.download import resolve_source
     ("gse182991", "geo_series"),
     ("GSM5514000", "geo_sample"),
     ("E-MTAB-9756", "arrayexpress"),
-    ("SRP123456", "sra"),
-    ("SRR9876543", "sra"),
-    ("PRJNA123456", "sra"),
-    ("ERR1234567", "sra"),
-    ("PXD012345", "pride"),
     ("MTBLS1234", "metabolights"),
     ("TCGA-BRCA", "gdc"),
     ("TARGET-AML", "gdc"),
@@ -58,7 +53,7 @@ def test_unknown_accession_lists_what_is_supported():
     with pytest.raises(DownloadError) as exc:
         resolve_source("not-an-accession-!!")
     msg = str(exc.value)
-    for token in ("GSE", "PXD", "MTBLS", "GDC", "Hugging Face"):
+    for token in ("GSE", "MTBLS", "GDC", "Hugging Face"):
         assert token in msg
     # And says why the credentialed archives are absent rather than omitting them.
     assert "dbGaP" in msg and "credentials" in msg
@@ -74,26 +69,3 @@ def test_credentialed_archives_refuse_with_a_route_forward():
     assert "falconage.io.read" in msg, "say what to do once the files are local"
 
 
-def test_pride_refuses_an_unfiltered_project_rather_than_starting_it():
-    """A PRIDE project is mostly raw instrument output no clock reads.
-
-    The refusal is the feature: without an extension filter this would begin a
-    multi-gigabyte transfer that nobody sized. Checked by signature so the test
-    stays offline.
-    """
-    import inspect
-
-    from falconage.download import pride
-
-    sig = inspect.signature(pride)
-    assert "extensions" in sig.parameters
-    assert sig.parameters["extensions"].default == ()
-
-
-def test_sra_returns_a_run_table_and_does_not_pretend_to_score():
-    """SRA holds reads. Alignment and methylation calling are not in scope."""
-    from falconage.download import DownloadResult, sra
-
-    assert "run_table" in DownloadResult.__dataclass_fields__
-    doc = sra.__doc__ or ""
-    assert "alignment" in doc.lower()

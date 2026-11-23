@@ -7,7 +7,6 @@ broke rather than "integration". Skipped wholesale when the corpus is absent.
 from __future__ import annotations
 
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -233,108 +232,6 @@ def test_mammalian_metadata_is_a_separate_file(corpus):
     assert "!Sample_characteristics_ch1" in text
     assert "age:" in text
     assert "!series_matrix_table_begin" not in text or text.count("\ncg") < 10
-
-
-# ---------------------------------------------------------------------------
-# mouse RRBS
-# ---------------------------------------------------------------------------
-def test_rrbs_reads_coordinate_keyed_sites(corpus):
-    paths = sorted((corpus / "mouse").glob("GSM*.overlap.txt.gz"))
-    assert len(paths) == 4
-    d = fa.read_rrbs_dir(paths, min_coverage=5)
-    assert d.modality == "rrbs"
-    assert d.n_samples == 4
-    assert d.n_features > 10_000
-    assert all(":" in str(f) for f in list(d.features)[:20]), "chr:pos keys"
-    v = d.X.to_numpy()
-    assert np.nanmin(v) >= 0.0 and np.nanmax(v) <= 1.0
-
-
-def test_rrbs_coverage_filter_actually_filters(corpus):
-    p = sorted((corpus / "mouse").glob("GSM*.overlap.txt.gz"))[0]
-    lo = fa.io.read_rrbs(p, min_coverage=1)
-    hi = fa.io.read_rrbs(p, min_coverage=20)
-    assert len(hi) < len(lo), "a site read once is not the same measurement as one read 400 times"
-
-
-def test_mouse_ages_are_months_labelled_years(corpus):
-    """The corpus's best argument for declaring units. A mouse does not live 35
-    years, and GEO says 'age (years): 35'."""
-    d = fa.read_series_matrix(corpus / "mouse" / "GSE80672_series_matrix.txt.gz")
-    ages = pd.to_numeric(d.obs["age_years"], errors="coerce")
-    assert ages.max() > 30, "the published field really does say 35"
-    from falconage.core.units import convert
-
-    assert convert(35.0, "months", "years") == pytest.approx(35 / 12)
-
-
-# ---------------------------------------------------------------------------
-# idat
-# ---------------------------------------------------------------------------
-@pytest.mark.parametrize("sub,n", [("epicv1", 1_051_815), ("epicv2", 1_105_209)])
-def test_idat_pairs_parse(corpus, sub, n):
-    grn = sorted((corpus / "idat" / sub).glob("*_Grn.idat.gz"))[0]
-    red = grn.with_name(grn.name.replace("_Grn.", "_Red."))
-    pair = fa.io.read_idat_pair(grn, red)
-    assert pair["grn"].shape == pair["red"].shape == pair["illumina_ids"].shape
-    assert pair["grn"].size > 500_000
-    assert (pair["grn"] >= 0).all()
-    # Two channels of the same array must not be identical.
-    assert not np.array_equal(pair["grn"], pair["red"])
-
-
-@pytest.mark.network
-def test_raw_idats_reproduce_the_published_betas_for_the_same_samples(corpus):
-    """The end-to-end check on the IDAT chain, and the only one that matters.
-
-    ``idat/epicv1`` holds the raw IDATs for GSM5548192 and GSM5548193.
-    ``bench/GSE182991.parquet`` holds the betas the authors published for those
-    same two physical samples. The two paths share nothing -- different files,
-    different pipelines, different decade -- so agreement is a real check on
-    the address decoding, the type I/II split and the channel assignment, which
-    is where a raw-array reader goes wrong.
-
-    Asserted on the *uncorrected* betas. GSE182991's published matrix agrees
-    with our decode at r = 0.999, which says its own processing was minimal;
-    comparing our background-corrected output against it would be asserting
-    that a correction does nothing.
-
-    Marked network: it needs the Illumina manifest, which is fetched once and
-    cached and is the only step in FALCONAge that is not offline.
-    """
-    grn = sorted((corpus / "idat" / "epicv1").glob("GSM5548193*_Grn.idat.gz"))[0]
-    red = grn.with_name(grn.name.replace("_Grn.", "_Red."))
-
-    sig = fa.preprocess.idat_to_betas(grn, red, correct=False, raw=True)
-    assert sig.platform == "EPICv1"
-    assert 0.005 < sig.summary()["frac_undetected"] < 0.10, "a normal failure rate"
-
-    ours = sig.betas(detection_p=None)
-    ref = fa.read_computage_bench("GSE182991", root=str(corpus / "bench"),
-                                  prepare=False).X.loc["GSM5548193"].dropna()
-    shared = ours.dropna().index.intersection(ref.index)
-    assert len(shared) > 750_000
-
-    x, y = ours[shared].to_numpy(), ref[shared].to_numpy()
-    ok = np.isfinite(x) & np.isfinite(y)
-    x, y = x[ok], y[ok]
-    assert np.corrcoef(x, y)[0, 1] > 0.99
-    assert float(np.median(np.abs(x - y))) < 0.03
-    assert float(np.mean(np.abs(x - y) < 0.05)) > 0.95
-
-
-@pytest.mark.network
-def test_the_manifest_that_decoded_a_matrix_is_recorded(corpus):
-    """A beta matrix is a function of which manifest turned addresses into
-    probes, in the way a score is a function of which coefficient file was
-    used. Recording one and not the other would be an odd place to stop."""
-    d = fa.read_idat_dir(corpus / "idat" / "epicv1")
-    rec = d.uns["idat_manifest"]
-    assert rec["platform"] == "EPICv1"
-    assert len(rec["sha256"]) == 64
-    assert rec["redistributed"].startswith("no")
-    assert int(rec["n_type_i"]) > 100_000 and int(rec["n_type_ii"]) > 500_000
-    assert "poobah" in d.uns["pipeline"] and "noob" in d.uns["pipeline"]
 
 
 # ---------------------------------------------------------------------------

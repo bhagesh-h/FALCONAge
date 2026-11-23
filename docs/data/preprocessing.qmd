@@ -1,10 +1,18 @@
 ---
-title: "Preprocessing, imputation and coverage"
+title: "Preparing data and coverage"
+subtitle: "The steps between a preprocessed input matrix and a clock score: identifier harmonisation, clock coverage and imputation"
 ---
 
-## Preprocessing, imputation, missing features
+## Preparing the input
 
 ### The input contract
+
+FALCONAge does not normalise, filter probes or run sample QC. The input is a matrix that has
+already been through those steps upstream, for example in the
+[methylarray](https://github.com/bhagesh-h/methylarray) pipeline, minfi or SeSAMe. What
+`fa.prepare()` (CLI: `falconage prepare`) applies is limited to what scoring requires:
+identifier harmonisation, EPIC v2 replicate collapse, clipping to the beta range and platform
+detection.
 
 Rows are samples, columns are features. Feature names are the identifiers the clock coefficients
 use: `cg00000029` for methylation probes, and the declared analyte names for clinical chemistry and
@@ -100,10 +108,23 @@ These are per-clock and must run *after* feature selection, not before:
 | nan → 0 | epiTOC2, epiTOC3 |
 | NaN → reference value | most linear clocks |
 
-## Platform coverage
-Worth running once on an array you have not used before. It reports, per clock, how many features
-are present **and** how much of the model's weight they carry. Two different numbers, and the
-second is the one that catches EPIC v2 probe loss:
+## Methylation clock coverage
+
+### Coverage across the genome
+
+Every `falconage run` on methylation data draws this figure first, before any clock is scored.
+It is written to `figures/clock_coverage_across_the_genome.png`, with its legend text in the
+`.txt` file beside it, and includes clocks added with `--clocks-dir`.
+
+![**Clock coverage across the genome.** Every DNA methylation clock in FALCONAge, one track each, with its CpGs at their positions on the genome (hg19). Coloured where the EPIC v1 array carries the CpG, grey where it does not; the legend gives each clock's colour and the share of its CpGs on the array. CpGs aligned across tracks are shared between clocks.](../figures/gallery/clock_coverage_across_the_genome.png){#fig-coverage-map}
+
+Python: `fa.plot.clock_coverage_manhattan(data)`, or `platform="EPICv2"` without data. R:
+`plot_clock_coverage()`.
+
+### Coverage and weight per clock
+
+`probe_loss()` reports, per clock, how many features are present **and** how much of the
+model's weight they carry. The second number is the one that detects EPIC v2 probe loss:
 
 ::: {.panel-tabset}
 
@@ -140,3 +161,16 @@ has nine of its ten CpGs, 90% by count, and the one it lacks carries 23% of its 
 A clock at 96% feature coverage and 61% weight coverage has kept nearly all its probes and lost
 the ones that matter. The scoring floor applies to both measures, so this run would be refused
 with a message naming the heaviest absent probes rather than returning a confident number.
+
+### Clock CpGs removed by upstream probe QC
+
+A clock CpG can be absent for two reasons. The array may not carry it (platform loss), or the
+array carried it and a probe filter removed it afterwards. FALCONAge separates the two with a
+table, bundled with the package, of which Illumina arrays (27K, 450K, EPIC v1, EPIC v2) carry
+each clock CpG (`fa.preprocess.platform_probes()`). When removed CpGs carry at least 1% of a
+clock's absolute weight, `score()` raises a `probe_qc` warning naming the heaviest of them, and
+the coverage record gives `n_removed_by_qc` and `qc_removed_mass`.
+
+SNP, cross-reactive and detection filters are designed for association studies. For clock
+scoring, pass the matrix taken before probe filtering: the clock weights were fitted on those
+probes, and an imputed value replaces each one that is removed.

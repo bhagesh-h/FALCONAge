@@ -16,7 +16,7 @@ and returns, and why each decision went the way it did. The science it implement
 [The science of aging clocks](../methods/formulas.qmd); every algorithmic claim here cites a section there
 rather than restating it.
 
-## What of this exists
+## Implementation status
 
 ::: {.callout-important title="Read this before believing any section below"}
 This document was written **before** the code and is deliberately wider than what ships. Every
@@ -30,18 +30,17 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 | Area | Shipped in v1.0.0 | Specified, not built |
 |---|---|---|
 | Clock catalogue | 68 human clocks, **all `bundled` and scoring offline**: 62 DNA methylation, 4 clinical chemistry, 2 NMR metabolomics. Clinical PhenoAge, KDM and homeostatic dysregulation are formulas with no coefficient file | — |
-| Modalities | DNA methylation, clinical chemistry, RRBS, **nanopore**, **transcriptomics**, **proteomics** | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
-| Inputs | Beta matrix, GEO series matrix, **raw IDATs**, RRBS, **bedMethyl**, **targeted panels**, **Olink NPX**, **SomaScan RFU**, **bulk counts**, clinical tables, ComputAgeBench | — |
-| Normalisation | **pOOBAH, noob, BMIQ, probe masks** ([From raw arrays to betas](../methods/raw-arrays.qmd)) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
+| Modalities | DNA methylation, clinical chemistry, NMR metabolomics | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
+| Inputs | Preprocessed beta matrix, GEO series matrix, targeted panels, clinical tables, Nightingale NMR, ComputAgeBench | Raw IDATs, sequencing coverage, proteomic and transcriptomic tables: out of scope, preprocessed upstream |
+| Preparation | Probe-id harmonisation, EPIC v2 replicate collapse, beta clipping, Horvath normalisation, a bundled CpG-to-array table ([Preparing data and coverage](../data/preprocessing.qmd)) | mLiftOver cross-platform harmonisation |
 | Model classes | `LinearClock`, `ClinicalClock`, `QuadraticClock`, `AggregationClock`, `DivisionClock`, `NeuralClock`, `DeconvolutionClock`, `MetabolomicsClock`, `ScAgeReference` | — |
 | Preprocess ops | 7: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binarize`, `simplex_projection`; and `standardise_within_sample` on the whole dataset | The other seven in [Preprocess ops](algorithms.qmd#preprocess-ops) |
 | Postprocess ops | **21**, plus **24 analytic derivatives** for uncertainty propagation and 4 ops explicitly marked non-differentiable | — |
 | Uncertainty | **Technical SE, conformal prediction intervals, per-probe ICC table, power, consensus** | Conformalised quantile regression (split conformal ships instead) |
-| Batch | **Frozen-reference ComBat**: adding a plate cannot move an earlier one | — |
-| Download | GEO series and sample, ArrayExpress, SRA/ENA, Zenodo by DOI, Hugging Face, **Figshare, PRIDE, MetaboLights, GDC** | Credentialed archives (Synapse, EGA, dbGaP, UK Biobank): documented, deliberately not automated |
+| Download | GEO series and sample, ArrayExpress, Zenodo by DOI, Hugging Face, **Figshare, MetaboLights, GDC** | Credentialed archives (Synapse, EGA, dbGaP, UK Biobank): documented, deliberately not automated |
 | Registry storage | One `clocks.yaml` inside the package, loaded into frozen dataclasses | The per-clock file tree and pydantic schema of [Clock registry](engine.qmd#clock-registry) |
 | Compute | numpy on the CPU, fp64 default, fp32 opt-in | - |
-| R interface | S3 classes, ggplot2 figures, bit-identical to Python, **including the uncertainty and batch verbs** | The raw-array chain and the model architectures are Python-only |
+| R interface | S3 classes, ggplot2 figures, bit-identical to Python, **including the uncertainty verbs** | The model architectures are Python-only |
 
 **The proteomic and transcriptomic readers ship without clocks.** No published model in either
 family has coefficients FALCONAge may redistribute, so none is in the registry. Scoring a proteomic
@@ -67,15 +66,11 @@ produced.
 | Clinical chemistry | PhenoAge (both unit variants), KDM, homeostatic dysregulation | — |
 | NMR metabolomics | MetaboAge, MetaboHealth | — |
 | Clock coefficients | all bundled in the package, SHA-256 checked before use | — |
-| Raw arrays | full chain: manifest fetch, pOOBAH, noob, BMIQ, probe masks | control-probe dye correction |
 | Uncertainty | technical SE, conformal intervals, power, consensus | conformalised quantile regression |
-| Batch | frozen-reference ComBat | — |
 | Specimen and platform checks | species, specimen type, cell-free DNA refusal, platform bias in years | — |
-| Transcriptomics | the bulk-counts chain ships; no registry entries | — |
-| Proteomics | Olink and SomaScan readers ship; no registry entries | — |
 | Single cell | scAge (per-cell likelihood) | — |
-| Download | GEO, ArrayExpress, SRA/ENA, Zenodo, Figshare, Hugging Face, GDC, PRIDE, MetaboLights; ComputAgeBench loader | Metabolomics Workbench |
-| Preprocess | IDAT → beta, series matrix, beta CSV/parquet, clinical chemistry, the RNA-seq and Olink/SomaScan chains | — |
+| Download | GEO, ArrayExpress, Zenodo, Figshare, Hugging Face, GDC, MetaboLights; ComputAgeBench loader | Metabolomics Workbench |
+| Input | Preprocessed beta matrix (CSV, TSV, parquet, `.h5ad`), series matrix, clinical chemistry, Nightingale NMR | — |
 | Compute | numpy on the CPU, FP64 default, FP32 opt-in | - |
 | Interfaces | Python API, R API, CLI, Docker (full and Python-only images) | - |
 
@@ -162,10 +157,9 @@ FALCONAge/
 │   │   │   └── errors.py           # exception hierarchy
 │   │   │
 │   │   ├── io/
-│   │   │   ├── methylation.py      # read_betas, read_idat_dir, read_series_matrix
+│   │   │   ├── methylation.py      # read_betas, read_series_matrix, read_panel
 │   │   │   ├── clinical.py         # read_clinical
-│   │   │   ├── expression.py       # read_counts 
-│   │   │   ├── proteomics.py       # read_olink, read_somascan (v1.2)
+│   │   │   ├── nmr.py              # read_nightingale
 │   │   │   ├── anndata_io.py       # read_h5ad, write_h5ad
 │   │   │   └── tables.py           # read_sample_table, write_results
 │   │   │
@@ -176,28 +170,18 @@ FALCONAge/
 │   │   │   ├── transfer.py         # resumable HTTP/FTP, checksum, retry
 │   │   │   ├── geo.py              # GSE/GSM
 │   │   │   ├── arrayexpress.py     # E-MTAB
-│   │   │   ├── sra.py              # SRP/SRR/PRJNA
 │   │   │   ├── zenodo.py           # DOI
 │   │   │   ├── figshare.py
 │   │   │   ├── huggingface.py
 │   │   │   ├── gdc.py              # TCGA
-│   │   │   ├── pride.py            # PXD (v1.2)
 │   │   │   ├── metabolights.py     # MTBLS, ST (v1.2)
 │   │   │   ├── credentialed.py     # Synapse/EGA/dbGaP/UKB guidance + hooks
 │   │   │   └── metadata.py         # source metadata → common sample table
 │   │   │
 │   │   ├── preprocess/
-│   │   │   ├── methylation/
-│   │   │   │   ├── idat.py         # IDAT parse
-│   │   │   │   ├── noob.py
-│   │   │   │   ├── bmiq.py
-│   │   │   │   ├── sesame.py
-│   │   │   │   ├── quality.py      # detection p, probe masks
-│   │   │   │   ├── platform.py     # detect_platform, harmonise_probe_ids
-│   │   │   │   └── epicv2.py       # aggregate_replicate_probes
+│   │   │   ├── methylation.py      # harmonise_probe_ids, aggregate_replicate_probes
+│   │   │   ├── horvath.py          # Horvath's calibration to his gold standard
 │   │   │   ├── clinical.py         # validate_ranges, convert_units
-│   │   │   ├── expression.py
-│   │   │   ├── proteomics.py       # v1.2
 │   │   │   ├── impute.py           # dataset-level imputation
 │   │   │   └── qc.py               # QCReport
 │   │   │
@@ -307,7 +291,7 @@ FALCONAge/
     └── registry-validate.yaml
 ```
 
-### What actually got laid down
+### Implemented layout
 
 Flatter than the plan in three places, each for the same reason: a directory with one file in it
 is a directory you have to open to find out it has one file in it.
@@ -320,13 +304,11 @@ python/src/falconage/
 ├── io/         __init__.py methylation.py            # readers, platform detection
 │               bench.py  # ComputAgeBench loader
 ├── preprocess/ __init__.py methylation.py            # prepare, qc, EPIC v2, units
-│               manifest.py idat.py bmiq.py masks.py  # raw-array chain
-│               batch.py  # frozen-reference ComBat
-│               proteomic.py transcriptomic.py  # modality chains
+│               horvath.py  # Horvath's BMIQ calibration to his gold standard
 ├── uncertainty/ __init__.py  # SE, conformal, ICC
 ├── registry/   registry.py  data/clocks.yaml         # all 68 entries, one file
 │               data/coefficients/  # bundled weights
-│               data/cpg_positions.csv.gz  # hg19 positions for the coverage map
+│               data/cpg_positions.csv.gz  # hg19 positions and array membership of clock CpGs
 │               data/probe_icc.csv.gz  # reliability table
 │               data/platform_bias.csv conformal.csv  # derived artefacts
 │               data/references/  # fill values for absent CpGs

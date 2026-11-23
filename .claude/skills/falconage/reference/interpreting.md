@@ -1,4 +1,4 @@
-# Reading what comes back
+# Interpreting the output
 
 ## The result object
 
@@ -117,8 +117,8 @@ as unsupported, because that is what a false positive usually looks like.
 | Not implemented | Why |
 |---|---|
 | Cross-platform liftover | Mapping tables encode concordance measured on paired samples; not derivable from array manifests. |
-| Dye-bias correction on by default | Ships opt-in. Moves the median beta by +0.10 to +0.12 on real IDATs, because the control probes are not in the fetchable manifest. |
-| Proteomic or transcriptomic **clocks** | Readers and preparation chains ship. No catalogue entry, because every published model in both families is licence-restricted. |
+| Raw-data preprocessing | IDAT decoding, normalisation, probe and sample QC are done upstream; FALCONAge reads the beta matrix. |
+| Proteomic or transcriptomic clocks | Every published model in both families is licence-restricted, and these tables are not read. |
 | A foundation-model imputation backend | `NeuralClock` ships, safetensors only. CpGPT and MethylGPT as zero-shot probe imputation do not. |
 | Silent correction of anything | Batch reference, platform offset and interval are all *reported*. A score adjusted by an untraceable factor destroys the provenance that is the reason to use this package. |
 | Percentiles against an unnamed population | The same person reads as accelerated or decelerated depending on the comparator. |

@@ -360,32 +360,15 @@ def test_an_unknown_method_names_the_ones_that_work(synthetic_betas):
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def isolated_manifests(tmp_path, monkeypatch):
-    """An empty download cache, and no parsed manifest leaking between tests."""
-    from falconage.preprocess.manifest import load_manifest
+def array_table(monkeypatch):
+    """Replace the bundled CpG-to-array table with one the test controls."""
+    import falconage.preprocess as P
 
-    monkeypatch.setenv("FALCONAGE_CACHE", str(tmp_path))
-    load_manifest.cache_clear()
-    yield tmp_path
-    load_manifest.cache_clear()
+    def install(epicv1_probes):
+        s = pd.Series(P.ARRAY_BITS["EPICv1"], index=pd.Index(epicv1_probes, name="feature_id"))
+        monkeypatch.setattr(P, "_clock_arrays", lambda: s)
 
-
-def _fake_manifest(cache, probes):
-    """A minimal EPICv1 manifest in the download cache, so nothing downloads."""
-    import gzip
-
-    from falconage.core.config import default_cache_dir
-    from falconage.download import _cache_path
-    from falconage.preprocess.manifest import BUCKET, MANIFESTS, load_manifest
-
-    assert default_cache_dir() == cache
-    path = _cache_path(f"{BUCKET}/{MANIFESTS['EPICv1'][0]}", cache)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    rows = ["IlmnID,AddressA_ID,AddressB_ID,Infinium_Design_Type,Color_Channel"]
-    rows += [f"{p},{1000 + i},,II," for i, p in enumerate(probes)]
-    with gzip.open(path, "wt") as fh:
-        fh.write("\n".join(rows) + "\n")
-    load_manifest.cache_clear()
+    return install
 
 
 def test_qc_removed_is_share_of_absolute_weight():
@@ -400,16 +383,14 @@ def test_qc_removed_is_share_of_absolute_weight():
     assert worst == [("b", pytest.approx(0.3))]
 
 
-def test_probes_removed_by_qc_are_named_when_the_manifest_is_cached(
-        synthetic_betas, isolated_manifests):
-    tmp_path = isolated_manifests
+def test_probes_removed_by_qc_are_named_from_the_array_table(synthetic_betas, array_table):
     reg = fa.registry.load()
     feats, w = reg.coefficients("horvath2013")
     heavy = [str(f) for f in np.asarray(feats)[np.argsort(-np.abs(np.asarray(w)))[:5]]]
     # The array carries every Horvath CpG except one light one, which is
     # platform loss and must not be blamed on QC.
     light = str(np.asarray(feats)[np.argmin(np.abs(np.asarray(w)))])
-    _fake_manifest(tmp_path, [str(f) for f in feats if str(f) != light])
+    array_table([str(f) for f in feats if str(f) != light])
 
     X = synthetic_betas.X.drop(columns=heavy + [light])
     d = fa.FalconData(X=X, obs=synthetic_betas.obs.assign(tissue="whole blood"),
@@ -427,15 +408,28 @@ def test_probes_removed_by_qc_are_named_when_the_manifest_is_cached(
     assert table.loc["horvath2013", "n_removed_by_qc"] == 5
 
 
-def test_no_manifest_in_the_cache_means_no_attribution(synthetic_betas, isolated_manifests):
-    """Offline and uncached: the check stays silent rather than guessing."""
+def test_an_unknown_platform_means_no_attribution(synthetic_betas):
+    """Without a known array the check stays silent rather than guessing."""
     feats, _ = fa.registry.load().coefficients("horvath2013")
     X = synthetic_betas.X.drop(columns=[str(f) for f in feats[:5]])
     d = fa.FalconData(X=X, obs=synthetic_betas.obs.assign(tissue="whole blood"),
-                      modality="dna_methylation", platform="EPICv1")
+                      modality="dna_methylation", platform=None)
     res = fa.score(d, clocks=["horvath2013"], min_coverage=0.5)
     assert "n_removed_by_qc" not in res.coverage["horvath2013"]
     assert not [r for r in res.manifest.warnings if r["category"] == "probe_qc"]
+
+
+def test_the_bundled_array_table_records_epic_v2_probe_loss():
+    """EPIC v2 dropped probes that EPIC v1 carried; the table must show it."""
+    from falconage.preprocess import platform_probes
+
+    v1, v2 = platform_probes("EPICv1"), platform_probes("EPICv2")
+    k450, k27 = platform_probes("450K"), platform_probes("27K")
+    assert platform_probes("not an array") is None
+    assert len(k27) < len(v2) < len(v1)
+    assert len(v1 - v2) > 1000 and len(k450) > 300_000
+    horvath = set(map(str, fa.registry.load().feature_ids("horvath2013")))
+    assert horvath - v2, "some Horvath 2013 CpGs are absent from EPIC v2"
 
 
 # ---------------------------------------------------------------------------

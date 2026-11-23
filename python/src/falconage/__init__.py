@@ -58,11 +58,10 @@ from .core import (
     describe,
 )
 from .download import download, download_intervention, how_to_get, interventions
-from .io import (list_computage_bench, read, read_bedmethyl, read_bedmethyl_dir,
-                 read_betas, read_clinical, read_computage_bench, read_nightingale, read_panel,
-                 read_rrbs_dir, read_series_matrix, write_results)
-from .preprocess import (apply_batch_reference, fit_batch_reference, idat_to_betas,
-                         prepare, prepare_clinical, probe_loss, qc, read_idat_dir)
+from .io import (list_computage_bench, read, read_betas, read_clinical,
+                 read_computage_bench, read_nightingale, read_panel,
+                 read_series_matrix, write_results)
+from .preprocess import prepare, prepare_clinical, probe_loss, qc
 from .disorder import drift, entropy, noise_barometer, variable_sites
 from .immune import repertoire_diversity, simulate_clonality
 from .models.single_cell import mosaic
@@ -80,8 +79,7 @@ from .uncertainty import (conformal_interval, icc_from_replicates, interval,
 __all__ = [
     "FalconConfig", "FalconData", "FalconError", "FalconResult", "REGISTRY_VERSION",
     "RunManifest", "WeightsUnavailableError", "__version__", "acceleration",
-    "add_clock", "apply_batch_reference", "cell_composition", "compare_learners", "demo_data", "fit_batch_reference",
-    "idat_to_betas", "read_idat_dir",
+    "add_clock", "cell_composition", "compare_learners", "demo_data",
     "agreement", "analysis", "associate", "combine", "configure",
     "conformal_interval", "consensus",
     "coefficient_mass", "core", "cox_hazard", "detectable_effect",
@@ -93,11 +91,10 @@ __all__ = [
     "repertoire_diversity", "simulate_clonality", "variable_sites",
     "variance_components",
     "models", "plot", "power", "prepare",
-    "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_bedmethyl",
-    "read_bedmethyl_dir", "read_betas",
+    "prepare_clinical", "preprocess", "probe_loss", "qc", "read", "read_betas",
     "report",
     "read_clinical", "read_nightingale", "read_panel",
-    "read_rrbs_dir", "read_series_matrix", "registry", "run_benchmark", "score",
+    "read_series_matrix", "registry", "run_benchmark", "score",
     "stack_clocks",
     "technical_se", "uncertainty",
     "write_results",

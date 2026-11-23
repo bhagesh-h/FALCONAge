@@ -1,64 +1,40 @@
 ---
 title: "Loading your data"
-subtitle: "Every input type this package reads, what the file looks like, the call, and what comes back"
+subtitle: "Supported input formats, their file layout, the reader function and its return value"
 aliases:
   - ../guide/loading.html
 ---
 
-Nine input types reach the same place: a `FalconData` carrying a samples-by-features
-matrix, the modality, the platform, and whatever sample annotation came with the file.
-Once you have one, scoring is the same call whatever you loaded.
+FALCONAge scores data that is already preprocessed and quality controlled. Normalisation,
+detection filtering and sample QC of methylation arrays belong upstream, in an array
+pipeline such as [methylarray](https://github.com/bhagesh-h/methylarray), minfi or SeSAMe;
+FALCONAge takes their beta matrix as input. Clinical chemistry and NMR tables are read as
+reported by the laboratory.
+
+Every reader returns a `FalconData`: a samples-by-features matrix with its modality,
+platform and sample annotation. Scoring is the same call whichever reader produced it.
 
 Every output on this page was produced by running the code above it, against the public
 test corpus where the corpus has that input type and against a small file written inline
 where it does not. Nothing here is illustrative.
 
-## What reads what
+## Readers by input format
 
-| Your data | Call | Modality |
-|---|---|---|
-| Raw Illumina IDATs | `read_idat_dir()` | `dna_methylation` |
-| A beta matrix, CSV, TSV or parquet | `read_betas()` | `dna_methylation` |
-| A GEO series matrix | `read_series_matrix()` | `dna_methylation` |
-| A ComputAgeBench study | `read_computage_bench()` | `dna_methylation` |
-| RRBS or bisulfite coverage files | `read_rrbs_dir()` | `rrbs` |
-| Nanopore bedMethyl | `read_bedmethyl_dir()` | `dna_methylation` |
-| A targeted assay: pyrosequencing, EpiTYPER, ddPCR | `read_panel()` | `dna_methylation` |
-| Clinical chemistry | `read_clinical()` | `clinical_chemistry` |
-| Olink NPX | `preprocess.read_olink()` | `proteomics` |
-| SomaScan RFU | `preprocess.read_somascan()` | `proteomics` |
-| Bulk RNA-seq counts | `preprocess.read_counts()` | `transcriptomics` |
+| Input | Reader | Modality | CLI |
+|---|---|---|---|
+| A beta matrix: CSV, TSV, parquet or `.h5ad` | `read_betas()` | `dna_methylation` | `falconage run betas.csv` |
+| A GEO series matrix | `read_series_matrix()` | `dna_methylation` | `falconage run GSE…_series_matrix.txt.gz` |
+| A ComputAgeBench study | `read_computage_bench()` | `dna_methylation` | |
+| A targeted assay: pyrosequencing, EpiTYPER, ddPCR | `read_panel()` | `dna_methylation` | |
+| Clinical chemistry | `read_clinical()` | `clinical_chemistry` | `falconage run labs.csv --kind clinical` |
+| Nightingale NMR metabolomics | `read_nightingale()` | `metabolomics_nmr` | `falconage run nmr.xlsx --kind nightingale` |
 
-`fa.read(path)` dispatches on the file name when you would rather not choose. It is
-convenience, not magic: it says which reader it picked, and any argument that reader
-needs has to be passed to the reader itself.
+Raw IDAT files, sequencing coverage files (RRBS, bedMethyl) and proteomic or
+transcriptomic tables are not accepted. A folder of IDATs passed to `falconage run` is
+refused with a message naming the preprocessing step it needs.
 
-## Raw Illumina IDATs
-
-A directory of `_Grn.idat` and `_Red.idat` pairs, one pair per sample, exactly as the
-scanner writes them. The array manifest is fetched once and cached.
-
-```python
-import falconage as fa
-
-d = fa.read_idat_dir("idats/")
-d = fa.prepare(d)              # noob, BMIQ, probe masks, id harmonisation
-```
-
-```
-INFO    fetched ebc36febf212e1d2_HumanMethylationEPIC_manifest_v2.csv.gz (23.7 MB)
-FalconData(2 samples x 865918 features, dna_methylation, EPICv1, 2.0% missing)
-FalconData(2 samples x 865859 features, dna_methylation, EPICv1, 2.0% missing)
-```
-
-The feature count drops by 59 across `prepare()`: those are the probes the published
-masks exclude, not samples lost. Platform is detected from the manifest and the probe
-count rather than declared.
-
-**EPIC v2 needs one more thing, and it is automatic.** Its probe ids carry a suffix
-(`cg00000029_TC21`), and a clock fitted on 450K sees zero overlap with them until the
-suffixes are collapsed. `prepare()` does that by default; `aggregate_epicv2=False` turns
-it off, and there is no good reason to.
+`fa.read(path)` selects the reader from the file name. Arguments specific to a reader,
+such as the units of a clinical table, are passed to that reader directly.
 
 ## A beta matrix
 
@@ -84,6 +60,16 @@ cg00000236,0.842,0.871,0.836
 
 Betas belong in 0 to 1. A matrix of percentages is a factor of a hundred out and every
 clock will return a confidently wrong number, so `prepare()` checks the range and says so.
+
+**EPIC v2 identifiers are harmonised automatically.** EPIC v2 probe ids carry a suffix
+(`cg00000029_TC21`), and a clock fitted on 450K finds no matching features until the
+suffixes are removed. `prepare()` removes them and averages replicate probes of the same
+CpG; `aggregate_epicv2=False` disables the step.
+
+**Pass the matrix before probe filtering.** Filters for SNP, cross-reactive or
+detection-failed probes are designed for association studies. A clock CpG removed by them
+is replaced by an imputed value at scoring time, and `score()` reports how much of each
+clock's weight that affects (see [Preparing data and coverage](preprocessing.qmd)).
 
 ## A GEO series matrix
 
@@ -137,44 +123,6 @@ GSM2861664  GSE107143  GPL13534  Blood  Whole blood   M  88.0        AS   CVD
 
 This is the input `run_benchmark()` expects: it needs `condition`, a control group, and
 `age`, and this reader supplies all three.
-
-## RRBS and bisulfite coverage
-
-One file per sample, each a table of positions with methylated and unmethylated counts.
-Sites are intersected across samples and thresholded on coverage.
-
-```python
-d = fa.read_rrbs_dir(["20D02.overlap.txt.gz", "20D03.overlap.txt.gz",
-                      "M3503.overlap.txt.gz"], min_coverage=5)
-```
-
-```
-FalconData(3 samples x 1976936 features, rrbs, RRBS, 1.9% missing)
-```
-
-Two million shared sites from three files, and the sites are genomic coordinates rather
-than probe ids. An array clock cannot be scored on them directly; that needs a liftover
-this package does not ship, and it says so rather than matching on position and hoping.
-
-## Nanopore bedMethyl
-
-`modkit` output, one row per site with the modification fraction in column 11.
-
-```python
-s = fa.read_bedmethyl("sample.bed", sample_id="ONT01", min_coverage=10)
-```
-
-```
-feature_id
-chr1:10468    0.733
-chr1:10470    0.120
-chr1:10483    0.902
-Name: ONT01, dtype: float64
-```
-
-One file gives a Series; `read_bedmethyl_dir()` gives a `FalconData` across the sites the
-files share. The fraction is converted from the percentage the format stores, so what you
-get back is already a beta.
 
 ## A targeted assay
 
@@ -250,29 +198,6 @@ floor to the floor, which is how the reference itself recorded them, and returns
 moved. It only touches markers whose minimum is a floor (at least 1% of reference rows sitting
 exactly at it); values above the reference's range are real measurements and are left alone.
 
-## Olink NPX
-
-Olink exports long: one row per sample per assay. That is detected and pivoted.
-
-```python
-from falconage import preprocess as pp
-
-d = pp.read_olink("olink_npx.csv")
-```
-
-```
-INFO    read_olink: olink_npx.csv is Olink's long export (SampleID, Assay, NPX);
-        pivoted to 2 sample(s) x 2 assay(s)
-FalconData(2 samples x 2 features, proteomics, olink, 0.0% missing)
-```
-
-A wide matrix of samples by assays is read as it stands. Values stay in NPX, which is
-already log2 and is the scale the coefficients were fitted in.
-
-For SomaScan, `pp.read_somascan()` takes RFU and logs it by default, because every
-published SomaScan aging model here was fitted on logged RFU and feeding it linear values
-is an order-of-magnitude error that looks like a plausible number.
-
 ## NMR metabolomics
 
 A Nightingale Health export (CSV, TSV or Excel), samples down the rows:
@@ -289,24 +214,6 @@ guessed. MetaboAge (van den Akker et al. 2020) and MetaboHealth (Deelen et al. 2
 MiMIR scores them, its quality control included, and match it to 1e-9 and 1e-12. MetaboHealth
 z-scores each measure within the cohort, so a score depends on who else is in the file: it is
 marked `requires_cohort` and is not comparable between files scored separately.
-
-## Bulk RNA-seq counts
-
-Genes down the rows, samples across, raw counts rather than TPM.
-
-```python
-d = pp.read_counts("counts.csv")
-d = pp.prepare_transcriptomic(d)   # RLE, log10, per-sample z, YuGene
-```
-
-```
-FalconData(2 samples x 3 features, transcriptomics, 0.0% missing)
-```
-
-The preparation chain ships and is tested. No transcriptomic clock has a registry entry
-yet: tAge's models are licence-restricted, which is a rights problem rather than a
-technical one, and the chain is here so that supplying one is all that stands between you
-and a score.
 
 ## After loading
 

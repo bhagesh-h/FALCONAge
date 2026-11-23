@@ -67,18 +67,11 @@ manifest(res)$warnings
 
 ## Availability
 
-| Tier | n | What you do |
-|---|---:|---|
-| A | 35 | Nothing. Coefficients ship inside the package. |
-| B | 98 | Catalogued, but no primary source has been established, so no coefficients ship. Eleven now record where the material is and what blocks it. |
-| C | 28 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
+All 68 clocks in the catalogue ship their coefficients inside the package, or are formulas with
+none to ship, and every one scores offline. Each is traced to its primary source; `clock_info()`
+gives the source and any documented discrepancy between the paper and other implementations.
 
 ```{r}
-list_clocks(tier = "C")     # the ones needing author permission
-list_clocks(untraced = TRUE)
+list_clocks()
+clock_info("horvath2013")
 ```
-
-The distinction between B and C matters. C is a licensing decision by the authors. B is an
-honesty one by us: copying a coefficient set out of another package without knowing where that
-package got it is how the known paper-versus-implementation discrepancies spread in the first
-place, and a traced extractor is a welcome contribution.

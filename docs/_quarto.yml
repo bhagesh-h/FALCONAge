@@ -49,10 +49,8 @@ website:
       - text: Guide
       - text: Loading your data
         file: data/loading.qmd
-      - text: Preprocessing and coverage
+      - text: Preparing data and coverage
         file: data/preprocessing.qmd
-      - text: Raw arrays to betas
-        file: data/raw-arrays.qmd
       - text: Age acceleration
         file: analysis/acceleration.qmd
       - text: Uncertainty
@@ -85,8 +83,6 @@ website:
       - text: Methods
       - text: Published formulas
         file: methods/formulas.qmd
-      - text: From raw arrays to betas
-        file: methods/raw-arrays.qmd
       - text: Uncertainty, specimen and platform
         file: methods/uncertainty.qmd
       - text: Downstream statistics
@@ -161,10 +157,8 @@ website:
       contents:
       - text: Loading your data
         file: data/loading.qmd
-      - text: Preprocessing and coverage
+      - text: Preparing data and coverage
         file: data/preprocessing.qmd
-      - text: Raw arrays to betas
-        file: data/raw-arrays.qmd
     - section: Analysis
       contents:
       - text: Age acceleration
@@ -215,8 +209,6 @@ website:
     contents:
     - text: Published formulas
       file: methods/formulas.qmd
-    - text: From raw arrays to betas
-      file: methods/raw-arrays.qmd
     - text: Uncertainty, specimen and platform
       file: methods/uncertainty.qmd
     - text: Downstream statistics
@@ -311,58 +303,30 @@ quartodoc:
     - report.run_report
     - demo_data
   - title: Reading data
-    desc: Every reader returns the same container, so nothing downstream can tell which format
-      the data arrived in.
+    desc: 'Input is data that is already normalised and quality controlled: a beta matrix,
+      a GEO series matrix, a clinical chemistry table or a Nightingale NMR table. Every reader
+      returns the same container.'
     contents:
     - read_series_matrix
     - read_clinical
-    - read_rrbs_dir
-    - read_bedmethyl
-    - read_bedmethyl_dir
+    - read_nightingale
     - read_panel
     - read_computage_bench
     - list_computage_bench
-    - preprocess.read_olink
-    - preprocess.read_somascan
-    - preprocess.read_counts
-    - read_nightingale
     - FalconData
-  - title: Raw arrays
-    desc: IDAT to scoreable betas, which at first meant leaving FALCONAge for sesame or minfi
-      and coming back. The manifest is fetched from Illumina's public bucket and cached; it
-      is the one step here that is not offline. Detection is computed before background correction,
-      because pOOBAH's null is the uncorrected out-of-band signal.
-    contents:
-    - idat_to_betas
-    - read_idat_dir
-    - preprocess.poobah
-    - preprocess.noob
-    - preprocess.dye_bias
-    - preprocess.bmiq
-    - preprocess.RawSignal
-    - preprocess.load_manifest
-    - preprocess.manifest_record
-    - preprocess.load_mask
-    - preprocess.mask_report
-    - preprocess.apply_mask
-  - title: Preprocessing
-    desc: 'Getting a matrix into the shape every clock assumes: bare probe identifiers, values
-      in the beta range, a known platform. The EPIC v2 step is mandatory rather than optional
-      -- without it a v2 dataset overlaps almost nothing and the clocks score imputed values.'
+  - title: Preparing data
+    desc: 'The light steps scoring needs on an input matrix: bare probe identifiers, EPIC
+      v2 replicate probes collapsed, values in the beta range, a known platform, clinical
+      units converted. No normalisation or probe filtering; that belongs upstream. The EPIC
+      v2 step is not optional: without it a v2 dataset overlaps almost nothing and the clocks
+      score imputed values.'
     contents:
     - prepare_clinical
     - qc
     - probe_loss
     - preprocess.aggregate_replicate_probes
+    - preprocess.platform_probes
     - preprocess.impute
-    - fit_batch_reference
-    - apply_batch_reference
-    - preprocess.BatchReference
-    - preprocess.prepare_proteomic
-    - preprocess.prepare_transcriptomic
-    - preprocess.rle_normalise
-    - preprocess.yugene
-    - preprocess.median_centre
     - preprocess.horvath_normalise
   - title: Uncertainty
     desc: 'How much of a score is the assay, and how far it is likely to be from the truth.

@@ -44,39 +44,23 @@ groups:
 
   - title: Reading data
     desc: >-
-      Every reader returns the same container, so nothing downstream can tell
-      which format the data arrived in.
-    python: [read_series_matrix, read_clinical, read_rrbs_dir, read_bedmethyl,
-             read_bedmethyl_dir, read_panel, read_computage_bench,
-             list_computage_bench, preprocess.read_olink, preprocess.read_somascan,
-             preprocess.read_counts, read_nightingale, FalconData]
-    r: [read_series_matrix, read_clinical, read_rrbs_dir, falcon_data, obs, write_h5ad]
+      Input is data that is already normalised and quality controlled: a beta
+      matrix, a GEO series matrix, a clinical chemistry table or a Nightingale
+      NMR table. Every reader returns the same container.
+    python: [read_series_matrix, read_clinical, read_nightingale, read_panel, read_computage_bench, list_computage_bench, FalconData]
+    r: [read_series_matrix, read_clinical, falcon_data, obs, write_h5ad]
 
-  - title: Raw arrays
+  - title: Preparing data
     desc: >-
-      IDAT to scoreable betas, which at first meant leaving FALCONAge for
-      sesame or minfi and coming back. The manifest is fetched from Illumina's
-      public bucket and cached; it is the one step here that is not offline.
-      Detection is computed before background correction, because pOOBAH's null
-      is the uncorrected out-of-band signal.
-    python: [idat_to_betas, read_idat_dir, preprocess.poobah, preprocess.noob,
-             preprocess.dye_bias, preprocess.bmiq, preprocess.RawSignal,
-             preprocess.load_manifest, preprocess.manifest_record,
-             preprocess.load_mask, preprocess.mask_report, preprocess.apply_mask]
-    r: []
-
-  - title: Preprocessing
-    desc: >-
-      Getting a matrix into the shape every clock assumes: bare probe
-      identifiers, values in the beta range, a known platform. The EPIC v2 step
-      is mandatory rather than optional -- without it a v2 dataset overlaps
-      almost nothing and the clocks score imputed values.
-    python: [prepare_clinical, qc, probe_loss, preprocess.aggregate_replicate_probes,
-             preprocess.impute, fit_batch_reference, apply_batch_reference,
-             preprocess.BatchReference, preprocess.prepare_proteomic,
-             preprocess.prepare_transcriptomic, preprocess.rle_normalise,
-             preprocess.yugene, preprocess.median_centre, preprocess.horvath_normalise]
-    r: [horvath_normalise, qc, probe_loss, fit_batch_reference, apply_batch_reference]
+      The light steps scoring needs on an input matrix: bare probe identifiers,
+      EPIC v2 replicate probes collapsed, values in the beta range, a known
+      platform, clinical units converted. No normalisation or probe filtering;
+      that belongs upstream. The EPIC v2 step is not optional: without it a v2
+      dataset overlaps almost nothing and the clocks score imputed values.
+    python: [prepare_clinical, qc, probe_loss,
+             preprocess.aggregate_replicate_probes, preprocess.platform_probes,
+             preprocess.impute, preprocess.horvath_normalise]
+    r: [horvath_normalise, qc, probe_loss]
 
   - title: Uncertainty
     desc: >-
@@ -231,16 +215,13 @@ pairs:
   Reading data:
     - [read_series_matrix, read_series_matrix]
     - [read_clinical, read_clinical]
-    - [read_rrbs_dir, read_rrbs_dir]
     - [falcon_data, FalconData]
     - [obs, FalconData.obs]
     - [write_h5ad, FalconData.write_h5ad]
-  Preprocessing:
+  Preparing data:
     - [horvath_normalise, preprocess.horvath_normalise]
     - [qc, qc]
     - [probe_loss, probe_loss]
-    - [fit_batch_reference, fit_batch_reference]
-    - [apply_batch_reference, apply_batch_reference]
   Uncertainty:
     - [interval, interval]
     - [icc_from_replicates, icc_from_replicates]
@@ -335,10 +316,8 @@ book:
     chapters:
       - title: Loading your data
         file: data/loading.qmd
-      - title: Preprocessing and coverage
+      - title: Preparing data and coverage
         file: data/preprocessing.qmd
-      - title: Raw arrays to betas
-        file: data/raw-arrays.qmd
   - part: Analysis
     section: guide
     chapters:
@@ -381,8 +360,6 @@ book:
     chapters:
       - title: Published formulas
         file: methods/formulas.qmd
-      - title: From raw arrays to betas
-        file: methods/raw-arrays.qmd
       - title: Uncertainty, specimen and platform
         file: methods/uncertainty.qmd
       - title: Downstream statistics

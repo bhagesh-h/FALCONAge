@@ -19,6 +19,13 @@ deployed for months with a blank browser tab -- the ``favicon:`` key was in the
 design and never made it into the generated config -- and no test noticed,
 because a missing icon breaks nothing that a build can see.
 
+Also checked, because neither Quarto nor pkgdown checks them: every relative
+link in the pkgdown sources (``r/README.md`` and the vignettes) that leaves the
+R site for the Quarto one, and every absolute link to the published site
+written anywhere in the repository's text files (READMEs, the R help, the
+skill, the CHANGELOG). Both are checked against the rendered ``_site``; a page
+that was renamed or removed shows up here rather than as a 404 for a reader.
+
 WHAT IS NOT CHECKED. External URLs, which would make this a network test with a
 network test's flakiness, and ``mailto:``. The generated API trees under
 ``reference/`` and ``r/`` are skipped as link *sources*: quartodoc and pkgdown
@@ -34,6 +41,7 @@ Usage
 from __future__ import annotations
 
 import html
+import posixpath
 import re
 import sys
 from collections import defaultdict
@@ -136,6 +144,65 @@ def ids_in(path: Path) -> set[str]:
            {html.unescape(m) for m in NAME.findall(text)}
 
 
+SITE_URL = "https://bhagesh-h.github.io/FALCONAge/"
+SITE_LINK = re.compile(re.escape(SITE_URL) + r"([^\s)\]>\"'`,]*)")
+MD_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
+#: Text files that can carry a link a reader follows.
+SOURCE_GLOBS = ("*.md", "*.qmd", "*.Rmd", "*.Rd", "*.R", "*.py", "*.yml",
+                "*.yaml", "*.cff", "DESCRIPTION")
+SOURCE_SKIP = ("docs/_site/", "docs/r/", "test/output", "reference_repo/",
+               "docs/reference/", ".git/", "node_modules/")
+
+
+def _exists_on_site(path: str, frag: str = "") -> bool:
+    dest = SITE / unquote(path)
+    if path == "" or path.endswith("/") or dest.is_dir():
+        dest = dest / "index.html"
+    if not dest.exists():
+        return False
+    if frag and dest.suffix == ".html":
+        return unquote(frag) in ids_in(dest)
+    return True
+
+
+def check_sources() -> tuple[list[str], int]:
+    """Absolute site links in repository text, and pkgdown's links to the guide."""
+    broken: list[str] = []
+    checked = 0
+    files = sorted({f for g in SOURCE_GLOBS for f in ROOT.rglob(g)})
+    for f in files:
+        rel = f.relative_to(ROOT).as_posix()
+        if rel.startswith(SOURCE_SKIP) or not f.is_file():
+            continue
+        text = f.read_text(encoding="utf-8", errors="ignore")
+        for m in SITE_LINK.finditer(text):
+            url = m.group(1).rstrip(".;:")
+            if "{" in url or "}" in url or url.startswith(BUILT_AFTER_RENDER):
+                continue
+            path, frag = urldefrag(url)
+            checked += 1
+            if not _exists_on_site(path, frag):
+                broken.append(f"{rel}: -> {SITE_URL}{url}")
+    # pkgdown publishes r/README.md as r/index.html and each vignette as
+    # r/articles/<name>.html; a relative link leaving r/ lands on the guide.
+    pkg = [(ROOT / "r" / "README.md", "r/")]
+    pkg += [(v, "r/articles/") for v in sorted((ROOT / "r" / "vignettes").glob("*.Rmd"))]
+    for f, where in pkg:
+        if not f.exists():
+            continue
+        for target in MD_LINK.findall(f.read_text(encoding="utf-8", errors="ignore")):
+            if re.match(r"^[a-z][a-z0-9+.-]*:|^#", target, re.I):
+                continue
+            path, frag = urldefrag(target)
+            resolved = posixpath.normpath(posixpath.join(where, path))
+            if resolved.startswith(("r/", "..")):
+                continue
+            checked += 1
+            if not _exists_on_site(resolved, frag):
+                broken.append(f"{f.relative_to(ROOT).as_posix()}: -> {target}")
+    return broken, checked
+
+
 def main() -> int:
     if not SITE.exists():
         print(f"{SITE.relative_to(ROOT)} does not exist; render the site first:\n"
@@ -214,6 +281,15 @@ def main() -> int:
               "`in_header` include, both written by docs/build_docs.py.")
         return 1
 
+    src_broken, src_checked = check_sources()
+    if src_broken:
+        print(f"{len(src_broken)} link(s) to the documentation site, written in the "
+              f"repository's text files, point at nothing ({src_checked} checked):\n")
+        for b in sorted(src_broken)[:60]:
+            print(f"  {b}")
+        print("\nThe page was renamed or removed. Link to where the content is now.")
+        return 1
+
     if broken:
         print(f"{len(broken)} broken internal link(s) of {counts['checked']} "
               f"checked across {len(pages)} page(s):\n")
@@ -232,6 +308,8 @@ def main() -> int:
           f"{len(pages)} rendered page(s) all resolve, anchors included "
           f"({counts['deferred']} into downloads/ and r/ skipped: a later build "
           f"step writes those)")
+    print(f"{src_checked} link(s) to the site from the repository's text files and "
+          f"the pkgdown sources all resolve")
     return 0
 
 

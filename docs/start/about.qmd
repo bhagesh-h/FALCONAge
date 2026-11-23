@@ -59,7 +59,7 @@ clock, which is established and which is contested.
 Each gate is a place where the wrong answer is available and cheap. A clock scored on the wrong
 specimen, on too little of its own model, on a scale that does not admit the operation asked for,
 on clinical values whose units were never stated, or from a weights file that cannot be
-redistributed, all return a number that looks exactly like a right one. What comes out of the
+redistributed, all return a number that looks exactly like a right one. The output of the
 last gate is a score and a manifest recording which gates it passed and on what evidence.
 
 Each of these is a silent wrong answer somewhere else, so each is a hard failure here:
@@ -87,24 +87,22 @@ Each of these is a silent wrong answer somewhere else, so each is a hard failure
   score time, not left on a documentation page.
 
 ### Known limitations
-Said here rather than left to be inferred. [Uncertainty](../analysis/uncertainty.qmd) and [Raw arrays to betas](../data/raw-arrays.qmd) cover each
+Said here rather than left to be inferred. [Uncertainty](../analysis/uncertainty.qmd) and [Preparing data and coverage](../data/preprocessing.qmd) cover each
 in full, with the algorithms and the reason each is or is not blocked.
 
 - **It does not repair cross-platform probe loss.** It measures it twice over: by count, by
   coefficient mass, and now in *years* per clock per platform. It cannot undo it. The
   liftover mapping tables encode concordance measured on paired samples and are not derivable
   from the array manifests.
-- **It has no proteomic or transcriptomic clocks in the catalogue.** The readers and the full
-  preparation chains ship, and `fa.fit_clock()` fits a clock to either; no published model in
-  either family may be redistributed. Scoring a proteomic matrix against the catalogue refuses
-  with "no clocks to score", which is accurate rather than broken.
-- **It does not correct dye bias by default.** The step exists and is opt-in. Measured on real
-  IDATs our implementation moves the median beta by +0.10 to +0.12, because a correct correction
-  needs the normalisation control probes and their addresses are not in the manifest we can fetch.
+- **It does not preprocess raw data.** IDAT decoding, normalisation, detection filtering and
+  sample QC belong to an array pipeline such as
+  [methylarray](https://github.com/bhagesh-h/methylarray); FALCONAge reads the resulting beta
+  matrix. Its own preparation is limited to identifier harmonisation, EPIC v2 replicate
+  collapse and clipping.
+- **It has no proteomic or transcriptomic clocks.** No published model in either family may be
+  redistributed, and proteomic and transcriptomic tables are not read.
 - **It has no foundation-model backend.** The `NeuralClock` architecture ships, safetensors only.
   CpGPT and MethylGPT are interesting here for zero-shot imputation and array conversion rather
   than as another age predictor.
 
-Removed from this list, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
-probe masks), the raw-IDAT path, single-cell scoring, and the transcriptomic per-dataset centring
-refusal.
+Removed from this list, because it now exists: single-cell scoring.

@@ -150,8 +150,7 @@ an R export with the matching name and argument set, checked against the table i
 
 Benchmarks on a fixed synthetic dataset, run nightly, with results committed so a slowdown is
 visible in the history rather than discovered later. Tracked: per-clock scoring throughput at
-1,024 / 8,192 / 32,768 samples; KNN imputation on a 500 by 400,000 matrix; IDAT
-parsing throughput; peak memory for the largest clock (cAge).
+1,024 / 8,192 / 32,768 samples; KNN imputation on a 500 by 400,000 matrix; peak memory for the largest clock (cAge).
 
 ### Coverage targets
 

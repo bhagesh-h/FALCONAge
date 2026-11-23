@@ -56,7 +56,7 @@ weaker claim than verification and is stated as such.
 docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu python test/run_all.py
 
 # or one group at a time: registry, bench, epicv2, gestational,
-#                         mammalian, mouse, idat, clinical, disorder
+#                         mammalian, clinical, disorder
 docker run --rm -v "$PWD:/work" -w /work bhagesh/falconage:1.0.0-cpu \
   python test/run_all.py --groups bench,epicv2
 ```
@@ -75,16 +75,12 @@ table is quoted from a paper; those carry a DOI at the point of use instead.
 | Every clock on every study, one figure | `clock_atlas.png` | `python test/run_all.py --groups bench` |
 | EPIC v2 suffix aggregation: coverage 0 → 0.9603 | [below](#epic-v2-probe-suffix-aggregation) | `python test/run_all.py --groups epicv2` |
 | Zebra scores at 0.9632 Horvath coverage | [below](#mammalian-array-coverage-is-not-validity) | `python test/run_all.py --groups mammalian` |
-| Mouse RRBS ages labelled years, recorded in months | [below](#mouse-rrbs) | `python test/run_all.py --groups mouse` |
-| Raw IDATs vs published betas: **r = 0.99928**, median \|Δ\| 0.011 | [below](#raw-idats) | `python test/run_all.py --groups idat` |
 | Gestational clocks against recorded days-not-weeks | [below](#gestational-clocks) | `python test/run_all.py --groups gestational` |
 | PhenoAge / KDM / HD on blood chemistry | [below](#clinical-chemistry) | `python test/run_all.py --groups clinical` (synthetic); the R suite runs the real 15,160-sample NHANES III |
 | Registry counts: 178 clocks, 69 bundled / 52 untraced / 57 licensed | [below](#the-registry) | `python test/run_all.py --groups registry` |
 | Horvath 2013 technical SE **±1.58 years**, implied ICC 0.98 | [Propagating measurement error](../docs/methods/uncertainty.qmd#propagating-measurement-error) | `python python/tools/build_probe_icc.py --check`, then the `uncertainty` unit tests |
 | `hrsinchphenoage` shifts **+16.7 years** on EPIC v2 | [Probe loss, priced](../docs/methods/uncertainty.qmd#probe-loss-priced) | `python python/tools/build_platform_bias.py` |
 | Conformal interval widths per clock | [Prediction error](../docs/methods/uncertainty.qmd#prediction-error-is-a-different-larger-question) | `python python/tools/build_conformal.py` |
-| ComBat moves reported scores by up to **2.20 years**; frozen reference moves them by 0 | [Uncertainty](../docs/analysis/uncertainty.qmd) | `pytest python/tests/unit/test_batch.py` |
-| Dye bias moves the median beta by **+0.10 to +0.12** | [From raw arrays to betas](../docs/methods/raw-arrays.qmd) | `python test/run_all.py --groups idat` |
 | R and Python agree at tolerance **exactly zero** | [R package](../docs/dev/r-package.qmd) | `Rscript -e 'testthat::test_local("r")'` |
 | No page scrolls sideways at 320--1280 px | the rendered site | `python test/responsive_check.py` |
 | Every documented `fa.*` name and CLI verb exists | all 129 prose files, including the Claude skill | `python docs/check_api_docs.py` |
@@ -130,9 +126,7 @@ test/output/
 ├── clinical/synthetic/ scores_wide.csv run_manifest.json
 ├── epicv2/GSE330325/   scores_wide.csv coverage.csv run_manifest.json
 ├── gestational/GSE66459/  vs_recorded_gestational_age.csv
-├── idat/raw/           intensities.csv
 ├── mammalian/GSE184222/   scores_wide.csv run_manifest.json
-├── mouse/GSE80672/     coverage_filter.csv betas_head.csv
 └── registry/catalogue/ clocks.csv tier_a.csv tier_c.csv
 ```
 
@@ -338,48 +332,6 @@ same probes, same pipeline, no warning.
 
 If you take one thing from these results, take this: **feature coverage answers "can this clock
 run", never "should it".**
-
-## Mouse RRBS
-
-<!-- BEGIN GENERATED: mouse -->
-| samples | shared_sites | sites_at_cov1 | sites_at_cov5 | sites_at_cov20 | series_age_field | series_age_min | series_age_max |
-|---|---|---|---|---|---|---|---|
-| 4 | 1976975 | 1976975 | 1875045 | 1120532 | age (years) | 0.67 | 35 |
-<!-- END GENERATED: mouse -->
-
-**How to read it.** Two things this exercises that no array file can.
-
-**Coverage-weighted beta.** A site read four times and a site read four hundred times are not the
-same measurement. `sites_at_cov1` versus `sites_at_cov20` shows how much of the file is thin
-coverage; keeping it would let the clock report sequencing depth as biology.
-
-**Units that lie.** `series_age_field` is what GEO calls the age column and `series_age_max` is
-the largest value in it. A mouse does not live 35 years: the values are months, mislabelled at
-submission. This is a real published series, not a contrived example, and it is the best argument
-in the corpus for declaring units rather than inferring them.
-
-Sites are keyed by the NCBI `gi` accessions the submitter used, not by `chr:pos`. FALCONAge keeps
-them verbatim: remapping would need an assembly and a choice about which one, and making that
-choice silently is how a coordinate-keyed clock matches nothing while appearing to match
-something.
-
-## Raw IDATs
-
-<!-- BEGIN GENERATED: idat -->
-| platform | sample | addresses | grn_median | red_median | channels_identical |
-|---|---|---|---|---|---|
-| epicv1 | GSM5548192 | 1051815 | 4028 | 4184 | False |
-| epicv1 | GSM5548193 | 1051815 | 4036 | 3603 | False |
-| epicv2 | GSM9723838 | 1105209 | 2564 | 1846 | False |
-| epicv2 | GSM9723839 | 1105209 | 2718 | 1621 | False |
-<!-- END GENERATED: idat -->
-
-**How to read it.** Two EPIC v1 and two EPIC v2 samples, both channels each. `channels_identical`
-must be `False` - a parser that returned the same buffer for Grn and Red would produce beta values
-of exactly 0.5 everywhere and look superficially fine.
-
-This is the only input path FALCONAge controls end to end. Everything else in the corpus is
-somebody else's beta matrix, normalised by a pipeline whose choices are not recorded.
 
 ## Clinical chemistry
 
@@ -627,5 +579,4 @@ methylCIPHER's `calcIntrinClock` raises an error on this input.
   suite with synthetic coefficients; they cannot produce a number without a licensed file.
 - **FP64 gold-standard vectors.** The ComputAgeBench parquets are float32. Double-precision
   reference values have to come from the papers' own worked examples.
-- **Plate-level normalisation.** Four IDATs is not a plate.
 
