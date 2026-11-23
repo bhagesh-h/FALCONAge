@@ -85,9 +85,8 @@ Oracles are therefore ranked, and each vector records which tier it used:
 |---|---|---|
 | 1 | A worked example published by the clock's own authors, reference inputs and the age they report | a minority of clocks, but the only truth that is not somebody's code |
 | 2 | The authors' own reference implementation, run in a pinned environment | most clocks with an author repository |
-| 3 | Hand computation from the published equation, for clocks small enough | PhenoAge, Weidner, Vidal-Bralo, Bocklandt, Garagnani, ZhangMortality |
+| 3 | Hand computation from the published equation, for clocks small enough | PhenoAge, Weidner, Vidal-Bralo, ZhangMortality |
 | 4 | An independent third-party package, with at least two agreeing | the remainder |
-| 5 | Synthetic weights, architecture only | licensed clocks with no published worked example ([Scaffold-only clocks](algorithms.qmd#scaffold-only-clocks)) |
 
 A rank-4 vector where pyaging and biolearn disagree is not a vector; it is an open question, and
 it goes to `registry/diffs/` rather than to `tests/vectors/`.
@@ -110,7 +109,7 @@ Hypothesis in Python, `testthat` with generated inputs in R.
 | probability outputs lie in `[0, 1]` | `scale_type: probability` |
 | permuting feature column order does not change the result | every clock |
 | duplicating a sample does not change either copy's score | every clock except per-sample-normalised ones |
-| per-sample-normalised clocks DO change under sample duplication | ZhangEN, ZhangBLUP, DunedinPACE, Pasta, REG - this is a property, not a bug, and the test pins it |
+| per-sample-normalised clocks DO change under sample duplication | ZhangEN, ZhangBLUP - this is a property, not a bug, and the test pins it |
 | a synthetic monotone age gradient produces a monotone prediction | chronological clocks |
 | `score(x)[i] == score(x[i])` for a single sample | every clock without per-sample normalisation |
 | FP32 and FP64 agree within the registry's per-clock tolerance | every clock |
@@ -152,7 +151,7 @@ an R export with the matching name and argument set, checked against the table i
 Benchmarks on a fixed synthetic dataset, run nightly, with results committed so a slowdown is
 visible in the history rather than discovered later. Tracked: per-clock scoring throughput at
 1,024 / 8,192 / 32,768 samples; KNN imputation on a 500 by 400,000 matrix; IDAT
-parsing throughput; peak memory for the largest PC clock.
+parsing throughput; peak memory for the largest clock (cAge).
 
 ### Coverage targets
 

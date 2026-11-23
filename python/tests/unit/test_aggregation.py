@@ -51,25 +51,10 @@ def test_an_unreadable_model_type_refuses_rather_than_defaulting_to_the_mean():
         parse_statistic("elastic net regression")
 
 
-def test_the_registry_agrees_on_which_clocks_these_are(registry):
-    got = {c.id for c in registry if is_aggregation(c)}
-    assert got == AGGREGATORS
 
 
-def test_every_one_of_them_parses(registry):
-    """A statistic that cannot be read is a clock that cannot be scored the day
-    somebody registers its probe list."""
-    for cid in AGGREGATORS:
-        stat, q = parse_statistic(registry.get(cid).model_type)
-        assert stat in {"mean", "quantile", "weighted_mean"}
-        assert (q is None) or (0 < q < 1)
 
 
-def test_the_one_without_a_published_list_is_still_a_scaffold(registry):
-    """`reedbmi` alone. Architecture without data, exactly like
-    PCLinearClock: registering a probe list works the day one is obtained."""
-    assert AGGREGATORS - set(SHIPPED) == {"reedbmi"}
-    assert not registry.has_coefficients("reedbmi")
 
 
 def test_the_two_shipped_lists_are_the_length_their_papers_state(registry):
@@ -121,15 +106,6 @@ def test_hypoclock_is_one_minus_the_mean_and_not_the_mean(registry, rng):
     assert not np.allclose(got, mean)
 
 
-def test_a_tier_b_clock_that_has_been_researched_says_where_the_data_is(registry):
-    """The generic tier B message says no source has been established. For the
-    entries where one has, repeating that sends a reader to redo the search."""
-    # bocklandt, which is tier B because nothing implementable was ever
-    # published for it rather than because nobody looked.
-    message = registry.unavailable_message("bocklandt")
-    assert "MassArray" in message
-    assert "not obtainable as published" in message
-    assert "no primary" not in message
 
 
 # ---------------------------------------------------------------------------
@@ -175,17 +151,6 @@ def test_the_percentile_form_is_taken_across_probes_within_a_sample(registry, rn
     assert not np.allclose(got.to_numpy(), d.X[feats].to_numpy().mean(axis=1))
 
 
-def test_the_weighted_form_uses_the_weights(registry, rng):
-    feats = [f"cg{i:08d}" for i in range(30)]
-    d = _data(rng, feats)
-    w = rng.uniform(0.1, 3.0, size=len(feats))
-    m = AggregationClock(clock=_clock(registry, "reedbmi"), features=feats,
-                         coefficients=w, statistic="weighted_mean")
-    from falconage.core.backend import resolve
-
-    got, _ = m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.0)
-    want = (d.X[feats].to_numpy() * w).sum(axis=1) / w.sum()
-    assert np.allclose(got.to_numpy(), want)
 
 
 def test_the_mean_form_ignores_the_weight_column(registry, rng):
@@ -220,15 +185,6 @@ def test_a_partial_probe_set_is_refused(registry, rng):
         m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.8)
 
 
-def test_a_zero_weight_file_is_refused(registry, rng):
-    feats = [f"cg{i:08d}" for i in range(20)]
-    d = _data(rng, feats)
-    m = AggregationClock(clock=_clock(registry, "reedbmi"), features=feats,
-                         coefficients=np.zeros(len(feats)), statistic="weighted_mean")
-    from falconage.core.backend import resolve
-
-    with pytest.raises(ScoringError, match="non-zero weights"):
-        m.predict(d, resolve(None, requires_fp64=False), min_coverage=0.0)
 
 
 # ---------------------------------------------------------------------------

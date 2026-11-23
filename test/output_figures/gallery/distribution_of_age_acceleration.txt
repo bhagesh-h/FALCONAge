@@ -1,0 +1,6 @@
+Distribution of age acceleration
+
+altumage · residual convention · n = 28
+
+Counted, not smoothed: a kernel density on a dozen cases invents structure
+that is not in the data.

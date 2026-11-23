@@ -9,6 +9,7 @@ import pytest
 import falconage as fa
 from falconage.analysis.learners import folds, metrics
 from falconage.core.errors import AnalysisError, IllegalOperationError, RegistryError
+from falconage.demo import write_demo
 
 
 @pytest.fixture(scope="module")
@@ -154,3 +155,57 @@ def test_a_stack_with_a_per_sample_standardisation_is_not_collapsed(scored, tmp_
     st = fa.stack_clocks(scored, clocks=["hannum", "zhangen"], method="nnls")
     with pytest.raises(AnalysisError, match="not a plain weighted sum"):
         st.to_clock("nope", tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# the coverage map
+# ---------------------------------------------------------------------------
+def test_coverage_map_has_a_track_and_a_coverage_for_every_methylation_clock():
+    d = fa.demo_data(n=6)
+    reg = fa.registry.load()
+    fig, table = fa.plot.clock_coverage_manhattan(d)
+    meth = {c.id for c in reg if c.data_type == "dna_methylation" and c.origin == "registry"}
+    assert meth <= set(table.index)
+    assert (table["coverage"] == 100.0).all()          # the demo carries every clock CpG
+    assert (table["n_placed"] >= 0.99 * table["n_features"]).all()
+    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    assert any(l.startswith("horvath2013") and l.endswith("100.0%") for l in labels)
+
+
+def test_coverage_map_greys_out_what_the_data_lacks_and_shows_a_user_clock(tmp_path):
+    d = fa.demo_data(n=6)
+    horvath = list(fa.registry.load().feature_ids("horvath2013"))
+    d.X = d.X.drop(columns=horvath[: len(horvath) // 2])
+    (tmp_path / "mine.csv").write_text("feature_id,coefficient\n(Intercept),1\n"
+                                       + "".join(f"{f},0.1\n" for f in horvath[:20]))
+    (tmp_path / "mine.yaml").write_text(
+        "id: mytestclock\nname: x\ndata_type: dna_methylation\ntissue: [whole blood]\n"
+        "training_target: [chronological age]\nscale_type: age_years\nunit: [years]\n"
+        "coefficients: mine.csv\n")
+    reg = fa.registry.load()
+    try:
+        reg.add_clock(tmp_path / "mine.yaml", replace=True)
+        pts, table = fa.plot.clock_coverage_points(d)
+        assert table.loc["horvath2013", "coverage"] == pytest.approx(
+            100 * (len(horvath) - len(horvath) // 2) / len(horvath), abs=0.1)
+        assert table.loc["mytestclock", "origin"] == "user"
+        assert table.loc["mytestclock", "n_shared"] == 20     # every CpG is also Horvath's
+        assert not pts.loc[pts.clock == "horvath2013", "present"].all()
+    finally:
+        reg._clocks.pop("mytestclock", None)
+
+
+@pytest.mark.slow
+def test_run_draws_the_coverage_map_first_even_without_figures(tmp_path):
+    from falconage.cli.app import main
+
+    betas, samples = write_demo(tmp_path / "in", n=8)
+    out = tmp_path / "out"
+    assert main(["run", str(betas), "--samples", str(samples), "--outdir", str(out),
+                 "--clocks", "horvath2013", "--no-figures"]) == 0
+    assert (out / "figures" / "clock_coverage_across_the_genome.png").exists()
+    assert (out / "figures" / "clock_coverage_across_the_genome.txt").read_text().startswith(
+        "Clock coverage across the genome\n")
+    assert "horvath2013" in pd.read_csv(out / "clock_coverage.csv")["clock"].tolist()
+    html = (out / "report.html").read_text()
+    assert html.index("Clock coverage across the genome") < html.index("<h2>Scores</h2>")

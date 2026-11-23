@@ -1,0 +1,6 @@
+Agreement across the age range
+
+altumage · bias = 41.92 years · limits of agreement 21.8 to 62.1
+
+A trend in this cloud means the clock's error depends on age, which a
+correlation coefficient cannot show and which invalidates a single MedAE.

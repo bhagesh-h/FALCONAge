@@ -3,17 +3,17 @@
 ## What a clock is
 
 A supervised model mapping molecular features to a scalar. What the scalar *means* is set by the
-outcome it was regressed on, not by the units it is reported in. Six families, trained on six
-different targets, all commonly reported as "biological age":
+outcome it was regressed on, not by the units it is reported in. FALCONAge ships 68 human
+clocks in six families, trained on six different targets, all commonly reported as "biological age":
 
 | Family | Trained on | Examples | What the number is |
 |---|---|---|---|
 | **First-generation** | calendar age | Horvath 2013, Hannum, SkinAndBlood | an estimate of age, with prediction error against a known truth |
-| **Second-generation** | a survival-weighted composite, then rescaled to years | PhenoAge, GrimAge (`licensed`) | years as a unit; age was never the target |
-| **Pace-of-aging** | the *rate of change* in organ-system biomarkers, tracked longitudinally | DunedinPACE (`licensed`), DunedinPoAm | a rate: biological ageing per calendar year |
+| **Second-generation** | a survival-weighted composite, then rescaled to years | DNAm PhenoAge, PhenoAge, KDM, LinAge2 | years as a unit; age was never the target |
+| **Pace-of-aging** | the *rate of change* in organ-system biomarkers, tracked longitudinally | DunedinPoAm38 | a rate: biological ageing per calendar year |
 | **Mitotic** | cumulative stem-cell divisions | epiTOC2, StemTOC, HypoClock | a count, not elapsed time |
 | **Causality-enriched** | CpGs with Mendelian-randomisation support | CausAge, DamAge, AdaptAge | damaging vs adaptive change, separated |
-| **Deconvolution** | cell-type reference profiles | the Salas 12-cell panel (`untraced`) | proportions, constrained to sum to one |
+| **Deconvolution** | cell-type reference profiles | the six IDOL blood cell types | proportions, not forced to sum to one |
 
 Reporting all six as "biological age" throws away the information needed to interpret any of them.
 
@@ -35,9 +35,7 @@ has no acceleration left with which to detect anything.
 | How long are the telomeres? | `dnamtl` | `telomere_kb` |
 | How many times has this tissue divided, relative to another sample? | `epitoc1` (mean over 385 polycomb-target CpGs), `hypoclock` (1 minus the mean over 678 solo-WCGWs), `stemtoc` (95th percentile over 371), `stemtocvitro` (over 629), `epicmithyper` (mean over 184), `epicmithypo` (1 minus the mean over 1,164), `replitali` (87 CpGs, linear) | `divisions` |
 | How many times has it divided, in divisions per stem cell? | `epitoc2` (163 sites), `epitoc3` (170 sites) | `divisions` |
-| Which organ system is aging fastest? | none ship. SystemsAge is licence-restricted | — |
-| What is the blood's cell composition? | none ship; the Salas panels are `untraced`, with no coefficient source traced yet | `proportion` |
-| How old is this **mouse**? | `meer` (435 RRBS sites, whole-lifespan multi-tissue) | `age_years`, reported in months |
+| What is the blood's cell composition? | the six `deconvolutebloodepic*` cell types | `proportion` |
 
 **The two questions in that pair are different questions.** The seven relative
 scores are summaries of a probe set, bounded by 0 and 1, and they compare
@@ -60,12 +58,6 @@ its published equation uses an unnamed site upstream of `cg17861230`, measured
 by pyrosequencing, which carries 164.7 of the model against 26.4 and 23.7 for
 the two real probes. It warns at score time.
 
-**The mouse clock is keyed differently from every other entry.** Its features
-are mm10 `chromosome:position`, not `cg` probe ids, which is what
-`read_bedmethyl` produces and what an mm10-aligned RRBS pipeline gives you.
-Data whose contigs are named some other way will match nothing, and the
-coverage floor is what stops that being scored anyway. Its output is months,
-converted from the days the model returns.
 
 `fa.registry.load().compatible_with(d)` answers this against a real dataset, which beats any table.
 
@@ -76,37 +68,32 @@ support it rather than returning a units error dressed as a number.
 
 | Scale | n | Permitted | Refused, and why |
 |---|---:|---|---|
-| `age_years` | 73 | acceleration, residual, difference, mean, correlate | — |
-| `relative_score` | 44 | correlate, rank | no external unit to difference or average |
-| `proportion` | 18 | compositional, difference, mean, correlate | anything ignoring sum-to-one |
-| `divisions` | 10 | difference, mean, rank, correlate | acceleration: a division count is not elapsed time |
-| `gestational_weeks` | 8 | acceleration, residual, difference, mean | mixing with an age in years |
-| `telomere_kb` | 2 | acceleration, difference, mean, correlate | comparison with an age in years; and **higher is younger** here, unlike every age clock beside it |
-| `pace_ratio` | 2 | difference, mean, rank, correlate | acceleration: it is already a rate |
+| `age_years` | 23 | acceleration, residual, difference, mean, correlate | — |
+| `relative_score` | 18 | correlate, rank | no external unit to difference or average |
+| `divisions` | 9 | difference, mean, rank, correlate | acceleration: a division count is not elapsed time |
+| `proportion` | 6 | compositional, difference, mean, correlate | anything ignoring the composition |
+| `gestational_weeks` | 6 | acceleration, residual, difference, mean | mixing with an age in years |
 | `mortality_log_hazard` | 2 | hazard ratio, mean, rank, correlate | acceleration: a log-hazard has no zero on the age scale |
 | `age_years_relative` | 2 | residual, difference, mean, correlate | acceleration: slope against age is near one but the origin moves between cohorts |
+| `telomere_kb` | 1 | acceleration, difference, mean, correlate | comparison with an age in years; and **higher is younger** here, unlike every age clock beside it |
+| `pace_ratio` | 1 | difference, mean, rank, correlate | acceleration: it is already a rate |
 
 `age_years_relative` exists because of a measurement: DamAge tracks age with a pooled slope of
 0.967, better than DNAmPhenoAge, but its offset swings **162 years** between cohorts against
 Horvath's 15. The residual and group differences are defined; `predicted − chronological` is not.
 
-## Availability, which is about rights and not about quality
+## Every clock runs
 
-| Availability | n | What it means |
-|---|---:|---|
-| `bundled` | 69 | Scores offline. 66 ship a coefficient or parameter file; 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. |
-| `untraced` | 52 | Catalogued, no traced coefficient source yet. Never copied out of another package unchecked: of the thirteen taken from catalogues and checked against the paper, three catalogue copies were wrong. |
-| `licensed` | 57 | Architecture implemented and tested; coefficients are research-use-only. Supply a licensed file and the same code scores them. |
-
-Every architecture is implemented and tested whatever the group. The values were
-A, B and C until they were renamed to say what they mean; the letters are still
-accepted by `--tier` and by `filter(availability=)` so older scripts keep working.
+All 68 catalogued clocks ship their coefficients (62 on DNA methylation, 4 on clinical chemistry,
+2 on NMR) or are formulas with none to ship, so every one scores offline. A clock that is not in
+the catalogue can be fitted with `fa.fit_clock()` or added from a YAML entry and a coefficient file
+with `fa.add_clock()`; it is then scored like any catalogue clock.
 
 ## Traps that bite
 
-**Coverage is not validity.** The mammalian array carries 96% of Horvath2013's 353 probes, so a
-zebra scores at *higher* coverage than many human 450K datasets and returns a confident number
-from a clock fitted on people. Nothing in the arithmetic notices. Set `species`.
+**Coverage is not validity.** High coverage says the probes are present, not that coefficients
+fitted on one tissue or population transfer to yours. Every run draws the coverage map first:
+one genome track per clock, grey where the data lacks a CpG.
 
 **Counting probes is not weighing them.** An elastic net's weights are nothing like uniform.
 96% of probes present can be 61% of the model. `probe_loss()` reports both count coverage and
@@ -121,14 +108,14 @@ identifiers finds *zero* features and then returns a plausible number computed e
 imputed values. Suffix aggregation is mandatory and `prepare()` does it. Even done correctly,
 probe loss shifts `hrsinchphenoage` by +16.7 years on EPIC v2 and `hannum` by −7.7.
 
-**Eleven clocks disagree with their own papers.** Bohlin (96 CpGs published, 251 in circulation),
-CVDWesterman (1,305 vs 235), ZhangMortality (an integer count published, a continuous sum
-implemented), the three Ying clocks (off by one each), and others. Every one carries the note and
+**Some clocks disagree with their own papers.** Bohlin (96 CpGs published, 251 in circulation),
+ZhangMortality (an integer count published, a continuous sum implemented), the three Ying clocks
+(off by one each), the McCartney EpiScores, and others. Every one carries the note and
 raises it as a warning at score time rather than silently inheriting one side.
 
 **Reliability means two things.** Technical ICC repeats the same DNA; biological ICC re-samples
-the same person days later. They do not track together, and GrimAge2 and DunedinPACE, the two
-most often used to claim an intervention worked, are among the most biologically fragile.
+the same person days later. They do not track together, and the mortality- and pace-trained
+clocks most often used to claim an intervention worked are among the most biologically fragile.
 
 **One significant clock is probably a false positive.** Re-analysing six intervention datasets,
 exactly one clock reached significance in five of them, a first-generation clock every time, and

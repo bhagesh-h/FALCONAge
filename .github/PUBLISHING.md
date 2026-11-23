@@ -123,6 +123,9 @@ maybe.
 One Dockerfile, two targets, three tags, all pushed by hand at release:
 
 ```bash
+# the published images, to compare against before replacing them
+docker pull bhagesh/falconage:latest
+docker pull bhagesh/falconage:1.0.0-py
 docker build -f docker/Dockerfile.cpu -t bhagesh/falconage:1.0.0-cpu -t bhagesh/falconage:latest .
 docker build -f docker/Dockerfile.cpu --target py -t bhagesh/falconage:1.0.0-py .
 docker push bhagesh/falconage:1.0.0-cpu

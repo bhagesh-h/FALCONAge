@@ -33,8 +33,7 @@ docker run --rm bhagesh/falconage:1.0.0-cpu config
 ::: {.falcon-output}
 ```
 FALCONAge 1.0.0
-  registry     1.1.0 (178 clocks)
-  availability 69 bundled - 52 untraced - 57 licensed
+  registry     1.1.0  (68 human clocks, 68 score offline)
   numpy        2.5.1
   cpu cores    8
 ```
@@ -87,7 +86,14 @@ docker run --rm -v "$PWD:/work" -v falconage-cache:/opt/falconage/cache \
 
 ### Building the image yourself
 
-From a clone of the repository, about ten minutes the first time:
+Both images are published, so pulling is the two-minute route:
+
+```bash
+docker pull bhagesh/falconage:1.0.0-cpu
+docker pull bhagesh/falconage:1.0.0-py
+```
+
+To build them from a clone of the repository instead, about ten minutes the first time:
 
 ```bash
 git clone https://github.com/bhagesh-h/FALCONAge.git

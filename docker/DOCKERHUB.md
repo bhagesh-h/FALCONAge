@@ -8,7 +8,7 @@
 # FALCONAge
 
 Biological age and aging-clock scoring from DNA methylation, clinical
-chemistry and NMR metabolomics data. 178 catalogued clocks, 69 of them scoring
+chemistry and NMR metabolomics data. 68 human clocks, every one scoring
 offline with coefficients bundled in the image. Python and R return the same
 numbers, because the R package delegates every calculation to the same Python
 core.

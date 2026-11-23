@@ -1,0 +1,9 @@
+Scores with the uncertainty they carry
+
+dnamphenoage · n = 27 · years
+
+Two samples whose bars overlap are not distinguishable by this clock on this
+assay. The narrow bar is measurement error: what a repeat of the same DNA
+would do. The wide grey bar, where present, is the conformal prediction
+interval against chronological age, which is a larger question and has a
+larger answer. Neither is a confidence interval on a diagnosis.

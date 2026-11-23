@@ -1,0 +1,9 @@
+Does the difference hold up across clocks?
+
+verdict: unsupported · 44 clocks tested · alpha 0.05
+
+One bar per clock, coloured by generation; * survives Benjamini-Hochberg and
+** survives Bonferroni across the tests actually run. The shape is the
+finding, not any one bar. A real change lights up across generations; a single
+lit bar among twenty dark ones is the published signature of a false positive,
+and five of six re-analysed intervention datasets looked exactly like that.

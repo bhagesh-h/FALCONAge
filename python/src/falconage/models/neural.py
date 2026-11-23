@@ -19,7 +19,7 @@ scale, and no coefficient file to checksum.
 
 WHAT SHIPS HERE. The architecture, loaded from ``safetensors`` only. No weights
 for any neural clock are redistributable, so this is a scaffold in exactly the
-sense :class:`PCLinearClock` is: implemented, tested on synthetic weights, and
+sense a licensed scaffold is: implemented, tested on synthetic weights, and
 usable the day a user supplies a file.
 
 WHY SAFETENSORS AND NOT A PICKLE. Loading a pickled file executes

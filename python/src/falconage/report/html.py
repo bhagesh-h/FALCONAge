@@ -36,6 +36,8 @@ td.num { text-align:right; font-variant-numeric:tabular-nums; }
 .kv dt { color:var(--muted); }
 .kv dd { margin:0; font-variant-numeric:tabular-nums; }
 img { max-width:100%; height:auto; }
+figure { margin:1rem 0 1.5rem; }
+figcaption { font-size:.88rem; color:var(--muted); max-width:60rem; line-height:1.45; margin-top:.35rem; }
 code { font-family:var(--font-mono); background:var(--panel); padding:.1rem .3rem;
        border-radius:3px; font-size:.85em; }
 footer { margin-top:3rem; color:var(--muted); font-size:.8rem; }
@@ -63,16 +65,57 @@ def _table(df: pd.DataFrame, max_rows: int = 60) -> str:
     return f'<div class="scroll"><table><tr>{head}</tr>{"".join(rows)}</table></div>{more}'
 
 
+def _caption(title: str, subtitle: str, description: str) -> str:
+    out = f"<figcaption><b>{html.escape(title)}.</b>"
+    if subtitle:
+        out += f" {html.escape(subtitle)}."
+    if description:
+        out += f" {html.escape(' '.join(description.split()))}"
+    return out + "</figcaption>"
+
+
 def _fig(fig) -> str:
+    """The figure as an inline PNG, its title and description as an HTML caption.
+
+    The PNG carries no title or caption of its own (see
+    :func:`falconage.plot.save_figure`), so the report supplies them here.
+    """
+    from ..plot import figure_text
+
+    t = figure_text(fig)
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight", dpi=140)
-    return ('<img alt="" src="data:image/png;base64,'
-            + base64.b64encode(buf.getvalue()).decode() + '">')
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=140, facecolor="white")
+    try:
+        import matplotlib.pyplot as plt
+
+        plt.close(fig)
+    except Exception:  # noqa: BLE001
+        pass
+    return ('<figure><img alt="' + html.escape(t["title"]) + '" src="data:image/png;base64,'
+            + base64.b64encode(buf.getvalue()).decode() + '">'
+            + _caption(t["title"], t["subtitle"], t["description"]) + "</figure>")
+
+
+def _png_with_txt(png: Path) -> str:
+    """An already-written figure, captioned from the ``.txt`` beside it."""
+    img = base64.b64encode(png.read_bytes()).decode()
+    from ..plot._common import read_caption
+
+    t = read_caption(png)
+    title = t["title"] or png.stem.replace("_", " ").capitalize()
+    sub, desc = t["subtitle"], t["description"]
+    return (f'<figure><img alt="{html.escape(title)}" src="data:image/png;base64,{img}">'
+            + _caption(title, sub, desc) + "</figure>")
 
 
 def write_report(result, path: str | Path, *, age_col: str = "age",
-                 group: str | None = None, title: str = "FALCONAge report") -> Path:
-    """Render one self-contained HTML file for a scoring run."""
+                 group: str | None = None, title: str = "FALCONAge report",
+                 coverage_map: str | Path | None = None) -> Path:
+    """Render one self-contained HTML file for a scoring run.
+
+    ``coverage_map`` is the PNG of :func:`falconage.plot.clock_coverage_manhattan`,
+    shown first, before the scores, as it was drawn before them.
+    """
     m = result.manifest
     parts: list[str] = []
 
@@ -80,6 +123,11 @@ def write_report(result, path: str | Path, *, age_col: str = "age",
     parts.append(f'<p class="sub">{result.scores.shape[0]} samples &times; '
                  f'{result.scores.shape[1]} clocks &middot; '
                  f'FALCONAge {m.falconage_version} &middot; registry {m.registry_version}</p>')
+
+    if coverage_map and Path(coverage_map).is_file():
+        parts.append("<h2>Clock coverage across the genome</h2>"
+                     '<p class="sub">Drawn before any clock was scored.</p>'
+                     + _png_with_txt(Path(coverage_map)))
 
     parts.append("<h2>Run</h2><dl class='kv'>")
     for k, v in (("started", m.started_utc), ("finished", m.finished_utc or ""),

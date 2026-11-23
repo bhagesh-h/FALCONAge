@@ -14,7 +14,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside,
     _wrap_caption,
 )
 
@@ -42,12 +42,6 @@ def ba_vs_ca(result, clock: str, *, age_col: str = "age", group: str | None = No
             ax.scatter(sub["chronological"], sub["predicted"], s=theme_value("point_size") * 8,
                        alpha=theme_value("point_alpha"), color=cols[g], label=g,
                        edgecolor="none")
-        # Outside the panel: a key drawn over a scatter hides exactly
-        # the points a reader is looking for. See clock_pca.
-        fig.set_size_inches(fig.get_figwidth() * 1.18, fig.get_figheight())
-        ax.legend(frameon=False, fontsize=theme_value("caption_size"),
-                  loc="upper left", bbox_to_anchor=(1.015, 1.0),
-                  borderaxespad=0.0, handletextpad=0.4, labelspacing=0.55)
     else:
         ax.scatter(d["chronological"], d["predicted"], s=theme_value("point_size") * 8,
                    alpha=theme_value("point_alpha"), color=palette()[0], edgecolor="none")
@@ -55,7 +49,8 @@ def ba_vs_ca(result, clock: str, *, age_col: str = "age", group: str | None = No
     lim = [float(np.nanmin(d[["chronological", "predicted"]].to_numpy())),
            float(np.nanmax(d[["chronological", "predicted"]].to_numpy()))]
     ax.plot(lim, lim, color=semantic("reference"), lw=theme_value("line_width"),
-            ls=theme_value("reference_line"), zorder=0)
+            ls=theme_value("reference_line"), zorder=0, label="identity")
+    _legend_outside(fig, ax)
 
     r = float(d["chronological"].corr(d["predicted"])) if len(d) > 2 else np.nan
     medae = float(np.median(np.abs(d["predicted"] - d["chronological"])))
@@ -83,9 +78,13 @@ def bland_altman(result, clock: str, *, age_col: str = "age"):
     fig, ax = _new()
     ax.scatter(d["mean"], d["diff"], s=theme_value("point_size") * 8,
                alpha=theme_value("point_alpha"), color=palette()[0], edgecolor="none")
-    _ref(ax, "h", 0.0)
-    for v, style in ((bias, "-"), (lo, ":"), (hi, ":")):
-        ax.axhline(v, color=semantic("case"), lw=theme_value("line_width"), ls=style)
+    _ref(ax, "h", 0.0, label="no difference")
+    ax.axhline(bias, color=semantic("case"), lw=theme_value("line_width"), ls="-",
+               label=f"mean difference ({bias:+.2f})")
+    for i, v in enumerate((lo, hi)):
+        ax.axhline(v, color=semantic("case"), lw=theme_value("line_width"), ls=":",
+                   label="95% limits of agreement" if i == 0 else None)
+    _legend_outside(fig, ax)
     _dress(fig, ax, spec.text("bland_altman", clock=clock, bias=f"{bias:.2f}",
                               lo=f"{lo:.1f}", hi=f"{hi:.1f}"))
     return fig, d
@@ -110,9 +109,11 @@ def calibration(result, clock: str, *, age_col: str = "age"):
     fig, ax = _new()
     ax.scatter(d["chronological"], d["residual"], s=theme_value("point_size") * 8,
                alpha=theme_value("point_alpha"), color=palette()[0], edgecolor="none")
-    _ref(ax, "h", 0.0)
+    _ref(ax, "h", 0.0, label="perfect calibration")
     xs = np.linspace(d["chronological"].min(), d["chronological"].max(), 50)
     ax.plot(xs, rslope * xs + np.mean(d["residual"]) - rslope * np.mean(d["chronological"]),
-            color=semantic("case"), lw=theme_value("line_width"))
+            color=semantic("case"), lw=theme_value("line_width"),
+            label=f"linear trend (slope {rslope:+.3f})")
+    _legend_outside(fig, ax)
     _dress(fig, ax, spec.text("calibration", clock=clock, slope=f"{rslope:+.3f}"))
     return fig, d

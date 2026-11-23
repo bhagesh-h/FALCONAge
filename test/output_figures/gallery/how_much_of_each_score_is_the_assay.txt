@@ -1,0 +1,9 @@
+How much of each score is the assay
+
+43 clocks · probe · bar is SE / cohort SD; the label is the raw SE
+
+Measurement error propagated from published per-probe reliability through each
+clock's own weights. The ICC beside each bar is what this cohort implies, not
+a published figure: green above 0.8, amber below it, red where the assay noise
+is as large as the spread between these samples, a clock that cannot tell them
+apart, however confident its point estimate.

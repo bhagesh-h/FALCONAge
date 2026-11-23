@@ -4,9 +4,11 @@ subtitle: "Biological age and aging-clock scoring from multiomic data, in Python
 body-classes: falcon-home
 ---
 
-FALCONAge applies published aging clocks to DNA methylation, clinical chemistry and NMR
-metabolomics data, and reads and prepares proteomic and transcriptomic data. Every score comes
+FALCONAge applies 68 published human aging clocks to DNA methylation, clinical chemistry and NMR
+metabolomics data. Every clock ships its coefficients and runs offline, and every score comes
 back with its unit, where its coefficients came from, and how much of it is measurement noise.
+
+![**Clock coverage across the genome.** Every DNA methylation clock in FALCONAge, one track each, with its CpGs at their positions on the genome (hg19). Coloured where the EPIC v1 array carries the CpG, grey where it does not; the legend gives each clock's colour and the share of its CpGs on the array. CpGs that line up across tracks are shared between clocks. A run draws the same figure for your own data before any clock is scored.](figures/gallery/clock_coverage_across_the_genome.png){#fig-coverage-map}
 
 ## Run it in three commands
 
@@ -53,7 +55,7 @@ run writes and how to read the report.
 
 ## What comes out
 
-- One score per sample per clock, for as many of the 178 catalogued clocks as your features support
+- One score per sample per clock, for as many of the 68 catalogued clocks as your features support
 - **A standard error on every score**, propagated from published per-probe reliability through each
   clock's own weights, and a distribution-free prediction interval
 - A coverage figure per clock, and what the probes you are missing cost in *years*
@@ -117,13 +119,13 @@ reference, so the list for an analysis comes out of the analysis:
 ### Python
 
 ```python
-fa.registry.load().get("grimage2").cite("bibtex")
+fa.registry.load().get("dnamphenoage").cite("bibtex")
 ```
 
 ### R
 
 ```r
-cite_clock("grimage2", "bibtex")
+cite_clock("dnamphenoage", "bibtex")
 ```
 
 :::

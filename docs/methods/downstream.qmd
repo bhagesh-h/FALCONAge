@@ -56,5 +56,4 @@ absolute change and the change relative to the measurement's own ICC.
 Intraclass correlation coefficient on technical replicates (same DNA, two arrays) and on
 biological replicates (same person, short interval). Pool across studies with Fisher-Z. The
 result to remember is from Sehgal et al. (bioRxiv 2025.10.13.682176), on the TranslAGE platform: **technical reproducibility does not predict
-biological reliability**, and PCGrimAge was the only clock reaching ICC > 0.75 for biological
-reliability. A tool should surface each clock's published ICC next to its prediction.
+biological reliability**. A tool should surface each clock's published ICC next to its prediction.

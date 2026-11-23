@@ -47,10 +47,10 @@ def cmd_config(args) -> int:
         _p(json.dumps(cfg, indent=2, sort_keys=True))
         return 0
     _p(f"FALCONAge {cfg['falconage']}")
-    _p(f"  registry     {cfg['registry_version']}  ({cfg['n_clocks']} clocks)")
-    t = cfg["clocks_by_availability"]
-    _p(f"  availability {t['bundled']} bundled - {t['untraced']} untraced - "
-       f"{t['licensed']} licensed")
+    _p(f"  registry     {cfg['registry_version']}  ({cfg['n_clocks']} human clocks, "
+       f"{cfg['runnable_offline']} score offline)")
+    if cfg.get("user_clocks"):
+        _p(f"  your clocks  {', '.join(cfg['user_clocks'])}")
     _p(f"  numpy        {cfg['numpy']}")
     _p(f"  cpu cores    {cfg['cpu_count']}")
     return 0
@@ -60,6 +60,8 @@ def _availability_line(clocks) -> str:
     """How many of these clocks run, stated before how many are catalogued."""
     n = {a: sum(c.availability == a for c in clocks)
          for a in ("bundled", "licensed", "untraced")}
+    if not (n["licensed"] or n["untraced"]):
+        return "all score offline"
     return (f"{n['bundled']} score offline (bundled), "
             f"{n['licensed']} need a licensed coefficient file, "
             f"{n['untraced']} have no traced coefficients")
@@ -378,7 +380,7 @@ def cmd_run(args) -> int:
 
     # Per-clock notes go to warnings.csv and the report; the console gets a
     # summary unless --verbose or --log-level asks for the full stream.
-    if not (args.verbose or args.log_level in ("info", "debug")):
+    if not (args.verbose or args.log_level == "debug"):
         fa.configure("none")
     if getattr(args, "clocks_dir", None):
         added = [fa.add_clock(y) for y in sorted(Path(args.clocks_dir).glob("*.y*ml"))]

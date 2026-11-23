@@ -1,0 +1,6 @@
+Beta value distribution per sample
+
+27 samples · EPICv1
+
+Two peaks near 0 and 1 is what a working array looks like. A sample with a
+filled middle failed, and no downstream normalisation will fix it.

@@ -410,7 +410,6 @@ def standardise_within_sample(X, features, block: int = 50_000):
 #: because they need more than one clock's slice of the data.
 MODEL_STEPS: dict[str, str] = {
     # DunedinPACE's quantile normalisation to its 20,000-probe background.
-    "quantile_normalize_gold": "falconage.models.pace.PaceClock",
 }
 
 DATASET_PREPROCESS: dict[str, Callable] = {

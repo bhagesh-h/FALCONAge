@@ -83,10 +83,8 @@ falconage_config <- function() {
 #' @export
 print.falcon_config <- function(x, ...) {
   cat("FALCONAge", x$falconage, "\n")
-  cat("  registry     ", x$registry_version, " (", x$n_clocks, " clocks)\n", sep = "")
-  t <- x$clocks_by_availability
-  cat("  availability ", t$bundled, " bundled - ", t$untraced, " untraced - ",
-      t$licensed, " licensed\n", sep = "")
+  cat("  registry     ", x$registry_version, " (", x$n_clocks, " human clocks, ",
+      x$runnable_offline, " score offline)\n", sep = "")
   cat("  numpy        ", x$numpy, "\n", sep = "")
   cat("  cpu cores    ", x$cpu_count, "
 ", sep = "")

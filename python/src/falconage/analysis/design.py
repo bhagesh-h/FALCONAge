@@ -10,7 +10,7 @@ import pandas as pd
 from scipy import stats
 
 from ..core.errors import AnalysisError
-from ._common import _bh, pc_counterpart
+from ._common import _bh
 from .acceleration import _residual
 
 
@@ -279,16 +279,6 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     aging has no residual to take, and taking one anyway is the units error
     ``LEGAL_OPS`` exists to prevent.
 
-    **The corroboration column, and when it is empty.** ``high_reliability_partner``
-    names each clock's principal-component version and ``partner_corroborates``
-    says whether that version agreed, which is the paper's sharpest single
-    diagnostic. It is ``None`` when the partner was not scored, and on a default
-    install that is every one of them: the PC clocks are ``licensed``, since
-    the authors' data file carries no licence and is not ours to ship.
-    ``why`` says so explicitly rather than omitting the clause, because a
-    verdict that silently drops its strongest check reads like one that passed
-    it. ``fa.registry.load().import_pc_clocks(path)`` registers five of them
-    from the authors' ``CalcAllPCClocks.RData`` and turns it on.
 
     **Repeated measures.** ``design`` says how the samples relate:
 
@@ -398,27 +388,6 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
     gens = set(strict["generation"])
     outcome = gens & _OUTCOME_TRAINED
 
-    # PC corroboration. The discriminating signal in the paper: for every
-    # sporadic first-generation hit, the PC version of the same clock was
-    # silent.
-    scored = set(tab["clock"])
-    tab["high_reliability_partner"] = [pc_counterpart(c) or "" for c in tab["clock"]]
-    tab["partner_corroborates"] = [
-        bool(tab.loc[tab["clock"] == pc, "sig_bonferroni"].iloc[0])
-        if pc and pc in scored else None
-        for pc in tab["high_reliability_partner"]]
-
-    pc_checks, unpaired = [], []
-    for cid in strict["clock"]:
-        pc = pc_counterpart(cid)
-        if not pc:
-            continue
-        if pc in scored:
-            agreed = bool(tab.loc[tab["clock"] == pc, "sig_bonferroni"].iloc[0])
-            pc_checks.append(f"{pc} {'agrees' if agreed else 'does NOT corroborate'}")
-        else:
-            unpaired.append(f"{cid} (would need {pc})")
-
     counts = (f"{len(strict)} of {n} clock(s) significant at Bonferroni "
               f"(alpha {alpha}), {int(tab['sig_bh'].sum())} at BH; "
               f"generations {sorted(gens) or 'none'}")
@@ -427,16 +396,6 @@ def consensus(result, group_col: str, *, reference=None, alpha: float = 0.05,
         counts += (f"; {small} of the {len(strict)} significant mean change(s) are "
                    "smaller than the minimum detectable change for one person "
                    "(mdc95), so they describe the group and not any individual")
-    if pc_checks:
-        counts += "; " + "; ".join(pc_checks)
-    if unpaired:
-        # Not a footnote. The PC clocks are licensed, so on a default install
-        # this check cannot run at all, and a verdict that quietly omitted it
-        # would read as though it had passed.
-        counts += ("; high-reliability corroboration NOT checked for "
-                   + ", ".join(unpaired)
-                   + " -- register the authors' PC clocks with "
-                     "fa.registry.load().import_pc_clocks(path) to enable it")
 
     if len(strict) == 0:
         verdict, why = "unsupported", f"nothing survives correction -- {counts}"

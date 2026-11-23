@@ -41,17 +41,8 @@ def test_score_records_a_complete_manifest(synthetic_betas, tmp_path):
     assert doc["weights"]["horvath2013"]["provenance"].startswith("Horvath 2013")
 
 
-def test_explicit_scaffold_request_raises_rather_than_skipping(synthetic_betas):
-    """A named clock that cannot run is an error; a silent skip leaves a column
-    quietly missing from the results table."""
-    with pytest.raises(WeightsUnavailableError):
-        fa.score(synthetic_betas, clocks=["grimage2"])
 
 
-def test_compatible_skips_scaffolds_and_says_why(synthetic_betas):
-    res = fa.score(synthetic_betas, clocks="compatible")
-    assert "grimage2" in res.skipped
-    assert "scaffold" in res.skipped["grimage2"]
 
 
 def test_coverage_floor_is_enforced(synthetic_betas):
@@ -314,12 +305,6 @@ def test_interpretation_carries_scale_reliability_and_caveats(synthetic_betas):
 # probe loss, before scoring
 # ---------------------------------------------------------------------------
 
-def test_probe_loss_names_tier_b_and_c_instead_of_omitting_them(synthetic_betas):
-    """A clock silently absent from this table reads as 'fine'."""
-    t = fa.probe_loss(synthetic_betas, clocks=["horvath2013", "grimage2"])
-    assert set(t.index) == {"horvath2013", "grimage2"}
-    assert t.loc["grimage2", "heaviest_absent"] == "coefficients not available"
-    assert np.isnan(t.loc["grimage2", "mass_coverage"])
 
 
 def test_probe_loss_separates_count_from_weight(synthetic_betas):

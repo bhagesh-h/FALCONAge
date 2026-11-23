@@ -29,11 +29,11 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 
 | Area | Shipped in v1.0.0 | Specified, not built |
 |---|---|---|
-| Clock catalogue | 178 entries. **69 `bundled` score offline**: 66 ship a coefficient file, 3 (PhenoAge, KDM, homeostatic dysregulation) are formulas with none to ship. 57 `licensed` are tested scaffolds | The 52 `untraced` entries carry metadata but no traced coefficients |
+| Clock catalogue | 68 human clocks, **all `bundled` and scoring offline**: 62 DNA methylation, 4 clinical chemistry, 2 NMR metabolomics. Clinical PhenoAge, KDM and homeostatic dysregulation are formulas with no coefficient file | — |
 | Modalities | DNA methylation, clinical chemistry, RRBS, **nanopore**, **transcriptomics**, **proteomics** | Single-cell as a *modality* (scAge is a model, not a container type); spatial |
 | Inputs | Beta matrix, GEO series matrix, **raw IDATs**, RRBS, **bedMethyl**, **targeted panels**, **Olink NPX**, **SomaScan RFU**, **bulk counts**, clinical tables, ComputAgeBench | — |
 | Normalisation | **pOOBAH, noob, BMIQ, probe masks** ([From raw arrays to betas](../methods/raw-arrays.qmd)) | Control-probe dye correction; mLiftOver cross-platform harmonisation |
-| Model classes | `LinearClock`, `ClinicalClock`, `ScaffoldClock`, **`PCLinearClock`**, **`AggregationClock`**, **`DivisionClock`**, **`NeuralClock`**, **`DeconvolutionClock`**, **`ScAgeReference`** | `MultiStageCoxClock`, `CompositeClock` |
+| Model classes | `LinearClock`, `ClinicalClock`, `QuadraticClock`, `AggregationClock`, `DivisionClock`, `NeuralClock`, `DeconvolutionClock`, `MetabolomicsClock`, `ScAgeReference` | — |
 | Preprocess ops | 7: `beta_to_m`, `m_to_beta`, `scale`, `rank_normalize`, `quantile_normalize`, `binarize`, `simplex_projection`; and `standardise_within_sample` on the whole dataset | The other seven in [Preprocess ops](algorithms.qmd#preprocess-ops) |
 | Postprocess ops | **21**, plus **24 analytic derivatives** for uncertainty propagation and 4 ops explicitly marked non-differentiable | — |
 | Uncertainty | **Technical SE, conformal prediction intervals, per-probe ICC table, power, consensus** | Conformalised quantile regression (split conformal ships instead) |
@@ -43,16 +43,9 @@ below come from `len(ops.PREPROCESS)`, `registry.load()` and the container's own
 | Compute | numpy on the CPU, fp64 default, fp32 opt-in | - |
 | R interface | S3 classes, ggplot2 figures, bit-identical to Python, **including the uncertainty and batch verbs** | The raw-array chain and the model architectures are Python-only |
 
-Two gaps are worth naming rather than leaving in a cell.
-
-**Tier B coefficient provenance** is not an engineering task. It is a per-clock literature hunt,
-find the paper, find the supplement, check the coefficient count against what circulates, record
-the discrepancy where they differ, and some of the 110 have no public supplement at all.
-`primary_source_traced: false` is the honest record of that debt.
-
-**The proteomic and transcriptomic chains ship without registry entries.** Every published model in
-both families is licence-restricted, so each would enter as a licensed scaffold. Scoring a proteomic
-matrix today refuses with "no clocks to score", which is accurate rather than broken.
+**The proteomic and transcriptomic readers ship without clocks.** No published model in either
+family has coefficients FALCONAge may redistribute, so none is in the registry. Scoring a proteomic
+matrix refuses with "no clocks to score"; a model of your own enters through `add_clock`.
 
 
 ## Scope, decisions and repository layout
@@ -70,17 +63,17 @@ produced.
 
 | Capability | Ships in 1.0.0 | Later |
 |---|---|---|
-| DNA methylation clocks | 172 catalogued: linear, PC, GrimAge family, mitotic, deconvolution, SystemsAge, AltumAge | — |
+| DNA methylation clocks | 62: linear, quadratic (cAge), mitotic, deconvolution, AltumAge | — |
 | Clinical chemistry | PhenoAge (both unit variants), KDM, homeostatic dysregulation | — |
-| Clock coefficients | 69 bundled, 57 scaffold-only, 52 untraced ([The three tiers](engine.qmd#the-three-tiers), [Scaffold-only clocks](algorithms.qmd#scaffold-only-clocks)) | the untraced count narrows as sources are traced |
+| NMR metabolomics | MetaboAge, MetaboHealth | — |
+| Clock coefficients | all bundled in the package, SHA-256 checked before use | — |
 | Raw arrays | full chain: manifest fetch, pOOBAH, noob, BMIQ, probe masks | control-probe dye correction |
 | Uncertainty | technical SE, conformal intervals, power, consensus | conformalised quantile regression |
 | Batch | frozen-reference ComBat | — |
 | Specimen and platform checks | species, specimen type, cell-free DNA refusal, platform bias in years | — |
-| Transcriptomics | the tAge chain ships; no registry entries | tAge's 60 models, licence permitting |
-| Proteomics | Olink and SomaScan readers ship; no registry entries | organAging, Oh 2023 organ clocks |
-| Single cell | scAge (per-cell likelihood) | pseudobulk, CellBiAge, SpatialAgingClock |
-| Foundation models | `NeuralClock` architecture, safetensors only | CpGPT as an *imputation* backend, not a clock |
+| Transcriptomics | the bulk-counts chain ships; no registry entries | — |
+| Proteomics | Olink and SomaScan readers ship; no registry entries | — |
+| Single cell | scAge (per-cell likelihood) | — |
 | Download | GEO, ArrayExpress, SRA/ENA, Zenodo, Figshare, Hugging Face, GDC, PRIDE, MetaboLights; ComputAgeBench loader | Metabolomics Workbench |
 | Preprocess | IDAT → beta, series matrix, beta CSV/parquet, clinical chemistry, the RNA-seq and Olink/SomaScan chains | — |
 | Compute | numpy on the CPU, FP64 default, FP32 opt-in | - |
@@ -91,26 +84,22 @@ overwhelming majority of real use, is fully specified in [the science notes](../
 has published values available to test against.
 
 Every **architecture** is written from scratch, with the equations taken from
-[Algorithm families](../methods/formulas.qmd) rather than from anybody's source: 15 preprocess ops, 15
-postprocess transforms and 10 special forward passes are specified, of which v1.0 implements the
-seven, nine and zero that its 23 scoring clocks reach for. No clock implementation is imported
-from another package.
+[the formulas page](../methods/formulas.qmd) rather than from anybody's source ([Algorithms](algorithms.qmd)
+lists the ops and model classes). No clock implementation is imported from another package.
 
 **Coefficients** are a different matter, because they are fitted data rather than a procedure and
-cannot be written at all. [Coefficient provenance and the three availability tiers](engine.qmd#coefficient-provenance-and-the-three-availability-tiers) surveys where each set actually comes from and [The three tiers](engine.qmd#the-three-tiers) sorts them into
-three tiers by what FALCONAge may distribute. Forty clocks (the GrimAge, PC GrimAge and
-SystemsAge families, DunedinPACE and a few others) ship as a complete, tested scaffold with no
-numbers, because their coefficients are research-use-only or have no traceable public source. [Scaffold-only clocks](algorithms.qmd#scaffold-only-clocks) covers what that means
-in practice.
+cannot be written at all. FALCONAge ships only clocks whose coefficients come from a publisher
+supplement or a permissively licensed author repository; [Coefficient provenance](engine.qmd#coefficient-provenance-and-the-three-availability-tiers)
+records where each set comes from. A clock whose coefficients are research-use-only is not in the
+registry; a user who holds them adds it with `add_clock`.
 
 ### The four architectural decisions
 
 **One numerical core, in Python.** The R package is a native-feeling front end that calls the
-Python core through `reticulate`. This is the design `tAge` uses
-([`tAge/R/predict.R`](https://github.com/Gladyshev-Lab/tAge)), and the reason is that
+Python core through `reticulate`. The reason is that
 "identical results in both languages" is either guaranteed by construction or it is a permanent
-testing liability. Two native implementations means writing 15 preprocess ops, 15 postprocess
-transforms and 10 special forward passes twice, then proving on every release that they still
+testing liability. Two native implementations means writing every op, transform and forward
+pass twice, then proving on every release that they still
 agree. One core means the R and Python answers are the same bytes because they are the same
 computation. The cost is that R users need a Python environment,
 which `falconage_install()` and the Docker image handle.
@@ -225,14 +214,11 @@ FALCONAge/
 │   │   │   │   ├── preprocess.py   # the 15 preprocess ops
 │   │   │   │   ├── postprocess.py  # the 15 postprocess transforms
 │   │   │   │   └── functional.py   # shared kernels (rank, quantile, simplex)
-│   │   │   ├── linear.py           # LinearClock, PCLinearClock
-│   │   │   ├── cox.py              # MultiStageCoxClock (GrimAge family)
+│   │   │   ├── linear.py           # LinearClock
 │   │   │   ├── neural.py           # NeuralClock (AltumAge)
 │   │   │   ├── aggregation.py      # AggregationClock (mitotic clocks)
 │   │   │   ├── deconvolution.py    # DeconvolutionClock
-│   │   │   ├── composite.py        # CompositeClock (SystemsAge, DNAmFitAge)
-│   │   │   ├── clinical.py         # PhenoAge, KDM, HD
-│   │   │   └── species.py          # mammalian species-lookup transforms
+│   │   │   └── clinical.py         # PhenoAge, KDM, HD
 │   │   │
 │   │   ├── score/
 │   │   │   ├── predict.py          # score()
@@ -338,13 +324,16 @@ python/src/falconage/
 │               batch.py  # frozen-reference ComBat
 │               proteomic.py transcriptomic.py  # modality chains
 ├── uncertainty/ __init__.py  # SE, conformal, ICC
-├── registry/   registry.py  data/clocks.yaml         # all 178 entries, one file
+├── registry/   registry.py  data/clocks.yaml         # all 68 entries, one file
+│               data/coefficients/  # bundled weights
+│               data/cpg_positions.csv.gz  # hg19 positions for the coverage map
 │               data/probe_icc.csv.gz  # reliability table
 │               data/platform_bias.csv conformal.csv  # derived artefacts
 │               data/references/  # fill values for absent CpGs
 │               data/evidence.yaml  # curated associations
-├── models/     linear.py clinical.py ops.py pc.py
-│               aggregation.py division.py neural.py single_cell.py
+├── models/     linear.py quadratic.py linage2.py clinical.py ops.py
+│               aggregation.py division.py neural.py deconvolution.py
+│               metabolomics.py single_cell.py
 ├── score/      __init__.py                           # score(), combine()
 ├── analysis/   __init__.py                           # acceleration, cox, icc,
 │                                                     # benchmark, power, consensus
@@ -352,8 +341,8 @@ python/src/falconage/
 │               _common.py spec.py colorscheme.yaml   # canvas, theme, captions
 │               accuracy.py acceleration.py agreement.py
 │               qc.py benchmark.py outcomes.py atlas.py
-│               uncertainty.py
-├── report/     html.py
+│               uncertainty.py coverage_map.py
+├── report/     html.py run.py
 └── cli/        app.py __main__.py                    # + report/power/consensus verbs
 
 python/tools/   build_probe_icc.py build_platform_bias.py  # derivations

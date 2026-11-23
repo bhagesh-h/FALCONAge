@@ -1,0 +1,6 @@
+Score distribution by study
+
+altumage · 13 studies · 394 samples
+
+Between-study spread is usually larger than the within-study effect being
+tested, which is why AA2 compares cases with their own controls.

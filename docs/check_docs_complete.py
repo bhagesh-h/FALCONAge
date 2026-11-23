@@ -120,48 +120,6 @@ def main() -> int:
             f"registry has {len(all_ids)}. A clock nobody can find is a clock "
             "nobody can use.")
 
-    # 5b -- each column of the routing table names only clocks of its group,
-    # and "Ready to score" accounts for every bundled clock. The column once
-    # compared against a retired availability letter and read "-" on every
-    # row, telling readers nothing in the package would run.
-    columns = {1: "bundled", 2: "licensed", 3: "untraced"}
-    counted = {g: 0 for g in columns.values()}
-    for line in block.splitlines():
-        if not line.startswith("| ") or line.startswith("| Question") or line.startswith("|:"):
-            continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) < 5:
-            continue
-        for col, group in columns.items():
-            ids = set(re.findall(r"`([a-z0-9]+)`", cells[col])) & all_ids
-            wrong = sorted(i for i in ids if reg.get(i).availability != group)
-            if wrong:
-                problems.append(
-                    f"docs/clocks/choosing.qmd lists {wrong[:4]} under {group!r}, "
-                    "which is not their availability")
-            more = re.search(r"and (\d+) more", cells[col])
-            counted[group] += len(ids) + (int(more.group(1)) if more else 0)
-    n_bundled = sum(1 for c in reg if c.availability == "bundled")
-    if block and counted["bundled"] != n_bundled:
-        problems.append(
-            f"docs/clocks/choosing.qmd shows {counted['bundled']} clocks ready to score; "
-            f"the registry has {n_bundled} bundled")
-
-    # 6 -- the availability column is a letter, and should be sized like one.
-    tier = _generated(choose, "tiers")
-    sep = next((ln for ln in tier.splitlines()
-                if "-" in ln and set(ln.strip()) <= set("|:- ")), None)
-    if sep is None:
-        problems.append("docs/clocks/choosing.qmd tier table has no separator row")
-    else:
-        widths = [len(c.strip()) for c in sep.strip().strip("|").split("|")]
-        share = widths[0] / sum(widths)
-        if share > 0.15:
-            problems.append(
-                f"the tier column asks for {share:.0%} of the table width to print "
-                f"one letter (dash counts {widths}). Pandoc sizes columns by the "
-                "dashes in the separator row.")
-
     # 7 -- the parity table must not claim Python lacks something it has.
     parity = _generated(r_readme, "api-map")
     for line in parity.splitlines():
@@ -279,14 +237,12 @@ def main() -> int:
     # patterns are the ways the pages actually state a total; the pyaging
     # appendix's "(173 clocks)" names another package's registry and matches
     # none of them.
-    from collections import Counter
 
-    avail = Counter(c.availability for c in reg)
-    totals = (r"catalogue of (\d+) published aging clocks",
-              r"registry\s+\S+ \((\d+) clocks\)",
+    totals = (r"catalogue of (\d+) published (?:human )?aging clocks",
+              r"(\d+) published human aging clocks",
+              r"registry\s+\S+ \((\d+) (?:human )?clocks",
               r"(\d+) catalogued clocks",
-              r"\*\*(\d+) clocks catalogued")
-    triple = r"(\d+) bundled - (\d+) untraced - (\d+) licensed"
+              r"\*\*(\d+) (?:human )?clocks")
     for page in sorted((ROOT / "docs").rglob("*.qmd")):
         rel = page.relative_to(ROOT).as_posix()
         if rel.startswith(("docs/_site/", "docs/reference/", "docs/r/")):
@@ -296,13 +252,6 @@ def main() -> int:
             for n in re.findall(pat, text):
                 if int(n) != len(all_ids):
                     problems.append(f"{rel} states {n} clocks; the registry has {len(all_ids)}")
-        for b, u, lic in re.findall(triple, text):
-            if (int(b), int(u), int(lic)) != (avail["bundled"], avail["untraced"],
-                                              avail["licensed"]):
-                problems.append(
-                    f"{rel} states {b} bundled, {u} untraced, {lic} licensed; the "
-                    f"registry has {avail['bundled']}, {avail['untraced']}, "
-                    f"{avail['licensed']}")
 
     # 11 -- pulling the published image is offered before building it.
     #
@@ -355,9 +304,8 @@ def main() -> int:
     print(f"documentation is current for v{fa.__version__}: the landing page names "
           f"every input, all {len(all_ids)} clocks are linked and routed, the "
           "architecture page is on this release, output is marked as output, the "
-          "tier column is sized for a letter, the parity table claims no false "
-          "gap, the GPU page's coverage table matches what the model classes "
-          f"declare, the architecture page names the {len(on_disk)} workflows "
+          "parity table claims no false gap, every stated clock total is the "
+          f"registry's, the architecture page names the {len(on_disk)} workflows "
           "that exist, and every documented build of a published image offers "
           "the pull first")
     return 0

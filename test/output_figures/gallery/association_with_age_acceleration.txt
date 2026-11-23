@@ -1,0 +1,8 @@
+Association with age acceleration
+
+3 tested · 3 pass FDR 0.05
+
+Effect size against evidence. The dashed line is the Benjamini-Hochberg
+threshold at the stated FDR, not a raw p-value cut; with thousands of tests
+the two differ by orders of magnitude. Points far right with small -log10 p
+are the usual trap: a large effect measured in few samples.

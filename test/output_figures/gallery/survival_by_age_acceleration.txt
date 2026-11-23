@@ -1,0 +1,9 @@
+Survival by age acceleration
+
+phenoage · 500 subjects · 277 events · log-rank p < 0.001
+
+Strata are the tails of the acceleration distribution, not a median split: the
+published figure compares the fastest-ageing tenth with the slowest, because
+the middle of the distribution is where a clock has least to say. Curves that
+cross mean the hazard is not proportional, and the hazard ratio beside them is
+then an average over a period during which the ordering changed.

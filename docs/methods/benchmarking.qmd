@@ -61,42 +61,18 @@ total     = AA2_score + AA1_score × (1 − max(0, MedE) / MedAE)
 The bias penalty is the clever part: a clock that simply over-predicts everyone's age will pass
 AA1 trivially, so AA1 credit is discounted by how much of the clock's error is systematic
 positive bias ([ComputAge benchmarking.py:427](https://github.com/ComputationalAgingLab/ComputAge)).
-GrimAge2 leads AA1 but carries a large positive HC bias, which the formula penalises.
 
-**Running it.** ComputAge's `run_benchmark(models_config, experiment_prefix, output_folder)`, not `fa.run_benchmark`, where
-`models_config` has an `in_library` dict (clock name → params, notably `imputation`) and a
-`new_models` dict (name → path to a pickled sklearn estimator with `feature_names_in_`). Outputs:
-AA2 and AA1 p-value CSVs, FDR-corrected boolean CSVs, MedAE CSV, bias CSV, four PDFs, and a
-pickled benchmark object.
+**Running it.** `fa.run_benchmark()` (R: `run_benchmark()`) computes AA1, AA2 and the combined
+score on a scored, combined result; see [Benchmarking](../analysis/benchmarking.qmd).
 
-### Biolearn and the Biomarkers of Aging Consortium
-
-Open-source Python library providing a unified interface over aging biomarkers plus a data
-library that loads GEO, NHANES and Framingham. Reference implementations for 39 biomarkers
-evaluated over >20,000 individuals; the framework paper reports integration of 17 additional GEO
-datasets covering 12,463 samples across tissues and age ranges. Version 0.7.0 released
-January 2025. The consortium runs a Synapse challenge series (chronological age, mortality,
-multimorbidity) with >$200k in prizes. ComputAge's `model_definitions` are explicitly ported from
-biolearn ([ComputAge definitions.py](https://github.com/ComputationalAgingLab/ComputAge)).
-
-### TranslAGE - reliability validation
+\1 - reliability validation
 
 TranslAGE (Borrus et al., bioRxiv 2025.10.16.682960) harmonises 179 blood methylation datasets and
 precomputes 41 biomarker scores. On it, Sehgal et al. (bioRxiv 2025.10.13.682176) measured technical
 and biological ICCs for 18 clocks, pooled with Fisher-Z: technical reproducibility did not predict
-biological reliability, PCGrimAge was the only clock with biological ICC > 0.75, and the PC-based
-clocks, PCGrimAge and SystemsAge in particular, stayed technically reliable across slide positions
-and DNA extraction protocols.
+biological reliability.
 
-### Intervention responsiveness
-
-In CALERIE, two years of calorie restriction (about 12% below baseline intake in practice) slowed
-DunedinPACE by 2 to 3% against controls (Waziry et al., *Nature Aging* 2023,
-[doi:10.1038/s43587-022-00357-y](https://doi.org/10.1038/s43587-022-00357-y)), the first randomised
-trial to move a methylation clock. Ordering: DunedinPACE responds fastest, GrimAge needs
-longer or larger interventions, first-generation Horvath barely moves.
-
-### What a benchmarking module in the new tool should do
+\1 in the new tool should do
 
 1. Chronological accuracy on healthy controls: MedAE, MAE, RMSE, r, ρ, slope, bias (MedE).
 2. AA1 and AA2 with configurable distributional assumption and FDR correction.

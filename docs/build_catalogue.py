@@ -102,18 +102,10 @@ the scoring code reads.
 downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
-**{n} clocks**, registry schema `{schema}`.
-
-![What separates the three availability groups, and what a traced coefficient source means](../images/tiers-and-provenance.png)
-
-Availability is about provenance, not about quality. A `bundled` clock has a
-coefficient file whose origin was followed back to the paper or its supplement
-and checksummed, so the same numbers come out on any machine with no network.
-An `untraced` clock has no public source for its coefficients, and a `licensed`
-one has a source whose terms do not permit redistribution. Copying a coefficient
-vector out of another package would move clocks into the bundled column and is
-the one route not taken here, because a number with no source behind it cannot
-be checked against anything.
+**{n} human clocks**, registry schema `{schema}`. Every one ships its
+coefficients inside the package, or is a formula with none, so it scores
+offline and gives the same numbers on any machine. Clocks of your own are added
+with `fa.add_clock()` ([Add a clock](../own/add.qmd)).
 """
 
 TAIL = """
@@ -220,19 +212,16 @@ def render() -> str:
     clocks = sorted(reg, key=lambda c: (c.availability, c.id))
 
     out = [HEAD.format(n=len(clocks), schema=reg.version, banner=BANNER)]
-    for tier in ("bundled", "untraced", "licensed"):
-        rows = [c for c in clocks if c.availability == tier]
-        out.append(f"\n## {tier.capitalize()}: {len(rows)} clocks\n")
-        out.append(TIER[tier] + "\n")
-        out.append("| Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |")
-        out.append("|---|---:|---|---|---:|---|---|---|")
-        for c in rows:
-            out.append("| " + " | ".join([
-                f"`{c.id}`", str(c.year or "—"), _predicts(c), f"`{c.scale_type}`",
-                str(c.n_features or "—"), ", ".join(c.tissue) or "—",
-                ", ".join(c.platform) or "—", _paper(c),
-            ]) + " |")
-        out.append("")
+    rows = clocks
+    out.append("| Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |")
+    out.append("|---|---:|---|---|---:|---|---|---|")
+    for c in rows:
+        out.append("| " + " | ".join([
+            f"`{c.id}`", str(c.year or "—"), _predicts(c), f"`{c.scale_type}`",
+            str(c.n_features or "—"), ", ".join(c.tissue) or "—",
+            ", ".join(c.platform) or "—", _paper(c),
+        ]) + " |")
+    out.append("")
     out.append(TAIL)
     return "\n".join(out)
 
@@ -321,8 +310,8 @@ def question_table() -> str:
     # tables, and without the hint the one-character tier column is given the
     # same share as the clock list beside it.
     out = [QUESTION_BEGIN, "",
-           "| Question | Ready to score | Needs a licensed file | No coefficients traced | Scale |",
-           "|:-----------------|:----------------------------|:-------------|:-------------|:------|"]
+           "| Question | Clocks | Scale |",
+           "|:-----------------|:----------------------------------------|:------|"]
     for q, _ in QUESTIONS:
         cs = buckets[q]
         if not cs:
@@ -342,7 +331,7 @@ def question_table() -> str:
             more = len(items) - limit
             return (shown + (f", and {more} more" if more > 0 else "")) or "—"
 
-        out.append(f"| {q} | {names(ready)} | {names(licensed)} | {names(untraced)} | "
+        out.append(f"| {q} | {names(ready, limit=12)} | "
                    + ", ".join(f"`{s}`" for s in scales) + " |")
     out += ["",
             f"Every one of the {len(list(reg))} catalogued clocks appears above, routed by "
@@ -432,8 +421,7 @@ def render_guide() -> str:
     """clocks/choosing.qmd with every generated block replaced."""
     text = GUIDE.read_text(encoding="utf-8")
     for begin, end, body in ((QUESTION_BEGIN, QUESTION_END, question_table()),
-                             (GSCALE_BEGIN, GSCALE_END, guide_scale_table()),
-                             (TIERS_BEGIN, TIERS_END, tier_table())):
+                             (GSCALE_BEGIN, GSCALE_END, guide_scale_table())):
         start, stop = text.find(begin), text.find(end)
         if start == -1 or stop == -1:
             raise SystemExit(f"docs/clocks/choosing.qmd has no {begin} block")

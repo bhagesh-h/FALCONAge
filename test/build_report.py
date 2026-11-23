@@ -81,12 +81,16 @@ def collect_tables() -> dict[str, pd.DataFrame]:
     return tables
 
 
+#: The clock atlas, under the title-derived name save_figure writes it as.
+HERO = "clock_atlas_across_pooled_studies.png"
+
+
 def collect_figures() -> list[Path]:
     """The gallery, with the conclusion figure held back for the hero slot."""
     if not GALLERY.exists():
         return []
     return sorted(p for p in GALLERY.glob("*.png")
-                  if p.name != "clock_atlas.png")
+                  if p.name != HERO)
 
 
 def main(argv=None) -> int:
@@ -107,7 +111,7 @@ def main(argv=None) -> int:
     # clock_atlas is the conclusion figure: it is the one panel that answers
     # "which of these algorithms actually work", every clock against every
     # study on one pair of axes, so it leads rather than appearing 14 figures in.
-    hero = GALLERY / "clock_atlas.png"
+    hero = GALLERY / HERO
     verdict = None
     bench = _read(OUT / "bench" / "_combined" / "benchmark.csv")
     if bench is not None and "total" in bench.columns:

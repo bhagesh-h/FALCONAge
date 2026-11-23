@@ -1,0 +1,8 @@
+Clock coverage across the genome
+
+62 clocks · the EPICv1 array · mean coverage 98.0% · 41 fully covered
+
+One track per clock, every CpG at its position on the genome (hg19). In the
+clock's colour, the data carries it; in grey, it does not. CpGs that line up
+across tracks are shared between clocks. Read this before the scores: a clock
+whose track is mostly grey is scored largely on filled values.

@@ -43,8 +43,6 @@ a clock for. Panels B and C are diagnostics for reading D, not scores.
 
 from __future__ import annotations
 
-import textwrap
-
 import numpy as np
 import pandas as pd
 
@@ -109,6 +107,7 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     from . import spec
     from ._common import (
         NothingToPlot,
+        _attach_text,
         _mpl,
         _require_signal,
         group_colours,
@@ -212,25 +211,14 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
                     allow_constant=True)
 
     # ---- geometry ----------------------------------------------------------
-    # The caption is written last but has to be measured first: it sits in the
-    # bottom margin with the axis labels and the generation legend, and a
-    # fixed margin cropped it the moment the caption gained a paragraph about
-    # panel G. Wrapped here, drawn from the same list below.
-    cap_text = spec.text("clock_atlas", n_clocks=len(order),
-                         n_datasets=len(datasets),
-                         n_samples=result.scores.shape[0],
-                         n_significant=int(per["significant"].sum()),
-                         n_comparisons=len(per))["description"]
-    cap_lines = textwrap.wrap(" ".join(cap_text.split()), width=168)
-
     n = len(order)
     # Inches per clock row: floored so a three-clock atlas is not a stripe, and
     # bounded above by max_clocks so a full catalogue still fits a page.
     row_h = 0.32
     # 0.17in per caption line, plus room for the axis labels under D and G and
     # the generation legend beneath the badges.
-    foot = 0.78 + 0.17 * len(cap_lines)
-    height = max(5.0, n * row_h + 2.8 + foot)
+    foot = 0.78
+    height = max(4.0, n * row_h + 1.6 + foot)
     width = 13.6
     # Panel D is widest because it carries the answer; A is a badge strip.
     # G is narrower than D and wider than the bar panels: it holds one dot per
@@ -245,7 +233,7 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
     gs = fig.add_gridspec(
         1, 7, width_ratios=widths, wspace=0.17,
         left=0.145, right=0.985,
-        top=1 - 1.62 / height, bottom=foot / height)
+        top=1 - 0.62 / height, bottom=foot / height)
     axes = [fig.add_subplot(gs[0, i]) for i in range(7)]
     y = np.arange(n)
 
@@ -463,22 +451,10 @@ def clock_atlas(result, bench, *, dataset_col: str = "dataset",
                 "are on G only")
     if truncated:
         key += f"  ·  {truncated} lower-scoring clock(s) not shown"
-    cap_size = theme_value("caption_size")
-    cap = "\n".join(cap_lines)
-
-    # Offsets in inches divided by height, so the gap between title and subtitle
-    # is a physical distance rather than a fraction of a canvas whose height
-    # grows with the number of clocks.
-    title_size = theme_value("title_size") + 2
-    sub_size = theme_value("subtitle_size")
-    fig.text(0.012, 1 - 0.20 / height, t["title"],
-             fontsize=title_size, va="top", ha="left")
-    fig.text(0.012, 1 - (0.20 + title_size * 1.5 / 72.0) / height, sub,
-             fontsize=sub_size, color="#555555", va="top", ha="left")
-    fig.text(0.012,
-             1 - (0.20 + (title_size * 1.5 + sub_size * 1.7) / 72.0) / height,
-             key, fontsize=sub_size - 0.5, color="#777777", va="top", ha="left")
-    fig.text(0.012, 0.12 / height, cap, fontsize=cap_size,
-             color="#666666", va="bottom", ha="left")
+    # The key is legend, so it stays on the canvas; title, subtitle and
+    # description travel in the .txt that save_figure writes.
+    fig.text(0.012, 1 - 0.18 / height, key, fontsize=theme_value("subtitle_size") - 0.5,
+             color="#555555", va="top", ha="left")
+    _attach_text(fig, {**t, "subtitle": sub})
 
     return fig, d.reset_index()

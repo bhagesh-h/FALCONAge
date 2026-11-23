@@ -1,0 +1,6 @@
+Score distribution by platform
+
+altumage · 3 platforms · 394 samples
+
+A shift between platforms in the same tissue is a technical effect. It is the
+reason cross-study comparisons need the platform as a covariate.

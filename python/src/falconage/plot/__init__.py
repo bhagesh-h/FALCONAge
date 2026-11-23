@@ -39,7 +39,8 @@ from .spec import (  # noqa: F401
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
     _radial_labels, _ref, _require_signal, _titles_outside, _unit,
-    _wrap_caption,
+    _wrap_caption, caption_text, figure_filename, figure_text, read_caption,
+    save_figure,
 )
 from .accuracy import ba_vs_ca, bland_altman, calibration
 from .acceleration import (
@@ -60,16 +61,20 @@ from .uncertainty import (
     consensus_plot, platform_bias, reliability_forest, score_interval,
 )
 from .atlas import clock_atlas
+from .coverage_map import (clock_coverage_manhattan, clock_coverage_points, clock_positions,
+                           save_coverage_manhattan)
 
 __all__ = [
     "NothingToPlot", "acceleration_by_group", "acceleration_density", "acceleration_heatmap",
-    "ba_vs_ca", "benchmark_bars", "benchmark_error_bias", "benchmark_heatmap",
+    "ba_vs_ca", "benchmark_bars", "clock_coverage_manhattan", "clock_coverage_points", "clock_positions", "benchmark_error_bias", "benchmark_heatmap",
     "beta_density", "bland_altman", "calibration", "clock_corr", "clock_embedding",
     "clock_chord", "clock_pca", "clock_radar", "clock_scatter_matrix",
     "consensus_plot", "coverage_bar",
     "forest", "kaplan_meier", "missingness", "platform_bias",
-    "platform_comparison", "reliability_forest", "save_all", "score_interval",
-    "sex_check", "spec", "study_comparison",
+    "platform_comparison", "reliability_forest", "save_all", "save_coverage_manhattan",
+    "score_interval",
+    "sex_check", "spec", "study_comparison", "figure_text", "figure_filename",
+    "caption_text", "read_caption", "save_figure",
     "timecourse", "trajectory", "clock_atlas", "volcano",
 ]
 
@@ -78,13 +83,18 @@ __all__ = [
 def save_all(result, outdir, *, data=None, bench=None, acc=None, age_col: str = "age",
              group: str | None = None, platform_col: str | None = None,
              dataset_col: str | None = None, max_per_clock: int = 4,
-             se=None, conformal=None, consensus=None) -> dict[str, Path]:
-    """Render every figure this result can support and write it as PNG.
+             se=None, conformal=None, consensus=None,
+             coverage_map: bool = True) -> dict[str, Path]:
+    """Render every figure this result can support: a PNG and a .txt for each.
+
+    Each file is named after the figure's title (``clock_coverage_across_the_genome.png``),
+    with the clock id appended for per-clock figures. The PNG carries the axes
+    and the legend; the ``.txt`` beside it carries the title, the figure's own
+    numbers and the description.
 
     Skips anything the data cannot support rather than raising -- a result with
     no age column should still get its coverage and agreement figures.
     """
-    plt = _mpl()
     d = Path(outdir)
     d.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
@@ -102,15 +112,20 @@ def save_all(result, outdir, *, data=None, bench=None, acc=None, age_col: str = 
         except Exception as exc:
             skipped[name] = f"{type(exc).__name__}: {exc}"
             return
-        p = d / f"{name}.png"
-        fig.savefig(p, bbox_inches="tight", dpi=theme_value("dpi"),
-                    facecolor="white")
-        plt.close(fig)
+        # Per-clock figures carry the clock id after the title-derived stem.
+        suffix = next((c for c in result.scores.columns if name.endswith(f"_{c}")), None)
+        p = save_figure(fig, d, suffix=suffix)
         written[name] = p
 
     age_clocks = [c for c in result.scores.columns
                   if result.registry.get(c).scale_type == "age_years"][:max_per_clock]
 
+    # First, and whenever the data is at hand: where each clock's CpGs sit and
+    # which of them the data carries. run_report draws it before scoring and
+    # passes coverage_map=False so it is not drawn twice.
+    if data is not None and coverage_map and data.modality == "dna_methylation":
+        emit("clock_coverage_manhattan",
+             lambda: clock_coverage_manhattan(data, registry=result.registry))
     emit("coverage_bar", lambda: coverage_bar(result))
     emit("clock_corr", lambda: clock_corr(result))
     emit("clock_pca", lambda: clock_pca(result, colour_by=group or age_col))

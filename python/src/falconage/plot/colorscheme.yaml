@@ -244,7 +244,7 @@ plots:
     subtitle: "{n} tested · {hits} pass FDR {fdr}"
     description: >-
       Effect size against evidence. The dashed line is the Benjamini-Hochberg
-      threshold at the stated FDR, not a raw p-value cut -- with thousands of
+      threshold at the stated FDR, not a raw p-value cut; with thousands of
       tests the two differ by orders of magnitude. Points far right with small
       -log10 p are the usual trap: a large effect measured in few samples.
     xlab: "effect size"
@@ -297,6 +297,17 @@ plots:
       filled middle failed, and no downstream normalisation will fix it.
     xlab: "beta"
     ylab: "density"
+
+  clock_coverage_manhattan:
+    title: "Clock coverage across the genome"
+    subtitle: "{n_clocks} clocks · {what} · mean coverage {mean}% · {n_full} fully covered"
+    description: >-
+      One track per clock, every CpG at its position on the genome (hg19). In the
+      clock's colour, the data carries it; in grey, it does not. CpGs that line up
+      across tracks are shared between clocks. Read this before the scores: a
+      clock whose track is mostly grey is scored largely on filled values.
+    xlab: "chromosome"
+    ylab: ""
 
   coverage_bar:
     title: "Feature coverage per clock"
@@ -416,7 +427,7 @@ plots:
   # The one figure that answers "which of these algorithms is measuring aging",
   # which no per-clock panel can. Only drawn when several studies are pooled.
   clock_atlas:
-    title: "Clock atlas: every algorithm across every pooled study"
+    title: "Clock atlas across pooled studies"
     subtitle: >-
       {n_clocks} clocks · {n_datasets} studies · {n_samples} samples ·
       {n_significant} of {n_comparisons} comparisons significant at BH q < 0.05
@@ -426,11 +437,11 @@ plots:
       that did, and a row with several says the effect held across studies rather
       than in one. Panels B and C are diagnostics for reading D, not scores: a
       clock that merely returned chronological age would be perfect in B, empty
-      in D, and useless. Panel F separates the two ways of finding nothing --
+      in D, and useless. Panel F separates the two ways of finding nothing:
       a clock that saw its features and detected no difference, from one that
       never had the features to look with. Panel G is for the clocks whose scale
-      admits no acceleration at all -- a pace, a telomere length, a division
-      count -- and asks the question their scale does allow: were cases and
+      admits no acceleration at all (a pace, a telomere length, a division
+      count) and asks the question their scale does allow: were cases and
       controls separated. Cliff's delta, so 0 is no separation and 1 is
       complete, and unlike D it is not adjusted for age, which matters when a
       cohort's cases are older than its controls.
@@ -449,7 +460,7 @@ plots:
       Measurement error propagated from published per-probe reliability through
       each clock's own weights. The ICC beside each bar is what this cohort
       implies, not a published figure: green above 0.8, amber below it, red
-      where the assay noise is as large as the spread between these samples --
+      where the assay noise is as large as the spread between these samples,
       a clock that cannot tell them apart, however confident its point estimate.
     xlab: "technical standard error, as a fraction of the cohort's own spread"
     ylab: ""
@@ -459,7 +470,7 @@ plots:
     subtitle: "{clock} · n = {n} · {unit}"
     description: >-
       Two samples whose bars overlap are not distinguishable by this clock on
-      this assay. The narrow bar is measurement error -- what a repeat of the
+      this assay. The narrow bar is measurement error: what a repeat of the
       same DNA would do. The wide grey bar, where present, is the conformal
       prediction interval against chronological age, which is a larger question
       and has a larger answer. Neither is a confidence interval on a diagnosis.

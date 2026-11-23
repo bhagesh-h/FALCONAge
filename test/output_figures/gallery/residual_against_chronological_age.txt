@@ -1,0 +1,6 @@
+Residual against chronological age
+
+altumage · slope = +0.000 · a flat line at zero is perfect calibration
+
+A negative slope is regression to the mean: the clock over-ages the young and
+under-ages the old, which is the most common artefact in this field.

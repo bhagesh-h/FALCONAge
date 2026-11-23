@@ -369,9 +369,6 @@ class ClockRegistry:
         self._local: dict[str, tuple[Path, str]] = {}
         #: clock_id -> per-feature fill values supplied with a user's weights.
         self._local_reference: dict[str, dict[str, float]] = {}
-        #: clock_id -> model parts beyond a weight vector, read from a user's
-        #: copy (DunedinPACE's background set and means).
-        self._local_extra: dict[str, dict] = {}
 
     # -- construction ------------------------------------------------------
     @classmethod
@@ -399,6 +396,8 @@ class ClockRegistry:
         # Runnable first: "178 clocks" alone reads as 178 that run.
         n = {a: sum(c.availability == a for c in self._clocks.values())
              for a in AVAILABILITY}
+        if n[LICENSED] == n[UNTRACED] == 0:
+            return f"ClockRegistry {self.version}: {len(self)} human clocks, all score offline"
         return (f"ClockRegistry {self.version}: {n[BUNDLED]} of {len(self)} clocks score "
                 f"offline; {n[LICENSED]} need a licensed coefficient file, "
                 f"{n[UNTRACED]} have no traced coefficients")
@@ -677,35 +676,6 @@ class ClockRegistry:
             return 0.0
         return _split_intercept(feats, coefs)[2]
 
-    def import_dunedinpace(self, path, out_dir=None) -> str:
-        """Register DunedinPACE from the authors' R package (installed, a source
-        checkout, or its ``sysdata.rda``).
-
-        See :func:`falconage.registry.pace_import.import_dunedinpace`.
-        """
-        from .pace_import import import_dunedinpace
-
-        return import_dunedinpace(self, path, out_dir=out_dir)
-
-    def pace_model(self, clock_id: str):
-        """The weights, background means and model means DunedinPACE scores with."""
-        from ..models.pace import PaceModel
-
-        if clock_id not in self._local_extra:
-            raise WeightsUnavailableError(clock_id, self.unavailable_message(clock_id))
-        extra = self._local_extra[clock_id]
-        feats, w = self.coefficients(clock_id)
-        return PaceModel(probes=list(feats), weights=w, intercept=self.intercept(clock_id),
-                         gold_means=extra["gold_means"], model_means=extra["model_means"])
-
-    def import_pc_clocks(self, path, out_dir=None) -> dict[str, str]:
-        """Register the PC clocks from the authors' ``CalcAllPCClocks.RData``.
-
-        See :func:`falconage.registry.pc_import.import_pc_clocks`.
-        """
-        from .pc_import import import_pc_clocks
-
-        return import_pc_clocks(self, path, out_dir=out_dir)
 
     def coefficients(self, clock_id: str) -> tuple[list[str], np.ndarray]:
         """Feature ids and coefficients, in the file's order.

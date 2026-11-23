@@ -28,3 +28,26 @@ test_that("a plain mean across scale types is refused", {
   res <- score(demo(), clocks = c("horvath2013", "dunedinpoam38"))
   expect_error(stack_clocks(res, method = "mean"), "no unit")
 })
+
+test_that("the coverage map has a track and a coverage for every methylation clock", {
+  skip_if_not_installed("ggplot2")
+  p <- plot_clock_coverage(demo(10L))
+  expect_s3_class(p, "ggplot")
+  tab <- attr(p, "table")
+  expect_true("horvath2013" %in% rownames(tab))
+  expect_true(all(as.numeric(tab$coverage) == 100))
+})
+
+test_that("figures are drawn without a title and saved under it with a .txt", {
+  skip_if_not(falconage_available())
+  skip_if_not_installed("ggplot2")
+  p <- plot_clock_coverage(platform = "450K")
+  t <- figure_text(p)
+  expect_equal(t$title, "Clock coverage across the genome")
+  expect_true(any(grepl("element_blank", class(p$theme$plot.title))))
+  out <- tempfile()
+  png <- save_figure(p, out, width = 12, height = 9)
+  expect_equal(basename(png), "clock_coverage_across_the_genome.png")
+  txt <- readLines(file.path(out, "clock_coverage_across_the_genome.txt"))
+  expect_equal(txt[1], "Clock coverage across the genome")
+})

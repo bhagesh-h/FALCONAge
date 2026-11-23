@@ -1,0 +1,6 @@
+Samples in clock space
+
+PCA of z-scored clock scores · PC1 37% · PC2 21%
+
+PC1 is almost always chronological age. Structure on PC2 that follows a batch
+and not a phenotype is a batch effect.

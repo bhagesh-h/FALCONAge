@@ -1,0 +1,6 @@
+Predicted against chronological age
+
+altumage · n = 27 · r = 0.59 · MedAE = 45.45 years
+
+Distance from the dashed identity line is error, not acceleration; a clock
+sitting parallel to it but offset is biased, which MedE quantifies.

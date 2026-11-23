@@ -1,6 +1,6 @@
 ---
 title: "Clock catalogue"
-subtitle: "All 178, generated from the registry that scores them"
+subtitle: "All 68, generated from the registry that scores them"
 aliases:
   - ../clocks.html
 ---
@@ -16,23 +16,10 @@ the scoring code reads.
 downstream operations FALCONAge will perform, and asking for age acceleration
 on a `pace_ratio` clock is refused rather than computed.
 
-**178 clocks**, registry schema `1.1.0`.
-
-![What separates the three availability groups, and what a traced coefficient source means](../images/tiers-and-provenance.png)
-
-Availability is about provenance, not about quality. A `bundled` clock has a
-coefficient file whose origin was followed back to the paper or its supplement
-and checksummed, so the same numbers come out on any machine with no network.
-An `untraced` clock has no public source for its coefficients, and a `licensed`
-one has a source whose terms do not permit redistribution. Copying a coefficient
-vector out of another package would move clocks into the bundled column and is
-the one route not taken here, because a number with no source behind it cannot
-be checked against anything.
-
-
-## Bundled: 69 clocks
-
-Coefficients ship with the package, or the clock is a formula with none to ship. Works offline, no network, no licence.
+**68 human clocks**, registry schema `1.1.0`. Every one ships its
+coefficients inside the package, or is a formula with none, so it scores
+offline and gives the same numbers on any machine. Clocks of your own are added
+with `fa.add_clock()` ([Add a clock](../own/add.qmd)).
 
 | Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |
 |---|---:|---|---|---:|---|---|---|
@@ -74,7 +61,7 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `lin` | 2016 | chronological age | `age_years` | 99 | whole blood | 27K, 450K | [Lin 2016](https://doi.org/10.18632/aging.100908) |
 | `linage2` | 2025 | mortality risk | `age_years` | 59 | blood | clinical laboratory assays | [Fong 2025](https://doi.org/10.1038/s41514-025-00221-4) |
 | `mayne` | 2017 | gestational age | `gestational_weeks` | 62 | placenta | 27K, 450K | [Mayne 2017](https://doi.org/10.2217/epi-2016-0103) |
-| `mccartneyalcohol` | 2018 | alcohol consumption | `gestational_weeks` | 450 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
+| `mccartneyalcohol` | 2018 | alcohol consumption | `relative_score` | 450 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneybmi` | 2018 | body mass index | `relative_score` | 1109 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneybodyfat` | 2018 | body fat percentage | `relative_score` | 968 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneyeducation` | 2018 | educational attainment | `relative_score` | 373 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
@@ -84,7 +71,6 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `mccartneytotalcholesterol` | 2018 | total cholesterol | `relative_score` | 204 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneytotalhdlratio` | 2018 | total-to-HDL cholesterol ratio | `relative_score` | 412 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
 | `mccartneywhr` | 2018 | waist-to-hip ratio | `relative_score` | 226 | whole blood | EPICv1 | [McCartney 2018](https://doi.org/10.1186/s13059-018-1514-1) |
-| `meer` | 2018 | chronological age | `age_years` | 435 | multi-tissue | RRBS | [Meer 2018](https://doi.org/10.7554/elife.40675) |
 | `metaboage` | 2020 | chronological age | `age_years` | 56 | blood | Nightingale Health 1H-NMR | [van den Akker 2020](https://doi.org/10.1161/CIRCGEN.119.002610) |
 | `metabohealth` | 2019 | mortality | `mortality_log_hazard` | 14 | blood | Nightingale Health 1H-NMR | [Deelen 2019](https://doi.org/10.1038/s41467-019-11311-9) |
 | `pedbe` | 2020 | chronological age | `age_years` | 94 | buccal epithelium | 450K, EPICv1 | [McEwen 2020](https://doi.org/10.1073/pnas.1820843116) |
@@ -105,131 +91,6 @@ Coefficients ship with the package, or the clock is a formula with none to ship.
 | `zhangblup` | 2019 | chronological age | `age_years` | 319607 | whole blood, saliva | 450K, EPICv1 | [Zhang 2019](https://doi.org/10.1186/s13073-019-0667-1) |
 | `zhangen` | 2019 | chronological age | `age_years` | 514 | whole blood, saliva | 450K, EPICv1 | [Zhang 2019](https://doi.org/10.1186/s13073-019-0667-1) |
 | `zhangmortality` | 2017 | mortality risk | `mortality_log_hazard` | 10 | whole blood | 450K | [Zhang 2017](https://doi.org/10.1038/ncomms14617) |
-
-
-## Untraced: 52 clocks
-
-Catalogued, but no primary source for the coefficients has been established, so nothing is bundled. The metadata is real; the numbers are absent.
-
-| Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |
-|---|---:|---|---|---:|---|---|---|
-| `abec` | 2020 | chronological age | `age_years` | — | whole blood | EPICv1 | [Lee 2020](https://doi.org/10.1186/s12864-020-07168-8) |
-| `adbahadosingh` | 2021 | late-onset Alzheimer's disease | `relative_score` | — | whole blood | EPICv1 | [Bahado-Singh 2021](https://doi.org/10.1371/journal.pone.0248375) |
-| `bocklandt` | 2011 | EDARADD methylation | `relative_score` | — | saliva | 27K | [Bocklandt 2011](https://doi.org/10.1371/journal.pone.0014821) |
-| `cabec` | 2020 | chronological age | `age_years` | — | whole blood | 450K, EPICv1 | [Lee 2020](https://doi.org/10.1186/s12864-020-07168-8) |
-| `compil6` | 2021 | interleukin-6 | `relative_score` | — | whole blood | 450K | [Stevenson 2021](https://doi.org/10.1093/gerona/glab046) |
-| `ctsliver` | 2024 | chronological age | `age_years` | — | liver | EPICv1 | [Tong 2024](https://doi.org/10.18632/aging.206184) |
-| `cvdwesterman` | 2020 | cardiovascular disease risk | `relative_score` | — | whole blood | 450K | [Westerman 2020](https://doi.org/10.1161/jaha.119.015299) |
-| `dnamfitage` | 2023 | physical-fitness biological age | `age_years` | — | whole blood | 450K | [McGreevy 2023](https://doi.org/10.18632/aging.204538) |
-| `dnamfitagegaitf` | 2023 | gait speed | `relative_score` | — | whole blood | 450K | [McGreevy 2023](https://doi.org/10.18632/aging.204538) |
-| `dnamfitagegaitm` | 2023 | gait speed | `relative_score` | — | whole blood | 450K | [McGreevy 2023](https://doi.org/10.18632/aging.204538) |
-| `dnamfitagegripf` | 2023 | grip strength | `relative_score` | — | whole blood | 450K | [McGreevy 2023](https://doi.org/10.18632/aging.204538) |
-| `dnamfitagegripm` | 2023 | grip strength | `relative_score` | — | whole blood | 450K | [McGreevy 2023](https://doi.org/10.18632/aging.204538) |
-| `dnamfitagevo2max` | 2023 | VO2max | `relative_score` | — | whole blood | 450K | [McGreevy 2023](https://doi.org/10.18632/aging.204538) |
-| `eabec` | 2020 | chronological age | `age_years` | — | whole blood | EPICv1 | [Lee 2020](https://doi.org/10.1186/s12864-020-07168-8) |
-| `encen100` | 2023 | chronological age | `age_years` | — | whole blood, saliva, buccal epithelium | 450K, EPICv1 | [Dec 2023](https://doi.org/10.1007/s11357-023-00731-7) |
-| `encen40` | 2023 | chronological age | `age_years` | — | whole blood, saliva, buccal epithelium | 450K, EPICv1 | [Dec 2023](https://doi.org/10.1007/s11357-023-00731-7) |
-| `ensembleagehumanmouse` | 2025 | relative age | `relative_score` | — | multi-tissue, whole blood | mammalian methylation array | [Haghani 2025](https://doi.org/10.1007/s11357-025-01808-1) |
-| `ensembleagestatic` | 2025 | intervention-responsive epigenetic age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40, Horvath MammalMethylChip320 | [Haghani 2025](https://doi.org/10.1007/s11357-025-01808-1) |
-| `ensembleagestatictop` | 2025 | intervention-responsive epigenetic age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40, Horvath MammalMethylChip320 | [Haghani 2025](https://doi.org/10.1007/s11357-025-01808-1) |
-| `epicga` | 2021 | gestational age | `gestational_weeks` | — | cord blood | EPICv1 | [Haftorn 2021](https://doi.org/10.1186/s13148-021-01055-z) |
-| `fiage` | 2025 | frailty index | `relative_score` | 53 | whole blood | EPICv1 | no primary source traced, [catalogued at](https://www.translage.io) |
-| `garagnani` | 2012 | ELOVL2 methylation | `relative_score` | — | whole blood | 450K | [Garagnani 2012](https://doi.org/10.1111/acel.12005) |
-| `gliasin` | 2024 | chronological age | `age_years` | — | brain cortex | 450K | [Tong 2024](https://doi.org/10.18632/aging.206184) |
-| `han` | 2020 | chronological age | `age_years` | — | whole blood | 450K | [Han 2020](https://doi.org/10.1186/s12915-020-00807-2) |
-| `hep` | 2024 | chronological age | `age_years` | — | liver | EPICv1 | [Tong 2024](https://doi.org/10.18632/aging.206184) |
-| `hepatoxu` | 2017 | hepatocellular carcinoma | `relative_score` | — | plasma cell-free DNA | targeted bisulfite sequencing | [Xu 2017](https://doi.org/10.1038/nmat4997) |
-| `mammalian1` | 2023 | chronological age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `mammalian2` | 2023 | chronological age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `mammalian3` | 2023 | chronological age | `age_years` | — | multi-tissue | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `mammalianblood2` | 2023 | chronological age | `age_years` | — | blood | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `mammalianblood3` | 2023 | chronological age | `age_years` | — | blood | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `mammalianfemale` | 2023 | sex | `relative_score` | — | multi-tissue | mammalian methylation array | [Li 2023](https://doi.org/10.1101/2023.11.02.565286) |
-| `mammalianlifespan` | 2024 | species maximum lifespan | `age_years` | — | multi-tissue | Horvath MammalMethylChip40 | [Li 2024](https://doi.org/10.1126/sciadv.adm7273) |
-| `mammalianskin2` | 2023 | chronological age | `age_years` | — | skin | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `mammalianskin3` | 2023 | chronological age | `age_years` | — | skin | Horvath MammalMethylChip40 | [Lu 2023](https://doi.org/10.1038/s43587-023-00462-6) |
-| `neusin` | 2024 | chronological age | `age_years` | — | brain cortex | 450K | [Tong 2024](https://doi.org/10.18632/aging.206184) |
-| `petkovich` | 2017 | chronological age | `age_years` | — | whole blood | bisulfite sequencing | [Petkovich 2017](https://doi.org/10.1016/j.cmet.2017.03.016) |
-| `pipekelasticnet` | 2022 | chronological age | `age_years` | — | multi-tissue | 27K, 450K, EPICv1 | [Pipek 2022](https://doi.org/10.1007/s10910-022-01381-4) |
-| `pipekfilteredh` | 2022 | chronological age | `age_years` | — | multi-tissue | 27K, 450K, EPICv1 | [Pipek 2022](https://doi.org/10.1007/s10910-022-01381-4) |
-| `pipekretrainedh` | 2022 | chronological age | `age_years` | — | multi-tissue | 27K, 450K, EPICv1 | [Pipek 2022](https://doi.org/10.1007/s10910-022-01381-4) |
-| `reedbmi` | 2020 | BMI methylation score | `relative_score` | — | whole blood, cord blood | 450K | [Reed 2020](https://doi.org/10.1186/s13148-020-00841-5) |
-| `replitalinorm` | 2022 | replicative history | `divisions` | — | cultured fibroblasts | EPICv1 | [Endicott 2022](https://doi.org/10.1038/s41467-022-34268-8) |
-| `retroelementagev1` | 2024 | chronological age | `age_years` | — | whole blood | EPICv1 | [Ndhlovu 2024](https://doi.org/10.1111/acel.14288) |
-| `retroelementagev2` | 2024 | chronological age | `age_years` | — | whole blood | EPICv1 | [Ndhlovu 2024](https://doi.org/10.1111/acel.14288) |
-| `senchronoage` | 2026 | chronological age | `age_years` | — | whole blood | 450K, EPICv1 | [Kasamoto 2026](https://doi.org/10.1111/acel.70430) |
-| `sencultureage` | 2026 | cellular senescence | `relative_score` | — | cultured fibroblasts, cultured mesenchymal stromal cells | 450K, EPICv1 | [Kasamoto 2026](https://doi.org/10.1111/acel.70430) |
-| `senmortalityage` | 2026 | mortality risk | `mortality_log_hazard` | — | whole blood | 450K, EPICv1 | [Kasamoto 2026](https://doi.org/10.1111/acel.70430) |
-| `stubbs` | 2017 | chronological age | `age_years` | — | multi-tissue, liver, lung, heart, brain cortex, skeletal muscle, cerebellum, spleen | RRBS | [Stubbs 2017](https://doi.org/10.1186/s13059-017-1203-5) |
-| `thompson` | 2018 | chronological age | `age_years` | — | adipose tissue, blood, cerebellum, brain cortex, heart, kidney, liver, lung, skeletal muscle, spleen | RRBS | [Thompson 2018](https://doi.org/10.18632/aging.101590) |
-| `wu` | 2019 | chronological age | `age_years` | — | whole blood | 27K, 450K | [Wu 2019](https://doi.org/10.18632/aging.102399) |
-| `xchrom` | 2021 | X-chromosome dosage | `relative_score` | — | whole blood | 450K, EPICv1 | [Wang 2021](https://doi.org/10.1186/s12864-021-07675-2) |
-| `ychrom` | 2021 | Y-chromosome presence | `relative_score` | — | whole blood | 450K, EPICv1 | [Wang 2021](https://doi.org/10.1186/s12864-021-07675-2) |
-
-
-## Licensed: 57 clocks
-
-The architecture is implemented and tested; the coefficients are research-use-only and are not ours to distribute. Obtain a file and register it.
-
-| Clock | Year | Predicts | Scale | Features | Tissue | Platform | Paper |
-|---|---:|---|---|---:|---|---|---|
-| `cpgptgrimage3` | 2024 | biological age | `age_years` | — | whole blood | 450K | [de Lima Camillo 2024](https://doi.org/10.1101/2024.10.24.619766) |
-| `cpgptpcgrimage3` | 2024 | biological age | `age_years` | — | whole blood | 450K | [de Lima Camillo 2024](https://doi.org/10.1101/2024.10.24.619766) |
-| `dnamemrage` | 2026 | electronic medical record age | `age_years` | — | whole blood | 450K, EPICv1 | [Chen 2026](https://doi.org/10.1038/s43587-026-01073-7) |
-| `dunedinpace` | 2022 | pace of aging | `pace_ratio` | — | whole blood | EPICv1 | [Belsky 2022](https://doi.org/10.7554/elife.73420) |
-| `grimage` | 2019 | mortality risk | `age_years` | — | whole blood | 450K | [Lu 2019](https://doi.org/10.18632/aging.101684) |
-| `grimage2` | 2022 | mortality risk | `age_years` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2adm` | 2022 | adrenomedullin | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2b2m` | 2022 | beta-2-microglobulin | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2cystatinc` | 2022 | cystatin C | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2gdf15` | 2022 | GDF-15 | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2leptin` | 2022 | leptin | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2loga1c` | 2022 | hemoglobin A1c | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2logcrp` | 2022 | C-reactive protein | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2packyrs` | 2022 | smoking exposure | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2pai1` | 2022 | PAI-1 | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `grimage2timp1` | 2022 | TIMP-1 | `relative_score` | — | whole blood | 450K | [Lu 2022](https://doi.org/10.18632/aging.204434) |
-| `omicmage` | 2026 | biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Chen 2026](https://doi.org/10.1038/s43587-026-01073-7) |
-| `pcdnamtl` | 2022 | leukocyte telomere length | `telomere_kb` | — | whole blood | 450K | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimage` | 2022 | mortality risk | `age_years` | — | whole blood | 450K | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimageadm` | 2022 | adrenomedullin | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimageb2m` | 2022 | beta-2 microglobulin | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimagecystatinc` | 2022 | cystatin C | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimagegdf15` | 2022 | growth differentiation factor 15 | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimageleptin` | 2022 | leptin | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimagepackyrs` | 2022 | smoking pack-years | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimagepai1` | 2022 | plasminogen activator inhibitor 1 | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcgrimagetimp1` | 2022 | TIMP metallopeptidase inhibitor 1 | `relative_score` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pchannum` | 2022 | chronological age | `age_years` | — | whole blood | 450K | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pchorvath2013` | 2022 | chronological age | `age_years` | — | multi-tissue | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcphenoage` | 2022 | phenotypic age | `age_years` | — | whole blood | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `pcskinandblood` | 2022 | chronological age | `age_years` | — | skin, whole blood, cultured fibroblasts | 450K, EPICv1 | [Higgins-Chen 2022](https://doi.org/10.1038/s43587-022-00248-2) |
-| `retroclock` | 2025 | retroelement methylation age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s41591-026-04562-9) |
-| `systemsage` | 2025 | multisystem biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsageageprediction` | 2025 | chronological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsageblood` | 2025 | blood-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsagebrain` | 2025 | brain-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsageheart` | 2025 | cardiovascular-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsagehormone` | 2025 | endocrine-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsageimmune` | 2025 | immune-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsageinflammation` | 2025 | inflammatory-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsagekidney` | 2025 | renal-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsageliver` | 2025 | hepatic-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsagelung` | 2025 | pulmonary-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsagemetabolic` | 2025 | metabolic-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `systemsagemusculoskeletal` | 2025 | musculoskeletal-system biological age | `age_years` | — | whole blood | 450K, EPICv1 | [Sehgal 2025](https://doi.org/10.1038/s43587-025-00958-3) |
-| `twelvecelldeconvolutebloodepicbas` | 2022 | basophil proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepicbmem` | 2022 | memory B cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepicbnv` | 2022 | naive B cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepiccd4mem` | 2022 | memory CD4+ T cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepiccd4nv` | 2022 | naive CD4+ T cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepiccd8mem` | 2022 | memory CD8+ T cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepiccd8nv` | 2022 | naive CD8+ T cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepiceos` | 2022 | eosinophil proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepicmono` | 2022 | monocyte proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepicneu` | 2022 | neutrophil proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepicnk` | 2022 | natural killer cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
-| `twelvecelldeconvolutebloodepictreg` | 2022 | regulatory T-cell proportion | `proportion` | — | purified blood leukocytes | EPICv1 | [Salas 2022](https://doi.org/10.1038/s41467-021-27864-7) |
 
 
 ## Querying it from code

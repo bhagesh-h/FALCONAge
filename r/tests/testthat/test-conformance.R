@@ -17,10 +17,11 @@ test_that("the module imports and reports a coherent configuration", {
   skip_if_no_python()
   cfg <- falconage_config()
   expect_s3_class(cfg, "falcon_config")
-  expect_equal(cfg$n_clocks, 178L)
+  expect_equal(cfg$n_clocks, 68L)
   expect_equal(cfg$falconage, as.character(utils::packageVersion("FALCONAge")))
   tiers <- cfg$clocks_by_availability
-  expect_equal(tiers$bundled + tiers$untraced + tiers$licensed, 178L)
+  expect_equal(tiers$bundled, 68L)
+  expect_equal(tiers$untraced + tiers$licensed, 0L)
 })
 
 test_that("the registry browses from R", {
@@ -29,20 +30,7 @@ test_that("the registry browses from R", {
   expect_gte(nrow(a), 20)
   expect_true(all(a$availability == "bundled"))
   expect_true("horvath2013" %in% rownames(a))
-
-  # 40, plus the twelve IDOL-Ext cell types (Dartmouth research-use licence)
-  # and the five PC clocks the user imports from the authors' file.
-  scaffolds <- list_clocks(tier = "licensed")
-  expect_equal(nrow(scaffolds), 57L)
-})
-
-test_that("a scaffold clock says why and names an alternative", {
-  skip_if_no_python()
-  out <- capture.output(clock_info("grimage2"))
-  txt <- paste(out, collapse = "\n")
-  expect_match(txt, "scaffold-only")
-  expect_match(txt, "Obtain them from")
-  expect_match(txt, "Bundled clocks that answer it too")
+  expect_gte(nrow(a), 68L)   # plus any clock an earlier test added
 })
 
 test_that("scores from R are bit-identical to scores from Python", {
@@ -125,7 +113,6 @@ _d4 = pd.DataFrame(np.full((3, 5), 0.5), index=list('abc'), columns=_f4)
                    modality = "dna_methylation")
   # The message must survive the crossing -- it is where the remedy lives.
   expect_error(score(d, clocks = "hannum"), "below the")
-  expect_error(score(d, clocks = "grimage2"), "scaffold-only")
 })
 
 test_that("run_report writes the step-ordered report from R", {
@@ -150,12 +137,4 @@ _o5 = pd.DataFrame({'age': np.linspace(25, 70, 8), 'tissue': 'whole blood'}, ind
   expect_match(qmd, "scores_wide.csv", fixed = TRUE)
 })
 
-test_that("the PC clock importer is reachable from R", {
-  skip_if_no_python()
-  expect_error(import_pc_clocks("/nonexistent/CalcAllPCClocks.RData"), "no such file")
-})
 
-test_that("the DunedinPACE importer is reachable from R", {
-  skip_if_no_python()
-  expect_error(import_dunedinpace("/nonexistent/DunedinPACE"), "no such file")
-})

@@ -1,0 +1,6 @@
+Error against bias on healthy controls
+
+17 clocks · point size is the benchmark total
+
+Neither axis is a ranking. A clock at the origin merely predicts chronological
+age well, which is the one thing a useful clock need not do.

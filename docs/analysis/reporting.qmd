@@ -81,82 +81,51 @@ a directory that already exists.
 
 ## Plots
 
-### The standard set
+### What FALCONAge draws
 
-1. **BA vs CA scatter, faceted by clock, coloured by sex**, with a fitted line, the identity line,
-   and Pearson r annotated in the corner. This is `plot_ba`
-   ([BioAge plot_ba.R](https://github.com/dayoonkwon/BioAge)), ggplot2, `geom_point(shape = 1)`,
-   `geom_smooth(method = lm)`, `facet_wrap(~ method, scales = "free")`, colours `#7294D4` (men)
-   and `#E6A0C4` (women).
-2. **Pairs / correlation matrix of age accelerations.** Scatter plots below the diagonal, Pearson
-   r above the diagonal colour-mapped, clock labels on the diagonal. `plot_baa`
-   ([BioAge plot_baa.R](https://github.com/dayoonkwon/BioAge)) implements this in base graphics with a
-   custom `layout()` matrix so the diagonal cells can hold text.
-3. **Hierarchical clustering + Spearman heatmap of clocks.** pyaging Figure 1a - 38 methylation
-   clocks over ~13,000 samples; telomere predictors cluster together, chronological predictors
-   separate from mortality predictors.
-4. **UMAP of samples in clock space.** pyaging Figures 1b–e; reveals "ageotypes" where AltumAge
-   (chronological) and GrimAge2 (mortality) disagree.
-5. **Reprogramming / intervention timecourse.** pyaging Figure 1f, GSE54848, 39 clocks over
-   OSKM days; most rejuvenate between days 10 and 20, telomere predictors go *up*, ENCen100 is
-   flat. Any tool should make "run N clocks across a timepoint variable and plot trajectories" a
-   one-liner.
-6. **Benchmark grids.** ComputAgeBench `plot_class_bench` - a boolean matrix of
-   clock × (dataset:condition:test) with per-condition-class column groups and a total column;
-   `plot_medae` (MedAE bar chart, upper bound 18 y); `plot_bias` (median error, x-limits ±20 y).
-   Saved as PDF at 180 dpi
-   ([ComputAge benchmarking.py:451](https://github.com/ComputationalAgingLab/ComputAge)).
-7. **Forest plot of hazard ratios** per clock, per outcome, per cohort.
-8. **Density / violin of age acceleration by group** (disease vs control, treated vs untreated).
-9. **Organ or system radar/heatmap.** organAging uses heatmaps of organ ages against traits,
-   medications, foods, professions, diseases; SystemsAge gives an 11-spoke profile.
-10. **Expression-density QC plots at each preprocessing stage.** tAge's `plot_eset_density` is
-    called after raw, RLE, log, scale, YuGene and centring - a cheap way to catch a broken
-    normalisation.
-11. **Volcano / GSEA plots** when linking clock features to biology.
-12. **Spatial maps** of predicted age or age acceleration over tissue coordinates, plus proximity
-    effect matrices (effector cell type × target cell type, coloured by t-statistic).
-13. **Calibration plot** for probability-output clocks; **precision–recall curve** for
-    classifiers on imbalanced test sets (CellBiAge's choice of AUPRC over AUROC).
-14. **Missingness bar chart** per clock, percent of features absent, drawn before the results so
-    the user sees which clocks are untrustworthy for their platform.
-
-### Plotting conventions worth adopting
-
-- Always draw the identity line on BA-vs-CA plots.
-- Never plot rate clocks (DunedinPACE) on the same axis as age clocks.
-- Facet by clock generation, not alphabetically.
-- Annotate every panel with n, r and the missingness fraction.
-- Colour by group, shape by platform; keep the palette stable across the whole report.
-
-### What FALCONAge draws, and against which of the above
-
-Thirty-one figures in Python, twenty of them also in R, drawn alike because both languages read
-their colours, titles, subtitles and one-line descriptions from the same `colorscheme.yaml`. The
-table lists those that answer the principles above; the [gallery](figures.qmd) shows every one. Every function returns its
+Thirty-two figures in Python, twenty-one of them also in R, drawn alike because both languages
+read their colours, titles, subtitles and one-line descriptions from the same `colorscheme.yaml`.
+The [gallery](figures.qmd) shows every one. The coverage map is drawn first on every run, before
+any clock is scored, and cannot be switched off. Every function returns its
 data frame as well as its figure, which is how two rendering engines draw the same numbers.
 
-| Figure | Answers | From [The standard set](#the-standard-set) |
-|---|---|---|
-| `ba_vs_ca` | does this clock track age here, and with what bias | 1 |
-| `bland_altman` | is the error age-dependent (regression dilution made visible) | - |
-| `calibration` | is the predicted age calibrated across the age range | 13 |
-| `acceleration_by_group` | do cases accelerate relative to controls | 8 |
-| `acceleration_density` | the same, as distributions rather than summaries | 8 |
-| `acceleration_heatmap` | clock × study, the whole pooled picture in one panel | - |
-| `forest` | effect size with an interval, per clock | 7 |
-| `clock_corr` | which clocks agree, clustered | 3 |
-| `clock_chord` | how much of that agreement is shared CpGs rather than shared signal | - |
-| `clock_radar` | one profile per group across clocks, on a common z scale | 9 |
-| `clock_pca`, `clock_embedding` | sample structure in clock space; ageotypes | 4 |
-| `clock_scatter_matrix` | pairwise acceleration, the `plot_baa` layout | 2 |
-| `coverage_bar`, `missingness` | which clocks are scoring imputed values, read before the scores | 14 |
-| `beta_density` | is the beta distribution bimodal, or did normalisation break | 10 |
-| `sex_check` | does the X/Y dosage match the recorded sex | - |
-| `platform_comparison`, `study_comparison` | is the batch bigger than the biology | - |
-| `benchmark_bars`, `benchmark_error_bias`, `benchmark_heatmap` | AA1/AA2, the MedAE–MedE tradeoff, clock × dataset | 6 |
-| `timecourse`, `trajectory` | clocks across a timepoint variable | 5 |
-| `clock_atlas` | every clock, every pooled study, one figure | - |
+**Ready for a manuscript.** A figure carries its axes and its legend and nothing else: no title,
+no subtitle and no caption on the canvas, so it drops into a panel layout as it is. Each one is
+written as a pair named after its title, with the clock appended for per-clock figures:
+
+```
+figures/predicted_against_chronological_age_horvath2013.png
+figures/predicted_against_chronological_age_horvath2013.txt
+```
+
+The `.txt` holds the title, the figure's own numbers (n, r, MedAE and the like) and the
+description, ready to paste into a figure legend. `save_figure()` writes a pair from any figure
+you draw yourself, in Python (`fa.plot.save_figure(fig, "figures")`) and in R
+(`save_figure(p, "figures")`); `figure_text()` returns the same text as a list. Both reports show
+the title and description beneath each figure and link its `.txt`.
+
+| Figure | Answers |
+|---|---|
+| `clock_coverage_manhattan` | where every clock's CpGs sit on the genome, which ones the data carries, and which clocks share them |
+| `ba_vs_ca` | does this clock track age here, and with what bias |
+| `bland_altman` | is the error age-dependent (regression dilution made visible) |
+| `calibration` | is the predicted age calibrated across the age range |
+| `acceleration_by_group` | do cases accelerate relative to controls |
+| `acceleration_density` | the same, as distributions rather than summaries |
+| `acceleration_heatmap` | clock × study, the whole pooled picture in one panel |
+| `forest` | effect size with an interval, per clock |
+| `clock_corr` | which clocks agree, clustered |
+| `clock_chord` | how much of that agreement is shared CpGs rather than shared signal |
+| `clock_radar` | one profile per group across clocks, on a common z scale |
+| `clock_pca`, `clock_embedding` | sample structure in clock space; ageotypes |
+| `clock_scatter_matrix` | pairwise acceleration, the `plot_baa` layout |
+| `coverage_bar`, `missingness` | which clocks are scoring imputed values, read before the scores |
+| `beta_density` | is the beta distribution bimodal, or did normalisation break |
+| `sex_check` | does the X/Y dosage match the recorded sex |
+| `platform_comparison`, `study_comparison` | is the batch bigger than the biology |
+| `benchmark_bars`, `benchmark_error_bias`, `benchmark_heatmap` | AA1/AA2, the MedAE–MedE tradeoff, clock × dataset |
+| `timecourse`, `trajectory` | clocks across a timepoint variable |
+| `clock_atlas` | every clock, every pooled study, one figure |
 
 `clock_chord` is the one with no precedent in the list above and it earns its place: the
 correlation heatmap says two clocks agree, and the chord says how much of that agreement was

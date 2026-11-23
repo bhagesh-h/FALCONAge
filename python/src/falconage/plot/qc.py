@@ -14,7 +14,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside,
     _wrap_caption,
 )
 
@@ -66,7 +66,14 @@ def coverage_bar(result, *, floor: float = 0.8, platform: str | None = None):
                semantic("warn") if c < 0.95 else semantic("pass") for c in d["coverage"]]
     fig, ax = _new(height=max(2.6, 0.24 * len(d) + 1.5))
     ax.barh(d["clock"], d["coverage"], color=colours)
-    _ref(ax, "v", floor)
+    _ref(ax, "v", floor, label=f"floor ({floor:.0%})")
+    from matplotlib.patches import Patch
+
+    _legend_outside(fig, ax, widen=1.3, handles=[
+        Patch(color=semantic("pass"), label="95% or more"),
+        Patch(color=semantic("warn"), label=f"{floor:.0%} to 95%"),
+        Patch(color=semantic("fail"), label=f"below {floor:.0%}"),
+        *ax.get_legend_handles_labels()[0]])
     ax.set_xlim(0, 1)
     ax.tick_params(axis="y", labelsize=theme_value("caption_size"))
     _dress(fig, ax, spec.text("coverage_bar", n_clocks=len(d), floor=int(floor * 100),
@@ -115,10 +122,7 @@ def sex_check(data, *, sex_col: str = "sex"):
     ax.set_yticks([])
     # Outside the panel: a key drawn over a scatter hides exactly
     # the points a reader is looking for. See clock_pca.
-    fig.set_size_inches(fig.get_figwidth() * 1.18, fig.get_figheight())
-    ax.legend(frameon=False, fontsize=theme_value("caption_size"),
-              loc="upper left", bbox_to_anchor=(1.015, 1.0),
-              borderaxespad=0.0, handletextpad=0.4, labelspacing=0.55)
+    _legend_outside(fig, ax)
 
     known = d[d["declared"].isin(["M", "F"])]
     mismatch = 0

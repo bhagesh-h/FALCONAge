@@ -10,7 +10,7 @@
 # are meant to agree for figures; only the clock SCORES are bit-identical.
 # =============================================================================
 
-#' Clock atlas: every algorithm across every pooled study
+#' Clock atlas across pooled studies
 #'
 #' The one figure that answers "of these twenty-odd algorithms, which are
 #' measuring aging at all". Rows are clocks on a shared vertical axis; panels
@@ -198,10 +198,8 @@ plot_clock_atlas <- function(x, bench, dataset_col = "dataset", min_datasets = 2
                         widths = c(0.5, 1, 1, 3.25, 0.92, 0.92)) +
     patchwork::plot_annotation(
       title = ttl$title, subtitle = ttl$subtitle, caption = ttl$caption,
-      theme = ggplot2::theme(
-        plot.title = ggplot2::element_text(size = .thm("title_size") + 2, hjust = 0),
-        plot.subtitle = ggplot2::element_text(size = .thm("subtitle_size"),
-                                              colour = "#555555", hjust = 0),
-        plot.caption = ggplot2::element_text(size = .thm("caption_size"),
-                                             colour = "#666666", hjust = 0)))
+      # Kept for figure_text() and save_figure(), not drawn.
+      theme = ggplot2::theme(plot.title = ggplot2::element_blank(),
+                             plot.subtitle = ggplot2::element_blank(),
+                             plot.caption = ggplot2::element_blank()))
 }

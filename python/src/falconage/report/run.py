@@ -42,6 +42,19 @@ def run_report(data: Any, outdir: str | Path, *, clocks: Any = "compatible",
     written: dict[str, Path] = {}
 
     if data.modality == "dna_methylation":
+        # Always, and before any clock is scored: where every clock's CpGs sit
+        # on the genome and which of them this data carries. Not switched off
+        # by figures=False, because coverage decides which clocks can run.
+        from ..plot.coverage_map import save_coverage_manhattan
+
+        try:
+            cov_png, cov_tab = save_coverage_manhattan(data, out / "figures")
+            cov_tab.to_csv(out / "clock_coverage.csv", index_label="clock")
+            written["coverage_map"] = cov_png
+            log(f"coverage map: {len(cov_tab)} clocks, mean coverage "
+                f"{cov_tab['coverage'].mean():.1f}% ({cov_png})")
+        except Exception as exc:                  # noqa: BLE001
+            log(f"  coverage map unavailable: {exc}")
         qc = fa.qc(data)
         qc.per_sample.to_csv(out / "qc_per_sample.csv")
         for w in qc.warnings:
@@ -92,13 +105,13 @@ def run_report(data: Any, outdir: str | Path, *, clocks: Any = "compatible",
         from .. import plot as fplot
 
         w = fplot.save_all(res, out / "figures", data=data, acc=acc, group=group_col,
-                           se=se, conformal=conf, consensus=cons)
+                           se=se, conformal=conf, consensus=cons, coverage_map=False)
         log(f"  {len(w)} figure(s)")
 
     from .html import write_report
 
     written["report"] = write_report(res, out / "report.html", group=group_col,
-                                     title=title)
+                                     title=title, coverage_map=written.get("coverage_map"))
     if quarto:
         from .quarto import write_quarto_report
 

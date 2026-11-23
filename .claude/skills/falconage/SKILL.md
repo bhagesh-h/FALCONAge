@@ -6,7 +6,7 @@ description: Score biological aging clocks from DNA methylation, clinical chemis
 # FALCONAge
 
 Aging-clock scoring with the unit, the provenance, and the measurement error attached
-to every number. 178 clocks catalogued; 69 score offline.
+to every number. 68 human clocks, every one scoring offline, plus any clock you add.
 
 **Docker is the supported path.** Nothing else needs installing, and the image pins every
 dependency so the same input gives the same numbers on any machine.
@@ -42,7 +42,10 @@ On Windows PowerShell write `"${PWD}"` wherever `"$PWD"` appears below; on `cmd.
 
 ## The one-command path
 
-Scores, uncertainty, age acceleration, 31 figures and an HTML report, no code written. The
+Scores, uncertainty, age acceleration, the figures and an HTML report, no code written. Each
+figure is `figures/<title>.png` (clock appended for per-clock figures) with no title or caption
+on the canvas, and a `<title>.txt` beside it holding the title, the figure's numbers and the
+description for a figure legend. The
 entrypoint is the CLI, so the verb goes straight after the image name with no `falconage` in
 front of it:
 

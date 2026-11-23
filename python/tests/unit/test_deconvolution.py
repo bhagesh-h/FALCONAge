@@ -103,36 +103,5 @@ def test_the_table_follows_the_array(registry):
     assert len(registry.deconvolution_table(cid, None, present=legacy)) == 350
 
 
-def test_the_twelve_cell_library_is_licensed_and_takes_a_local_table(tmp_path, rng):
-    reg = ClockRegistry.from_yaml()           # a private copy; registration mutates it
-    cid = "twelvecelldeconvolutebloodepictreg"
-    c = reg.get(cid)
-    assert c.availability == "licensed" and c.deconvolution.cell_type == "Treg"
-    assert "Dartmouth" in reg.unavailable_message(cid)
-
-    cells = ["Bas", "Bmem", "Bnv", "CD4mem", "CD4nv", "CD8mem", "CD8nv", "Eos",
-             "Mono", "Neu", "NK", "Treg"]
-    cpgs = [f"cg{i:08d}" for i in range(300)]
-    table = pd.DataFrame(rng.uniform(0.05, 0.95, size=(300, 12)), index=cpgs, columns=cells)
-    table.index.name = "feature_id"
-    p = tmp_path / "extended.csv"
-    table.to_csv(p)
-    reg.register_local_weights(cid, p)
-
-    w = rng.dirichlet(np.ones(12), size=5)
-    ids = [f"E{i}" for i in range(5)]
-    data = fa.FalconData(X=pd.DataFrame(w @ table.to_numpy().T, index=ids, columns=cpgs),
-                         obs=pd.DataFrame({"tissue": "whole blood"}, index=ids),
-                         modality="dna_methylation", platform="EPICv1")
-    res = fa.score(data, clocks=[cid], registry=reg)
-    assert np.allclose(res.scores[cid], w[:, cells.index("Treg")], atol=5e-5)
-    assert res.manifest.weights[cid]["source"] == "user_supplied"
 
 
-def test_a_local_table_without_the_entrys_column_is_refused(tmp_path, rng):
-    reg = ClockRegistry.from_yaml()
-    p = tmp_path / "wrong.csv"
-    pd.DataFrame(rng.uniform(size=(10, 2)), columns=["A", "B"],
-                 index=pd.Index([f"cg{i}" for i in range(10)], name="feature_id")).to_csv(p)
-    with pytest.raises(RegistryError, match="Treg"):
-        reg.register_local_weights("twelvecelldeconvolutebloodepictreg", p)

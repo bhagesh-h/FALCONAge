@@ -11,8 +11,9 @@ for, follow cyRAVEN's run report (``report_table_note``, ``write_run_report``).
 A file the table does not name still appears, in the last step, with its name
 and size. Nothing in the output directory is left out of the report silently.
 
-Descriptions of figures are not here: they live with the figures, in
-``quarto.FIGURE_NOTES``, so a figure's text exists once.
+Descriptions of figures are not here: each figure is written under its title
+with a ``.txt`` beside it carrying the description, and ``quarto.FIGURE_NOTES``
+adds what to look for, so a figure's text exists once.
 """
 
 from __future__ import annotations
@@ -36,7 +37,8 @@ class Output:
     #: Path relative to the output directory; shell wildcards allowed.
     pattern: str
     step: int
-    #: "table", "figure", "json", "text" or "file" (named, never embedded).
+    #: "table", "figure", "json", "text", "caption" (a figure's .txt, shown
+    #: with the figure) or "file" (named, never embedded).
     kind: str
     title: str = ""
     description: str = ""
@@ -89,32 +91,36 @@ OUTPUTS: tuple[Output, ...] = (
     Output("qc_per_sample.csv", 1, "table", "Quality control, per sample",
            "Fraction of missing values, and the mean and SD of each sample's betas. A "
            "sample far from the rest on either is the one to check first."),
-    Output("figures/beta_density.png", 1, "figure"),
-    Output("figures/missingness.png", 1, "figure"),
-    Output("figures/sex_check.png", 1, "figure"),
+    Output("figures/beta_value_distribution_per_sample.png", 1, "figure"),
+    Output("figures/missing_values_per_sample.png", 1, "figure"),
+    Output("figures/predicted_against_declared_sex.png", 1, "figure"),
 
+    Output("clock_coverage.csv", 2, "table", "Coverage on the genome, per clock",
+           "Drawn before scoring: each clock's CpGs, how many the data carries, how many "
+           "have a known position and how many another clock also uses."),
     Output("qc.csv", 2, "table", "Coverage, per clock",
            "Share of each clock's features present, the share of its coefficient weight "
            "they carry, and how many values were filled and how."),
     Output("skipped_clocks.csv", 2, "table", "Clocks not scored",
            "Every clock considered and not scored, with the reason."),
-    Output("figures/coverage_bar.png", 2, "figure"),
-    Output("figures/platform_bias.png", 2, "figure"),
-    Output("figures/platform_*.png", 2, "figure"),
+    Output("figures/clock_coverage_across_the_genome.png", 2, "figure"),
+    Output("figures/feature_coverage_per_clock.png", 2, "figure"),
+    Output("figures/what_probe_loss_costs_in_years.png", 2, "figure"),
+    Output("figures/score_distribution_by_platform_*.png", 2, "figure"),
 
     Output("scores_wide.csv", 3, "table", "Scores, one row per sample",
            "One column per clock, in the unit the clock reports."),
     Output("scores.csv", 3, "table", "Scores, one row per sample and clock",
            "The long form, with each clock's unit and scale type beside the value."),
-    Output("figures/clock_corr.png", 3, "figure"),
-    Output("figures/clock_pca.png", 3, "figure"),
-    Output("figures/clock_chord.png", 3, "figure"),
-    Output("figures/clock_radar.png", 3, "figure"),
+    Output("figures/agreement_between_clocks.png", 3, "figure"),
+    Output("figures/samples_in_clock_space.png", 3, "figure"),
+    Output("figures/feature_sharing_between_clocks.png", 3, "figure"),
+    Output("figures/multi_clock_profile.png", 3, "figure"),
 
-    Output("figures/ba_vs_ca_*.png", 4, "figure"),
-    Output("figures/bland_altman_*.png", 4, "figure"),
-    Output("figures/calibration_*.png", 4, "figure"),
-    Output("figures/study_*.png", 4, "figure"),
+    Output("figures/predicted_against_chronological_age_*.png", 4, "figure"),
+    Output("figures/agreement_across_the_age_range_*.png", 4, "figure"),
+    Output("figures/residual_against_chronological_age_*.png", 4, "figure"),
+    Output("figures/score_distribution_by_study_*.png", 4, "figure"),
 
     Output("technical_se.csv", 5, "table", "Technical standard error, per sample",
            "The part of each score that repeat measurement of the same DNA would move, "
@@ -128,22 +134,22 @@ OUTPUTS: tuple[Output, ...] = (
            "adult blood samples of known age. The coverage holds only for samples "
            "drawn like that calibration cohort, which nothing here can verify, so "
            "`exchangeable` is always false."),
-    Output("figures/reliability_forest.png", 5, "figure"),
-    Output("figures/score_interval_*.png", 5, "figure"),
+    Output("figures/how_much_of_each_score_is_the_assay.png", 5, "figure"),
+    Output("figures/scores_with_the_uncertainty_they_carry_*.png", 5, "figure"),
 
     Output("acceleration.csv", 6, "table", "Age acceleration",
            "Residual of each score on chronological age, for clocks whose scale admits "
            "it."),
-    Output("figures/acceleration_heatmap.png", 6, "figure"),
-    Output("figures/acceleration_density_*.png", 6, "figure"),
+    Output("figures/age_acceleration_across_clocks_and_samples.png", 6, "figure"),
+    Output("figures/distribution_of_age_acceleration_*.png", 6, "figure"),
 
     Output("consensus_verdict.txt", 7, "text", "Consensus verdict",
            "The verdict across clocks, and the reason for it."),
     Output("consensus.csv", 7, "table", "Consensus test, every clock",
            "Effect size, uncorrected p and both corrected thresholds per clock, in the "
            "order tested rather than by p, so the table cannot be read as a ranking."),
-    Output("figures/consensus_plot.png", 7, "figure"),
-    Output("figures/acceleration_group_*.png", 7, "figure"),
+    Output("figures/does_the_difference_hold_up_across_clocks.png", 7, "figure"),
+    Output("figures/age_acceleration_by_group_*.png", 7, "figure"),
 
     Output("interpretation.csv", 8, "table", "What each score means",
            "Per clock: what it predicts and was trained on, its unit and permitted "
@@ -158,6 +164,9 @@ OUTPUTS: tuple[Output, ...] = (
            "reason reads as an absence; an empty one would read as a measurement."),
     Output("report.html", 9, "file", "One-page report",
            "The compact self-contained report, for sending."),
+    # The title and legend text beside each figure. Linked from the figure it
+    # belongs to, not listed as a file of its own.
+    Output("figures/*.txt", 9, "caption"),
 )
 
 #: The Quarto report's own files: never listed inside it.
@@ -189,6 +198,8 @@ def collect(outdir: str | Path) -> dict[int, list[tuple[Path, Output]]]:
         if any(fnmatch.fnmatchcase(rel, pat) for pat in OWN):
             continue
         o = classify(rel)
+        if o is not None and o.kind == "caption" and p.with_suffix(".png").is_file():
+            continue
         if o is None:
             o = Output(rel, STEPS[-1].number, "file", rel, "")
             rank = len(OUTPUTS)

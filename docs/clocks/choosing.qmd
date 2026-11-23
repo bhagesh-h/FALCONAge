@@ -19,28 +19,26 @@ sample looks.
 ## Choosing by research question
 <!-- BEGIN GENERATED: by-question -->
 
-| Question | Ready to score | Needs a licensed file | No coefficients traced | Scale |
-|:-----------------|:----------------------------|:-------------|:-------------|:------|
-| How old does this sample look? | `altumage`, `cage`, `corticalclock`, `hannum`, `horvath2013`, `intrinclock`, `lin`, `meer`, and 11 more | `pchannum`, `pchorvath2013`, `pcskinandblood`, `retroclock`, `systemsageageprediction` | `abec`, `cabec`, `ctsliver`, `eabec`, `encen100`, `encen40`, `ensembleagehumanmouse`, `gliasin`, and 20 more | `age_years`, `relative_score` |
-| How old is this newborn, gestationally? | `bohlin`, `knight`, `leecontrol`, `leerefinedrobust`, `leerobust`, `mayne` | — | `epicga` | `gestational_weeks` |
-| How fast is this person aging? | `dunedinpoam38` | `dunedinpace` | `ensembleagestatic`, `ensembleagestatictop` | `age_years`, `pace_ratio` |
-| Which organ system is aging fastest? | — | `systemsage`, `systemsageblood`, `systemsagebrain`, `systemsageheart`, `systemsagehormone`, `systemsageimmune`, `systemsageinflammation`, `systemsagekidney`, and 4 more | `dnamfitage` | `age_years` |
-| Who is at risk of dying sooner, or is frailer? | `dnamfili`, `dnamic`, `dnamphenoage`, `hd`, `hrsinchphenoage`, `kdm`, `linage2`, `metabohealth`, and 2 more | `cpgptgrimage3`, `cpgptpcgrimage3`, `dnamemrage`, `grimage`, `grimage2`, `omicmage`, `pcgrimage`, `pcphenoage` | `fiage`, `mammalianlifespan`, `senmortalityage` | `age_years`, `mortality_log_hazard`, `relative_score` |
-| Is damage separable from adaptation? | `yingadaptage`, `yingdamage` | — | — | `age_years_relative` |
-| How much has this tissue divided? | `cellpopage`, `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, and 2 more | — | `replitalinorm`, `sencultureage` | `divisions`, `relative_score` |
-| What is the blood's cell composition? | `deconvolutebloodepicbcell`, `deconvolutebloodepiccd4tcell`, `deconvolutebloodepiccd8tcell`, `deconvolutebloodepicmonocyte`, `deconvolutebloodepicneutrophil`, `deconvolutebloodepicnkcell` | `twelvecelldeconvolutebloodepicbas`, `twelvecelldeconvolutebloodepicbmem`, `twelvecelldeconvolutebloodepicbnv`, `twelvecelldeconvolutebloodepiccd4mem`, `twelvecelldeconvolutebloodepiccd4nv`, `twelvecelldeconvolutebloodepiccd8mem`, `twelvecelldeconvolutebloodepiccd8nv`, `twelvecelldeconvolutebloodepiceos`, and 4 more | — | `proportion` |
-| How long are the telomeres? | `dnamtl` | `pcdnamtl` | — | `telomere_kb` |
-| What is this person exposed to, or how do they live? | `dnamstress`, `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, and 3 more | `grimage2packyrs`, `pcgrimagepackyrs` | `dnamfitagegaitf`, `dnamfitagegaitm`, `dnamfitagegripf`, `dnamfitagegripm`, `dnamfitagevo2max`, `reedbmi` | `gestational_weeks`, `relative_score` |
-| What is a specific protein or lab value likely to be? | `downsyndrome` | `grimage2adm`, `grimage2b2m`, `grimage2cystatinc`, `grimage2gdf15`, `grimage2leptin`, `grimage2loga1c`, `grimage2logcrp`, `grimage2pai1`, and 8 more | `bocklandt`, `compil6`, `garagnani` | `relative_score` |
-| Is a named disease more likely? | `depressionbarbu`, `prostatecancerkirby` | — | `adbahadosingh`, `cvdwesterman`, `hepatoxu` | `relative_score` |
-| What is the sample's chromosomal sex, or its species? | — | — | `mammalianfemale`, `xchrom`, `ychrom` | `relative_score` |
+| Question | Clocks | Scale |
+|:-----------------|:----------------------------------------|:------|
+| How old does this sample look? | `altumage`, `cage`, `corticalclock`, `hannum`, `horvath2013`, `intrinclock`, `lin`, `metaboage`, `pedbe`, `skinandblood`, `stoch`, `stocp`, and 6 more | `age_years` |
+| How old is this newborn, gestationally? | `bohlin`, `knight`, `leecontrol`, `leerefinedrobust`, `leerobust`, `mayne` | `gestational_weeks` |
+| How fast is this person aging? | `dunedinpoam38` | `pace_ratio` |
+| Who is at risk of dying sooner, or is frailer? | `dnamfili`, `dnamic`, `dnamphenoage`, `hd`, `hrsinchphenoage`, `kdm`, `linage2`, `metabohealth`, `phenoage`, `zhangmortality` | `age_years`, `mortality_log_hazard`, `relative_score` |
+| Is damage separable from adaptation? | `yingadaptage`, `yingdamage` | `age_years_relative` |
+| How much has this tissue divided? | `cellpopage`, `epicmithyper`, `epicmithypo`, `epitoc1`, `epitoc2`, `epitoc3`, `hypoclock`, `replitali`, `stemtoc`, `stemtocvitro` | `divisions`, `relative_score` |
+| What is the blood's cell composition? | `deconvolutebloodepicbcell`, `deconvolutebloodepiccd4tcell`, `deconvolutebloodepiccd8tcell`, `deconvolutebloodepicmonocyte`, `deconvolutebloodepicneutrophil`, `deconvolutebloodepicnkcell` | `proportion` |
+| How long are the telomeres? | `dnamtl` | `telomere_kb` |
+| What is this person exposed to, or how do they live? | `dnamstress`, `mccartneyalcohol`, `mccartneybmi`, `mccartneybodyfat`, `mccartneyeducation`, `mccartneyhdlcholesterol`, `mccartneyldlcholesterol`, `mccartneysmoking`, `mccartneytotalcholesterol`, `mccartneytotalhdlratio`, `mccartneywhr` | `relative_score` |
+| What is a specific protein or lab value likely to be? | `downsyndrome` | `relative_score` |
+| Is a named disease more likely? | `depressionbarbu`, `prostatecancerkirby` | `relative_score` |
 
-Every one of the 178 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](catalogue.qmd).
+Every one of the 68 catalogued clocks appears above, routed by its declared `predicts` field. The full table with paper links is the [clock catalogue](catalogue.qmd).
 
 <!-- END GENERATED: by-question -->
 
-"Ready to score" means the coefficients ship in the package. The rest are
-catalogued and need a file; see [Availability](#availability) below.
+Every clock listed ships its coefficients in the package and scores offline. A clock of your
+own joins the same registry with [`add_clock`](../own/add.qmd).
 
 ::: {.panel-tabset}
 
@@ -68,15 +66,15 @@ Every clock carries a `scale_type`, and it decides which downstream operations a
 
 | Scale | Clocks | Permitted | Refused, and why |
 |:------------|---:|:------------------|:---------------------------|
-| `age_years` | 80 | acceleration, correlate, difference, mean, residual | — |
-| `relative_score` | 53 | correlate, rank | everything except correlation and rank: there is no external unit to difference or average |
-| `proportion` | 18 | compositional, correlate, difference, mean | anything ignoring the sum-to-one constraint |
-| `divisions` | 10 | correlate, difference, mean, rank | acceleration: a division count is not elapsed time |
-| `gestational_weeks` | 8 | acceleration, correlate, difference, mean, residual | mixing with an age in years |
-| `mortality_log_hazard` | 3 | correlate, hazard ratio, mean, rank | acceleration: a log-hazard has no zero on the age scale |
-| `telomere_kb` | 2 | acceleration, correlate, difference, mean | comparison with an age in years; and higher is the *younger* direction here, unlike every age clock beside it |
-| `pace_ratio` | 2 | correlate, difference, mean, rank | acceleration: it is already a rate |
+| `age_years` | 23 | acceleration, correlate, difference, mean, residual | — |
+| `relative_score` | 18 | correlate, rank | everything except correlation and rank: there is no external unit to difference or average |
+| `divisions` | 9 | correlate, difference, mean, rank | acceleration: a division count is not elapsed time |
+| `gestational_weeks` | 6 | acceleration, correlate, difference, mean, residual | mixing with an age in years |
+| `proportion` | 6 | compositional, correlate, difference, mean | anything ignoring the sum-to-one constraint |
+| `mortality_log_hazard` | 2 | correlate, hazard ratio, mean, rank | acceleration: a log-hazard has no zero on the age scale |
 | `age_years_relative` | 2 | correlate, difference, mean, residual | acceleration: the clock tracks age with a slope near one but its origin moves between cohorts, so predicted minus chronological measures the cohort |
+| `telomere_kb` | 1 | acceleration, correlate, difference, mean | comparison with an age in years; and higher is the *younger* direction here, unlike every age clock beside it |
+| `pace_ratio` | 1 | correlate, difference, mean, rank | acceleration: it is already a rate |
 
 <!-- END GENERATED: guide-scales -->
 
@@ -119,8 +117,7 @@ of probes carry a disproportionate share of the total weight, and losing four pe
 probes loses thirty-five per cent of the model when the missing four per cent are those.
 
 → [Probe loss, priced](../methods/uncertainty.qmd#probe-loss-priced) prices the same loss in years, per clock
-per platform, and explains why the PC clocks barely move where first-generation clocks shift by
-double digits.
+per platform.
 
 ## Reliability
 "Reliable" means two different things, and they do not track together:
@@ -131,12 +128,12 @@ double digits.
 | **Biological ICC** | the same person, sampled again days later | whether the number is a property of the person or of the morning |
 
 Nearly every clock is technically excellent; biological ICCs are substantially lower.
-**GrimAge2 and DunedinPACE are among the most biologically fragile**, and they are the two most
-often used to claim an intervention worked. `res.interpretation()` carries both columns, with
+Measured on the clocks published with both, the gap is widest for the mortality- and
+pace-trained clocks, which are the ones most often used to claim an intervention worked. `res.interpretation()` carries both columns, with
 `None` meaning "not established" rather than "fine".
 
-**The rule:** measuring change within a person, prefer a clock with a published biological ICC, or
-a principal-component version. → [Reliability, and why it governs everything above](discrepancies.qmd).
+**The rule:** measuring change within a person, prefer a clock with a published biological ICC,
+and measure the ICC on your own replicates when you can (below).
 
 ### Measure it on your own cohort
 
@@ -182,33 +179,11 @@ the same direction, so no amount of averaging removes it.
 
 **The rule:** set `obs["tissue"]` on every dataset. FALCONAge then compares it against what each
 clock was fitted on. Pan-tissue clocks say nothing, most warn with the measured discordance, and
-twelve refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
+nine refuse outright. Cell-free DNA is refused by every clock. No `tissue` column gets one
 warning saying the check did not run.
 
-→ [Specimen type is not metadata](../methods/uncertainty.qmd#specimen-type-is-not-metadata) for the twelve refusals and
+→ [Specimen type is not metadata](../methods/uncertainty.qmd#specimen-type-is-not-metadata) for the refusals and
 the measurements behind each. Reliability, technical against biological, is [[39]](../references.qmd#ref-39).
-
-## Availability
-
-<!-- BEGIN GENERATED: tiers -->
-
-| Availability | n | What you do |
-|:---------|--:|:-------------------------------------------------------|
-| `bundled` | 69 | Nothing. Coefficients ship inside the package, or the clock is a formula with none. |
-| `untraced` | 52 | Catalogued, but no primary source has been established, so no coefficients ship. |
-| `licensed` | 57 | Obtain a coefficient file and register it. The architecture is implemented and tested. |
-
-<!-- END GENERATED: tiers -->
-
-```r
-list_clocks(tier = "C")     # the ones needing author permission
-list_clocks(untraced = TRUE)
-```
-
-The distinction between B and C matters. C is a licensing decision by the authors. B is an honesty
-one by us: copying a coefficient set out of another package without knowing where that package got
-it is how the known paper-versus-implementation discrepancies spread in the first place, and a
-traced extractor is a welcome contribution.
 
 ## The clock catalogue
 
@@ -235,28 +210,9 @@ cite_clock("dnamphenoage", "bibtex")
 
 :::
 
-Forty clocks are `licensed` scaffolds: the model, the feature list, the transform chain and the
-expected shapes all ship, but the coefficients are research-use-only or have no public source
-FALCONAge may redistribute. Asking about one says why, where to obtain a file, and which open clocks answer the
-same question.
-
-::: {.panel-tabset}
-
-### Python
-
-```python
-fa.registry.register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
-fa.score(d, clocks=["grimage2"])
-```
-
-### R
-
-```r
-register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
-score(d, clocks = "grimage2")
-```
-
-:::
+To score a catalogue clock from a coefficient file you hold, such as a corrected copy,
+`fa.registry.register_local_weights("hannum", "my_copy.csv")`; to score a clock that is not in the
+catalogue, [add it](../own/add.qmd).
 
 ## Which clocks were trained on data like mine
 
@@ -301,7 +257,7 @@ Every row carries a `verify_url`, and every one is checked. 66 clocks are cross-
 checked against someone who is not us.
 
 **One column is deliberately absent.** Health status of the training cohort is not a registry
-field and is not recoverable from one: 4 of 178 entries mention it in free text. There is no
+field and is not recoverable from one: few entries mention it in free text. There is no
 "trained on healthy individuals" column, because the honest value for nearly every row would be
 *unstated*. `target_class == disease` identifies the clocks fitted on a disease endpoint, which is
 the part that is knowable; for the rest, read the paper behind `verify_url`.

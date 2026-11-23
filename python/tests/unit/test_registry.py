@@ -13,24 +13,10 @@ from falconage.registry.registry import AVAILABILITY, DATA_DIR, LEGAL_OPS
 
 
 def test_registry_size_and_availability(registry):
-    assert len(registry) == 178
-    tiers = {t: len(registry.filter(availability=t)) for t in AVAILABILITY}
-    assert sum(tiers.values()) == 178
-    assert tiers["licensed"] == 57, (
-        "28 scaffolds, plus the 12 biomarkers Figure 1c of the TranslAGE paper "
-        "computes: the eight PC GrimAge sub-scores, SystemsAge's age-prediction "
-        "component, OMICmAge, DNAmEMRAge and RetroClock; plus the twelve "
-        "IDOL-Ext cell types, whose reference is under a Dartmouth research-use "
-        "licence; plus the five single-model PC clocks, imported from the "
-        "authors' unlicensed data file")
-    assert tiers["untraced"] == 52, (
-        "87, plus the two frailty clocks from the TranslAGE panel, less the "
-        "eighteen deconvolution entries (six bundled with the IDOL library, "
-        "twelve licensed) and the five PC clocks now licensed, less the thirteen "
-        "traced from the BSD catalogues to their primary sources, less efrs, "
-        "which was dnamfili catalogued a second time. FIAge has no paper at all; "
-        "it is catalogued so the panel can be reproduced or its gap stated, "
-        "rather than quietly omitted")
+    """Only human clocks that score in the tool are catalogued."""
+    assert len(registry) == 68
+    assert {c.availability for c in registry} == {"bundled"}
+    assert {c.species for c in registry} == {"Homo sapiens"}
 
 
 def test_the_retired_tier_letters_still_resolve(registry):
@@ -81,7 +67,7 @@ def test_tier_a_coefficients_load_and_match_their_digest(registry):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         assert digest == c.coefficient_source.sha256, f"{c.id}: digest drift"
         checked += 1
-    assert checked == 63, ("63 clocks ship weights: 35 linear sets, the seven "
+    assert checked == 62, ("62 clocks ship weights: 34 linear sets, the seven "
                            "mitotic probe lists, RepliTali, the two epiTOC "
                            "transmission-model files, AltumAge's network, cAge's "
                            "two models with squared terms, the cortical clock, the "
@@ -103,7 +89,9 @@ def test_horvath_came_from_the_paper_not_a_package(registry):
     assert registry.get("horvath2013").coefficient_source.primary_source_traced
     assert registry.get("dnamphenoage").coefficient_source.primary_source_traced
     assert registry.get("hannum").coefficient_source.primary_source_traced
-    assert len(registry.untraced()) > 60
+    # PedBE ships the coefficients every implementation uses, but its paper's
+    # supplement could not be reached to trace them.
+    assert [c.id for c in registry.untraced()] == ["pedbe"]
 
 
 def test_every_bundled_clock_but_pedbe_is_traced(registry):
@@ -121,54 +109,12 @@ def test_intercepts_are_the_published_ones(registry):
                     "dnamtl": [7.924780053]}                                     # Lu 2019 ST3
 
 
-def test_scaffold_clocks_refuse_and_say_why(registry):
-    for cid in ("grimage2", "dunedinpace", "systemsage", "pcgrimage"):
-        c = registry.get(cid)
-        assert c.availability == "licensed"
-        assert c.coefficient_source.redistributable is False
-        with pytest.raises(WeightsUnavailableError) as exc:
-            registry.coefficients(cid)
-        msg = str(exc.value)
-        assert "scaffold-only" in msg
-        assert "Obtain them from" in msg
 
 
-def test_scaffold_error_names_an_open_alternative(registry):
-    msg = registry.unavailable_message("grimage2")
-    assert "Bundled clocks that answer it too" in msg
-    named = [a for a in ("dnamphenoage", "zhangmortality", "hrsinchphenoage")
-             if a in msg]
-    assert named, "a user who wanted a mortality clock should leave with one"
-    for a in named:
-        assert registry.has_coefficients(a), f"{a} is offered but does not work"
 
 
-def test_a_mortality_clock_is_never_replaced_by_a_chronological_one(registry):
-    """GrimAge once offered Horvath and Hannum as alternatives "predicting the
-    same thing". They predict chronological age; the offer is now derived from
-    the question each clock answers, so that cannot recur."""
-    from falconage.registry.questions import question_for
-
-    for cid in ("grimage", "grimage2", "pcgrimage"):
-        msg = registry.unavailable_message(cid)
-        assert "horvath2013" not in msg and "hannum" not in msg
-    for c in registry:
-        if c.availability != "licensed":
-            continue
-        msg = registry.unavailable_message(c.id)
-        if "answer it too:" not in msg:
-            continue
-        block = msg.split("answer it too:\n", 1)[1].split("  Related entries:", 1)[0]
-        for row in block.strip().splitlines():
-            other = registry.get(row.split()[0])
-            assert other.availability == "bundled"
-            assert question_for(other.predicts) == question_for(c.predicts), (c.id, other.id)
 
 
-def test_no_bundled_alternative_is_said_plainly(registry):
-    msg = registry.unavailable_message("systemsage")
-    assert "The question it answers: Which organ system is aging fastest?" in msg
-    assert "No bundled clock answers it." in msg
 
 
 def test_weidner_answers_the_question_it_was_trained_for(registry):
@@ -202,18 +148,19 @@ def test_search_and_filter(registry):
 def test_register_local_weights_validates(registry, tmp_path):
     """Registering a file is also how you check one somebody handed you."""
     good = tmp_path / "g.csv"
-    feats = [f"cg{i:08d}" for i in range(registry.get("grimage2").n_features or 1032)]
+    feats = [f"cg{i:08d}" for i in range(registry.get("hannum").n_features)]
     good.write_text("feature_id,coefficient\n"
                     + "\n".join(f"{f},0.001" for f in feats) + "\n")
-    digest = registry.register_local_weights("grimage2", good)
+    digest = registry.register_local_weights("hannum", good)
     assert len(digest) == 64
-    assert registry.has_coefficients("grimage2")
-    assert registry.weight_record("grimage2")["source"] == "user_supplied"
+    assert registry.has_coefficients("hannum")
+    assert registry.weight_record("hannum")["source"] == "user_supplied"
+    registry._local.pop("hannum")
 
     bad = tmp_path / "b.csv"
     bad.write_text("feature_id,coefficient\ncg1,0.5\ncg1,0.7\n")
     with pytest.raises(RegistryError, match="duplicate"):
-        registry.register_local_weights("dunedinpace", bad)
+        registry.register_local_weights("horvath2013", bad)
 
 
 def test_weight_record_distinguishes_bundled_from_supplied(registry):
@@ -231,9 +178,8 @@ def test_weight_record_distinguishes_bundled_from_supplied(registry):
 # and another gained, and the whole value of this field is that a specific
 # clock carries a specific caveat to the person scoring with it.
 DOCUMENTED_DISCREPANCIES = {
-    "bocklandt", "bohlin", "cvdwesterman", "zhangmortality",
+    "bohlin", "zhangmortality",
     "yingcausage", "yingdamage", "yingadaptage",
-    "senchronoage", "sencultureage", "senmortalityage",
     "phenoage",
     # Weidner ships with the equation exactly as its paper prints it, and the
     # discrepancy is in the inputs rather than the numbers: the third term is
@@ -304,7 +250,7 @@ def test_a_clock_reported_in_days_does_not_claim_to_be_in_weeks(registry):
     """
     from falconage.models import ops
 
-    for cid in ("bohlin", "epicga"):
+    for cid in ("bohlin",):
         # the intercept, in days, comes first where the clock ships one
         assert ops.describe_chain(registry.get(cid).postprocess).endswith("days_to_weeks()")
 
@@ -551,9 +497,7 @@ def test_registry_version_agrees_with_the_package_constant():
 def test_the_registry_states_how_many_clocks_run(registry):
     """"178 clocks" read alone is taken as 178 that score; the runnable count leads."""
     text = repr(registry)
-    assert text.startswith(f"ClockRegistry {registry.version}: 69 of 178 clocks score offline")
-    assert "57 need a licensed coefficient file" in text
-    assert "52 have no traced coefficients" in text
+    assert text == f"ClockRegistry {registry.version}: 68 human clocks, all score offline"
 
 
 @pytest.mark.parametrize("tier", ["A", "bundled"])
@@ -563,7 +507,5 @@ def test_cli_lists_clocks_by_availability_under_either_name(tier, capsys):
 
     assert main(["clocks", "list", "--tier", tier]) == 0
     out = capsys.readouterr().out
-    assert "horvath2013" in out and "grimage2" not in out
-    assert out.rstrip().endswith(
-        "69 clock(s): 69 score offline (bundled), 0 need a licensed coefficient file, "
-        "0 have no traced coefficients")
+    assert "horvath2013" in out
+    assert out.rstrip().endswith("68 clock(s): all score offline")

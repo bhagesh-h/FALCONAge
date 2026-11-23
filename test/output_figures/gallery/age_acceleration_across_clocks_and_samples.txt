@@ -1,0 +1,6 @@
+Age acceleration across clocks and samples
+
+19 clocks x 394 samples · z-scored within clock
+
+Rows that disagree are clocks measuring different things; a column that is red
+everywhere is a sample, not a finding.

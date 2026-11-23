@@ -118,8 +118,8 @@ def test_policy_defaults_are_derived_from_the_tissue_list(registry):
 def test_the_refusing_clocks_are_the_ones_with_no_peripheral_counterpart(registry):
     refuse = {c.id for c in registry if c.tissue_policy == "refuse"}
     assert refuse == {
-        "bohlin", "corticalclock", "downsyndrome", "epicga", "gliasin", "knight",
-        "leecontrol", "leerefinedrobust", "leerobust", "mayne", "neusin", "pedbe",
+        "bohlin", "corticalclock", "downsyndrome", "knight",
+        "leecontrol", "leerefinedrobust", "leerobust", "mayne", "pedbe",
     }
 
 

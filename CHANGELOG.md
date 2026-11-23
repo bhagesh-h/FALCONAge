@@ -17,7 +17,7 @@ notes on the documentation site.
   matrix, a folder of IDATs, a clinical table or a Nightingale export; joins an optional sample
   sheet (`age`, `sex`, `tissue`, `group`); scores every clock the data supports; and writes the
   scores, technical standard errors, prediction intervals, age acceleration, the cross-clock
-  consensus, 31 figures and `report.html`. Per-clock notes go to `warnings.csv`; the console
+  consensus, the figures and `report.html`. Per-clock notes go to `warnings.csv`; the console
   gets a summary.
 - **Ready for workflow managers (Nextflow, Snakemake).** Every verb takes `--threads`,
   `--log-level {quiet,info,debug}` and `--log-file`; `--help` documents every option with
@@ -26,11 +26,21 @@ notes on the documentation site.
   --process NAME` prints the YAML a `versions.yml` takes; `run --format tsv` writes TSV tables.
   The image passes an absolute-path command such as `/bin/bash .command.sh` straight through,
   ships `ps` for task metrics, and runs as any user id.
+- **Publication-ready figures.** No figure draws a title, subtitle or caption on the canvas;
+  each carries its axes and a legend placed outside the data, and every reference line and
+  colour code is in that legend. Figures are written as `<title>.png` (the clock id appended
+  for per-clock figures) with `<title>.txt` beside it holding the title, the figure's own
+  numbers and the description. `save_figure()` and `figure_text()` do the same for any figure,
+  in Python and R; both reports caption each figure from that text and link its `.txt`.
 - **`falconage demo`**: the same pipeline on a small synthetic dataset, so every output can be
   seen before real data is ready. `fa.demo_data()` returns the dataset.
-- **A catalogue of 178 clocks**, 69 scoring offline from bundled coefficients, each traced to its
-  primary source or marked `untraced`, and 57 licensed scaffolds that take a coefficient file the
-  user supplies (`fa.registry.register_local_weights`).
+- **A catalogue of 68 human clocks** (62 DNA methylation, 4 clinical chemistry, 2 NMR), every one
+  shipping its coefficients and scoring offline, each traced to its primary source.
+- **A coverage map drawn before any clock is scored**: one genome track per clock, its CpGs at
+  their hg19 positions, coloured where the data carries them and grey where it does not, with
+  the legend giving each clock's colour and coverage. It includes clocks you add, shows which
+  CpGs clocks share, and cannot be switched off (`fa.plot.clock_coverage_manhattan`, R
+  `plot_clock_coverage()`).
 - **Readers** for raw Illumina IDATs (27K, 450K, EPIC v1, EPIC v2, with pOOBAH detection, noob
   background correction and optional BMIQ), beta matrices, GEO series matrices, RRBS, nanopore
   bedMethyl, targeted panels, clinical chemistry with declared units, Nightingale NMR, Olink NPX,
@@ -86,11 +96,18 @@ notes on the documentation site.
 
 ### Removed
 
+- Clocks that do not run in the tool: 57 licensed scaffolds, 38 entries with no traced
+  coefficients and 15 non-human clocks, with the PC-clock and DunedinPACE importers and the
+  model classes only they used.
+
 - The unused `cli` extra (typer). The command line has always used argparse.
 - The content-preservation check, the developer Dockerfile and the duplicate colour scheme;
   the clock overlap tables moved to `docs/clocks/`.
 
 ### Fixed
+
+- `mccartneyalcohol` was filed as gestational weeks; it is a relative score.
+- A user clock's `(Intercept)` row is no longer read as a CpG.
 
 - `build_overlap.py` no longer sends a hard-coded contact address to Crossref; set
   `FALCONAGE_CONTACT` to give one.

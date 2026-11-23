@@ -14,7 +14,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside, _legend_above,
     _wrap_caption,
 )
 
@@ -91,7 +91,16 @@ def reliability_forest(se, *, top: int | None = None):
     ax.barh(y, drawn, color=colours, height=0.62)
     ax.set_yticks(y)
     ax.set_yticklabels(d.index)
-    _ref(ax, "v", 1.0)
+    _ref(ax, "v", 1.0, label="noise equals the cohort's spread")
+    from matplotlib.patches import Patch
+
+    # Above the axes, not beside them: the value labels already run past the
+    # bars' ends on the right, and a legend there lands on top of them.
+    _legend_above(ax, ncol=2, title="implied cohort ICC", handles=[
+        Patch(color=pal["pass"], label="0.8 or above"),
+        Patch(color=pal["warn"], label="above 0, below 0.8"),
+        Patch(color=pal["fail"], label="0 or below, or unknown"),
+        *[h for h in ax.get_legend_handles_labels()[0]]])
 
     base = theme_value("base_size")
     for i, (v, k, raw, cut) in enumerate(zip(vals, icc, d["median_se"], over)):
@@ -165,7 +174,7 @@ def score_interval(result, clock: str, *, se=None, conformal=None,
         ax.plot(x, _age(result, age_col).reindex(order), color=pal["reference"],
                 linewidth=1.0, linestyle="dashed", label="chronological age")
     ax.set_xticks([])
-    ax.legend(frameon=False, fontsize=theme_value("base_size") - 2, ncol=2)
+    _legend_outside(fig, ax, widen=1.25)
 
     t = spec.text("score_interval", clock=clock, n=len(v), unit=_unit(result, clock))
     _dress(fig, ax, t)
@@ -215,7 +224,7 @@ def platform_bias(*, clocks: Sequence[str] | None = None, top: int = 14):
     ax.set_yticks(np.arange(len(order)))
     ax.set_yticklabels(order)
     _ref(ax, "v", 0.0)
-    ax.legend(frameon=False, fontsize=theme_value("base_size") - 2, ncol=len(plats))
+    _legend_outside(fig, ax, title="platform", widen=1.15)
 
     t = spec.text("platform_bias", n=len(order), platforms=", ".join(plats))
     _dress(fig, ax, t)
@@ -249,12 +258,17 @@ def consensus_plot(report, *, alpha: float = 0.05):
     ax.set_yticks(y)
     ax.set_yticklabels(d.index)
     _ref(ax, "v", 0.0)
-    handles = [__import__("matplotlib").patches.Patch(color=cmap[g], label=g)
-               for g in gens]
-    # "best" rather than a fixed corner: which corner is free depends entirely
-    # on the effect sizes, and a legend over the bars defeats the figure.
-    ax.legend(handles=handles, frameon=False, loc="best",
-              fontsize=theme_value("base_size") - 2, ncol=min(len(gens), 4))
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    handles = [Patch(color=cmap[g], label=g) for g in gens]
+    handles += [Line2D([], [], ls="none", marker="$*$", color="#222222",
+                       label="BH q < " + f"{alpha:g}"),
+                Line2D([], [], ls="none", marker="$**$", markersize=12, color="#222222",
+                       label="Bonferroni p < " + f"{alpha:g}")]
+    # Outside the axes: which corner is free depends entirely on the effect
+    # sizes, and a legend over the bars defeats the figure.
+    _legend_outside(fig, ax, handles=handles, title="clock generation", widen=1.25)
 
     t = spec.text("consensus_plot", verdict=report.verdict, n=report.n_tests,
              alpha=f"{alpha:g}")

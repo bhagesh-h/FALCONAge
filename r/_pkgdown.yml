@@ -120,8 +120,6 @@ reference:
   - cite_clock
   - compatible_clocks
   - register_local_weights
-  - import_pc_clocks
-  - import_dunedinpace
 - title: Analysis
   desc: Age acceleration in its three conventions, association and survival models, reliability,
     and the AA1/AA2 benchmark. Each is gated on the clock's scale type -- acceleration on
@@ -151,10 +149,13 @@ reference:
   - fit_hd
 - title: Figures and reports
   desc: 'Every plot returns its data as well as its figure, which is how the two languages
-    draw the same numbers with different engines. `clock_atlas` is the exception in scale
-    rather than in kind: one figure covering every clock across every pooled study, for the
-    case where a per-clock panel would need forty of them.'
+    draw the same numbers with different engines. Figures carry axes and legend only; `save_figure`
+    writes each as `<title>.png` with its title, numbers and description in `<title>.txt`.
+    `clock_atlas` is the exception in scale rather than in kind: one figure covering every
+    clock across every pooled study, for the case where a per-clock panel would need forty
+    of them.'
   contents:
+  - plot_clock_coverage
   - plot_ba_vs_ca
   - plot_bland_altman
   - plot_calibration
@@ -177,6 +178,8 @@ reference:
   - falcon_palette
   - falcon_scheme
   - falcon_theme
+  - save_figure
+  - figure_text
   - report
   - quarto_report
 - title: Downloading public data

@@ -13,12 +13,10 @@ clock_info(clock_id)
 A named list, invisibly. Printed for reading.
 }
 \description{
-For a licensed clock this also prints why its coefficients are not distributed,
-where to obtain them, and which open clocks answer the same question.
 }
 \examples{
 \dontrun{
 clock_info("horvath2013")
-clock_info("grimage2")
+clock_info("dnamphenoage")
 }
 }

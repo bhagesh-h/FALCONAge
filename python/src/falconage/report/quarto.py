@@ -274,35 +274,45 @@ FIGURE_NOTES: dict[str, dict[str, str]] = {
 }
 
 
-#: File stems whose figure is defined in colorscheme.yaml under another name.
-_PLOT_ALIASES = {"platform": "platform_comparison", "study": "study_comparison"}
+#: FIGURE_NOTES keys that name a colorscheme.yaml plot differently.
+_NOTE_ALIASES = {"acceleration_by_group": "acceleration_group"}
+
+
+def figure_kinds() -> dict[str, str]:
+    """File stem (the figure's title as written by ``save_figure``) to plot key."""
+    from ..plot._common import _slug
+    from ..plot.spec import load as _spec
+
+    return {_slug(v["title"]): k for k, v in _spec()["plots"].items()}
 
 
 def figure_note(stem: str) -> dict[str, str]:
     """The notes for a figure file's stem.
 
-    Per-clock figures are written as ``<kind>_<clock>`` (``ba_vs_ca_hannum``), so
-    the longest known kind the stem starts with is used and the clock is named
-    in the caption; an exact lookup missed every one of them. A kind with no
-    entry in :data:`FIGURE_NOTES` takes the title and description the figure
-    itself prints, from colorscheme.yaml, so its text is not written twice.
+    Figures are written under their title (``predicted_against_chronological_age``),
+    with the clock id appended for per-clock figures
+    (``predicted_against_chronological_age_hannum``), so the longest title the
+    stem starts with is used and the clock is named in the caption. A kind
+    with no entry in :data:`FIGURE_NOTES` takes the title and description from
+    colorscheme.yaml, so its text is not written twice.
     """
     from ..plot.spec import load as _spec
 
     plots = _spec()["plots"]
-    kinds = set(FIGURE_NOTES) | set(plots) | set(_PLOT_ALIASES)
-    kind, clock = stem, ""
-    if stem not in kinds:
-        for k in sorted(kinds, key=len, reverse=True):
-            if stem.startswith(k + "_"):
-                kind, clock = k, stem[len(k) + 1:]
+    kinds = figure_kinds()
+    key, clock = kinds.get(stem), ""
+    if key is None:
+        for st in sorted(kinds, key=len, reverse=True):
+            if stem.startswith(st + "_"):
+                key, clock = kinds[st], stem[len(st) + 1:]
                 break
-    if kind in FIGURE_NOTES:
-        note = dict(FIGURE_NOTES[kind])
-    elif _PLOT_ALIASES.get(kind, kind) in plots:
-        spec = plots[_PLOT_ALIASES.get(kind, kind)]
-        note = {"caption": spec["title"],
-                "read": " ".join(str(spec.get("description", "")).split()),
+    note_key = _NOTE_ALIASES.get(key, key)
+    if key is not None and note_key in FIGURE_NOTES:
+        note = dict(FIGURE_NOTES[note_key])
+        note["caption"] = plots[key]["title"]
+    elif key is not None:
+        note = {"caption": plots[key]["title"],
+                "read": " ".join(str(plots[key].get("description", "")).split()),
                 "wrong": ""}
     else:
         note = {"caption": stem.replace("_", " ").capitalize(), "read": "", "wrong": ""}
@@ -544,13 +554,26 @@ def _table(df: pd.DataFrame, *, title: str, note: str = "",
 
 
 def _figure(path: Path, *, hero: bool = False) -> str:
+    """A figure with its title as the caption and its own numbers beneath.
+
+    The PNG has no title or caption on the canvas; the ``.txt`` that
+    ``save_figure`` wrote beside it supplies the subtitle line.
+    """
     n = figure_note(path.stem)
+    from ..plot._common import read_caption
+
+    sub = read_caption(path)["subtitle"]
+    sub_html = f" {html.escape(sub)}" if sub else ""
     read = f'<p class="fa-readit"><b>What to look for.</b> {html.escape(n["read"])}</p>' if n["read"] else ""
     wrong = f'<p class="fa-readit"><b>What a bad one looks like.</b> {html.escape(n["wrong"])}</p>' if n["wrong"] else ""
+    txt = path.with_suffix(".txt")
+    legend = (f' <a class="fa-dl" download="{html.escape(txt.name)}" '
+              f'href="data:text/plain;base64,{_b64(txt)}">Legend text</a>'
+              if txt.is_file() else "")
     return (
         f'<figure class="fa-figure{" fa-hero" if hero else ""}">\n'
         f'<img src="data:image/png;base64,{_b64(path)}" alt="{html.escape(n["caption"])}">\n'
-        f'<figcaption><strong>{html.escape(n["caption"])}</strong></figcaption>\n'
+        f'<figcaption><strong>{html.escape(n["caption"])}</strong>{sub_html}{legend}</figcaption>\n'
         f'{read}\n{wrong}\n</figure>\n')
 
 
@@ -731,9 +754,12 @@ def write_quarto_report(
             rel = path.relative_to(outdir).as_posix()
             size = path.stat().st_size
             if o.kind == "figure":
+                legend = ""
+                if path.with_suffix(".txt").is_file():
+                    legend = f' data-legend="{html.escape(rel[:-4] + ".txt")}"'
                 figs.append(_figure(path).replace(
                     '<figure class="fa-figure">',
-                    f'<figure class="fa-figure" data-file="{html.escape(rel)}">', 1))
+                    f'<figure class="fa-figure" data-file="{html.escape(rel)}"{legend}>', 1))
             elif o.kind == "table" and size <= MAX_TABLE_BYTES:
                 df = pd.read_csv(path)
                 note = html.escape(o.description) + " " + _csv_link(path)

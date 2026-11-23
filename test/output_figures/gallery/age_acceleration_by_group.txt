@@ -1,0 +1,6 @@
+Age acceleration by group
+
+altumage · residual convention · AS vs HC
+
+Each point is one sample; the box is the median and interquartile range. Read
+the separation between groups, not the distance from zero.

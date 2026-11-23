@@ -2,12 +2,12 @@
 % Please edit documentation in R/clocks.R
 \name{register_local_weights}
 \alias{register_local_weights}
-\title{Supply a coefficient file for a clock FALCONAge does not distribute}
+\title{Score a catalogue clock from a coefficient file you supply}
 \usage{
 register_local_weights(clock_id, path, sha256 = NULL)
 }
 \arguments{
-\item{clock_id}{A clock identifier, e.g. \code{"grimage2"}.}
+\item{clock_id}{A clock identifier, e.g. \code{"hannum"}.}
 
 \item{path}{A CSV with \verb{feature_id,coefficient} columns.}
 
@@ -17,22 +17,17 @@ register_local_weights(clock_id, path, sha256 = NULL)
 The file's SHA-256, invisibly.
 }
 \description{
-Fifty-seven clocks ship as scaffolds: the model, the feature list, the
-preprocess and postprocess chain, the expected shapes -- everything except
-the numbers, which are research-use-only or have no public source FALCONAge
-may redistribute. Once you hold a licensed file, this
-registers it.
-}
-\details{
-Registration validates the file against the scaffold and rejects a mismatch
-with the discrepancy named, which also makes it a way to check a coefficient
-set somebody handed you. The digest goes into the run manifest as
-\code{user_supplied}, so a result computed from a licensed copy is distinguishable
-from one computed from a redistributed set.
+Replaces a catalogue clock's bundled coefficients with your own copy, for
+this session: a corrected or re-fitted set, or a copy you want to check.
+The file is validated against the clock (two columns, unique feature ids,
+finite values, the declared feature count) and a mismatch is refused with
+the discrepancy named. The digest goes into the run manifest as
+\code{user_supplied}. To score a clock that is not in the catalogue, use
+\code{\link[=add_clock]{add_clock()}}.
 }
 \examples{
 \dontrun{
-register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
-score(d, clocks = "grimage2")
+register_local_weights("hannum", "~/my_copy/hannum.csv")
+score(d, clocks = "hannum")
 }
 }

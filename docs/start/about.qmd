@@ -32,8 +32,7 @@ error per sample, and calibrates distribution-free prediction intervals against 
 
 It is one numerical core in Python, called from R through reticulate, so a result obtained in
 either language is the same bits rather than two implementations that agree approximately. The
-catalogue holds 178 clocks; 69 of them score offline, and the rest are documented with the reason
-they cannot, which is licensing or untraced provenance rather than missing code.
+catalogue holds 68 human clocks, and every one of them ships its coefficients and scores offline.
 
 These are instruments for population research, not a clinical judgement about one person.
 FALCONAge computes what the papers specify and records how it did so; whether a given clock is fit
@@ -96,17 +95,15 @@ in full, with the algorithms and the reason each is or is not blocked.
   liftover mapping tables encode concordance measured on paired samples and are not derivable
   from the array manifests.
 - **It has no proteomic or transcriptomic clocks in the catalogue.** The readers and the full
-  preparation chains ship; no entry declares either `data_type`, because every published model in
-  both families is licence-restricted and would enter as a `licensed` scaffold. Scoring a proteomic
-  matrix today refuses with "no clocks to score", which is accurate rather than broken.
+  preparation chains ship, and `fa.fit_clock()` fits a clock to either; no published model in
+  either family may be redistributed. Scoring a proteomic matrix against the catalogue refuses
+  with "no clocks to score", which is accurate rather than broken.
 - **It does not correct dye bias by default.** The step exists and is opt-in. Measured on real
   IDATs our implementation moves the median beta by +0.10 to +0.12, because a correct correction
   needs the normalisation control probes and their addresses are not in the manifest we can fetch.
 - **It has no foundation-model backend.** The `NeuralClock` architecture ships, safetensors only.
   CpGPT and MethylGPT are interesting here for zero-shot imputation and array conversion rather
   than as another age predictor.
-- **105 of the 178 catalogued clocks have no traced coefficient source.** A per-clock literature
-  hunt, not a technical problem, and `primary_source_traced: false` is the honest record of it.
 
 Removed from this list, because they now exist: array normalisation (pOOBAH, noob, BMIQ,
 probe masks), the raw-IDAT path, single-cell scoring, and the transcriptomic per-dataset centring

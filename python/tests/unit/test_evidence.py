@@ -46,18 +46,6 @@ def test_the_cross_clock_finding_behind_legal_ops_is_recorded():
     assert row.iloc[0]["value"] == 0.12
 
 
-def test_grimage2_carries_its_hazard_ratios():
-    df = fa.registry.evidence("grimage2")
-    hr = df[df["measure"] == "hazard_ratio"]
-    assert set(hr[hr["outcome"] == "cirrhosis"]["value"]) == {1.86}
-    # Two mortality rows, from two studies with different designs and different
-    # numbers -- 1.54 per SD in Generation Scotland, 2.57 pooled across the
-    # Biolearn cohorts. Both are kept. Collapsing them to one would be picking a
-    # favourite, and the design column is there precisely so a reader can see
-    # why they differ.
-    mort = hr[hr["outcome"] == "all-cause mortality"]
-    assert sorted(mort["value"]) == [1.54, 2.57]
-    assert mort["doi"].nunique() == 2
 
 
 def test_an_unknown_clock_returns_an_empty_table_not_an_error():

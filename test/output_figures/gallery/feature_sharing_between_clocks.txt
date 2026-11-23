@@ -1,0 +1,8 @@
+Feature sharing between clocks
+
+24 clocks on the ring · 71 pairs sharing at least 5 CpGs
+
+Chord width is the number of CpGs two clocks have in common. This is the
+answer to the question the correlation heatmap raises: clocks agree partly
+because they measure the same biology and partly because they are built from
+the same probes.

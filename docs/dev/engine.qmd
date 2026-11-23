@@ -20,10 +20,9 @@ Everything runs in numpy on the CPU. `resolve()` fixes the floating-point precis
 clock and the manifest records it per clock. An unknown precision is refused rather than
 silently replaced.
 
-FP64 is the default because that is what pyaging uses and what the gold-standard vectors are
-generated at. FP32 is opt-in. Clocks whose registry entry sets `requires_fp64: true` are promoted back to FP64 for
-their own forward pass and a warning is emitted; this covers the PC clocks, whose 78,464- and
-125,175-dimensional centring and rotation is ill-conditioned ([Failure modes and the frontier](../clocks/discrepancies.qmd)).
+FP64 is the default because the reference values the tests assert against are generated at it.
+FP32 is opt-in. Clocks whose registry entry sets `requires_fp64: true` are promoted back to FP64
+for their own forward pass and a warning is emitted.
 
 ```python
 def check_dtype_safety(clock: ClockMeta, spec: ComputeSpec) -> ComputeSpec:
@@ -211,145 +210,74 @@ and a registry fix does not require a PyPI release.
 
 ### Schema
 
-> **v1.0 stores this differently.** All 178 entries live in one file,
+> **v1.0 stores this differently.** All 68 entries live in one file,
 > `python/src/falconage/registry/data/clocks.yaml`, loaded into frozen dataclasses by
 > `registry/registry.py`. There is no `registry/` directory at the repository root, no file per
 > clock, and no pydantic.
 >
 > The per-clock tree below is the right shape for a registry that outside contributors edit
-> concurrently, one file per pull request, no merge conflicts. At 178 entries maintained by one
-> author it bought nothing and cost a directory walk on every import, plus 178 files to keep a
-> schema version in step across. The single file is 178 entries the loader validates in one pass,
+> concurrently, one file per pull request, no merge conflicts. At 68 entries maintained by one
+> author it bought nothing and cost a directory walk on every import, plus 68 files to keep a
+> schema version in step across. The single file is 68 entries the loader validates in one pass,
 > and it travels inside the wheel so a clock catalogue is never a download. Pydantic went the
 > same way: the fields are flat, the loader coerces and defaults them in about forty lines, and
 > a runtime dependency that exists to check a file the package itself ships is a dependency
 > earning nothing.
 >
-> The field vocabulary below is otherwise accurate: it is what the loader reads.
+> The entry below is copied from the shipped file; it is what the loader reads.
 
 ```yaml
 # one entry in falconage/registry/data/clocks.yaml
-id: grimage2
-display_name: GrimAge2
-schema_version: "1.0"
-clock_version: "1.0.0"
-
-provenance:
-  year: 2022
-  citation: "Lu AT, Binder AM, Zhang J, et al. DNA methylation GrimAge version 2. Aging. 2022;14(23):9484-9549."
-  doi: "10.18632/aging.204434"
-  last_author: "Steve Horvath"
-  journal: "Aging"
-  approved_by_author: false
-  evidence: paper-confirmed        # author | code | paper | supplement-confirmed
-
-license:
-  spdx: null
-  research_only: true
-  redistributable: true
-  notes: "Research use only; commercial use requires a licence from UCLA."
-
-biology:
-  data_type: dna_methylation
-  species: homo_sapiens
-  tissue: [whole_blood]
-  platform: [illumina_450k]
-  population: older_adults
-  generation: second               # first|second|pace|causal|mitotic|system|foundation
-  predicts: [mortality_risk]
-  training_target: [mortality]
-
-output:
-  unit: years
-  scale_type: age_years            # governs which downstream operations are legal
-  plausible_range: [0, 150]        # a value outside this is flagged, not clipped
-
-features:
-  n_features: 1032
-  id_type: cpg_illumina
-  requires_covariates: [age, sex]
-  reference_values: true
-
-architecture:
-  kind: multi_stage_cox
-  sub_models:                      # order is load-bearing, see [Model classes](algorithms.qmd#model-classes)
-    - {name: GDF15,     n_features: 138}
-    - {name: B2M,       n_features: 92}
-    - {name: CystatinC, n_features: 88}
-    - {name: TIMP1,     n_features: 43}
-    - {name: ADM,       n_features: 187}
-    - {name: PAI1,      n_features: 211}
-    - {name: Leptin,    n_features: 187}
-    - {name: PACKYRS,   n_features: 173}
-    - {name: LogCRP,    n_features: 132}
-    - {name: A1C,       n_features: 87}
-  covariate_order: [age, female]
+horvath2013:
+  name: "horvath2013"
+  year: 2013
+  species: "Homo sapiens"
+  data_type: "dna_methylation"
+  generation: "first"
+  tissue: ["multi-tissue"]
+  platform: ["27K", "450K"]
+  predicts: ["chronological age"]
+  training_target: ["chronological age"]
+  unit: ["years"]
+  scale_type: "age_years"          # governs which downstream operations are legal
+  model_type: "elastic net regression"
+  population: "all ages"
+  n_features: 353
   requires_fp64: false
-
-preprocess:
-  - op: fill_nan_with_reference
-
-postprocess:
-  - op: cox_to_years
-    params:
-      cox_mean: 15.370829484122
-      cox_std:  1.09534876966487
-      age_mean: 66.0943807965085
-      age_std:  9.05974444998421
-
-weights:
-  uri: "hf://bhagesh-h/falconage-registry/clocks/grimage2/weights.safetensors"
-  sha256: "..."
-  size_bytes: 8421376
-  reference_uri: "hf://bhagesh-h/falconage-registry/clocks/grimage2/reference.safetensors"
-  reference_sha256: "..."
-
-reliability:
-  technical_icc:  {value: 0.83, source: "Higgins-Chen 2022", n: null}
-  biological_icc: {value: 0.61, source: "TranslAGE 2025", n: null}
-
-benchmark:
-  computage:
-    aa2_passed: null
-    aa1_passed: null
-    medae: null
-    median_bias: null
-    total_score: null
-
-gold_standard:
-  input:     "tests/vectors/grimage2/input.parquet"
-  expected:  "tests/vectors/grimage2/expected.parquet"
-  tolerance: 1.0e-6
-  source:    "pyaging 0.3.0, FP64, CPU"
-
-known_discrepancies: []
+  availability: "bundled"
+  citation: "Horvath, S. DNA methylation age of human tissues and cell types. Genome Biology 14, R115 (2013)."
+  doi: "https://doi.org/10.1186/gb-2013-14-10-r115"
+  coefficient_source:
+    file: "coefficients/horvath2013.csv"
+    sha256: "a54cdb931c85763ed8e28be68fa926b4e602be168df505683ea5c6b2ba3a5319"
+    provenance: "Horvath 2013, Additional File 3 (publisher supplementary)"
+    primary_source_traced: true
+    redistributable: true
+  reference_values:
+    file: "references/horvath2013.csv"
+    label: "Horvath 2013 gold standard (Additional file 22)"
+  preprocess: []
+  postprocess:                     # order is load-bearing
+    - {op: "add", value: 0.695507258}
+    - {op: "anti_log_linear", adult_age: 20}
 ```
 
 ### The discrepancy field is load-bearing
 
-[Where the paper and the coefficients disagree](../clocks/discrepancies.qmd) documents the eleven clocks where the published paper and the coefficient set in
+[Where the paper and the coefficients disagree](../clocks/discrepancies.qmd) documents the clocks where the published paper and the coefficient set in
 circulation disagree. Every implementation in the field silently inherits one side of each
 disagreement. FALCONAge records both and warns at score time:
 
 ```yaml
+# bohlin, as shipped
 known_discrepancies:
-  - field: n_features
-    paper_says: 96
-    implementation_has: 251
-    source: "pyaging audit_report.md"
-    resolution: implementation
-    note: >
-      The paper and supplement report a 96-CpG primary ultrasound model. The
-      third-party coefficient file everyone uses carries 251 CpGs and cannot be
-      mapped to any of the paper's six LASSO variants. No author-hosted 251-CpG
-      model was located.
+  - "The paper reports 96 CpGs; the coefficient set in circulation carries 251. Scores here
+    will match other packages and not the figures printed in the paper."
 ```
 
-The nine to encode at minimum: `bohlin` (96 vs 251), `cvdwesterman` (1,305 vs 235),
-`zhangmortality` (integer quartile count vs continuous weighted sum), `yingcausage` (586 vs 585),
-`yingdamage` (1,090 vs 1,089), `yingadaptage` (1,000 vs 999), `senchronoage` (188 vs 187),
-`sencultureage` (141 vs 142), `senmortalityage` (89 vs 91), plus `bocklandt` (2 CpGs vs 1) and
-`downsyndrome` (EWAS estimates repurposed as a zero-intercept score).
+Seventeen shipped clocks carry the field: `bohlin`, `phenoage`, `weidner`, `zhangmortality`, the
+three Ying clocks (`yingcausage`, `yingdamage`, `yingadaptage`) and the ten McCartney trait
+scores. [Where the paper and the coefficients disagree](../clocks/discrepancies.qmd) gives each one.
 
 Warning behaviour is a config knob: `discrepancy_warnings: once | always | never`, defaulting to
 `once` per clock per session.
@@ -358,9 +286,8 @@ Warning behaviour is a config knob: `discrepancy_warnings: once | always | never
 
 `registry/vocabulary.yaml` fixes the allowed values for `data_type`, `species`, `tissue`,
 `platform`, `population`, `generation`, `predicts`, `training_target`, `unit`, `scale_type` and
-`architecture.kind`. This is the mechanism that kept pyaging's 173 entries coherent through an
-audit that collapsed 94 free-text tissue strings to 30 controlled terms
-([`pyaging/clocks/metadata/audit_report.md`](https://github.com/lucascamillomd/pyaging)).
+`architecture.kind`. A controlled vocabulary is what keeps tissue and platform filters working:
+free-text tissue strings drift into dozens of spellings of the same thing.
 `registry/validate.py` fails CI on any value outside the vocabulary, any missing required field,
 any weight URI without a checksum, and any clock without a gold-standard vector.
 
@@ -383,7 +310,7 @@ class ClockRegistry:
     def cite(self, clock_id: str, style: str = "plain") -> str
 ```
 
-`compatible_with` is the function that makes a 173-clock registry usable: hand it a loaded
+`compatible_with` is the function that makes the registry usable: hand it a loaded
 dataset and it returns the clocks whose species, platform and feature coverage actually match,
 sorted by coverage. This replaces the current field practice of running everything and reading
 the missingness column afterwards.
@@ -396,69 +323,26 @@ writes every architecture from scratch. It cannot write a coefficient set from s
 there is no procedure that regenerates Horvath's 353 weights without Horvath's training data.
 
 So the question for each clock is only ever *where do its numbers come from and may we ship
-them*. Surveying pyaging's 173 notebooks for the URL each one fetches gives the answer for the
-159 methylation and clinical clocks in v1:
+them*. Copying a copy is how a transcription error becomes a field-wide convention, so every
+shipped set is traced back to its primary source, a publisher supplement or the authors' own
+repository, and `coefficient_source.provenance` names it.
 
-| Provenance | n | Traceable to the authors |
-|---|---|---|
-| Publisher supplementary file | 31 | yes, the paper's own Additional file |
-| Author's own code repository | 48 | yes |
-| Author-hosted file share (Box, Google Drive) | 24 | yes, on fragile links |
-| Copied package-to-package, primary source unrecorded | 37 | not without tracing |
-| No public primary source | 13 | no |
-| Embedded inline, small enough to read off the paper | 6 | yes |
-
-The 37 in the fourth row are the reason the eleven discrepancies in [The discrepancy field is load-bearing](#the-discrepancy-field-is-load-bearing) exist. epiTOC2's
-coefficients in pyaging are a file lifted from biolearn's repository; the McCartney scores and
-most of the deconvolution panels are the same story. Copying a copy is how a transcription error
-becomes a field-wide convention, and tracing each back to its supplement is the only way to find
-out which reading is right.
-
-### The three tiers
-
-Every registry entry carries `availability`, one of three values. This governs what ships, what
-is fetched, and what the user has to do.
-
-| Tier | n | Architecture | Coefficients | User action |
-|---|---|---|---|---|
-| **A - open** | 38 | ships | ship, extracted from the primary source and redistributed | none |
-| **B - fetch on first use** | 95 | ships | fetched from the author's URL at first use, cached, licence printed once | none, but needs network once |
-| **C - permission required** | 28 | ships | never fetched; the user obtains them and points FALCONAge at a local file | obtain a licence or file |
-
-**As shipped in v1.0.0.** The registry names the tiers by what they mean: `bundled` (A),
-`untraced` (B) and `licensed` (C). The letters are still accepted by `filter`, `list_clocks` and
-`falconage clocks list --tier`. The counts are 69 bundled, 52 untraced and 57 licensed.
-Fetching on first use was not built: an untraced clock carries its metadata and no
-coefficients, and scoring it raises with the reason.
-
-Tier A is where the coefficient set came from a publisher supplement or a permissively licensed
-author repository and may be redistributed. Includes PhenoAge, KDM and homeostatic dysregulation,
-which need no network at all.
-
-Tier B is where the coefficients are public but FALCONAge has no clear right to re-host them, or
-where the primary source has not yet been traced. The scaffold ships; the numbers arrive on first
-use. Forty-eight of these are author repositories whose licences have not been individually
-reviewed and will move to A as each is checked.
-
-Tier C is the subject of [Scaffold-only clocks](algorithms.qmd#scaffold-only-clocks).
+The registry schema keeps three values of `availability`: `bundled` (coefficients ship and score
+offline), `untraced` (no primary source established) and `licensed` (the coefficients are not
+FALCONAge's to give). **Every shipped clock is `bundled`.** Clocks whose coefficients are
+research-use-only or untraceable were removed rather than catalogued without numbers, so
+nothing in the registry is a placeholder. The other two values remain so that a user's own entry
+can say what it is. `pedbe` is the one bundled clock whose primary source is not fully traced, and
+`falconage clocks list --untraced` prints it.
 
 ```yaml
-# in every registry entry
-availability: B
 coefficient_source:
-  tier: T2
-  url: "https://github.com/rsinghlab/AltumAge/raw/main/example_dependencies/..."
-  format: csv
-  sha256: "..."
-  extractor: extractors/altumage.py
-  licence: "MIT (repository)"
-  redistributable: true
-  retrieved: "2026-08-07"
+  file: "coefficients/hannum.csv"
+  sha256: "58d84337d3100888358763cd79c29a776e5cfdc675af99c14a339595aceaf375"
+  provenance: "Hannum et al. 2013, Molecular Cell, Table S3 (mmc2.xlsx, sheet Model_PrimaryData)"
   primary_source_traced: true
+  redistributable: true
 ```
-
-`primary_source_traced: false` is a visible debt, counted in the registry validation report, and
-`falconage clocks list --untraced` prints them.
 
 ### Coefficient extraction
 
@@ -496,40 +380,30 @@ Two assertions do most of the work. `expected_n_features` catches a supplement w
 changed or a sheet index that was off by one. The comparison against the prior extraction turns
 an upstream file being silently revised into a failed CI run rather than a changed result.
 
-**Diffing against the field.** For every clock where pyaging, biolearn, computage or methylCIPHER
-also carries coefficients, extraction runs a comparison and writes the result to
-`registry/diffs/<clock>.md`: features present in one and not the other, coefficients differing
-beyond 1e-9, and a verdict. Disagreements are published rather than resolved silently. This is
-what turns the eleven known discrepancies from inherited folklore into a documented finding, and
-it is expected to surface more.
+**Diffing against the field.** For every clock where biolearn, computage or methylCIPHER
+also carries coefficients, the test suite compares the sets: features present in one and not
+the other, and coefficients differing beyond 1e-9. Disagreements are published rather than
+resolved silently.
 
 ### Weight loading
 
-`falconage/registry/weights.py`
+`falconage/registry/registry.py`, methods of `ClockRegistry`:
 
 ```python
-def resolve_weights(meta: ClockMeta, cache_dir: Path | None = None) -> Path
-def load_weights(meta: ClockMeta, spec: ComputeSpec) -> dict[str, np.ndarray]
-def register_local_weights(clock_id: str, path: Path, sha256: str | None = None) -> None
+def coefficients(self, clock_id: str) -> tuple[list[str], np.ndarray]
+def intercept(self, clock_id: str) -> float
+def weight_record(self, clock_id: str) -> dict[str, Any]          # what the manifest records
+def register_local_weights(self, clock_id: str, path, sha256: str | None = None) -> str
+def add_clock(self, path, *, replace: bool = False) -> str
 ```
 
 Rules:
 
-- **safetensors only.** Loading a pickled weights file, which pyaging does
-  ([`pyaging/predict/_pred_utils.py`:90](https://github.com/lucascamillomd/pyaging)),
-  executes arbitrary code from a downloaded file. Architecture lives in the registry YAML and in
+- **safetensors only.** Loading a pickled weights file executes arbitrary code from a
+  downloaded file. Architecture lives in the registry YAML and in
   `models/`; tensors live in safetensors; nothing pickled is ever loaded.
 - **Checksum verified** against the registry before use; a mismatch raises rather than warns.
-- **Hugging Face cache** for tier A, the same cache for tier B, so weights are shared with other
-  tools and survive a reinstall.
-- **Offline mode**: `FALCONAGE_OFFLINE=1` uses only what is cached and raises
-  `WeightsUnavailableError` naming the missing clock rather than attempting a network call.
-- **Bundling**: nothing over 1 MB ships inside the PyPI or CRAN artefact. The clinical-chemistry
-  sets are the exception. PhenoAge is ten numbers, so that path works with no network at all.
-- **Licence surfacing**: tier B prints the source licence once per clock per session on first
-  fetch. Tier C prints the obtain-it-yourself instructions.
-
-> **As shipped.** Bundled coefficients ship inside the package and are checked against the
-> registry's SHA-256 before use; untraced clocks are not fetched ([The three tiers](#the-three-tiers)), so the cache and the
-> licence line for tier B were not built. Licensed clocks print the obtain-it-yourself
-> instructions, as above.
+- **Bundled.** Every coefficient set ships inside the package, about 13 MB in all, so scoring
+  never needs a network.
+- **Your own weights**: `register_local_weights` and `add_clock` take a local file, checksum it
+  and record `weight_record.source = "user_clock"` in the manifest.

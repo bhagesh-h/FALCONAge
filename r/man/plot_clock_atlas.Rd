@@ -2,7 +2,7 @@
 % Please edit documentation in R/atlas.R
 \name{plot_clock_atlas}
 \alias{plot_clock_atlas}
-\title{Clock atlas: every algorithm across every pooled study}
+\title{Clock atlas across pooled studies}
 \usage{
 plot_clock_atlas(
   x,

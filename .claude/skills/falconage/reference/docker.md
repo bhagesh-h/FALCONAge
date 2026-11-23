@@ -162,27 +162,17 @@ d2  = fa.apply_batch_reference(d2, ref)              # earlier plates stay bit-i
 It freezes ComBat's global parameters *and* its empirical-Bayes hyperparameters, which is the part
 a naive "just refit on the reference" gets wrong.
 
-## Licensed clocks
-
-Fifty-seven clocks are tested scaffolds whose coefficients are research-use-only, or have no
-public source FALCONAge may redistribute. Two families are imported from the authors' own files
-and then score exactly as the authors' code does:
+## Clocks of your own
 
 ```python
-reg = fa.registry.load()
-reg.import_dunedinpace("DunedinPACE")        # installed package, source checkout or .rda
-reg.import_pc_clocks("CalcAllPCClocks.RData")
-fa.score(d, clocks=["dunedinpace", "pchorvath2013"], registry=reg)
+fit = fa.fit_clock(d, target="age", learner="elasticnet", groups="person")
+fit.to_clock("mycohortclock", "my_clocks/")
+fa.add_clock("my_clocks/mycohortclock.yaml")
+fa.score(d, clocks=["mycohortclock", "horvath2013"])
 ```
 
-For any other licensed clock, obtain the file from the authors, then:
-
-```python
-fa.registry.register_local_weights("grimage2", "~/licensed/grimage2_coefs.csv")
-fa.score(d, clocks=["grimage2"])
-```
-
-Never commit such a file to a repository. That is exactly the redistribution the licence forbids.
+On the command line, `run --clocks-dir my_clocks` scores them alongside the catalogue, and the
+coverage map gives each one its own track.
 
 ## Native install, if Docker is not available
 

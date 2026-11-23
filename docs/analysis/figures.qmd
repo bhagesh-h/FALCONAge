@@ -13,9 +13,11 @@ and copied into `test/output_figures/gallery/`. They are regenerated from the
 code, so a figure here is what the current version actually draws -- not a
 screenshot taken once.
 
-The caption under each image is the same text the figure prints beneath its own
-axes. There is one copy of it, in `colorscheme.yaml`, so the website and the
-PNG cannot drift apart. The same file's `ui` block sets the colours and fonts of
+The figures carry no title or caption on the canvas, only axes and legend, so
+they drop into a manuscript or a panel layout as they are. Each PNG is named
+after its title, and a `.txt` of the same name beside it holds the title, the
+figure's own numbers and the description; the caption under each image here is
+read from that file. The same file's `ui` block sets the colours and fonts of
 both HTML reports and of this site, so a figure, a report and a page of the
 documentation share one palette: Okabe-Ito for data, because group membership
 is carried by hue alone and has to survive colour-vision deficiency, and the
@@ -36,15 +38,27 @@ in [SOURCES.md](https://github.com/bhagesh-h/FALCONAge/blob/main/test/output_fig
 
 ## Start here
 
-One figure for the question everyone actually has: which of these algorithms detects anything.
+Where every clock's CpGs sit on the genome and which ones the array carries, then the question everyone actually has: which of these algorithms detects anything.
 
-### Clock atlas: every algorithm across every pooled study
+### Clock coverage across the genome
 
-![Clock atlas: every algorithm across every pooled study](../figures/gallery/clock_atlas.png)
+![Clock coverage across the genome](../figures/gallery/clock_coverage_across_the_genome.png)
 
-Read panel D down the page. A row of hollow circles on zero is an algorithm that detected nothing in any cohort; filled dots pushed right are the ones that did, and a row with several says the effect held across studies rather than in one. Panels B and C are diagnostics for reading D, not scores: a clock that merely returned chronological age would be perfect in B, empty in D, and useless. Panel F separates the two ways of finding nothing -- a clock that saw its features and detected no difference, from one that never had the features to look with. Panel G is for the clocks whose scale admits no acceleration at all -- a pace, a telomere length, a division count -- and asks the question their scale does allow: were cases and controls separated. Cliff's delta, so 0 is no separation and 1 is complete, and unlike D it is not adjusted for age, which matters when a cohort's cases are older than its controls.
+*62 clocks · the EPICv1 array · mean coverage 98.0% · 41 fully covered.*
 
-`plot.clock_atlas()` in Python.
+One track per clock, every CpG at its position on the genome (hg19). In the clock's colour, the data carries it; in grey, it does not. CpGs that line up across tracks are shared between clocks. Read this before the scores: a clock whose track is mostly grey is scored largely on filled values.
+
+`plot.clock_coverage_manhattan()` in Python; written as `clock_coverage_across_the_genome.png` with `clock_coverage_across_the_genome.txt`.
+
+### Clock atlas across pooled studies
+
+![Clock atlas across pooled studies](../figures/gallery/clock_atlas_across_pooled_studies.png)
+
+*40 clocks · 13 studies · 394 samples · 12 of 193 comparisons significant at BH q < 0.05.*
+
+Read panel D down the page. A row of hollow circles on zero is an algorithm that detected nothing in any cohort; filled dots pushed right are the ones that did, and a row with several says the effect held across studies rather than in one. Panels B and C are diagnostics for reading D, not scores: a clock that merely returned chronological age would be perfect in B, empty in D, and useless. Panel F separates the two ways of finding nothing: a clock that saw its features and detected no difference, from one that never had the features to look with. Panel G is for the clocks whose scale admits no acceleration at all (a pace, a telomere length, a division count) and asks the question their scale does allow: were cases and controls separated. Cliff's delta, so 0 is no separation and 1 is complete, and unlike D it is not adjusted for age, which matters when a cohort's cases are older than its controls.
+
+`plot.clock_atlas()` in Python; written as `clock_atlas_across_pooled_studies.png` with `clock_atlas_across_pooled_studies.txt`.
 
 ## Is the clock calibrated
 
@@ -52,61 +66,77 @@ Before any biology: does the prediction track chronological age, and where does 
 
 ### Predicted against chronological age
 
-![Predicted against chronological age](../figures/gallery/ba_vs_ca.png)
+![Predicted against chronological age](../figures/gallery/predicted_against_chronological_age.png)
+
+*altumage · n = 27 · r = 0.59 · MedAE = 45.45 years.*
 
 Distance from the dashed identity line is error, not acceleration; a clock sitting parallel to it but offset is biased, which MedE quantifies.
 
-`plot.ba_vs_ca()` in Python.
+`plot.ba_vs_ca()` in Python; written as `predicted_against_chronological_age.png` with `predicted_against_chronological_age.txt`.
 
 ### Agreement across the age range
 
-![Agreement across the age range](../figures/gallery/bland_altman.png)
+![Agreement across the age range](../figures/gallery/agreement_across_the_age_range.png)
+
+*altumage · bias = 41.92 years · limits of agreement 21.8 to 62.1.*
 
 A trend in this cloud means the clock's error depends on age, which a correlation coefficient cannot show and which invalidates a single MedAE.
 
-`plot.bland_altman()` in Python.
+`plot.bland_altman()` in Python; written as `agreement_across_the_age_range.png` with `agreement_across_the_age_range.txt`.
 
 ### Residual against chronological age
 
-![Residual against chronological age](../figures/gallery/calibration.png)
+![Residual against chronological age](../figures/gallery/residual_against_chronological_age.png)
+
+*altumage · slope = +0.000 · a flat line at zero is perfect calibration.*
 
 A negative slope is regression to the mean: the clock over-ages the young and under-ages the old, which is the most common artefact in this field.
 
-`plot.calibration()` in Python.
+`plot.calibration()` in Python; written as `residual_against_chronological_age.png` with `residual_against_chronological_age.txt`.
 
 ## Age acceleration
 
 The residual after age is removed, by group and across studies.
 
-### Acceleration group
+### Age acceleration by group
 
-![Acceleration group](../figures/gallery/acceleration_group.png)
+![Age acceleration by group](../figures/gallery/age_acceleration_by_group.png)
 
-`plot.acceleration_group()` in Python.
+*altumage · residual convention · AS vs HC.*
+
+Each point is one sample; the box is the median and interquartile range. Read the separation between groups, not the distance from zero.
+
+`plot.acceleration_by_group()` in Python; written as `age_acceleration_by_group.png` with `age_acceleration_by_group.txt`.
 
 ### Distribution of age acceleration
 
-![Distribution of age acceleration](../figures/gallery/acceleration_density.png)
+![Distribution of age acceleration](../figures/gallery/distribution_of_age_acceleration.png)
+
+*altumage · residual convention · n = 28.*
 
 Counted, not smoothed: a kernel density on a dozen cases invents structure that is not in the data.
 
-`plot.acceleration_density()` in Python.
+`plot.acceleration_density()` in Python; written as `distribution_of_age_acceleration.png` with `distribution_of_age_acceleration.txt`.
 
 ### Age acceleration across clocks and samples
 
-![Age acceleration across clocks and samples](../figures/gallery/acceleration_heatmap.png)
+![Age acceleration across clocks and samples](../figures/gallery/age_acceleration_across_clocks_and_samples.png)
+
+*19 clocks x 394 samples · z-scored within clock.*
 
 Rows that disagree are clocks measuring different things; a column that is red everywhere is a sample, not a finding.
 
-`plot.acceleration_heatmap()` in Python.
+`plot.acceleration_heatmap()` in Python; written as `age_acceleration_across_clocks_and_samples.png` with `age_acceleration_across_clocks_and_samples.txt`.
 
 ### Effect of condition on age acceleration
 
-![Effect of condition on age acceleration](../figures/gallery/forest.png)
+![Effect of condition on age acceleration](../figures/gallery/effect_of_condition_on_age_acceleration.png)
+
+*40 comparisons · point and 95% interval · BH-corrected.*
 
 Intervals crossing zero are the honest majority. Width tracks sample size, so a wide interval far from zero is a small study, not a large effect.
 
-`plot.forest()` in Python.
+`plot.forest()` in Python; written as `effect_of_condition_on_age_acceleration.png` with `effect_of_condition_on_age_acceleration.txt`.
 
 ## Outcomes
 
@@ -114,19 +144,23 @@ Whether acceleration predicts anything that happens to a person.
 
 ### Survival by age acceleration
 
-![Survival by age acceleration](../figures/gallery/kaplan_meier.png)
+![Survival by age acceleration](../figures/gallery/survival_by_age_acceleration.png)
+
+*phenoage · 500 subjects · 277 events · log-rank p < 0.001.*
 
 Strata are the tails of the acceleration distribution, not a median split: the published figure compares the fastest-ageing tenth with the slowest, because the middle of the distribution is where a clock has least to say. Curves that cross mean the hazard is not proportional, and the hazard ratio beside them is then an average over a period during which the ordering changed.
 
-`plot.kaplan_meier()` in Python.
+`plot.kaplan_meier()` in Python; written as `survival_by_age_acceleration.png` with `survival_by_age_acceleration.txt`.
 
 ### Association with age acceleration
 
-![Association with age acceleration](../figures/gallery/volcano.png)
+![Association with age acceleration](../figures/gallery/association_with_age_acceleration.png)
 
-Effect size against evidence. The dashed line is the Benjamini-Hochberg threshold at the stated FDR, not a raw p-value cut -- with thousands of tests the two differ by orders of magnitude. Points far right with small -log10 p are the usual trap: a large effect measured in few samples.
+*3 tested · 3 pass FDR 0.05.*
 
-`plot.volcano()` in Python.
+Effect size against evidence. The dashed line is the Benjamini-Hochberg threshold at the stated FDR, not a raw p-value cut; with thousands of tests the two differ by orders of magnitude. Points far right with small -log10 p are the usual trap: a large effect measured in few samples.
+
+`plot.volcano()` in Python; written as `association_with_age_acceleration.png` with `association_with_age_acceleration.txt`.
 
 ## How the clocks relate
 
@@ -134,35 +168,43 @@ Twenty clocks are not twenty measurements. These show how much they share -- of 
 
 ### Agreement between clocks
 
-![Agreement between clocks](../figures/gallery/clock_corr.png)
+![Agreement between clocks](../figures/gallery/agreement_between_clocks.png)
+
+*Spearman rank correlation · 53 clocks · 394 samples.*
 
 Rank, not Pearson: clocks on different scales have no meaningful linear correlation. Blocks of agreement are usually shared training data.
 
-`plot.clock_corr()` in Python.
+`plot.clock_corr()` in Python; written as `agreement_between_clocks.png` with `agreement_between_clocks.txt`.
 
 ### Feature sharing between clocks
 
-![Feature sharing between clocks](../figures/gallery/clock_chord.png)
+![Feature sharing between clocks](../figures/gallery/feature_sharing_between_clocks.png)
+
+*24 clocks on the ring · 71 pairs sharing at least 5 CpGs.*
 
 Chord width is the number of CpGs two clocks have in common. This is the answer to the question the correlation heatmap raises: clocks agree partly because they measure the same biology and partly because they are built from the same probes.
 
-`plot.clock_chord()` in Python.
+`plot.clock_chord()` in Python; written as `feature_sharing_between_clocks.png` with `feature_sharing_between_clocks.txt`.
 
 ### Multi-clock profile
 
-![Multi-clock profile](../figures/gallery/clock_radar.png)
+![Multi-clock profile](../figures/gallery/multi_clock_profile.png)
+
+*12 clocks · 12 groups by condition · z-scored within clock against the cohort.*
 
 One closed polygon per group, on a common z scale. A spike on one axis is one clock disagreeing with the rest, which is a finding about the clock at least as often as about the sample.
 
-`plot.clock_radar()` in Python.
+`plot.clock_radar()` in Python; written as `multi_clock_profile.png` with `multi_clock_profile.txt`.
 
 ### Samples in clock space
 
-![Samples in clock space](../figures/gallery/clock_pca.png)
+![Samples in clock space](../figures/gallery/samples_in_clock_space.png)
+
+*PCA of z-scored clock scores · PC1 37% · PC2 21%.*
 
 PC1 is almost always chronological age. Structure on PC2 that follows a batch and not a phenotype is a batch effect.
 
-`plot.clock_pca()` in Python.
+`plot.clock_pca()` in Python; written as `samples_in_clock_space.png` with `samples_in_clock_space.txt`.
 
 ## Benchmarking
 
@@ -170,27 +212,33 @@ AA1 and AA2 against the ComputAgeBench conditions, and the error-versus-bias tra
 
 ### Datasets detected per clock
 
-![Datasets detected per clock](../figures/gallery/benchmark_bars.png)
+![Datasets detected per clock](../figures/gallery/datasets_detected_per_clock.png)
+
+*17 clocks · 13 datasets · BH q < 0.05.*
 
 AA2 compares cases with their own controls; AA1 tests case-only cohorts against zero. Ordered by the combined total, not by either alone.
 
-`plot.benchmark_bars()` in Python.
+`plot.benchmark_bars()` in Python; written as `datasets_detected_per_clock.png` with `datasets_detected_per_clock.txt`.
 
 ### Error against bias on healthy controls
 
-![Error against bias on healthy controls](../figures/gallery/benchmark_error_bias.png)
+![Error against bias on healthy controls](../figures/gallery/error_against_bias_on_healthy_controls.png)
+
+*17 clocks · point size is the benchmark total.*
 
 Neither axis is a ranking. A clock at the origin merely predicts chronological age well, which is the one thing a useful clock need not do.
 
-`plot.benchmark_error_bias()` in Python.
+`plot.benchmark_error_bias()` in Python; written as `error_against_bias_on_healthy_controls.png` with `error_against_bias_on_healthy_controls.txt`.
 
 ### Effect size per clock and dataset
 
-![Effect size per clock and dataset](../figures/gallery/benchmark_heatmap.png)
+![Effect size per clock and dataset](../figures/gallery/effect_size_per_clock_and_dataset.png)
+
+*17 clocks x 13 datasets · outlined cells are significant.*
 
 Read the columns. A dataset that is blank across every clock is either a condition the clocks cannot see or a cohort too small to show it.
 
-`plot.benchmark_heatmap()` in Python.
+`plot.benchmark_heatmap()` in Python; written as `effect_size_per_clock_and_dataset.png` with `effect_size_per_clock_and_dataset.txt`.
 
 ## Data quality
 
@@ -198,39 +246,53 @@ Drawn before the results, because a coverage problem invalidates everything afte
 
 ### Feature coverage per clock
 
-![Feature coverage per clock](../figures/gallery/coverage_bar.png)
+![Feature coverage per clock](../figures/gallery/feature_coverage_per_clock.png)
+
+*8 clocks · floor at 80% · mixed.*
 
 The plot to read before the scores. Below the dashed line a clock is mostly scoring imputed values, which is why it was refused.
 
-`plot.coverage_bar()` in Python.
+`plot.coverage_bar()` in Python; written as `feature_coverage_per_clock.png` with `feature_coverage_per_clock.txt`.
 
 ### Missing values per sample
 
-![Missing values per sample](../figures/gallery/missingness.png)
+![Missing values per sample](../figures/gallery/missing_values_per_sample.png)
+
+*21 samples · median 0.06% missing.*
 
 One sample far to the right is a failed array; a shifted whole cohort is a probe filter someone applied upstream.
 
-`plot.missingness()` in Python.
+`plot.missingness()` in Python; written as `missing_values_per_sample.png` with `missing_values_per_sample.txt`.
 
 ### Beta value distribution per sample
 
-![Beta value distribution per sample](../figures/gallery/beta_density.png)
+![Beta value distribution per sample](../figures/gallery/beta_value_distribution_per_sample.png)
+
+*27 samples · EPICv1.*
 
 Two peaks near 0 and 1 is what a working array looks like. A sample with a filled middle failed, and no downstream normalisation will fix it.
 
-`plot.beta_density()` in Python.
+`plot.beta_density()` in Python; written as `beta_value_distribution_per_sample.png` with `beta_value_distribution_per_sample.txt`.
 
-### Platform
+### Score distribution by platform
 
-![Platform](../figures/gallery/platform.png)
+![Score distribution by platform](../figures/gallery/score_distribution_by_platform.png)
 
-`plot.platform()` in Python.
+*altumage · 3 platforms · 394 samples.*
 
-### Study
+A shift between platforms in the same tissue is a technical effect. It is the reason cross-study comparisons need the platform as a covariate.
 
-![Study](../figures/gallery/study.png)
+`plot.platform_comparison()` in Python; written as `score_distribution_by_platform.png` with `score_distribution_by_platform.txt`.
 
-`plot.study()` in Python.
+### Score distribution by study
+
+![Score distribution by study](../figures/gallery/score_distribution_by_study.png)
+
+*altumage · 13 studies · 394 samples.*
+
+Between-study spread is usually larger than the within-study effect being tested, which is why AA2 compares cases with their own controls.
+
+`plot.study_comparison()` in Python; written as `score_distribution_by_study.png` with `score_distribution_by_study.txt`.
 
 ## Other
 
@@ -238,37 +300,45 @@ Figures not yet placed in a section above.
 
 ### Does the difference hold up across clocks?
 
-![Does the difference hold up across clocks?](../figures/gallery/consensus_plot.png)
+![Does the difference hold up across clocks?](../figures/gallery/does_the_difference_hold_up_across_clocks.png)
+
+*verdict: unsupported · 44 clocks tested · alpha 0.05.*
 
 One bar per clock, coloured by generation; * survives Benjamini-Hochberg and ** survives Bonferroni across the tests actually run. The shape is the finding, not any one bar. A real change lights up across generations; a single lit bar among twenty dark ones is the published signature of a false positive, and five of six re-analysed intervention datasets looked exactly like that.
 
-`plot.consensus_plot()` in Python.
-
-### What probe loss costs, in years
-
-![What probe loss costs, in years](../figures/gallery/platform_bias.png)
-
-Full 450K matrices masked down to each platform's probe set and rescored, absent probes filled from each clock's reference values as score() fills them; the bar is the median shift and the whisker a bootstrap interval. A bar at zero is a clock that lost nothing. A long bar is a clock whose lost probes carry weight no fill value stands in for, which is why a correlation check passes while the intercept moves. Reported, never subtracted.
-
-`plot.platform_bias()` in Python.
+`plot.consensus_plot()` in Python; written as `does_the_difference_hold_up_across_clocks.png` with `does_the_difference_hold_up_across_clocks.txt`.
 
 ### How much of each score is the assay
 
-![How much of each score is the assay](../figures/gallery/reliability_forest.png)
+![How much of each score is the assay](../figures/gallery/how_much_of_each_score_is_the_assay.png)
 
-Measurement error propagated from published per-probe reliability through each clock's own weights. The ICC beside each bar is what this cohort implies, not a published figure: green above 0.8, amber below it, red where the assay noise is as large as the spread between these samples -- a clock that cannot tell them apart, however confident its point estimate.
+*43 clocks · probe · bar is SE / cohort SD; the label is the raw SE.*
 
-`plot.reliability_forest()` in Python.
+Measurement error propagated from published per-probe reliability through each clock's own weights. The ICC beside each bar is what this cohort implies, not a published figure: green above 0.8, amber below it, red where the assay noise is as large as the spread between these samples, a clock that cannot tell them apart, however confident its point estimate.
+
+`plot.reliability_forest()` in Python; written as `how_much_of_each_score_is_the_assay.png` with `how_much_of_each_score_is_the_assay.txt`.
 
 ### Scores with the uncertainty they carry
 
-![Scores with the uncertainty they carry](../figures/gallery/score_interval.png)
+![Scores with the uncertainty they carry](../figures/gallery/scores_with_the_uncertainty_they_carry.png)
 
-Two samples whose bars overlap are not distinguishable by this clock on this assay. The narrow bar is measurement error -- what a repeat of the same DNA would do. The wide grey bar, where present, is the conformal prediction interval against chronological age, which is a larger question and has a larger answer. Neither is a confidence interval on a diagnosis.
+*dnamphenoage · n = 27 · years.*
 
-`plot.score_interval()` in Python.
+Two samples whose bars overlap are not distinguishable by this clock on this assay. The narrow bar is measurement error: what a repeat of the same DNA would do. The wide grey bar, where present, is the conformal prediction interval against chronological age, which is a larger question and has a larger answer. Neither is a confidence interval on a diagnosis.
+
+`plot.score_interval()` in Python; written as `scores_with_the_uncertainty_they_carry.png` with `scores_with_the_uncertainty_they_carry.txt`.
+
+### What probe loss costs, in years
+
+![What probe loss costs, in years](../figures/gallery/what_probe_loss_costs_in_years.png)
+
+*14 clocks · platforms: EPICv1, EPICv2 · measured, not assumed.*
+
+Full 450K matrices masked down to each platform's probe set and rescored, absent probes filled from each clock's reference values as score() fills them; the bar is the median shift and the whisker a bootstrap interval. A bar at zero is a clock that lost nothing. A long bar is a clock whose lost probes carry weight no fill value stands in for, which is why a correlation check passes while the intercept moves. Reported, never subtracted.
+
+`plot.platform_bias()` in Python; written as `what_probe_loss_costs_in_years.png` with `what_probe_loss_costs_in_years.txt`.
 
 
 ## In total
 
-26 figures. Every one is also written per dataset under `test/output_figures/<group>/<dataset>/` when the full corpus run is executed; the gallery keeps one representative of each type so a reader does not have to fetch 586 MB to see them.
+27 figures. Every one is also written per dataset under `test/output_figures/<group>/<dataset>/` when the full corpus run is executed; the gallery keeps one representative of each type so a reader does not have to fetch 586 MB to see them.

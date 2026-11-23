@@ -229,42 +229,6 @@ def test_duplicating_a_sample_duplicates_its_score(synthetic_betas):
     assert dup["DUP"] == pytest.approx(dup[synthetic_betas.X.index[0]], abs=1e-12)
 
 
-# ---------------------------------------------------------------------------
-# the synthetic-weights trick for scaffolds
-# ---------------------------------------------------------------------------
-def test_scaffold_architecture_is_testable_without_real_coefficients(tmp_path):
-    """A tier C clock given a one-hot coefficient vector must return exactly the
-    matching feature's value put through its postprocess chain.
-
-    This is how a scaffold is verified: the architecture is checked
-    algebraically, and only the numbers are missing.
-    """
-    import pandas as pd
-
-    reg = fa.registry.ClockRegistry.from_yaml()
-    # A licensed clock whose architecture is a plain weighted sum. DunedinPACE
-    # was the example until it gained its own model class, which needs the
-    # background set a bare weight vector does not carry.
-    cid = "pchannum"
-    assert reg.get(cid).availability == "licensed"
-    n = reg.get(cid).n_features or 20_000
-    feats = [f"cg{i:08d}" for i in range(n)]
-
-    w = tmp_path / "synthetic.csv"
-    coefs = np.zeros(n)
-    coefs[7] = 2.0
-    w.write_text("feature_id,coefficient\n"
-                 + "\n".join(f"{f},{c}" for f, c in zip(feats, coefs)) + "\n")
-    reg.register_local_weights(cid, w)
-
-    X = pd.DataFrame(np.full((2, n), 0.25), index=["a", "b"], columns=feats)
-    X.iloc[0, 7] = 0.5
-    d = fa.FalconData(X=X, obs=pd.DataFrame(index=["a", "b"]),
-                      modality="dna_methylation")
-    model = fa.models.build(reg, cid)
-    got, _ = model.predict(d, resolve())
-    assert got["a"] == pytest.approx(1.0)   # 0.5 * 2.0, identity postprocess
-    assert got["b"] == pytest.approx(0.5)   # 0.25 * 2.0
 
 
 # ---------------------------------------------------------------------------
@@ -374,83 +338,13 @@ def _synthetic_rotation(features, n_components=5, seed=20260808):
     )
 
 
-def test_pc_rotation_rejects_mismatched_shapes():
-    from falconage.core.errors import RegistryError
-    from falconage.models.pc import PCRotation
-
-    with pytest.raises(RegistryError, match="coefficients"):
-        PCRotation(features=["a", "b"], centre=np.zeros(2),
-                   rotation=np.zeros((2, 3)), coefficients=np.zeros(2))
-    with pytest.raises(RegistryError, match="rotation has"):
-        PCRotation(features=["a", "b"], centre=np.zeros(2),
-                   rotation=np.zeros((3, 2)), coefficients=np.zeros(2))
 
 
-def test_pc_clock_computes_the_published_form(synthetic_betas):
-    """((x - centre) @ rotation) @ coefficients, asserted against numpy."""
-    from falconage.models.pc import PCLinearClock
-
-    reg = fa.registry.load()
-    feats = list(synthetic_betas.features[:200])
-    rot = _synthetic_rotation(feats)
-    m = PCLinearClock(clock=reg.get("pchorvath2013"), rotation=rot)
-
-    got, al = m.predict(synthetic_betas, resolve())
-
-    x = synthetic_betas.X[feats].to_numpy(dtype=np.float64)
-    want = ((x - rot.centre) @ rot.rotation) @ rot.coefficients
-    # pchorvath2013 carries Horvath's output transform, so apply it too.
-    want = ops.apply_chain(want, reg.get("pchorvath2013").postprocess,
-                           ops.POSTPROCESS)
-    np.testing.assert_allclose(got.to_numpy(), want, rtol=1e-12)
-    assert al.coverage == pytest.approx(1.0)
 
 
-def test_pc_clock_reports_no_coefficient_mass(synthetic_betas):
-    """A PC clock has no per-probe weight, so claiming a mass share would be
-    attributing a component back to probes -- the very thing PCA removes."""
-    from falconage.models.pc import PCLinearClock
-
-    reg = fa.registry.load()
-    feats = list(synthetic_betas.features[:200])
-    m = PCLinearClock(clock=reg.get("pchorvath2013"),
-                      rotation=_synthetic_rotation(feats))
-    _, al = m.predict(synthetic_betas, resolve())
-    assert al.mass_coverage is None
 
 
-def test_pc_rotation_roundtrips_through_npz(tmp_path, synthetic_betas):
-    from falconage.models.pc import read_rotation
-
-    feats = list(synthetic_betas.features[:50])
-    rot = _synthetic_rotation(feats, n_components=4)
-    p = tmp_path / "r.npz"
-    np.savez(p, features=np.array(rot.features), centre=rot.centre,
-             rotation=rot.rotation, coefficients=rot.coefficients)
-
-    back = read_rotation(p)
-    assert back.features == rot.features
-    assert back.n_components == 4
-    np.testing.assert_allclose(back.rotation, rot.rotation)
 
 
-def test_npz_missing_an_array_says_which(tmp_path):
-    from falconage.core.errors import RegistryError
-    from falconage.models.pc import read_rotation
-
-    p = tmp_path / "bad.npz"
-    np.savez(p, features=np.array(["a"]), centre=np.zeros(1))
-    with pytest.raises(RegistryError, match="rotation"):
-        read_rotation(p)
 
 
-def test_pc_clock_enforces_the_feature_floor(synthetic_betas):
-    from falconage.core.errors import FeatureCoverageError
-    from falconage.models.pc import PCLinearClock
-
-    reg = fa.registry.load()
-    feats = list(synthetic_betas.features[:100]) + [f"cg9999{i:04d}" for i in range(100)]
-    m = PCLinearClock(clock=reg.get("pchorvath2013"),
-                      rotation=_synthetic_rotation(feats))
-    with pytest.raises(FeatureCoverageError, match="below the"):
-        m.predict(synthetic_betas, resolve(), min_coverage=0.8)

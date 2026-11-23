@@ -39,7 +39,6 @@ mccartneysmoking,EPICv1,pack-years,206,230,233,0.0,0.0142,0.0,0.0,0.0272
 mccartneytotalcholesterol,EPICv1,unitless,206,203,204,0.0,0.0725,0.0,0.0,0.0832
 mccartneytotalhdlratio,EPICv1,ratio,206,407,412,0.1177,0.1285,0.1129,0.1234,0.1586
 mccartneywhr,EPICv1,ratio,206,223,226,-0.0459,0.0541,-0.0479,-0.04,0.0584
-meer,EPICv1,days,206,0,435,0.0,0.0,0.0,0.0,0.0
 replitali,EPICv1,population doublings,206,87,87,0.0,0.0,0.0,0.0,0.0
 skinandblood,EPICv1,years,206,385,391,0.6551,1.6274,0.1941,0.8757,2.5483
 stemtoc,EPICv1,beta value,206,370,371,0.0,0.0002,0.0,0.0001,0.0007
@@ -82,7 +81,6 @@ mccartneysmoking,EPICv2,pack-years,206,208,233,0.0158,0.1942,0.0024,0.0308,0.341
 mccartneytotalcholesterol,EPICv2,unitless,206,189,204,-0.015,0.2193,-0.0375,0.0024,0.3579
 mccartneytotalhdlratio,EPICv2,ratio,206,379,412,0.0173,0.1481,-0.0042,0.0427,0.2694
 mccartneywhr,EPICv2,ratio,206,210,226,-0.0,0.0165,-0.0006,0.0025,0.1147
-meer,EPICv2,days,206,0,435,0.0,0.0,0.0,0.0,0.0
 replitali,EPICv2,population doublings,206,84,87,7.0787,0.7175,7.0009,7.3283,7.9787
 skinandblood,EPICv2,years,206,373,391,0.5997,1.6393,0.4165,0.8319,2.8412
 stemtoc,EPICv2,beta value,206,332,371,-0.0033,0.0056,-0.0039,-0.0026,0.0237

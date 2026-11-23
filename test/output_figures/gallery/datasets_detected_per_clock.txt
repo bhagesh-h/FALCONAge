@@ -1,0 +1,6 @@
+Datasets detected per clock
+
+17 clocks · 13 datasets · BH q < 0.05
+
+AA2 compares cases with their own controls; AA1 tests case-only cohorts
+against zero. Ordered by the combined total, not by either alone.

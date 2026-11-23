@@ -4,23 +4,15 @@ subtitle: "Training targets, units and the operations each scale admits"
 ---
 
 ## The clock catalogue
-178 clocks, in three availability groups. Availability is about redistribution rights, not about
-whether the algorithm works.
-
-| Availability | n | What you do |
-|---|---:|---|
-| `bundled` | 69 | Nothing. Sixty-six ship a weights file; PhenoAge, KDM and homeostatic dysregulation are formulas with none to ship. |
-| `untraced` | 52 | Catalogued, but no primary source for the numbers has been established yet, so nothing is bundled. |
-| `licensed` | 57 | Obtain a coefficient file and register it; the numbers are research-use-only. DunedinPACE and five PC clocks import from the authors' files and reproduce the authors' code; the composite architectures (GrimAge, PCGrimAge, SystemsAge) are not implemented yet. |
+68 human clocks, every one of which ships its coefficients (or is a formula with none) and scores
+offline: 62 on DNA methylation, 4 on clinical chemistry (PhenoAge, KDM, homeostatic
+dysregulation, LinAge2) and 2 on NMR metabolomics (MetaboAge, MetaboHealth). The full list with
+papers is the [clock catalogue](catalogue.qmd); clocks of your own are added with
+[`fa.add_clock()`](../own/add.qmd).
 
 ```python
-fa.registry.load().filter(availability="bundled")
+fa.registry.load().list()
 ```
-
-Two licensed families can be imported from the authors' own files, which then score exactly as
-the authors' code does: DunedinPACE from an installed DunedinPACE package, a source checkout or
-an `.rda` (`fa.registry.load().import_dunedinpace(path)`; R: `import_dunedinpace()`), and the PC
-clocks from `CalcAllPCClocks.RData` (`import_pc_clocks(path)`).
 
 ## Training targets, and what a score means
 
@@ -37,9 +29,9 @@ common use, and they are not variants of one quantity:
 
 - **Chronological-age clocks** (Horvath 2013 [[5]](../references.qmd#ref-5), Hannum 2013 [[4]](../references.qmd#ref-4)) are fitted to calendar age. Their error
   bars are prediction error against a known truth.
-- **Mortality- and morbidity-trained clocks** (PhenoAge [[8]](../references.qmd#ref-8), GrimAge [[11]](../references.qmd#ref-11)) are fitted to a survival-weighted
+- **Mortality- and morbidity-trained clocks** (DNAm PhenoAge [[8]](../references.qmd#ref-8)) are fitted to a survival-weighted
   composite and then rescaled into years. The unit is years; the target was never age.
-- **Pace-of-aging clocks** (DunedinPACE [[15]](../references.qmd#ref-15)) are fitted to the *rate of change* in organ-system
+- **Pace-of-aging clocks** (DunedinPoAm38 [[14]](../references.qmd#ref-14)) are fitted to the *rate of change* in organ-system
   biomarkers tracked longitudinally. Belsky and colleagues draw the distinction directly:
 
   > [Pace-of-aging measures capture] the rate of deterioration in system integrity occurring over a
@@ -75,24 +67,24 @@ perform:
 
 | `scale_type` | n | What the number is | Units in the registry | Operations permitted |
 |---|---:|---|---|---|
-| `age_years` | 80 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years, months, days | acceleration, correlate, difference, mean, residual |
-| `relative_score` | 53 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, picograms per milliliter, probability, and 12 more | correlate, rank |
-| `proportion` | 18 | A composition. The estimates are fractions of a whole, not forced to sum to one; the sum shows how much the reference explains. | proportion | compositional, correlate, difference, mean |
-| `divisions` | 10 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
-| `gestational_weeks` | 8 | An age, before birth. | weeks, days, units per week | acceleration, correlate, difference, mean, residual |
-| `mortality_log_hazard` | 3 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, per cohort SD, log hazard, unitless | correlate, hazard ratio, mean, rank |
-| `telomere_kb` | 2 | An estimated physical length. | kilobases, base pairs | acceleration, correlate, difference, mean |
-| `pace_ratio` | 2 | A rate: how much biological ageing per year of calendar time, at the moment of sampling. | biological years per chronological year | correlate, difference, mean, rank |
+| `age_years` | 23 | An age. The model predicts elapsed time and is reported on the same scale as chronological age. | years | acceleration, correlate, difference, mean, residual |
+| `relative_score` | 18 | A score with no external unit. Comparable within a cohort, meaningless as an absolute value. | unitless, ratio, passages, and 3 more | correlate, rank |
+| `divisions` | 9 | A count of cell divisions, not elapsed time. | beta value, proportion, cell divisions per stem cell, and 1 more | correlate, difference, mean, rank |
+| `gestational_weeks` | 6 | An age, before birth. | weeks | acceleration, correlate, difference, mean, residual |
+| `proportion` | 6 | A composition. The estimates are fractions of a whole, not forced to sum to one; the sum shows how much the reference explains. | proportion | compositional, correlate, difference, mean |
+| `mortality_log_hazard` | 2 | A risk on the log-hazard scale. Exponentiating a difference gives a hazard ratio. | log hazard, per cohort SD, unitless | correlate, hazard ratio, mean, rank |
 | `age_years_relative` | 2 | An age in years with a slope near one against chronological age, but no fixed origin: the offset moves between cohorts. The residual and group differences are defined; predicted minus chronological is not. | years | correlate, difference, mean, residual |
+| `telomere_kb` | 1 | An estimated physical length. | kilobases | acceleration, correlate, difference, mean |
+| `pace_ratio` | 1 | A rate: how much biological ageing per year of calendar time, at the moment of sampling. | biological years per chronological year | correlate, difference, mean, rank |
 
 <!-- END GENERATED: scales -->
 
 Age acceleration is the residual of predicted age on chronological age. It is defined when the
-prediction is in years and undefined when it is a rate, so asking for it on DunedinPACE is an
+prediction is in years and undefined when it is a rate, so asking for it on DunedinPoAm38 is an
 error with a message, not a number:
 
 ```
-IllegalOperationError: 'acceleration' is not defined for dunedinpace, whose output is
+IllegalOperationError: 'acceleration' is not defined for dunedinpoam38, whose output is
 pace_ratio (biological years per chronological year).
   Legal here: correlate, difference, mean, rank.
   A pace of aging is already a rate; subtracting chronological age from it is a units
@@ -120,24 +112,17 @@ the precision and the package versions are in `res.manifest`. pyaging writes the
 
 ### Scale types and what you may do with them
 
-| Scale type | Example clocks | Legal operations |
+| Scale type | Clocks in the catalogue | Legal operations |
 |---|---|---|
-| Age in years | Horvath, GrimAge, PhenoAge, SystemsAge | subtract CA; residualise on CA; average across clocks only after z-scoring |
-| Age in months / days / hours | Petkovich, Stubbs (months), Meer (days), BiTAge (hours) | convert before comparing to human clocks |
-| Gestational age in weeks | Knight, Bohlin, Mayne, Lee, EPICGA | compare to ultrasound GA, not to adult clocks |
-| Rate (bio-y per chron-y) | DunedinPACE, DunedinPoAm38 | centred at 1; do **not** subtract CA |
-| Log hazard | ZhangMortality, MetaboHealth, SenMortalityAge, organAging mortality, raw Cox scores | exponentiate for HR; convert to years only with an explicit Gompertz assumption |
-| log10(hazard ratio) | tAge mortality clocks | never multiply by species lifespan |
-| Probability | CVDWesterman, ADBahadoSingh, MammalianFemale | ROC/AUC, calibration |
-| Log odds | ProstateCancerKirby, SenCultureAge | logistic transform before interpretation |
-| Proportion | deconvolution clocks | not forced to sum to 1; the sum is how much the reference explains |
-| Beta value | epiTOC1, stemTOC, HypoClock, Garagnani, Bocklandt | ordinal within a study; not comparable across platforms |
-| Cell divisions per stem cell | epiTOC2, epiTOC3 | |
-| Population doublings / passages | RepliTali, CellPopAge | |
-| Physical units | DNAmTL (kb), PCDNAmTL (bp) | compare to measured values |
-| Concentration | GrimAge2 sub-clocks (pg/mL), logCRP (ln mg/L), logA1C (ln %) | intermediate quantities, not ages |
-| Unitless score | DNAmFILi, DNAmIC, DNAmStress, ReedBMI, DownSyndrome; the DNAmFitAge gait, grip and VO2max predictors | rank or z-score within cohort |
-| Relative age | EnsembleAgeHumanMouse, tAge normalized age | fraction of maximum lifespan |
+| Age in years | Horvath 2013, Hannum, DNAm PhenoAge, Skin & Blood, AltumAge, cAge, PhenoAge, KDM, LinAge2, MetaboAge | subtract CA; residualise on CA; average across clocks only after z-scoring |
+| Age in years, offset not fixed | DamAge, AdaptAge | residualise on CA; do **not** subtract CA |
+| Gestational age in weeks | Knight, Bohlin, Mayne, Lee (three variants) | compare to ultrasound GA, not to adult clocks |
+| Rate (bio-y per chron-y) | DunedinPoAm38 | centred at 1; do **not** subtract CA |
+| Log hazard | ZhangMortality, MetaboHealth | exponentiate for HR; convert to years only with an explicit Gompertz assumption |
+| Proportion | the six blood cell-type deconvolutions | not forced to sum to 1; the sum is how much the reference explains |
+| Mitotic count or beta value | epiTOC1, epiTOC2, epiTOC3, stemTOC, HypoClock, EpiCMIT, RepliTali | ordinal within a study; not comparable across platforms |
+| Physical units | DNAmTL (kb) | compare to measured values |
+| Unitless score | DNAmFILi, DNAmIC, DNAmStress, DownSyndrome, the McCartney EpiScores, CellPopAge | rank or z-score within cohort |
 
 A clock in physical units can be checked against the range its source paper reports, and a
 median far outside that range is a computation error rather than an unusual cohort. FALCONAge
@@ -168,6 +153,4 @@ profile are not built.
 - Age-acceleration matrix, absolute and residual (`fa.acceleration(res, method="both")`).
 - Composite score: z-score each clock within cohort, then average within generation class, and
   report the classes separately rather than mixing generations.
-- Per-system / per-organ profile (SystemsAge, organAging, tAge tissue clocks) with a radar or
-  heatmap layout.
 - QC block: missingness per clock, platform detected, imputation used, warnings.

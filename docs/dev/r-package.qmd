@@ -11,8 +11,8 @@ with `print`, `summary`, `plot` and `as.data.frame`; `data.frame` in and `data.f
 roxygen2 documentation; a pkgdown site; and errors that arrive as R conditions rather than Python
 tracebacks.
 
-This is the design tAge uses ([`tAge/R/predict.R`](https://github.com/Gladyshev-Lab/tAge)),
-with one difference: tAge asks the user to set `RETICULATE_PYTHON` by hand, and FALCONAge manages
+The R package does not reimplement anything,
+and it does not ask the user to set `RETICULATE_PYTHON` by hand: FALCONAge manages
 the environment itself.
 
 ## Environment management
@@ -44,7 +44,7 @@ from a Python user carry comparable information:
 FALCONAge 1.0.0 (R)
   python core   1.0.0  /home/x/.virtualenvs/r-falconage/bin/python
   dtype         float64
-  registry      1.1.0  (178 clocks)
+  registry      1.1.0  (68 human clocks)
   cache         /home/x/.cache/falconage  (2.1 GB)
 ```
 
@@ -169,11 +169,10 @@ plot.falcon_qc
   horvath2013    years    54.2    9.1      0.8%  -
   hannum         years    51.7    8.4      0.0%  -
   phenoage       years    56.9   11.2      0.0%  -
-  grimage2       years    61.4    8.8     12.4%  -
-  dunedinpace    ratio     1.03   0.11     2.1%  -
+  dunedinpoam38  ratio     1.03   0.11     2.1%  -
+  skinandblood   years    52.8    9.0      0.0%  -
 
   2 warnings. See warnings(x).
-  grimage2 is research-use-only.
 ```
 
 ## DESCRIPTION
@@ -187,16 +186,14 @@ Version: 1.0.0
 Authors@R:
     person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5957-8005"))
-Description: Scores DNA methylation and clinical chemistry data against a
-    catalogue of 178 published aging clocks, and provides the downstream
+Description: Scores DNA methylation, clinical chemistry and NMR data against a
+    catalogue of 68 published human aging clocks, and provides the downstream
     statistics the field expects: age acceleration in its three conventions,
     survival and association models, technical reliability, and the AA1/AA2
     benchmark. Numerical work is delegated to the 'falconage' Python package
     through 'reticulate', so results from R and from Python are the same bits
-    rather than two implementations that agree approximately. Twenty-three
-    clocks carry coefficients inside the package and run offline; twenty-eight
-    are implemented as scaffolds whose research-use-only coefficients the user
-    supplies.
+    rather than two implementations that agree approximately. Every
+    clock carries its coefficients inside the package and runs offline.
 License: GPL (>= 3)
 URL: https://github.com/bhagesh-h/FALCONAge,
     https://bhagesh-h.github.io/FALCONAge/,
@@ -315,7 +312,7 @@ score <- function(data, clocks = "compatible",
 
 ```bash
 Rscript "$(Rscript -e 'cat(system.file("scripts","falconage.R",package="FALCONAge"))')" \
-  score --input prepared.h5ad --clocks horvath2013,grimage2 --outdir results/
+  score --input prepared.h5ad --clocks horvath2013,hannum --outdir results/
 ```
 
 Options are built in `R/cli-options.R` with `optparse`, and the flag names match the Python CLI

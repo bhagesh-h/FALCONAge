@@ -4,44 +4,27 @@ title: "Preprocessing, imputation and coverage"
 
 ## Preprocessing, imputation, missing features
 
-### The canonical input contract
+### The input contract
 
-Rows = samples, columns = features. This is the pyaging convention and it should be the new
-tool's too. Feature names must be the exact identifiers the clock coefficients use:
-`cg00000029` for human methylation, Ensembl or Entrez for expression, UniProt/Olink assay names
-for proteins.
-
-pyaging wraps this in AnnData: `adata.X` is the feature matrix, `adata.obs` holds sample metadata
-and later the predictions, `adata.uns` holds per-clock metadata and missingness diagnostics,
-`adata.obsm["X_<clock>"]` is the transient per-clock feature slice
-([pyaging _pred.py](https://github.com/lucascamillomd/pyaging)).
+Rows are samples, columns are features. Feature names are the identifiers the clock coefficients
+use: `cg00000029` for methylation probes, and the declared analyte names for clinical chemistry and
+NMR. `fa.FalconData` holds the matrix in `X`, sample metadata (age, sex, tissue, group) in `obs`,
+and per-feature annotation in `var`; it reads and writes AnnData's `.h5ad`.
 
 ### EPIC v2 probe aggregation
 
-EPIC v2 column names look like `cg00000029_TC21`. Split on `_`, group by CpG prefix, and average
-duplicated probes before anything else
-([pyaging `epicv2_probe_aggregation`](https://github.com/lucascamillomd/pyaging)).
-Skipping this means every EPIC v2 clock silently sees zero overlapping features.
+EPIC v2 column names look like `cg00000029_TC21`. `fa.prepare()` strips the suffix and averages
+replicate probes of the same CpG before anything else. Skipping this means every clock sees almost
+no overlapping features on EPIC v2 data.
 
 ### Two distinct imputation stages
 
-**Stage 1 - dataset-level, before the clock.** `df_to_adata(imputer_strategy=...)` with `mean`,
-`median`, `constant` (0), or `knn` (default). KNN is expensive on wide matrices.
+**Stage 1 - dataset-level, before the clock.** `fa.preprocess.impute()` with `median` (default),
+`mean` or `none`, run only when asked.
 
-**Stage 2 - clock-level, for features the dataset does not contain at all.** pyaging preallocates
-the clock's feature matrix, fills present features by index lookup, and fills absent features with
-the model's `reference_values` (typically the training-set mean or a gold-standard median) or with
-zero if no reference vector was shipped
-([pyaging `check_features_in_adata`](https://github.com/lucascamillomd/pyaging)). It
-records `adata.uns["<clock>_percent_na"]` and `adata.uns["<clock>_missing_features"]`, and raises
-if 100% of features are missing.
-
-Filling with zero in β space means "fully unmethylated", which is biologically wrong for most
-sites, always ship a reference vector.
-
-**Third stage in tAge**: pad missing genes with NA and let the model's own sklearn
-`SimpleImputer` insert training medians. This is the cleanest of the three because the imputation
-statistic travels with the model.
+**Stage 2 - clock-level, for features the dataset does not contain at all.** Filling with zero
+in beta space means "fully unmethylated", which is biologically wrong for most sites, so FALCONAge
+never does it.
 
 **What FALCONAge does, and what the R packages do.** For a linear clock FALCONAge fills an absent
 feature with the mean of the clock's observed features over the whole dataset: one constant, the
@@ -101,36 +84,21 @@ is their k-nearest-neighbour imputation of 51 missing values. Only the 21,368 go
 are changed, and a missing value is set to its gold-standard value first, as Horvath's code does
 for a single sample; both counts are recorded in `uns["horvath_normalisation"]`.
 
-### Imputation options used for benchmarking
-
-ComputAge exposes three and treats the choice as part of the model config
-([ComputAge benchmarking.py:323](https://github.com/ComputationalAgingLab/ComputAge)):
-
-- `none` - reindex and fill 0.
-- `sesame_450k` - fill with the sesame 450K per-probe median.
-- `average` - fill with the column mean of the current dataset (0 if the column is empty).
-
-Reporting the imputation method alongside a score is not optional; it changes the answer.
+Reporting the imputation method alongside a score is not optional; it changes the answer, and
+the run manifest records it.
 
 ### Preprocessing steps that live inside a model
 
 These are per-clock and must run *after* feature selection, not before:
 
-| Step | Clocks |
+| Step | Clocks in the catalogue |
 |---|---|
-| robust scale `(x − median)/std` | AltumAge, CpGPTGrimAge3 |
-| standard scale `(x − mean)/std` | CpGPTPCGrimAge3 |
+| robust scale `(x − median)/std` | AltumAge |
 | per-sample z-score across features | ZhangEN, ZhangBLUP |
-| quantile normalise to gold standard | DunedinPACE, Stubbs |
-| quantile normalise then scale | Stubbs |
-| TPM by feature length then log1p | OcampoATAC1/2 |
-| binarise at per-row non-zero median | BiTAge |
-| median-fill then per-sample average rank | Pasta, PastaMouse, REG |
-| mean over non-missing (−1 sentinel) | epiTOC1, HypoClock, epiCMIT |
+| mean over non-missing | epiTOC1, HypoClock, EPICmitHyper, EPICmitHypo |
 | 0.95 quantile over non-missing | stemTOC, stemTOCvitro |
 | nan → 0 | epiTOC2, epiTOC3 |
-| autosomal z-score | XChrom, YChrom |
-| NaN → reference value | ~90 clocks (the `LinearReferenceClock` base) |
+| NaN → reference value | most linear clocks |
 
 ## Platform coverage
 Worth running once on an array you have not used before. It reports, per clock, how many features

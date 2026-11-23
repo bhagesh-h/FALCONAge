@@ -149,14 +149,83 @@ falcon_theme <- function() {
       panel.grid.minor = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_line(linewidth = 0.3,
                                                colour = grDevices::grey(0.85)),
-      plot.title = ggplot2::element_text(size = .thm("title_size"), hjust = 0),
-      plot.subtitle = ggplot2::element_text(size = .thm("subtitle_size"),
-                                            colour = "#555555", hjust = 0),
-      plot.caption = ggplot2::element_text(size = .thm("caption_size"),
-                                           colour = "#666666", hjust = 0),
-      plot.caption.position = "plot",
-      plot.title.position = "plot",
+      # Title, subtitle and caption stay in the plot's labels, where
+      # figure_text() and save_figure() read them, and are not drawn: the
+      # figure carries its axes and legend, the legend text goes in the .txt.
+      plot.title = ggplot2::element_blank(),
+      plot.subtitle = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_blank(),
       legend.title = ggplot2::element_blank())
+}
+
+#' The title, subtitle and description of a FALCONAge figure
+#'
+#' Figures are drawn without a title or caption on the canvas. The text lives
+#' in the plot object; this returns it, and [save_figure()] writes it to a
+#' `.txt` beside the PNG.
+#'
+#' @param p A plot returned by one of the `plot_*` functions.
+#' @return A list with `title`, `subtitle` and `description`.
+#' @examples
+#' \dontrun{
+#' figure_text(plot_ba_vs_ca(res, "horvath2013"))$title
+#' }
+#' @export
+figure_text <- function(p) {
+  lab <- if (inherits(p, "patchwork")) {
+    p$patches$annotation
+  } else if (exists("get_labs", envir = asNamespace("ggplot2"), inherits = FALSE)) {
+    ggplot2::get_labs(p)
+  } else {
+    p$labels
+  }
+  one <- function(x) if (is.null(x) || !length(x)) "" else paste(as.character(x), collapse = " ")
+  list(title = one(lab$title), subtitle = one(lab$subtitle),
+       description = one(lab$caption))
+}
+
+.slug <- function(x) {
+  s <- gsub("^_+|_+$", "", gsub("[^a-z0-9]+", "_", tolower(x %||% "")))
+  if (nzchar(s)) s else "figure"
+}
+
+#' Write a figure as `<title>.png` with its legend text in `<title>.txt`
+#'
+#' The PNG is named after the figure's title, lower case with underscores,
+#' with `suffix` (usually a clock id) appended for per-clock figures. The
+#' `.txt` beside it holds the title, the figure's own numbers and the
+#' description, ready for a figure legend. The same names as the Python
+#' `falconage.plot.save_figure`.
+#'
+#' @param p A plot returned by one of the `plot_*` functions.
+#' @param outdir Directory to write into; created if absent.
+#' @param suffix Optional text appended to the file name, such as a clock id.
+#' @param width,height Size in inches; default the plot's own size where it
+#'   sets one (the coverage map does), otherwise from `colorscheme.yaml`.
+#' @param dpi Resolution; default from `colorscheme.yaml`.
+#' @return The path of the PNG, invisibly.
+#' @examples
+#' \dontrun{
+#' save_figure(plot_ba_vs_ca(res, "horvath2013"), "figures", suffix = "horvath2013")
+#' }
+#' @export
+save_figure <- function(p, outdir, suffix = NULL, width = NULL, height = NULL,
+                        dpi = NULL) {
+  need_ggplot()
+  t <- figure_text(p)
+  dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+  stem <- .slug(t$title)
+  if (!is.null(suffix) && nzchar(suffix)) stem <- paste0(stem, "_", .slug(suffix))
+  png <- file.path(outdir, paste0(stem, ".png"))
+  size <- attr(p, "falcon_size") %||% c(.thm("width"), .thm("height"))
+  ggplot2::ggsave(png, p, width = width %||% size[[1]],
+                  height = height %||% size[[2]], dpi = dpi %||% .thm("dpi"),
+                  bg = "white")
+  wrap <- function(x) paste(strwrap(gsub("\\s+", " ", trimws(x)), width = 78), collapse = "\n")
+  parts <- c(trimws(t$title), trimws(t$subtitle), wrap(t$description))
+  writeLines(paste(parts[nzchar(parts)], collapse = "\n\n"),
+             file.path(outdir, paste0(stem, ".txt")), useBytes = TRUE)
+  invisible(png)
 }
 
 .labs <- function(t) {
@@ -219,8 +288,10 @@ plot_ba_vs_ca <- function(x, clock, age_col = "age", group = NULL) {
             unit = .unit_of(x, clock))
 
   p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$chronological, y = .data$predicted)) +
-    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = .thm("reference_line"),
+    ggplot2::geom_abline(ggplot2::aes(slope = 1, intercept = 0, linetype = "identity"),
                          colour = .sem("reference")) +
+    ggplot2::scale_linetype_manual(values = c(identity = .thm("reference_line")),
+                                   name = NULL) +
     .labs(t) + falcon_theme()
   if (!is.null(group)) {
     p + ggplot2::geom_point(ggplot2::aes(colour = .data$group),
@@ -254,10 +325,20 @@ plot_bland_altman <- function(x, clock, age_col = "age") {
   bias <- mean(d$diff); sd_ <- stats::sd(d$diff)
   lo <- bias - 1.96 * sd_; hi <- bias + 1.96 * sd_
 
+  # Every reference line named in the legend: the figure carries no subtitle
+  # to explain them.
+  what <- c("no difference", sprintf("mean difference (%+.2f)", bias),
+            "95% limits of agreement")
+  lines <- data.frame(y = c(0, bias, lo, hi),
+                      what = factor(what[c(1, 2, 3, 3)], levels = what))
   ggplot2::ggplot(d, ggplot2::aes(x = .data$mean, y = .data$diff)) +
-    .refline("h", 0) +
-    ggplot2::geom_hline(yintercept = bias, colour = .sem("case")) +
-    ggplot2::geom_hline(yintercept = c(lo, hi), colour = .sem("case"), linetype = "dotted") +
+    ggplot2::geom_hline(data = lines, ggplot2::aes(yintercept = .data$y,
+                                                   linetype = .data$what,
+                                                   colour = .data$what)) +
+    ggplot2::scale_linetype_manual(values = stats::setNames(
+      c(.thm("reference_line"), "solid", "dotted"), what), name = NULL) +
+    ggplot2::scale_colour_manual(values = stats::setNames(
+      c(.sem("reference"), .sem("case"), .sem("case")), what), name = NULL) +
     ggplot2::geom_point(size = .thm("point_size"), alpha = .thm("point_alpha"),
                         colour = falcon_palette()[[1]]) +
     .labs(.txt("bland_altman", clock = clock, bias = sprintf("%.2f", bias),
@@ -287,12 +368,18 @@ plot_calibration <- function(x, clock, age_col = "age") {
   d <- data.frame(chronological = age[ok], residual = stats::resid(fit))
   slope <- stats::coef(stats::lm(residual ~ chronological, d))[[2]]
 
+  what <- c("perfect calibration", sprintf("linear trend (slope %+.3f)", slope))
   ggplot2::ggplot(d, ggplot2::aes(x = .data$chronological, y = .data$residual)) +
-    .refline("h", 0) +
+    ggplot2::geom_hline(ggplot2::aes(yintercept = 0, linetype = what[1], colour = what[1])) +
     ggplot2::geom_point(size = .thm("point_size"), alpha = .thm("point_alpha"),
                         colour = falcon_palette()[[1]]) +
-    ggplot2::geom_smooth(method = "lm", formula = y ~ x, se = FALSE,
-                         colour = .sem("case"), linewidth = .thm("line_width") * 0.5) +
+    ggplot2::geom_smooth(ggplot2::aes(linetype = what[2], colour = what[2]),
+                         method = "lm", formula = y ~ x, se = FALSE,
+                         linewidth = .thm("line_width") * 0.5) +
+    ggplot2::scale_linetype_manual(values = stats::setNames(
+      c(.thm("reference_line"), "solid"), what), name = NULL) +
+    ggplot2::scale_colour_manual(values = stats::setNames(
+      c(.sem("reference"), .sem("case")), what), name = NULL) +
     .labs(.txt("calibration", clock = clock, slope = sprintf("%+.3f", slope))) +
     falcon_theme()
 }
@@ -1033,4 +1120,80 @@ plot_volcano <- function(assoc, effect = "beta", p = "p", fdr = 0.05,
                        size = .thm("caption_size") / 3) +
     .labs(.txt("volcano", n = nrow(d), hits = sum(d$hit), fdr = fdr)) +
     falcon_theme()
+}
+
+#' Clock coverage across the genome
+#'
+#' One track per DNA methylation clock, every CpG at its position on the genome
+#' (hg19). In the clock's colour where the data carries the CpG, grey where it
+#' does not; the legend gives each clock's colour and the share of its CpGs
+#' present. CpGs that line up across tracks are shared between clocks. Clocks
+#' added with [add_clock()] get a track too. [run_report()] draws this figure
+#' first, before any clock is scored.
+#'
+#' @param data A `falcon_data`, or `NULL` with `platform`.
+#' @param platform Without `data`, the array to measure coverage against:
+#'   `"EPICv1"`, `"EPICv2"`, `"450K"` or `"27K"`.
+#' @return A ggplot. The per-clock table (coverage, CpGs placed, CpGs shared)
+#'   is attached as `attr(p, "table")`.
+#' @examples
+#' \dontrun{
+#' plot_clock_coverage(d)
+#' plot_clock_coverage(platform = "EPICv1")
+#' }
+#' @export
+plot_clock_coverage <- function(data = NULL, platform = NULL) {
+  need_ggplot()
+  out <- py_do(fa()$plot$clock_coverage_points(
+    if (is.null(data)) reticulate::py_none() else data$py,
+    platform = or_none(platform)))
+  pts <- as_df(out[[0]], row_names = FALSE)
+  tab <- as_df(out[[1]])
+  clocks <- rownames(tab)
+  n <- length(clocks)
+  pts$y <- n - 1 - as.numeric(pts$track)
+  pts$present <- as.logical(pts$present)
+  labels <- sprintf("%s  %.1f%%", clocks, as.numeric(tab$coverage))
+  cols <- stats::setNames(tab$colour, clocks)
+  lens <- c(249250621, 243199373, 198022430, 191154276, 180915260, 171115067,
+            159138663, 146364022, 141213431, 135534747, 135006516, 133851895,
+            115169878, 107349540, 102531392, 90354753, 81195210, 78077248,
+            59128983, 63025520, 48129895, 51304566, 155270560, 59373566)
+  chrom <- c(as.character(1:22), "X", "Y")
+  starts <- c(0, cumsum(lens)[-length(lens)])
+  bands <- data.frame(xmin = starts, xmax = starts + lens)[seq(1, 24, 2), ]
+  t <- .txt("clock_coverage_manhattan", n_clocks = n,
+            what = if (is.null(data)) paste("the", platform, "array") else "this data",
+            mean = sprintf("%.1f", mean(as.numeric(tab$coverage))),
+            n_full = sum(as.numeric(tab$coverage) >= 99.95))
+  absent <- "CpG absent from the data"
+  p <- ggplot2::ggplot() +
+    ggplot2::geom_rect(data = bands, ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax,
+                                                  ymin = -0.7, ymax = n - 0.3),
+                       fill = "#f0f2f5", inherit.aes = FALSE) +
+    ggplot2::geom_point(data = pts[!pts$present, ],
+                        ggplot2::aes(x = .data$x, y = .data$y, colour = absent),
+                        shape = "|", size = 2) +
+    ggplot2::geom_point(data = pts[pts$present, ],
+                        ggplot2::aes(x = .data$x, y = .data$y, colour = .data$clock),
+                        shape = "|", size = 2) +
+    ggplot2::scale_colour_manual(values = c(cols, stats::setNames("#c4c9d2", absent)),
+                                 breaks = c(clocks, absent), labels = c(labels, absent),
+                                 name = "clock, % of CpGs present") +
+    ggplot2::scale_x_continuous(breaks = starts + lens / 2, labels = chrom,
+                                expand = c(0, 0)) +
+    ggplot2::scale_y_continuous(breaks = (n - 1):0, labels = clocks, expand = c(0, 0.5)) +
+    # One column up to 45 clocks: ggplot's default wraps at 20 entries, and
+    # four legend columns take more width than the genome they explain.
+    ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(shape = 15, size = 3),
+                                                   ncol = ceiling(n / 45))) +
+    .labs(t) + falcon_theme() +
+    # The one legend whose title carries information: what the percentage is.
+    ggplot2::theme(legend.title = ggplot2::element_text(size = .thm("caption_size")),
+                   legend.key.height = ggplot2::unit(0.14, "in"),
+                   legend.text = ggplot2::element_text(size = .thm("caption_size") - 1))
+  attr(p, "table") <- tab
+  # The size save_figure() uses when none is given: one track per clock.
+  attr(p, "falcon_size") <- c(13, max(3, 0.2 * n + 1.8))
+  p
 }

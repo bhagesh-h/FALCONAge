@@ -262,7 +262,9 @@ def test_every_plot_function_has_text_defined():
     # of this test used `callable()` and duly demanded colour-scheme text for
     # an exception class.
     helpers = {"save_all", "palette", "semantic", "theme_value",
-               "group_colours", "platform_colour"}
+               "group_colours", "platform_colour", "clock_positions",
+               "clock_coverage_points", "save_coverage_manhattan", "figure_text",
+               "figure_filename", "caption_text", "read_caption", "save_figure"}
     undefined = [
         name for name in fa.plot.__all__
         if inspect.isfunction(getattr(fa.plot, name, None))
@@ -270,3 +272,53 @@ def test_every_plot_function_has_text_defined():
         and name not in scheme
     ]
     assert not undefined, f"no colorscheme.yaml text for: {', '.join(undefined)}"
+
+
+# ---------------------------------------------------------------------------
+# publication layout: no text on the canvas, title-named PNG with a .txt
+# ---------------------------------------------------------------------------
+
+def _drawn_text(fig) -> list[str]:
+    """Every string drawn on the figure outside tick labels, axis labels and legends."""
+    out = [t.get_text() for t in fig.texts if t.get_text().strip()]
+    for ax in fig.axes:
+        for loc in ("left", "center", "right"):
+            if ax.get_title(loc).strip():
+                out.append(ax.get_title(loc))
+    return out
+
+
+def test_figures_carry_no_title_or_caption_on_the_canvas():
+    res = _result_with_survival()
+    for fig, _ in (fa.plot.ba_vs_ca(res, "horvath2013"),
+                   fa.plot.kaplan_meier(res, "horvath2013", time_col="time",
+                                        event_col="event"),
+                   fa.plot.volcano(_assoc_table())):
+        t = fa.plot.figure_text(fig)
+        assert t["title"] and t["description"]
+        drawn = " ".join(_drawn_text(fig))
+        assert t["title"] not in drawn
+        assert t["description"][:40] not in drawn
+
+
+def test_save_figure_names_the_files_after_the_title(tmp_path):
+    res = _result_with_survival()
+    fig, _ = fa.plot.ba_vs_ca(res, "horvath2013")
+    png = fa.plot.save_figure(fig, tmp_path, suffix="horvath2013")
+    assert png.name == "predicted_against_chronological_age_horvath2013.png"
+    txt = png.with_suffix(".txt").read_text(encoding="utf-8")
+    assert txt.startswith("Predicted against chronological age\n\n")
+    back = fa.plot.read_caption(png)
+    assert back["title"] == "Predicted against chronological age"
+    assert back["subtitle"].startswith("horvath2013")
+    assert "diagonal" in back["description"] or back["description"]
+
+
+def test_save_all_writes_a_txt_for_every_png(tmp_path):
+    res = _result_with_survival()
+    written = fa.plot.save_all(res, tmp_path, max_per_clock=1)
+    pngs = sorted(tmp_path.glob("*.png"))
+    assert pngs and len(pngs) == len(written)
+    for p in pngs:
+        assert p.with_suffix(".txt").is_file(), p.name
+        assert fa.plot.read_caption(p)["title"]

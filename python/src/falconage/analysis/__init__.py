@@ -12,8 +12,6 @@ like every other number in the table.
 from __future__ import annotations
 
 from ._common import (  # noqa: F401
-    PC_COUNTERPART,
-    pc_counterpart,
     _check_legal,
     _bh,
 )
@@ -75,7 +73,6 @@ __all__ = [
     "detectable_effect",
     "icc",
     "leave_one_marker_out",
-    "pc_counterpart",
     "power",
     "run_benchmark",
 ]

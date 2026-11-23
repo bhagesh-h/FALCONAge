@@ -52,6 +52,8 @@ def test_every_file_of_the_run_appears_once_under_its_step(run_dir):
         n = qmd.count(f)
         if f == "run_manifest.json":
             assert "Coefficients used" in qmd
+        elif o is not None and o.kind == "caption":
+            assert f'data-legend="{f}"' in qmd, f"{f}: no figure links it"
         elif o is not None and o.kind == "text" and f == "consensus_verdict.txt":
             assert "<strong>Verdict.</strong>" in qmd
         else:
@@ -78,7 +80,9 @@ def test_each_file_is_placed_under_the_step_the_table_gives_it(run_dir):
     assert step_of["consensus.csv"] == 7
     assert step_of["evidence.csv"] == 8
     assert step_of["report.html"] == 9
-    assert step_of["figures/ba_vs_ca_hannum.png"] == 4
+    assert step_of["figures/predicted_against_chronological_age_hannum.png"] == 4
+    # The .txt beside each figure is linked from it, not listed as a file.
+    assert "figures/predicted_against_chronological_age_hannum.txt" not in step_of
 
 
 def test_the_report_loads_nothing_from_outside(run_dir):

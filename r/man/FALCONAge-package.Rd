@@ -6,7 +6,7 @@
 \alias{FALCONAge-package}
 \title{FALCONAge: Multiomic Biological Age and Aging Clock Scoring}
 \description{
-Scores DNA methylation and clinical chemistry data against a catalogue of 175 published aging clocks, and provides the downstream statistics the field expects: age acceleration in its three conventions, survival and association models, technical reliability, and the AA1/AA2 benchmark. Numerical work is delegated to the 'falconage' Python package through 'reticulate', so results from R and from Python are the same bits rather than two implementations that agree approximately. Fifty-two clocks carry coefficients inside the package and run offline; fifty-seven are implemented as scaffolds whose research-use-only coefficients the user supplies.
+Scores DNA methylation and clinical chemistry data against a catalogue of 68 published human aging clocks, and provides the downstream statistics the field expects: age acceleration in its three conventions, survival and association models, technical reliability, and the AA1/AA2 benchmark. Numerical work is delegated to the 'falconage' Python package through 'reticulate', so results from R and from Python are the same bits rather than two implementations that agree approximately. Fifty-two clocks carry coefficients inside the package and run offline; fifty-seven are implemented as scaffolds whose research-use-only coefficients the user supplies.
 }
 \section{Why this package is a wrapper}{
 
@@ -41,11 +41,9 @@ acceleration(res)
 
 \section{What ships}{
 
-178 catalogued clocks. 69 carry coefficients inside the package and run
-offline; 57 are scaffolds whose coefficients are research-use-only and are
-not ours to distribute -- \code{list_clocks(tier = "licensed")} names each one, why,
-and where to obtain a file. The remaining 52 are catalogued with metadata and
-await a traced extractor.
+68 human clocks, every one shipping its coefficients and scoring offline:
+DNA methylation, clinical chemistry and NMR metabolomics. Clocks of your own
+are added with \code{add_clock()}.
 }
 
 \section{Scales, and what may be done with them}{

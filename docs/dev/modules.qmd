@@ -319,7 +319,7 @@ class QCReport:
     warnings: list[str]
 ```
 
-`clock_coverage` prints before scoring, not after. A user who can see that GrimAge2 will run on
+`clock_coverage` prints before scoring, not after. A user who can see that Hannum will run on
 61% of its features gets to decide whether to proceed; a user who discovers it afterwards has
 already written the number down.
 
@@ -408,7 +408,7 @@ Three conventions ([the science notes](../methods/formulas.qmd) section [The thr
 
 - `absolute` - `value − chronological_age`. Legal only for `scale_type` in `{age_years,
   age_months, age_days, age_hours, gestational_weeks}`. Attempting it on `rate`, `log_hazard`,
-  `probability` or `proportion` raises `IncompatibleScaleError`: DunedinPACE is not an age, and
+  `probability` or `proportion` raises `IncompatibleScaleError`: DunedinPoAm38 is not an age, and
   subtracting CA from it is a category error.
 - `relative` - residual of `lm(value ~ age)`, optionally with covariates. Legal for any
   continuous scale. This is the convention that removes the regression-dilution bias every
@@ -497,7 +497,7 @@ matplotlib figures across the bridge. The fourteen from [the science notes](../m
 | `bias_bar` | median error per clock, symmetric x-limits |
 | `forest` | hazard ratios per clock per outcome |
 | `acceleration_density` | violin or density of age acceleration by group |
-| `system_profile` | radar or heatmap over SystemsAge systems and organAging organs |
+| `system_profile` | radar or heatmap over per-system or per-organ clocks |
 | `qc_density` | beta distribution per sample at each preprocessing stage |
 | `calibration` | predicted against observed, for probability outputs |
 | `missingness` | percent of features absent per clock, drawn before the results |
@@ -545,11 +545,11 @@ report is a complete record.
 > document against that parser and skips this page for exactly this reason.
 
 ```bash
-falconage score prepared.h5ad --clocks horvath2013,grimage2,dunedinpace --out results/
+falconage score prepared.h5ad --clocks horvath2013,hannum,dunedinpoam38 --out results/
 falconage score prepared.h5ad --clocks compatible --dtype float32
 falconage bench results/ --condition-col condition --control HC
 falconage report results/ --out report.html
-falconage clocks --tier bundled --search mortality
+falconage clocks list --search mortality
 falconage power horvath2013 --effect 0.5 --sd 6
 falconage consensus results/ --group condition
 ```
@@ -602,7 +602,7 @@ substitution is a category error and warning when it is an offset.
 |---|---|
 | `scale_type` → `LEGAL_OPS` | an operation is undefined for the output's scale |
 | coverage / coefficient mass | too much of the model is absent |
-| `availability` tier | the coefficients are not distributable |
+| `availability` | a clock of your own whose coefficients are not supplied |
 | `requires_cohort` | a cohort-centred clock is given one sample |
 | **`tissue_policy`** | a clock is scored off a tissue with no counterpart, or on cell-free DNA |
 | **`age_years_relative`** | the absolute acceleration convention is asked of a clock whose origin moves between cohorts |

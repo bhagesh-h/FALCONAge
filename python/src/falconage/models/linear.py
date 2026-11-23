@@ -346,12 +346,6 @@ def build(registry, clock_id: str):
         from .clinical import ClinicalClock
 
         return ClinicalClock(clock=c)
-    # DunedinPACE: every sample quantile-normalised to a 20,000-probe
-    # background before its 173 weights apply.
-    from .pace import PaceClock, is_pace
-
-    if is_pace(c):
-        return PaceClock.from_registry(registry, clock_id)
     # cAge: CpGs and their squares, and a log-age model for the young.
     from .quadratic import QuadraticClock, is_quadratic
 

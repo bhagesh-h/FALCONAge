@@ -28,11 +28,9 @@
 #' }
 #'
 #' @section What ships:
-#' 178 catalogued clocks. 69 carry coefficients inside the package and run
-#' offline; 57 are scaffolds whose coefficients are research-use-only and are
-#' not ours to distribute -- \code{list_clocks(tier = "licensed")} names each one, why,
-#' and where to obtain a file. The remaining 52 are catalogued with metadata and
-#' await a traced extractor.
+#' 68 human clocks, every one shipping its coefficients and scoring offline:
+#' DNA methylation, clinical chemistry and NMR metabolomics. Clocks of your own
+#' are added with \code{add_clock()}.
 #'
 #' @section Scales, and what may be done with them:
 #' Every clock carries a \code{scale_type}, and it governs which downstream

@@ -14,7 +14,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside,
     _wrap_caption,
 )
 
@@ -87,16 +87,8 @@ def clock_scatter_matrix(result, clocks: Sequence[str] | None = None):
                 ax.set_xlabel(b, fontsize=theme_value("caption_size") - 1, rotation=45,
                               ha="right")
     t = spec.text("clock_scatter_matrix", n_clocks=n)
-    import textwrap
-
-    cap = "\n".join(textwrap.wrap(" ".join(t["description"].split()), width=92))
-    fig.tight_layout(rect=(0.02, 0.055 + 0.022 * (cap.count("\n") + 1), 1, 0.90))
-    fig.text(0.012, 0.975, t["title"], fontsize=theme_value("title_size"),
-             va="top", ha="left")
-    fig.text(0.012, 0.935, t["subtitle"], fontsize=theme_value("subtitle_size"),
-             color="#555555", va="top", ha="left")
-    fig.text(0.012, 0.012, cap, fontsize=theme_value("caption_size"),
-             color="#666666", va="bottom", ha="left")
+    fig.tight_layout()
+    _figure_text(fig, t)
     return fig, r
 
 
@@ -145,11 +137,7 @@ def clock_pca(result, *, colour_by: str | None = None, method: str = "pca"):
             # landed on the HGPS and IHD samples, hiding the phenotype a
             # reader is looking for. A key that can obscure the data is worth
             # a little width instead.
-            fig.set_size_inches(fig.get_figwidth() * 1.18, fig.get_figheight())
-            ax.legend(frameon=False, fontsize=theme_value("caption_size"),
-                      loc="upper left", bbox_to_anchor=(1.015, 1.0),
-                      borderaxespad=0.0, handletextpad=0.4,
-                      labelspacing=0.55)
+            _legend_outside(fig, ax)
     else:
         ax.scatter(d["d1"], d["d2"], s=theme_value("point_size") * 9,
                    color=palette()[0], edgecolor="none")
@@ -313,9 +301,8 @@ def clock_radar(result, *, group: str | None = None, clocks: Sequence[str] | Non
     nrow = int(np.ceil(len(names) / ncol))
     legend_in = 0.12 + nrow * (fs + 5.0) / 72.0
 
-    cap = _wrap_caption(t["description"])
-    cap_in = 0.16 + (cap.count("\n") + 1) * (fs + 3.0) / 72.0
-    head_in = 0.92
+    cap_in = 0.08
+    head_in = 0.15
     width = max(box_w, 6.4)
     height = head_in + box_h + legend_in + cap_in
 
@@ -329,7 +316,7 @@ def clock_radar(result, *, group: str | None = None, clocks: Sequence[str] | Non
         ax.fill(closed, v, color=cmap[g], alpha=0.14)
 
     ax.plot(closed, np.zeros_like(closed), color=semantic("reference"), lw=1,
-            ls=theme_value("reference_line"))
+            ls=theme_value("reference_line"), label="cohort mean (z = 0)")
 
     # matplotlib's polar tick labels sit tangentially and collide past about
     # eight axes, so they are suppressed and redrawn as radial spikes.
@@ -360,6 +347,6 @@ def clock_radar(result, *, group: str | None = None, clocks: Sequence[str] | Non
                bbox_to_anchor=(0.5, (cap_in + 0.04) / height), ncol=ncol,
                frameon=False, fontsize=fs, columnspacing=1.4,
                handlelength=1.5, handletextpad=0.5, borderaxespad=0.0)
-    _figure_text(fig, t, cap)
+    _figure_text(fig, t)
     return fig, prof
 

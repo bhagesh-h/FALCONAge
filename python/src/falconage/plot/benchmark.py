@@ -13,7 +13,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside,
     _wrap_caption,
 )
 
@@ -30,7 +30,7 @@ def benchmark_bars(bench, *, alpha: float = 0.05):
     ax.barh(y + 0.2, s["AA1"], height=0.38, color=palette()[1], label="AA1 (vs zero)")
     ax.set_yticks(y, s.index, fontsize=theme_value("caption_size"))
     ax.invert_yaxis()
-    ax.legend(frameon=False, fontsize=theme_value("caption_size"))
+    _legend_outside(fig, ax, widen=1.3)
     _dress(fig, ax, spec.text("benchmark_bars", n_clocks=len(s),
                               n_datasets=bench.per_dataset["dataset"].nunique(),
                               alpha=alpha))
@@ -54,7 +54,22 @@ def benchmark_error_bias(bench):
     for _, r in s.iterrows():
         ax.annotate(r["clock"], (r["MedAE"], r["MedE"]), fontsize=6.5,
                     xytext=(3, 3), textcoords="offset points", color="#555555")
-    _ref(ax, "h", 0.0)
+    # Room on the right for the last point's name, which would otherwise run
+    # past the axes into the legend.
+    ax.margins(x=0.14, y=0.08)
+    _ref(ax, "h", 0.0, label="no bias")
+    # Three reference sizes spanning the benchmark totals, so the point size
+    # can be read without the description.
+    top = float(max(s["total"].max(), 1e-9))
+    marks = sorted({round(top * f, 1) for f in (0.25, 0.5, 1.0)} - {0.0})
+    handles = [ax.scatter([], [], s=40 + 90 * m / top, color=palette()[0],
+                          alpha=theme_value("point_alpha"), edgecolor="none",
+                          label=f"{m:g}") for m in marks]
+    from matplotlib.lines import Line2D
+
+    handles.append(Line2D([], [], color=semantic("reference"), lw=theme_value("line_width"),
+                          ls=theme_value("reference_line"), label="no bias"))
+    _legend_outside(fig, ax, title="benchmark total", widen=1.25, handles=handles)
     _dress(fig, ax, spec.text("benchmark_error_bias", n_clocks=len(s)))
     return fig, s
 
@@ -86,6 +101,12 @@ def benchmark_heatmap(bench):
                   fontsize=theme_value("caption_size"))
     ax.set_yticks(range(m.shape[0]), m.index, fontsize=theme_value("caption_size"))
     fig.colorbar(im, ax=ax, shrink=0.7, label="delta (years)")
+    from matplotlib.patches import Patch
+
+    ax.legend(handles=[Patch(facecolor="white", edgecolor="black", lw=1.4,
+                             label="significant (BH)")],
+              frameon=False, fontsize=theme_value("caption_size"), loc="lower left",
+              bbox_to_anchor=(0.0, 1.01), borderaxespad=0.0)
     ax.grid(False)
     _dress(fig, ax, spec.text("benchmark_heatmap", n_clocks=m.shape[0],
                               n_datasets=m.shape[1]))

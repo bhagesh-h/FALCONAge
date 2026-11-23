@@ -1,0 +1,7 @@
+Multi-clock profile
+
+12 clocks · 12 groups by condition · z-scored within clock against the cohort
+
+One closed polygon per group, on a common z scale. A spike on one axis is one
+clock disagreeing with the rest, which is a finding about the clock at least
+as often as about the sample.

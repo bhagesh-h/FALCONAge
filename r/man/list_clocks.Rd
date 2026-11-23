@@ -13,11 +13,8 @@ list_clocks(
 )
 }
 \arguments{
-\item{tier}{\code{"bundled"}, \code{"untraced"} or \code{"licensed"}, or \code{NULL} for all.
-The retired \code{"A"}, \code{"B"}, \code{"C"} are still accepted. Bundled ships with
-coefficients and runs offline; untraced is catalogued but has no traced
-primary source yet; licensed is implemented but its coefficients are
-research-use-only.}
+\item{tier}{\code{"bundled"} or \code{NULL} for all. Every catalogued clock is
+bundled: it ships its coefficients and runs offline.}
 
 \item{data_type}{\code{"dna_methylation"} or \code{"clinical_chemistry"}.}
 
@@ -38,6 +35,5 @@ List the clock catalogue
 \dontrun{
 list_clocks(tier = "bundled")
 list_clocks(search = "mortality")
-list_clocks(tier = "licensed")   # the ones needing author permission
 }
 }

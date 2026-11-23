@@ -144,8 +144,6 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 | **The clock catalogue** | `list_clocks()` | `fa.registry.ClockRegistry()` |
 |  | `clock_info()` | `fa.registry.Clock()` |
 |  | `register_local_weights()` | `fa.registry.register_local_weights()` |
-|  | `import_pc_clocks()` | `fa.registry.load().import_pc_clocks()` |
-|  | `import_dunedinpace()` | `fa.registry.load().import_dunedinpace()` |
 |  | `cite_clock()` | `reg.get(id).cite()` |
 |  | `compatible_clocks()` | `reg.compatible_with(data)` |
 |  | — | `fa.registry.load()` |
@@ -168,12 +166,13 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 | **Model architectures** | — | `fa.models.AggregationClock()` |
 |  | — | `fa.models.NeuralClock()` |
 |  | — | `fa.models.read_neural_weights()` |
-|  | — | `fa.models.PCLinearClock()` |
-|  | — | `fa.models.read_rotation()` |
 |  | — | `fa.models.ScAgeReference()` |
 |  | — | `fa.models.fit_scage_reference()` |
 |  | — | `fa.models.scage()` |
-| **Figures and reports** | `plot_ba_vs_ca()` | `fa.plot.ba_vs_ca()` |
+| **Figures and reports** | `plot_clock_coverage()` | `fa.plot.clock_coverage_manhattan()` |
+|  | `save_figure()` | `fa.plot.save_figure()` |
+|  | `figure_text()` | `fa.plot.figure_text()` |
+|  | `plot_ba_vs_ca()` | `fa.plot.ba_vs_ca()` |
 |  | `plot_bland_altman()` | `fa.plot.bland_altman()` |
 |  | `plot_calibration()` | `fa.plot.calibration()` |
 |  | `plot_acceleration()` | `fa.plot.acceleration_density()` |
@@ -197,6 +196,7 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | `quarto_report()` | `fa.report.write_quarto_report()` |
 |  | `falcon_scheme()` | *R only: loads the shared palette into R* |
 |  | `falcon_theme()` | *R only: a ggplot2 theme; Python styles via matplotlib* |
+|  | — | `fa.plot.clock_coverage_points()` |
 |  | — | `fa.plot.missingness()` |
 |  | — | `fa.plot.beta_density()` |
 |  | — | `fa.plot.study_comparison()` |
@@ -205,6 +205,7 @@ So the mapping is worth having explicitly. Every row is the same computation rea
 |  | — | `fa.plot.platform_bias()` |
 |  | — | `fa.plot.consensus_plot()` |
 |  | — | `fa.plot.save_all()` |
+|  | — | `fa.plot.read_caption()` |
 | **Downloading public data** | `download()` | `fa.download()` |
 |  | `cache_info()` | `fa.download.cache_info()` |
 |  | `clear_cache()` | `fa.download.clear_cache()` |

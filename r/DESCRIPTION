@@ -4,16 +4,14 @@ Version: 1.0.0
 Authors@R:
     person("Bhagesh", "Hunakunti", , "bhunakun@uni-bonn.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-5957-8005"))
-Description: Scores DNA methylation and clinical chemistry data against a
-    catalogue of 178 published aging clocks, and provides the downstream
+Description: Scores DNA methylation, clinical chemistry and NMR data against a
+    catalogue of 68 published human aging clocks, and provides the downstream
     statistics the field expects: age acceleration in its three conventions,
     survival and association models, technical reliability, and the AA1/AA2
     benchmark. Numerical work is delegated to the 'falconage' Python package
     through 'reticulate', so results from R and from Python are the same bits
-    rather than two implementations that agree approximately. Fifty-two
-    clocks carry coefficients inside the package and run offline; fifty-seven are
-    implemented as scaffolds whose research-use-only coefficients the user
-    supplies.
+    rather than two implementations that agree approximately. Every
+    clock carries its coefficients inside the package and runs offline.
 License: GPL (>= 3)
 URL: https://github.com/bhagesh-h/FALCONAge,
     https://bhagesh-h.github.io/FALCONAge/,

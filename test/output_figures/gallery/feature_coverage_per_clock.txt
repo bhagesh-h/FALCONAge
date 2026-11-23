@@ -1,0 +1,6 @@
+Feature coverage per clock
+
+8 clocks · floor at 80% · mixed
+
+The plot to read before the scores. Below the dashed line a clock is mostly
+scoring imputed values, which is why it was refused.

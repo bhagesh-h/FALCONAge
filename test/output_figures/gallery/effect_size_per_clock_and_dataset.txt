@@ -1,0 +1,6 @@
+Effect size per clock and dataset
+
+17 clocks x 13 datasets · outlined cells are significant
+
+Read the columns. A dataset that is blank across every clock is either a
+condition the clocks cannot see or a cohort too small to show it.

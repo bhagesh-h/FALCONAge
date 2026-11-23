@@ -13,13 +13,10 @@ Quick start
 
 What ships
 ----------
-178 catalogued clocks. 69 are ``bundled``: their coefficients live inside the
-wheel and they run offline. 57 are ``licensed`` scaffolds whose coefficients are
-research-use-only and are not ours to distribute (:mod:`falconage.registry`
-explains each one and names an open alternative). The remaining 52 are
-``untraced`` -- catalogued with real metadata, awaiting a traced extractor for
-the numbers. ``fa.registry.load().filter(availability="bundled")`` is the list
-that works today.
+68 human clocks: 62 DNA methylation, four clinical chemistry and two NMR
+metabolomics. Every one is ``bundled``: its coefficients live inside the wheel
+and it scores offline. Clocks of your own join the same registry through
+:func:`falconage.add_clock`.
 
 Beyond the clocks
 -----------------

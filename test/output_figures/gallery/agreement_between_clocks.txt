@@ -1,0 +1,6 @@
+Agreement between clocks
+
+Spearman rank correlation · 53 clocks · 394 samples
+
+Rank, not Pearson: clocks on different scales have no meaningful linear
+correlation. Blocks of agreement are usually shared training data.

@@ -11,7 +11,7 @@
 
 **F**ramework for **A**ging **CL**ocks, **O**mics **N**ormalisation and **Age** scoring.
 
-FALCONAge applies published aging clocks to DNA methylation, clinical chemistry and NMR
+FALCONAge applies 68 published human aging clocks to DNA methylation, clinical chemistry and NMR
 metabolomics data, in Python and R. Every score comes back with its unit, where its coefficients
 came from, and how much of it is measurement noise.
 
@@ -46,14 +46,18 @@ Docker itself, the smaller Python-only image, and installing without Docker.
 
 ## What you get
 
-- A score per sample for every one of the 178 catalogued clocks your data supports (69 ship
-  their coefficients and run offline; the rest say why they cannot)
+- A coverage map, drawn first: one genome track per clock, showing which of its CpGs your data
+  carries and which it shares with other clocks
+- A score per sample for every one of the 68 human clocks your data supports, all of which ship
+  their coefficients and run offline
 - A **standard error on every score**, propagated from published per-probe reliability, and a
   prediction interval
 - Age acceleration where the sample's age is known and the clock's scale permits it
 - Whether a group difference holds across clocks or rests on one
-- 31 figures and one HTML report, and a manifest recording versions, every coefficient file's
-  SHA-256 and every warning, enough to reproduce the run
+- Publication-ready figures, each a `<title>.png` with no text on the canvas but axes and
+  legend, and a `<title>.txt` beside it holding the title, the numbers and the description
+- One HTML report, and a manifest recording versions, every coefficient file's SHA-256 and
+  every warning, enough to reproduce the run
 
 ## From Python or R
 
@@ -100,9 +104,8 @@ Each refusal is enforced in code and names the measurement behind it.
 |---|---|
 | Cross-platform liftover (`mLiftOver`) | Mapping tables encode concordance measured on paired samples; not derivable from array manifests |
 | Dye-bias correction **on by default** | Ships opt-in. On real IDATs it moves the median beta by +0.10 to +0.12, and a correct version needs control probes absent from the fetchable manifest |
-| Proteomic or transcriptomic **clocks** | Readers and preparation chains ship; no catalogue entry, because organAging and tAge are both licence-restricted |
+| Proteomic or transcriptomic **clocks** | Readers and preparation chains ship, and `fit_clock` fits one; no published model may be redistributed |
 | A foundation-model imputation backend | `NeuralClock` ships; CpGPT/MethylGPT as zero-shot probe imputation does not |
-| 52 untraced coefficient sources | A per-clock literature hunt; some have no public supplement |
 | meQTL awareness at score time | A clock CpG under strong genetic control carries variance fixed at conception. `coefficient_mass()` now measures each clock's exposure against a meQTL list you supply, but the registry stores no meQTL status and no score is adjusted for it, so a number still cannot say which part of its spread is acquired |
 | Allele-specific methylation | A beta value averages both alleles, so an array cannot resolve it. Sequencing can; nothing here reads that |
 | Co-methylation modules | Probes are treated independently. Module-level testing is what makes an epigenome-wide scan tractable, and is not implemented |
@@ -113,7 +116,7 @@ Each refusal is enforced in code and names the measurement behind it.
 |---|---|
 | [Get started](https://bhagesh-h.github.io/FALCONAge/) | Install, the first run, what the tool refuses |
 | [Guide](https://bhagesh-h.github.io/FALCONAge/data/loading.html) | Loading data, preprocessing, acceleration, uncertainty, reports, building your own clocks |
-| [Clocks](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html) | Choosing a clock, what a score means, the catalogue of 178 |
+| [Clocks](https://bhagesh-h.github.io/FALCONAge/clocks/choosing.html) | Choosing a clock, what a score means, the catalogue of 68 |
 | [Methods](https://bhagesh-h.github.io/FALCONAge/methods/formulas.html) | The formulas FALCONAge implements, the raw-array chain, uncertainty, benchmarking |
 | [Python](https://bhagesh-h.github.io/FALCONAge/reference/) · [R](https://bhagesh-h.github.io/FALCONAge/r/reference/) | Full API references |
 | [Developers](https://bhagesh-h.github.io/FALCONAge/dev/index.html) | Architecture, testing, and how the images are built |

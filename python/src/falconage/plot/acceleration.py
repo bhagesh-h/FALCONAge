@@ -14,7 +14,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside,
     _wrap_caption,
 )
 
@@ -78,7 +78,7 @@ def acceleration_density(acc: pd.DataFrame, clock: str, obs: pd.DataFrame | None
                 color=cols[g], label=f"{g} (n={v.size})")
     _ref(ax, "v", 0.0)
     if "group" in d:
-        ax.legend(frameon=False, fontsize=theme_value("caption_size"))
+        _legend_outside(fig, ax, title="group")
     _dress(fig, ax, spec.text("acceleration_density", clock=clock, n=len(d),
                               method=acc.attrs.get("method", "residual")))
     return fig, d
@@ -146,8 +146,16 @@ def forest(bench, *, top: int | None = None):
         c = semantic("case") if r["significant"] else semantic("neutral")
         ax.plot([r["lo"], r["hi"]], [y, y], color=c, lw=theme_value("line_width"))
         ax.scatter(r["delta"], y, s=theme_value("point_size") * 12, color=c, zorder=3)
-    _ref(ax, "v", 0.0)
+    _ref(ax, "v", 0.0, label="no difference")
     ax.set_yticks(ys, d["label"], fontsize=theme_value("caption_size"))
+    from matplotlib.lines import Line2D
+
+    _legend_outside(fig, ax, widen=1.25, handles=[
+        Line2D([], [], color=semantic("case"), marker="o", lw=theme_value("line_width"),
+               label="significant (BH)"),
+        Line2D([], [], color=semantic("neutral"), marker="o", lw=theme_value("line_width"),
+               label="not significant"),
+        *ax.get_legend_handles_labels()[0]])
     _dress(fig, ax, spec.text("forest", n=len(d)))
     return fig, d
 
@@ -202,7 +210,7 @@ def timecourse(result, time_col: str, *, clocks: Sequence[str] | None = None,
                 color=pal[i % len(pal)], label=c)
         ax.fill_between(sub["time"], sub["lo"], sub["hi"], alpha=0.16,
                         color=pal[i % len(pal)], linewidth=0)
-    ax.legend(frameon=False, fontsize=theme_value("caption_size"), ncol=2)
+    _legend_outside(fig, ax, title="clock")
     _dress(fig, ax, spec.text("timecourse", n_clocks=d["clock"].nunique(),
                               time_label=time_label))
     return fig, d

@@ -14,7 +14,7 @@ from .spec import (  # noqa: F401
 )
 from ._common import (  # noqa: F401
     NothingToPlot, PALETTE, _age, _dress, _figure_text, _mpl, _new,
-    _radial_labels, _ref, _require_signal, _titles_outside, _unit,
+    _radial_labels, _ref, _require_signal, _titles_outside, _unit, _legend_outside,
     _wrap_caption,
 )
 
@@ -114,7 +114,7 @@ def kaplan_meier(result, clock: str, *, time_col: str, event_col: str,
                  fast["time"].to_numpy(), fast["event"].to_numpy())
 
     ax.set_ylim(0, 1.02)
-    ax.legend(frameon=False, fontsize=theme_value("caption_size"), loc="lower left")
+    _legend_outside(fig, ax)
     _dress(fig, ax, spec.text("kaplan_meier", clock=clock, n=len(d),
                               events=int(d["event"].sum()),
                               p="< 0.001" if p < 1e-3 else f"{p:.3f}"))
@@ -156,13 +156,14 @@ def volcano(assoc, *, effect: str = "beta", p: str = "p", fdr: float = 0.05,
     fig, ax = _new()
     ax.scatter(d.loc[~d["_hit"], effect], d.loc[~d["_hit"], "_y"],
                s=theme_value("point_size") * 8, color=semantic("neutral"),
-               alpha=0.65, edgecolors="none")
+               alpha=0.65, edgecolors="none", label="does not pass")
     ax.scatter(d.loc[d["_hit"], effect], d.loc[d["_hit"], "_y"],
                s=theme_value("point_size") * 12, color=semantic("case"),
-               edgecolors="none")
+               edgecolors="none", label=f"passes BH FDR {fdr:g}")
     if y_cut is not None:
-        _ref(ax, "h", y_cut)
+        _ref(ax, "h", y_cut, label="BH threshold")
     _ref(ax, "v", 0.0)
+    _legend_outside(fig, ax)
 
     for name, r in d.nlargest(label_top, "_y").iterrows():
         ax.annotate(str(name), (r[effect], r["_y"]),

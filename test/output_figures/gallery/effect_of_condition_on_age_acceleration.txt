@@ -1,0 +1,6 @@
+Effect of condition on age acceleration
+
+40 comparisons · point and 95% interval · BH-corrected
+
+Intervals crossing zero are the honest majority. Width tracks sample size, so
+a wide interval far from zero is a small study, not a large effect.
