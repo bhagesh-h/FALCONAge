@@ -1,0 +1,162 @@
+# Changelog
+
+## FALCONAge 1.0.0 (2026-11-22)
+
+### Added
+
+- **`falconage run`**: the whole pipeline in one command. Reads a
+  preprocessed beta matrix, a GEO series matrix, a clinical chemistry
+  table or a Nightingale NMR table; joins an optional sample sheet
+  (`age`, `sex`, `tissue`, `group`); scores every clock the data
+  supports; and writes the scores, technical standard errors, prediction
+  intervals, age acceleration, the cross-clock consensus, the figures
+  and `report.html`. Per-clock notes go to `warnings.csv`; the console
+  gets a summary.
+- **Ready for workflow managers (Nextflow, Snakemake).** Every verb
+  takes `--threads`, `--log-level {quiet,info,debug}` and `--log-file`;
+  `--help` documents every option with examples; errors print one line
+  naming the cause, with the exit status saying what kind (0 success, 1
+  internal, 2 usage, 3 input data, 4 scoring or analysis);
+  `falconage versions --process NAME` prints the YAML a `versions.yml`
+  takes; `run --format tsv` writes TSV tables. The image passes an
+  absolute-path command such as `/bin/bash .command.sh` straight
+  through, ships `ps` for task metrics, and runs as any user id.
+- **Publication-ready figures.** No figure draws a title, subtitle or
+  caption on the canvas; each carries its axes and a legend placed
+  outside the data, and every reference line and colour code is in that
+  legend. Figures are written as `<title>.png` (the clock id appended
+  for per-clock figures) with `<title>.txt` beside it holding the title,
+  the figure’s own numbers and the description.
+  [`save_figure()`](https://bhagesh-h.github.io/FALCONAge/r/reference/save_figure.md)
+  and
+  [`figure_text()`](https://bhagesh-h.github.io/FALCONAge/r/reference/figure_text.md)
+  do the same for any figure, in Python and R; both reports caption each
+  figure from that text and link its `.txt`.
+- **`falconage demo`**: the same pipeline on a small synthetic dataset,
+  so every output can be seen before real data is ready.
+  `fa.demo_data()` returns the dataset.
+- **A catalogue of 68 human clocks** (62 DNA methylation, 4 clinical
+  chemistry, 2 NMR), every one shipping its coefficients and scoring
+  offline, each traced to its primary source.
+- **A coverage map drawn before any clock is scored**: one genome track
+  per clock, its CpGs at their hg19 positions, coloured where the data
+  carries them and grey where it does not, with the legend giving each
+  clock’s colour and coverage. It includes clocks you add, shows which
+  CpGs clocks share, and cannot be switched off
+  (`fa.plot.clock_coverage_manhattan`, R
+  [`plot_clock_coverage()`](https://bhagesh-h.github.io/FALCONAge/r/reference/plot_clock_coverage.md)).
+- **Readers** for preprocessed beta matrices (CSV, TSV, parquet,
+  `.h5ad`), GEO series matrices, targeted panels, clinical chemistry
+  with declared units, Nightingale NMR and the ComputAgeBench studies.
+  Normalisation and QC are done upstream, for example by the methylarray
+  pipeline.
+- **Clock CpGs removed by upstream probe QC are detected offline.** A
+  bundled table records which arrays (27K, 450K, EPIC v1, EPIC v2) carry
+  each clock CpG (`fa.preprocess.platform_probes()`), so
+  [`score()`](https://bhagesh-h.github.io/FALCONAge/r/reference/score.md)
+  warns when probe filters removed CpGs carrying at least 1% of a
+  clock’s weight.
+- **Uncertainty on every score**:
+  [`technical_se()`](https://bhagesh-h.github.io/FALCONAge/r/reference/technical_se.md)
+  propagates published per-probe reliability through each clock’s
+  weights;
+  [`conformal_interval()`](https://bhagesh-h.github.io/FALCONAge/r/reference/conformal_interval.md)
+  gives distribution-free prediction intervals;
+  [`icc_from_replicates()`](https://bhagesh-h.github.io/FALCONAge/r/reference/icc_from_replicates.md)
+  and `variance_components()` measure reliability from the user’s own
+  replicates.
+- **Analysis**: age acceleration in three conventions, gated on each
+  clock’s scale type; association and Cox models; the AA1/AA2 benchmark;
+  [`consensus()`](https://bhagesh-h.github.io/FALCONAge/r/reference/consensus.md),
+  which asks whether a group difference holds across clocks;
+  [`power()`](https://rdrr.io/r/stats/power.html) and
+  `detectable_effect()` for study design.
+- **Clinical clocks**: PhenoAge, Klemera-Doubal and homeostatic
+  dysregulation reproducing BioAge, LinAge2, MetaboAge and MetaboHealth.
+- **Building a clock.** `fa.fit_clock()` fits an elastic net reproducing
+  glmnet, or any of eight other learners, with every reported prediction
+  made out of fold, folds optionally grouped by person or batch,
+  Horvath’s age transform on request, and MAE, MedAE, r, slope and bias
+  by thirds. `fa.compare_learners()` compares learners on the same folds
+  and reports the nested error of picking the best one. The elastic net
+  solver now uses glmnet’s active-set strategy and ridge its closed
+  form, so wide arrays fit in reasonable time with unchanged answers.
+- **Adding a clock.** `fa.add_clock()` (R:
+  [`add_clock()`](https://bhagesh-h.github.io/FALCONAge/r/reference/add_clock.md);
+  CLI: `run --clocks-dir`) scores a clock from a YAML entry and its
+  coefficient file exactly like a catalogue clock, with coverage, the
+  specimen check, technical standard errors and `origin: user` in the
+  manifest. `ClockFit.to_clock()` writes a fitted model in that format.
+- **Stacking clocks.** `fa.stack_clocks()` (R:
+  [`stack_clocks()`](https://bhagesh-h.github.io/FALCONAge/r/reference/stack_clocks.md))
+  combines clocks by a same-scale mean, non-negative least squares,
+  ridge or Cox, judged out of fold against the best single clock and the
+  plain mean. A linear stack of linear clocks collapses to one
+  coefficient file with `.to_clock()`.
+- **Readouts that are not clocks**: methylome entropy, drift, the noise
+  barometer, repertoire structure, and coefficient mass.
+- **Two Docker images** from one Dockerfile:
+  `bhagesh/falconage:1.0.0-cpu` (Python, R and every reader; also
+  `latest`) and `bhagesh/falconage:1.0.0-py` (Python only, smaller).
+- **A Claude skill** at `.claude/skills/falconage/`, checked against the
+  running package in CI.
+
+### Changed
+
+- **CPU only.** The `device` argument, the CUDA image and the optional
+  torch dependency are removed. Everything runs in numpy; the manifest
+  records the floating-point precision of each clock.
+
+- **The image is about 1 GB smaller**: R packages are compiled in a
+  builder stage and only the finished library is copied in, and the test
+  tools are no longer in the published image.
+
+- **The documentation is arranged in six sections** (Get started, Guide,
+  Clocks, Methods, API, Developers), each with its own sidebar. The home
+  page leads with the three commands that run the tool; the design
+  argument moved to *About and design*, and the developer notes left the
+  downloadable PDF. The literature pages on what clocks are and the
+  illustrated concept diagrams are removed; the figures on the site are
+  the ones the package draws. The literature pages on what clocks are
+  and the illustrated concept diagrams are removed; the figures on the
+  site are the ones the package draws.
+
+- **CRAN’s Debian signing key** is pinned by its new fingerprint
+  (`BA4EE5DE858FFFA7CFD8563908FC7B745769E9E4`), as published by CRAN
+  after its rotation.
+
+- **`falconage consensus` exits 0 whatever the verdict**;
+  `--fail-unsupported` restores a non-zero status (5) for an unsupported
+  verdict. A verdict is a result, not a failure.
+
+### Removed
+
+- Clocks that do not run in the tool: 57 licensed scaffolds, 38 entries
+  with no traced coefficients and 15 non-human clocks, with the PC-clock
+  and DunedinPACE importers and the model classes only they used.
+
+- Raw-data preprocessing, which now belongs upstream: the IDAT reader
+  and its chain (pOOBAH, noob, dye bias, BMIQ, probe masks, Illumina
+  manifest download), frozen-reference batch correction, the RRBS and
+  bedMethyl readers, the Olink, SomaScan and RNA-seq readers and their
+  preparation chains, and the SRA and PRIDE downloads. The `preprocess`
+  verb is renamed `prepare`. The array labelled EPIC v2 in the old
+  manifest table was methylprep’s extended EPIC v1 manifest; EPIC v2
+  membership now comes from the Zhou lab InfiniumAnnotation manifest.
+
+- The unused `cli` extra (typer). The command line has always used
+  argparse.
+
+- The content-preservation check, the developer Dockerfile and the
+  duplicate colour scheme; the clock overlap tables moved to
+  `docs/clocks/`.
+
+### Fixed
+
+- `mccartneyalcohol` was filed as gestational weeks; it is a relative
+  score.
+
+- A user clock’s `(Intercept)` row is no longer read as a CpG.
+
+- `build_overlap.py` no longer sends a hard-coded contact address to
+  Crossref; set `FALCONAGE_CONTACT` to give one.

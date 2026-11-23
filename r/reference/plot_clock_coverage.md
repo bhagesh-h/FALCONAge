@@ -1,0 +1,42 @@
+# Clock coverage across the genome
+
+One track per DNA methylation clock, every CpG at its position on the
+genome (hg19). In the clock's colour where the data carries the CpG,
+grey where it does not; the legend gives each clock's colour and the
+share of its CpGs present. CpGs that line up across tracks are shared
+between clocks. Clocks added with
+[`add_clock()`](https://bhagesh-h.github.io/FALCONAge/r/reference/add_clock.md)
+get a track too.
+[`run_report()`](https://bhagesh-h.github.io/FALCONAge/r/reference/run_report.md)
+draws this figure first, before any clock is scored.
+
+## Usage
+
+``` r
+plot_clock_coverage(data = NULL, platform = NULL)
+```
+
+## Arguments
+
+- data:
+
+  A `falcon_data`, or `NULL` with `platform`.
+
+- platform:
+
+  Without `data`, the array to measure coverage against: `"EPICv1"`,
+  `"EPICv2"`, `"450K"` or `"27K"`.
+
+## Value
+
+A ggplot. The per-clock table (coverage, CpGs placed, CpGs shared) is
+attached as `attr(p, "table")`.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+plot_clock_coverage(d)
+plot_clock_coverage(platform = "EPICv1")
+} # }
+```

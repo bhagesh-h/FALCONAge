@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Core engine and clock registry – FALCONAge</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../favicon.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-b9c7c7ac21299bd1aa5d6524aea23e39.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-79c658453e491f0cbc92e6631834b62d.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-b9c7c7ac21299bd1aa5d6524aea23e39.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-c4b6d3954443ab5c94b98a309aa1dde0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-2a291762bba85ab7be5d7bd835cf073c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-c4b6d3954443ab5c94b98a309aa1dde0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../assets/brand.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          toggle.setAttribute("aria-checked", alternate ? "true" : "false");
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455).
+    // Not run on load: stylesheets are set before first paint there, and
+    // scrolling would undo the scroll to a URL fragment (#14973).
+    // The one pixel nudge keeps the reader where they were.
+    const refreshSafariScrollbar = () => {
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        const scrollY = window.scrollY;
+        window.scrollTo(0, scrollY > 0 ? scrollY - 1 : 1);
+        setTimeout(() => {
+          window.scrollTo(0, scrollY);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      refreshSafariScrollbar();
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">FALCONAge</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Get started</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../data/loading.html"> 
+<span class="menu-text">Guide</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../clocks/choosing.html"> 
+<span class="menu-text">Clocks</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../methods/formulas.html"> 
+<span class="menu-text">Methods</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../reference/index.html"> 
+<span class="menu-text">API</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../dev/index.html" aria-current="page"> 
+<span class="menu-text">Developers</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-contents" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Contents</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-contents">    
+        <li class="dropdown-header">Get started</li>
+        <li>
+    <a class="dropdown-item" href="../index.html">
+ <span class="dropdown-text">Overview</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/install.html">
+ <span class="dropdown-text">Install</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/quickstart.html">
+ <span class="dropdown-text">Your first run</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/about.html">
+ <span class="dropdown-text">About and design</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../start/claude.html">
+ <span class="dropdown-text">Using FALCONAge from Claude</span></a>
+  </li>  
+        <li class="dropdown-header">Guide</li>
+        <li>
+    <a class="dropdown-item" href="../data/loading.html">
+ <span class="dropdown-text">Loading your data</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../data/preprocessing.html">
+ <span class="dropdown-text">Preparing data and coverage</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/acceleration.html">
+ <span class="dropdown-text">Age acceleration</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/uncertainty.html">
+ <span class="dropdown-text">Uncertainty</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/clinical.html">
+ <span class="dropdown-text">Clinical chemistry and survival</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/benchmarking.html">
+ <span class="dropdown-text">Benchmarking</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/beyond.html">
+ <span class="dropdown-text">Beyond the clock score</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/reporting.html">
+ <span class="dropdown-text">Figures and reports</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../analysis/figures.html">
+ <span class="dropdown-text">Figure gallery</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../own/compare.html">
+ <span class="dropdown-text">Build a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../own/add.html">
+ <span class="dropdown-text">Add a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../own/stack.html">
+ <span class="dropdown-text">Stack clocks</span></a>
+  </li>  
+        <li class="dropdown-header">Clocks</li>
+        <li>
+    <a class="dropdown-item" href="../clocks/choosing.html">
+ <span class="dropdown-text">Choosing a clock</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/meaning.html">
+ <span class="dropdown-text">What a score means</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/catalogue.html">
+ <span class="dropdown-text">Clock catalogue</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../clocks/discrepancies.html">
+ <span class="dropdown-text">Known discrepancies</span></a>
+  </li>  
+        <li class="dropdown-header">Methods</li>
+        <li>
+    <a class="dropdown-item" href="../methods/formulas.html">
+ <span class="dropdown-text">Published formulas</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/uncertainty.html">
+ <span class="dropdown-text">Uncertainty, specimen and platform</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/downstream.html">
+ <span class="dropdown-text">Downstream statistics</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/benchmarking.html">
+ <span class="dropdown-text">Benchmarking and validation</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../methods/building.html">
+ <span class="dropdown-text">Building a clock</span></a>
+  </li>  
+        <li class="dropdown-header">API</li>
+        <li>
+    <a class="dropdown-item" href="../reference/index.html">
+ <span class="dropdown-text">Python reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../r/index.html">
+ <span class="dropdown-text">R reference</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../references.html">
+ <span class="dropdown-text">References</span></a>
+  </li>  
+        <li class="dropdown-header">Developers</li>
+        <li>
+    <a class="dropdown-item" href="../dev/index.html">
+ <span class="dropdown-text">Architecture</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/engine.html">
+ <span class="dropdown-text">Core engine and registry</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/algorithms.html">
+ <span class="dropdown-text">Algorithms</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/modules.html">
+ <span class="dropdown-text">Modules</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/r-package.html">
+ <span class="dropdown-text">R package</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/operations.html">
+ <span class="dropdown-text">Docker, testing and CI</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/testing.html">
+ <span class="dropdown-text">Testing against the public corpus</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/history.html">
+ <span class="dropdown-text">Design history</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/software.html">
+ <span class="dropdown-text">Other software</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../dev/appendices.html">
+ <span class="dropdown-text">Appendices</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-download" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Download</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nav-menu-download">    
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge.pdf">
+ <span class="dropdown-text">Documentation (PDF)</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../downloads/FALCONAge-docs-markdown.zip">
+ <span class="dropdown-text">Documentation (markdown ZIP)</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/bhagesh-h/FALCONAge"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <button type="button" role="switch" aria-checked="false" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi"></i></button>
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../dev/engine.html">Core engine and registry</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Architecture</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/engine.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Core engine and registry</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/algorithms.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Algorithms</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/modules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Modules</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/r-package.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">R package</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/operations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Docker, testing and CI</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/testing.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Testing against the public corpus</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/history.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design history</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/software.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Other software</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../dev/appendices.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Appendices</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+<div class="quarto-sidebar-footer"><div class="sidebar-footer-item">
+<p><a href="https://orcid.org/0000-0002-5957-8005">Bhagesh Hunakunti</a><br>
+<a href="https://github.com/bhagesh-h/FALCONAge/blob/main/LICENSE">GPL-3.0-or-later</a> · <a href="https://github.com/bhagesh-h/FALCONAge">source</a></p>
+</div></div></nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#core-engine" id="toc-core-engine" class="nav-link active" data-scroll-target="#core-engine">Core engine</a>
+  <ul class="collapse">
+  <li><a href="#precision" id="toc-precision" class="nav-link" data-scroll-target="#precision">Precision</a></li>
+  <li><a href="#the-data-container" id="toc-the-data-container" class="nav-link" data-scroll-target="#the-data-container">The data container</a></li>
+  <li><a href="#run-manifest" id="toc-run-manifest" class="nav-link" data-scroll-target="#run-manifest">Run manifest</a></li>
+  <li><a href="#logging-and-verbosity" id="toc-logging-and-verbosity" class="nav-link" data-scroll-target="#logging-and-verbosity">Logging and verbosity</a></li>
+  <li><a href="#configuration" id="toc-configuration" class="nav-link" data-scroll-target="#configuration">Configuration</a></li>
+  <li><a href="#units" id="toc-units" class="nav-link" data-scroll-target="#units">Units</a></li>
+  <li><a href="#error-hierarchy" id="toc-error-hierarchy" class="nav-link" data-scroll-target="#error-hierarchy">Error hierarchy</a></li>
+  </ul></li>
+  <li><a href="#clock-registry" id="toc-clock-registry" class="nav-link" data-scroll-target="#clock-registry">Clock registry</a>
+  <ul class="collapse">
+  <li><a href="#why-the-registry-is-a-separate-artefact" id="toc-why-the-registry-is-a-separate-artefact" class="nav-link" data-scroll-target="#why-the-registry-is-a-separate-artefact">Why the registry is a separate artefact</a></li>
+  <li><a href="#schema" id="toc-schema" class="nav-link" data-scroll-target="#schema">Schema</a></li>
+  <li><a href="#the-discrepancy-field-is-load-bearing" id="toc-the-discrepancy-field-is-load-bearing" class="nav-link" data-scroll-target="#the-discrepancy-field-is-load-bearing">The discrepancy field is load-bearing</a></li>
+  <li><a href="#controlled-vocabulary" id="toc-controlled-vocabulary" class="nav-link" data-scroll-target="#controlled-vocabulary">Controlled vocabulary</a></li>
+  <li><a href="#registry-api" id="toc-registry-api" class="nav-link" data-scroll-target="#registry-api">Registry API</a></li>
+  <li><a href="#coefficient-provenance-and-the-three-availability-tiers" id="toc-coefficient-provenance-and-the-three-availability-tiers" class="nav-link" data-scroll-target="#coefficient-provenance-and-the-three-availability-tiers">Coefficient provenance and the three availability tiers</a></li>
+  <li><a href="#coefficient-extraction" id="toc-coefficient-extraction" class="nav-link" data-scroll-target="#coefficient-extraction">Coefficient extraction</a></li>
+  <li><a href="#weight-loading" id="toc-weight-loading" class="nav-link" data-scroll-target="#weight-loading">Weight loading</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/dev/engine.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Core engine and clock registry</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="core-engine" class="level2">
+<h2 class="anchored" data-anchor-id="core-engine">Core engine</h2>
+<section id="precision" class="level3">
+<h3 class="anchored" data-anchor-id="precision">Precision</h3>
+<p><code>falconage/core/backend.py</code></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span>(frozen<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ComputeSpec:</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    dtype: <span class="bu">str</span> <span class="op">=</span> <span class="st">"float64"</span>        <span class="co"># "float64" | "float32"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> resolve(dtype: <span class="bu">str</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>, <span class="op">*</span>, requires_fp64: <span class="bu">bool</span> <span class="op">=</span> <span class="va">False</span>) <span class="op">-&gt;</span> ComputeSpec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Everything runs in numpy on the CPU. <code>resolve()</code> fixes the floating-point precision once per clock and the manifest records it per clock. An unknown precision is refused rather than silently replaced.</p>
+<p>FP64 is the default because the reference values the tests assert against are generated at it. FP32 is opt-in. Clocks whose registry entry sets <code>requires_fp64: true</code> are promoted back to FP64 for their own forward pass and a warning is emitted.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> check_dtype_safety(clock: ClockMeta, spec: ComputeSpec) <span class="op">-&gt;</span> ComputeSpec:</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Promote to FP64 for clocks that need it. Returns a possibly-modified spec."""</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-data-container" class="level3">
+<h3 class="anchored" data-anchor-id="the-data-container">The data container</h3>
+<p><code>falconage/core/container.py</code></p>
+<p><code>FalconData</code> wraps <code>anndata.AnnData</code> rather than replacing it, so the on-disk artefact is a plain <code>.h5ad</code> that both languages and every scverse tool can read.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> FalconData:</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    adata: AnnData                    <span class="co"># X = primary modality, obs = samples, var = features</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    modality: <span class="bu">str</span>                     <span class="co"># "methylation" | "clinical" | "expression" | "proteomics"</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    platform: <span class="bu">str</span> <span class="op">|</span> <span class="va">None</span>              <span class="co"># "illumina_450k" | "illumina_epic_v2" | ...</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    species: <span class="bu">str</span>                      <span class="co"># "homo_sapiens" | ...</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    units: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">str</span>]             <span class="co"># feature → unit, for clinical chemistry</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Conventions, matching <a href="https://github.com/lucascamillomd/pyaging">pyaging</a>’s AnnData slot contract and extending it:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Slot</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>X</code></td>
+<td>samples × features, the primary modality</td>
+</tr>
+<tr class="even">
+<td><code>obs</code></td>
+<td><code>age</code>, <code>sex</code>, <code>tissue</code>, <code>condition</code>, <code>subject_id</code>, <code>timepoint</code>, <code>time</code>, <code>status</code>, plus predictions after scoring</td>
+</tr>
+<tr class="odd">
+<td><code>var</code></td>
+<td><code>feature_id</code>, <code>id_type</code>, <code>platform</code>, <code>chromosome</code>, <code>position</code></td>
+</tr>
+<tr class="even">
+<td><code>obsm["X_&lt;clock&gt;"]</code></td>
+<td>transient per-clock feature slice, deleted after scoring unless <code>keep=True</code></td>
+</tr>
+<tr class="odd">
+<td><code>layers["&lt;modality&gt;"]</code></td>
+<td>a second modality on the same features</td>
+</tr>
+<tr class="even">
+<td><code>uns["falconage"]</code></td>
+<td>the run manifest</td>
+</tr>
+<tr class="odd">
+<td><code>uns["&lt;clock&gt;_percent_na"]</code>, <code>uns["&lt;clock&gt;_missing_features"]</code>, <code>uns["&lt;clock&gt;_metadata"]</code></td>
+<td>per-clock diagnostics</td>
+</tr>
+</tbody>
+</table>
+<p>Multi-modality with different feature spaces (850K methylation probes alongside 3,000 proteins) uses <code>MuData</code>, with <code>FalconData.from_mudata()</code> / <code>.to_mudata()</code>. A single <code>FalconData</code> always has one primary feature space.</p>
+<p>Constructors:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>FalconData.from_dataframe(df, modality, platform<span class="op">=</span><span class="va">None</span>, metadata_cols<span class="op">=</span>(), units<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>FalconData.from_anndata(adata, modality, ...)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>FalconData.read_h5ad(path)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>FalconData.write_h5ad(path)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>from_dataframe</code> takes samples in rows and features in columns, splits <code>metadata_cols</code> into <code>obs</code>, and preserves <code>df.index</code> as sample identifiers. This is the same signature as pyaging’s <code>df_to_adata</code> minus the imputation, which moves to the preprocess module where it belongs.</p>
+</section>
+<section id="run-manifest" class="level3">
+<h3 class="anchored" data-anchor-id="run-manifest">Run manifest</h3>
+<p><code>falconage/core/manifest.py</code></p>
+<p>Everything needed to reproduce a run, written into <code>uns["falconage"]</code> and into a sidecar <code>run_manifest.json</code> next to the results.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> RunManifest:</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    falconage_version:  <span class="bu">str</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    registry_version:   <span class="bu">str</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    registry_schema:    <span class="bu">str</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    python_version:     <span class="bu">str</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    r_version:          <span class="bu">str</span> <span class="op">|</span> <span class="va">None</span>      <span class="co"># set when the call came through reticulate</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    platform:           <span class="bu">str</span>             <span class="co"># OS, arch</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    dtype:              <span class="bu">str</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    timestamp:          <span class="bu">str</span>             <span class="co"># ISO 8601, UTC</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    command:            <span class="bu">str</span>             <span class="co"># the resolved call</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    config:             <span class="bu">dict</span>            <span class="co"># fully resolved, defaults expanded</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    inputs:             <span class="bu">list</span>[InputRecord]   <span class="co"># path, sha256, n_samples, n_features</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    clocks:             <span class="bu">list</span>[ClockRun]      <span class="co"># name, version, weights_sha256, percent_na, warnings</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    warnings:           <span class="bu">list</span>[<span class="bu">str</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>ClockRun.weights_sha256</code> is what makes a result auditable: two runs that report the same score for the same clock either used the same weights or the manifest says they did not.</p>
+</section>
+<section id="logging-and-verbosity" class="level3">
+<h3 class="anchored" data-anchor-id="logging-and-verbosity">Logging and verbosity</h3>
+<p><code>falconage/core/logging.py</code></p>
+<p>Three levels, matching cyRAVEN’s <code>cyRAVEN.verbose</code> option so the two front ends behave the same:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Python</th>
+<th>R</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>none</code></td>
+<td><code>logging.CRITICAL</code></td>
+<td><code>options(FALCONAge.verbose = "none")</code></td>
+</tr>
+<tr class="even">
+<td><code>inform</code> (default)</td>
+<td><code>logging.INFO</code>, indented progress</td>
+<td><code>"inform"</code></td>
+</tr>
+<tr class="odd">
+<td><code>debug</code></td>
+<td><code>logging.DEBUG</code>, per-op timings and shapes</td>
+<td><code>"debug"</code></td>
+</tr>
+</tbody>
+</table>
+<p>Progress bars via <code>rich</code> on a TTY, plain line output otherwise, suppressed entirely under <code>none</code>. Every message goes through the logger, so <code>logging.disable()</code> in Python and <code>suppressMessages()</code> in R both work.</p>
+</section>
+<section id="configuration" class="level3">
+<h3 class="anchored" data-anchor-id="configuration">Configuration</h3>
+<p><code>falconage/core/config.py</code></p>
+<p>Precedence, lowest to highest: packaged defaults → user config file (<code>~/.config/falconage/config.yaml</code>) → environment (<code>FALCONAGE_*</code>) → explicit function arguments.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ~/.config/falconage/config.yaml</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dtype</span><span class="kw">:</span><span class="at"> float64</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">verbose</span><span class="kw">:</span><span class="at"> inform</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cache_dir</span><span class="kw">:</span><span class="at"> ~/.cache/falconage</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">registry_version</span><span class="kw">:</span><span class="at"> </span><span class="st">"1.1.0"</span><span class="co">        # pin to make a project reproducible</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">hf_token</span><span class="kw">:</span><span class="at"> </span><span class="ch">null</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">max_download_gb</span><span class="kw">:</span><span class="at"> </span><span class="dv">50</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="units" class="level3">
+<h3 class="anchored" data-anchor-id="units">Units</h3>
+<p><code>falconage/core/units.py</code></p>
+<p>The single most common source of wrong answers in this field is a clinical biomarker in the wrong unit (<a href="../clocks/discrepancies.html">Failure modes</a>). The unit registry makes that a hard error.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> UnitRegistry:</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> convert(<span class="va">self</span>, value: ArrayLike, marker: <span class="bu">str</span>, frm: <span class="bu">str</span>, to: <span class="bu">str</span>) <span class="op">-&gt;</span> ArrayLike</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> canonical(<span class="va">self</span>, marker: <span class="bu">str</span>, variant: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> require(<span class="va">self</span>, markers: Sequence[<span class="bu">str</span>], units: <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">str</span>] <span class="op">|</span> <span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">str</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>require</code> raises <code>MissingUnitsError</code> naming every marker whose unit was not declared. There is no default and no inference from magnitude, a creatinine of 80 is plausible as both µmol/L and an absurd mg/dL, and guessing is how the 88× error happens. Conversions carried:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Marker</th>
+<th>Units</th>
+<th>Factor</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>albumin</td>
+<td>g/L ↔︎ g/dL</td>
+<td>×10</td>
+</tr>
+<tr class="even">
+<td>creatinine</td>
+<td>µmol/L ↔︎ mg/dL</td>
+<td>×88.42</td>
+</tr>
+<tr class="odd">
+<td>glucose</td>
+<td>mmol/L ↔︎ mg/dL</td>
+<td>×18.016</td>
+</tr>
+<tr class="even">
+<td>CRP</td>
+<td>mg/L ↔︎ mg/dL</td>
+<td>×10</td>
+</tr>
+<tr class="odd">
+<td>total/HDL/LDL cholesterol</td>
+<td>mmol/L ↔︎ mg/dL</td>
+<td>×38.67</td>
+</tr>
+<tr class="even">
+<td>triglycerides</td>
+<td>mmol/L ↔︎ mg/dL</td>
+<td>×88.57</td>
+</tr>
+<tr class="odd">
+<td>urea/BUN</td>
+<td>mmol/L ↔︎ mg/dL</td>
+<td>×2.801</td>
+</tr>
+<tr class="even">
+<td>uric acid</td>
+<td>µmol/L ↔︎ mg/dL</td>
+<td>×59.48</td>
+</tr>
+<tr class="odd">
+<td>bilirubin</td>
+<td>µmol/L ↔︎ mg/dL</td>
+<td>×17.1</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="error-hierarchy" class="level3">
+<h3 class="anchored" data-anchor-id="error-hierarchy">Error hierarchy</h3>
+<p><code>falconage/core/errors.py</code></p>
+<pre><code>FalconError
+├── ConfigurationError
+│   ├── MissingUnitsError
+│   └── InvalidDeviceError
+├── DataError
+│   ├── FeatureMismatchError        # 100% of a clock's features absent
+│   ├── ExcessiveMissingnessError   # above the configured threshold
+│   ├── PlatformMismatchError       # EPIC v2 probes not aggregated, etc.
+│   ├── MissingCovariateError       # clock needs age/sex and it is not there
+│   └── OutOfRangeError             # beta outside [0,1], negative counts
+├── RegistryError
+│   ├── UnknownClockError
+│   ├── WeightsUnavailableError
+│   └── SchemaValidationError
+├── DownloadError
+│   ├── AccessionNotFoundError
+│   ├── ChecksumMismatchError
+│   └── CredentialsRequiredError
+└── ComputeError
+    ├── InsufficientMemoryError
+    └── NumericalInstabilityError</code></pre>
+<p>Every error carries <code>.remedy</code>, a one-sentence statement of what to do about it, which the R bridge surfaces as the condition message and the CLI prints after the traceback.</p>
+</section>
+</section>
+<section id="clock-registry" class="level2">
+<h2 class="anchored" data-anchor-id="clock-registry">Clock registry</h2>
+<section id="why-the-registry-is-a-separate-artefact" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-registry-is-a-separate-artefact">Why the registry is a separate artefact</h3>
+<p>The registry is versioned independently of the package, packaged into both language distributions, and validated in its own CI job. That separation exists because adding a clock and releasing software are different events with different risk profiles: a user pinning <code>registry_version: "1.0.0"</code> gets the same coefficients in a year regardless of package upgrades, and a registry fix does not require a PyPI release.</p>
+</section>
+<section id="schema" class="level3">
+<h3 class="anchored" data-anchor-id="schema">Schema</h3>
+<blockquote class="blockquote">
+<p><strong>v1.0 stores this differently.</strong> All 68 entries live in one file, <code>python/src/falconage/registry/data/clocks.yaml</code>, loaded into frozen dataclasses by <code>registry/registry.py</code>. There is no <code>registry/</code> directory at the repository root, no file per clock, and no pydantic.</p>
+<p>The per-clock tree below is the right shape for a registry that outside contributors edit concurrently, one file per pull request, no merge conflicts. At 68 entries maintained by one author it bought nothing and cost a directory walk on every import, plus 68 files to keep a schema version in step across. The single file is 68 entries the loader validates in one pass, and it travels inside the wheel so a clock catalogue is never a download. Pydantic went the same way: the fields are flat, the loader coerces and defaults them in about forty lines, and a runtime dependency that exists to check a file the package itself ships is a dependency earning nothing.</p>
+<p>The entry below is copied from the shipped file; it is what the loader reads.</p>
+</blockquote>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># one entry in falconage/registry/data/clocks.yaml</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">horvath2013</span><span class="kw">:</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">"horvath2013"</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">year</span><span class="kw">:</span><span class="at"> </span><span class="dv">2013</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">species</span><span class="kw">:</span><span class="at"> </span><span class="st">"Homo sapiens"</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">data_type</span><span class="kw">:</span><span class="at"> </span><span class="st">"dna_methylation"</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">generation</span><span class="kw">:</span><span class="at"> </span><span class="st">"first"</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">tissue</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"multi-tissue"</span><span class="kw">]</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">platform</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"27K"</span><span class="kw">,</span><span class="at"> </span><span class="st">"450K"</span><span class="kw">]</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">predicts</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"chronological age"</span><span class="kw">]</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">training_target</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"chronological age"</span><span class="kw">]</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">unit</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">"years"</span><span class="kw">]</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">scale_type</span><span class="kw">:</span><span class="at"> </span><span class="st">"age_years"</span><span class="co">          # governs which downstream operations are legal</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">model_type</span><span class="kw">:</span><span class="at"> </span><span class="st">"elastic net regression"</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">population</span><span class="kw">:</span><span class="at"> </span><span class="st">"all ages"</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">n_features</span><span class="kw">:</span><span class="at"> </span><span class="dv">353</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">requires_fp64</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">availability</span><span class="kw">:</span><span class="at"> </span><span class="st">"bundled"</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">citation</span><span class="kw">:</span><span class="at"> </span><span class="st">"Horvath, S. DNA methylation age of human tissues and cell types. Genome Biology 14, R115 (2013)."</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">doi</span><span class="kw">:</span><span class="at"> </span><span class="st">"https://doi.org/10.1186/gb-2013-14-10-r115"</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">coefficient_source</span><span class="kw">:</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">file</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients/horvath2013.csv"</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">sha256</span><span class="kw">:</span><span class="at"> </span><span class="st">"a54cdb931c85763ed8e28be68fa926b4e602be168df505683ea5c6b2ba3a5319"</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">provenance</span><span class="kw">:</span><span class="at"> </span><span class="st">"Horvath 2013, Additional File 3 (publisher supplementary)"</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">primary_source_traced</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">redistributable</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">reference_values</span><span class="kw">:</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">file</span><span class="kw">:</span><span class="at"> </span><span class="st">"references/horvath2013.csv"</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">label</span><span class="kw">:</span><span class="at"> </span><span class="st">"Horvath 2013 gold standard (Additional file 22)"</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">preprocess</span><span class="kw">:</span><span class="at"> </span><span class="kw">[]</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">postprocess</span><span class="kw">:</span><span class="co">                     # order is load-bearing</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="fu">op</span><span class="kw">:</span><span class="at"> </span><span class="st">"add"</span><span class="kw">,</span><span class="at"> </span><span class="fu">value</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.695507258</span><span class="kw">}</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="fu">op</span><span class="kw">:</span><span class="at"> </span><span class="st">"anti_log_linear"</span><span class="kw">,</span><span class="at"> </span><span class="fu">adult_age</span><span class="kw">:</span><span class="at"> </span><span class="dv">20</span><span class="kw">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="the-discrepancy-field-is-load-bearing" class="level3">
+<h3 class="anchored" data-anchor-id="the-discrepancy-field-is-load-bearing">The discrepancy field is load-bearing</h3>
+<p><a href="../clocks/discrepancies.html">Where the paper and the coefficients disagree</a> documents the clocks where the published paper and the coefficient set in circulation disagree. Every implementation in the field silently inherits one side of each disagreement. FALCONAge records both and warns at score time:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># bohlin, as shipped</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">known_discrepancies</span><span class="kw">:</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="st">"The paper reports 96 CpGs; the coefficient set in circulation carries 251. Scores here</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="st">    will match other packages and not the figures printed in the paper."</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Seventeen shipped clocks carry the field: <code>bohlin</code>, <code>phenoage</code>, <code>weidner</code>, <code>zhangmortality</code>, the three Ying clocks (<code>yingcausage</code>, <code>yingdamage</code>, <code>yingadaptage</code>) and the ten McCartney trait scores. <a href="../clocks/discrepancies.html">Where the paper and the coefficients disagree</a> gives each one.</p>
+<p>Warning behaviour is a config knob: <code>discrepancy_warnings: once | always | never</code>, defaulting to <code>once</code> per clock per session.</p>
+</section>
+<section id="controlled-vocabulary" class="level3">
+<h3 class="anchored" data-anchor-id="controlled-vocabulary">Controlled vocabulary</h3>
+<p><code>registry/vocabulary.yaml</code> fixes the allowed values for <code>data_type</code>, <code>species</code>, <code>tissue</code>, <code>platform</code>, <code>population</code>, <code>generation</code>, <code>predicts</code>, <code>training_target</code>, <code>unit</code>, <code>scale_type</code> and <code>architecture.kind</code>. A controlled vocabulary is what keeps tissue and platform filters working: free-text tissue strings drift into dozens of spellings of the same thing. <code>registry/validate.py</code> fails CI on any value outside the vocabulary, any missing required field, any weight URI without a checksum, and any clock without a gold-standard vector.</p>
+</section>
+<section id="registry-api" class="level3">
+<h3 class="anchored" data-anchor-id="registry-api">Registry API</h3>
+<p><code>falconage/registry/registry.py</code></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ClockRegistry:</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@classmethod</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> load(cls, version: <span class="bu">str</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> ClockRegistry</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get(<span class="va">self</span>, clock_id: <span class="bu">str</span>) <span class="op">-&gt;</span> ClockMeta</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">list</span>(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">str</span>]</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> search(<span class="va">self</span>, query: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[ClockMeta]          <span class="co"># free text over name, citation, notes</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">filter</span>(<span class="va">self</span>, <span class="op">**</span>criteria) <span class="op">-&gt;</span> <span class="bu">list</span>[ClockMeta]          <span class="co"># data_type=, species=, generation=, ...</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> by_doi(<span class="va">self</span>, doi: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[ClockMeta]</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> compatible_with(<span class="va">self</span>, data: FalconData,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                        min_coverage: <span class="bu">float</span> <span class="op">=</span> <span class="fl">0.8</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[ClockMeta]</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> cite(<span class="va">self</span>, clock_id: <span class="bu">str</span>, style: <span class="bu">str</span> <span class="op">=</span> <span class="st">"plain"</span>) <span class="op">-&gt;</span> <span class="bu">str</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>compatible_with</code> is the function that makes the registry usable: hand it a loaded dataset and it returns the clocks whose species, platform and feature coverage actually match, sorted by coverage. This replaces the current field practice of running everything and reading the missingness column afterwards.</p>
+</section>
+<section id="coefficient-provenance-and-the-three-availability-tiers" class="level3">
+<h3 class="anchored" data-anchor-id="coefficient-provenance-and-the-three-availability-tiers">Coefficient provenance and the three availability tiers</h3>
+<p>A clock is two things: an <strong>architecture</strong>, which is a procedure described in a paper, and a <strong>coefficient set</strong>, which is data produced by fitting that procedure to a cohort. FALCONAge writes every architecture from scratch. It cannot write a coefficient set from scratch, because there is no procedure that regenerates Horvath’s 353 weights without Horvath’s training data.</p>
+<p>So the question for each clock is only ever <em>where do its numbers come from and may we ship them</em>. Copying a copy is how a transcription error becomes a field-wide convention, so every shipped set is traced back to its primary source, a publisher supplement or the authors’ own repository, and <code>coefficient_source.provenance</code> names it.</p>
+<p>The registry schema keeps three values of <code>availability</code>: <code>bundled</code> (coefficients ship and score offline), <code>untraced</code> (no primary source established) and <code>licensed</code> (the coefficients are not FALCONAge’s to give). <strong>Every shipped clock is <code>bundled</code>.</strong> Clocks whose coefficients are research-use-only or untraceable were removed rather than catalogued without numbers, so nothing in the registry is a placeholder. The other two values remain so that a user’s own entry can say what it is. <code>pedbe</code> is the one bundled clock whose primary source is not fully traced, and <code>falconage clocks list --untraced</code> prints it.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coefficient_source</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">file</span><span class="kw">:</span><span class="at"> </span><span class="st">"coefficients/hannum.csv"</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">sha256</span><span class="kw">:</span><span class="at"> </span><span class="st">"58d84337d3100888358763cd79c29a776e5cfdc675af99c14a339595aceaf375"</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">provenance</span><span class="kw">:</span><span class="at"> </span><span class="st">"Hannum et al. 2013, Molecular Cell, Table S3 (mmc2.xlsx, sheet Model_PrimaryData)"</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">primary_source_traced</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">redistributable</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="coefficient-extraction" class="level3">
+<h3 class="anchored" data-anchor-id="coefficient-extraction">Coefficient extraction</h3>
+<p><code>registry/extractors/</code>. One small script per clock, or per family where the format is shared. Each reads the primary source in whatever shape it was published, xlsx, csv, a zip of csvs, an RData object, a supplementary PDF table, and emits a normalised two-column file plus a provenance record.</p>
+<pre><code>registry/extractors/
+├── _base.py                 # fetch, checksum, normalise, write, record
+├── horvath2013.py           # Springer MOESM3 csv
+├── hannum.py                # Elsevier mmc2.xlsx, sheet 2, cols B:C
+├── ying.py                  # Nature Aging MOESM6 zip, three clocks in one archive
+└── ...</code></pre>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Extractor(ABC):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    clock_id: <span class="bu">str</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    source_url: <span class="bu">str</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    expected_sha256: <span class="bu">str</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    expected_n_features: <span class="bu">int</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">@abstractmethod</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> parse(<span class="va">self</span>, raw: <span class="bu">bytes</span>) <span class="op">-&gt;</span> pd.DataFrame:      <span class="co"># feature_id, coefficient</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        ...</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> run(<span class="va">self</span>) <span class="op">-&gt;</span> ExtractionResult:</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>        <span class="co"># fetch -&gt; verify checksum -&gt; parse -&gt; assert n_features -&gt; assert no</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        <span class="co"># duplicate feature ids -&gt; compare against any prior extraction -&gt; write</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Two assertions do most of the work. <code>expected_n_features</code> catches a supplement whose layout changed or a sheet index that was off by one. The comparison against the prior extraction turns an upstream file being silently revised into a failed CI run rather than a changed result.</p>
+<p><strong>Diffing against the field.</strong> For every clock where biolearn, computage or methylCIPHER also carries coefficients, the test suite compares the sets: features present in one and not the other, and coefficients differing beyond 1e-9. Disagreements are published rather than resolved silently.</p>
+</section>
+<section id="weight-loading" class="level3">
+<h3 class="anchored" data-anchor-id="weight-loading">Weight loading</h3>
+<p><code>falconage/registry/registry.py</code>, methods of <code>ClockRegistry</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> coefficients(<span class="va">self</span>, clock_id: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">tuple</span>[<span class="bu">list</span>[<span class="bu">str</span>], np.ndarray]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> intercept(<span class="va">self</span>, clock_id: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">float</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> weight_record(<span class="va">self</span>, clock_id: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">str</span>, Any]          <span class="co"># what the manifest records</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> register_local_weights(<span class="va">self</span>, clock_id: <span class="bu">str</span>, path, sha256: <span class="bu">str</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> <span class="bu">str</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> add_clock(<span class="va">self</span>, path, <span class="op">*</span>, replace: <span class="bu">bool</span> <span class="op">=</span> <span class="va">False</span>) <span class="op">-&gt;</span> <span class="bu">str</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Rules:</p>
+<ul>
+<li><strong>safetensors only.</strong> Loading a pickled weights file executes arbitrary code from a downloaded file. Architecture lives in the registry YAML and in <code>models/</code>; tensors live in safetensors; nothing pickled is ever loaded.</li>
+<li><strong>Checksum verified</strong> against the registry before use; a mismatch raises rather than warns.</li>
+<li><strong>Bundled.</strong> Every coefficient set ships inside the package, about 13 MB in all, so scoring never needs a network.</li>
+<li><strong>Your own weights</strong>: <code>register_local_weights</code> and <code>add_clock</code> take a local file, checksum it and record <code>weight_record.source = "user_clock"</code> in the manifest.</li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script>
+// Wrap every article table in a horizontal scroll container.
+//
+// WHY THIS IS JAVASCRIPT AND NOT CSS. The scrolling element has to be a
+// *parent* of the table. Setting `display: block; overflow-x: auto` on the
+// table itself -- the obvious CSS-only version, and what this site did -- makes
+// the table a block box of width auto, so it shrinks to the container and the
+// anonymous inner table compresses every column to its minimum content width.
+// Measured at 390px on the clock catalogue: cells 46-120px wide and 82px tall,
+// with "dnamphenoage" broken over three lines. The table was not overflowing;
+// it was being crushed.
+//
+// Bootstrap solves this with a `.table-responsive` wrapper div, and Pandoc does
+// not emit one, so it gets added here. Then the table keeps a sane width and
+// the wrapper scrolls, which is the behaviour everyone expects from a wide
+// table on a phone.
+(function () {
+  function wrap() {
+    var tables = document.querySelectorAll(
+      "main table:not(.falcon-wrapped)");
+    for (var i = 0; i < tables.length; i++) {
+      var t = tables[i];
+      t.classList.add("falcon-wrapped");
+      // Already inside something that scrolls (Quarto does wrap some outputs)?
+      // A second wrapper would nest two scrollbars.
+      if (t.parentElement &&
+          t.parentElement.classList.contains("falcon-table-scroll")) continue;
+
+      var box = document.createElement("div");
+      box.className = "falcon-table-scroll";
+      // Keyboard users need to be able to scroll it too, and a focusable
+      // scroll container is the accessible way to expose that.
+      box.setAttribute("tabindex", "0");
+      box.setAttribute("role", "region");
+      var cap = t.querySelector("caption");
+      box.setAttribute("aria-label",
+        cap && cap.textContent.trim() ? cap.textContent.trim() : "Table");
+
+      t.parentNode.insertBefore(box, t);
+      box.appendChild(t);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wrap);
+  } else {
+    wrap();
+  }
+})();
+</script>
+<script>
+// The home page's background: a field of A/T/G/C hexagons, as on the author's
+// site (bhagesh-h.github.io), which this is ported from.
+//
+// A hexagonal grid spans the page behind everything. Single cells light up
+// with a white A, T, G or C (the fill encodes the base) and pick a new letter
+// each time they fade back in; cells near the pointer light up and trail off.
+// Before anything lights, the layout is mapped so that a cell only ever
+// appears in empty space: never under text, tables, code, the sidebar, the
+// contents list, the header or the logo sticker. A faint lattice surrounds
+// the sticker.
+//
+// ONLY ON THE HOME PAGE (`body-classes: falcon-home`). The other pages are for
+// reading, and a letter fading in at the end of a line is a distraction there.
+// Progressive enhancement: the page is complete without it, nothing moves with
+// reduced motion (a still scattering is drawn instead), and print hides it.
+(function () {
+  'use strict';
+  var body = document.body;
+  if (!body || !body.classList.contains('falcon-home') || !window.Uint8Array || !window.Map) return;
+
+  var root = document.documentElement;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var host = document.querySelector('#title-block-header.quarto-title-block');
+
+  var layer = document.createElement('div');
+  layer.className = 'falcon-dna';
+  layer.setAttribute('aria-hidden', 'true');
+  body.insertBefore(layer, body.firstChild);
+  body.style.position = 'relative';
+
+  var BASES = ['A', 'T', 'G', 'C'];
+  // Tight boxes around each line: the hero, where the empty space beside a
+  // short line is part of the design.
+  var TEXT = '.quarto-title .title, .quarto-title .subtitle, .quarto-title-breadcrumbs';
+  // Whole boxes: reading text and everything drawn.
+  var BOXES = 'main p, main li, main h2, main h3, main h4, main h5, main dl, main table, ' +
+              'main pre, main .sourceCode, main .callout, main figure, main img, main blockquote, ' +
+              'main .panel-tabset, main .cell, main .quarto-figure, footer';
+  // The header is fixed and the sidebar and contents list are sticky, so they
+  // move with the screen: checked live in screen coordinates.
+  var FIXED = ['#quarto-header', '#quarto-sidebar', '#quarto-margin-sidebar', '.quarto-secondary-nav'];
+  var STICKER = [[50, 0], [100, 25], [100, 75], [50, 100], [0, 75], [0, 25]];
+  var MAX_CELLS = 140;
+
+  var R = 14, DX = 0, DY = 0, cols = 0, rows = 0, free = null, docW = 0, docH = 0;
+  var active = new Map(), pool = [], fading = [], pendingOn = [], made = 0;
+  var halo = null, haloBox = null;
+  var mouse = { x: 0, y: 0, cx: 0, cy: 0, on: false, dirty: false };
+  var raf = 0, nextSpawn = 0, liveRects = [];
+  var rand = Math.random;
+
+  function colX(r, c) { return c * DX + ((r & 1) ? DX / 2 : 0); }
+
+  function inPolygon(x, y, poly) {
+    var inside = false;
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      var xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Mark every cell whose hexagon touches the box [x0,y0]-[x1,y1] (page coords) as taken.
+  function block(x0, y0, x1, y1) {
+    var r0 = Math.max(0, Math.floor((y0 - R) / DY)), r1 = Math.min(rows - 1, Math.ceil((y1 + R) / DY));
+    for (var r = r0; r <= r1; r++) {
+      var y = r * DY;
+      if (y + R < y0 || y - R > y1) continue;
+      var off = (r & 1) ? DX / 2 : 0;
+      var c0 = Math.max(0, Math.floor((x0 - DX - off) / DX)), c1 = Math.min(cols - 1, Math.ceil((x1 + DX - off) / DX));
+      for (var c = c0; c <= c1; c++) {
+        var x = c * DX + off;
+        if (x + DX / 2 < x0 || x - DX / 2 > x1) continue;
+        free[r * cols + c] = 0;
+      }
+    }
+  }
+
+  function readLive() {
+    liveRects = [];
+    FIXED.forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var b = el.getBoundingClientRect();
+      if (b.bottom > 0 && b.top < window.innerHeight && b.width && b.height &&
+          getComputedStyle(el).display !== 'none') liveRects.push(b);
+    });
+    document.querySelectorAll('.dropdown-menu.show').forEach(function (el) {
+      liveRects.push(el.getBoundingClientRect());
+    });
+  }
+
+  // True if the cell at page position (x, y) would sit under something that moves with the screen.
+  function underFixed(x, y) {
+    var vx = x - window.scrollX, vy = y - window.scrollY, m = R * 0.5;
+    for (var i = 0; i < liveRects.length; i++) {
+      var b = liveRects[i];
+      if (vx + DX / 2 > b.left - m && vx - DX / 2 < b.right + m && vy + R > b.top - m && vy - R < b.bottom + m) return true;
+    }
+    return false;
+  }
+
+  // The sticker is the title block's ::after, which has no box of its own to
+  // ask for, so its place is read from the pseudo-element's computed position.
+  function stickerRect(sx, sy) {
+    if (!host) return null;
+    var cs = getComputedStyle(host, '::after');
+    if (cs.content === 'none' || cs.display === 'none') return null;
+    var w = parseFloat(cs.width), h = parseFloat(cs.height);
+    if (!w || !h) return null;
+    var tb = host.getBoundingClientRect();
+    return { x: tb.left + sx + parseFloat(cs.left) + (parseFloat(cs.marginLeft) || 0),
+             y: tb.top + sy + parseFloat(cs.top) + (parseFloat(cs.marginTop) || 0), w: w, h: h };
+  }
+
+  function build() {
+    var sx = window.scrollX, sy = window.scrollY, prevR = R, prevCols = cols;
+    docW = layer.clientWidth; docH = layer.clientHeight;
+    if (!docW || !docH) return;
+    R = docW < 600 ? 12 : 14;
+    DX = Math.sqrt(3) * R; DY = 1.5 * R;
+    layer.style.setProperty('--nt-w', (DX * 0.9).toFixed(2) + 'px');
+    layer.style.setProperty('--nt-h', (2 * R * 0.9).toFixed(2) + 'px');
+    layer.style.setProperty('--nt-fs', Math.round(R * 0.95) + 'px');
+
+    cols = Math.floor(docW / DX) + 1;
+    rows = Math.floor(docH / DY) + 1;
+    free = new Uint8Array(rows * cols);
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var x = colX(r, c), y = r * DY;
+        free[r * cols + c] = (x - DX / 2 >= 0 && x + DX / 2 <= docW && y - R >= 0 && y + R <= docH) ? 1 : 0;
+      }
+    }
+
+    var m = R * 0.5;   // breathing room around every element
+    function rect(b) {
+      if (b.width || b.height) block(b.left + sx - m, b.top + sy - m, b.right + sx + m, b.bottom + sy + m);
+    }
+    var range = document.createRange();
+    document.querySelectorAll(TEXT).forEach(function (el) {
+      range.selectNodeContents(el);                       // tight boxes around each line of text
+      Array.prototype.forEach.call(range.getClientRects(), rect);
+    });
+    document.querySelectorAll(BOXES).forEach(function (el) { rect(el.getBoundingClientRect()); });
+
+    haloBox = null;
+    var p = stickerRect(sx, sy);
+    if (p) {
+      var poly = STICKER.map(function (v) { return [p.x + v[0] / 100 * p.w, p.y + v[1] / 100 * p.h]; });
+      var pr0 = Math.max(0, Math.floor((p.y - R) / DY)), pr1 = Math.min(rows - 1, Math.ceil((p.y + p.h + R) / DY));
+      for (var rr = pr0; rr <= pr1; rr++) {
+        for (var cc = 0; cc < cols; cc++) {
+          var hx = colX(rr, cc), hy = rr * DY;
+          if (hx < p.x - DX || hx > p.x + p.w + DX) continue;
+          // blocked if the centre or any corner of the cell falls on the sticker
+          var hit = inPolygon(hx, hy, poly);
+          for (var k = 0; k < 6 && !hit; k++) {
+            var a = Math.PI / 180 * (60 * k - 90);
+            hit = inPolygon(hx + R * Math.cos(a), hy + R * Math.sin(a), poly);
+          }
+          if (hit) free[rr * cols + cc] = 0;
+        }
+      }
+      haloBox = { x: p.x - 0.24 * p.w, y: p.y - 0.14 * p.h, w: 1.48 * p.w, h: 1.28 * p.h };
+    }
+
+    // Lit cells fade out if the grid changed or something now sits on them.
+    active.forEach(function (cell, key) {
+      if (R !== prevR || cols !== prevCols || !free[key]) cell.until = 0;
+    });
+    drawHalo();
+    if (reduceMotion.matches) seedStill();
+  }
+
+  function haloWeight(x, y) {
+    if (!haloBox) return 0;
+    var nx = (x - haloBox.x - haloBox.w / 2) / (haloBox.w / 2);
+    var ny = (y - haloBox.y - haloBox.h / 2) / (haloBox.h / 2);
+    var d = Math.sqrt(nx * nx + ny * ny);
+    return d < 0.58 ? 1 : Math.max(0, 1 - (d - 0.58) / 0.4);
+  }
+
+  function hexPath(ctx, x, y, r) {
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+      var a = Math.PI / 180 * (60 * i - 90);
+      if (i === 0) ctx.moveTo(x + r * Math.cos(a), y + r * Math.sin(a));
+      else ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
+    }
+    ctx.closePath();
+  }
+
+  function drawHalo() {
+    if (!haloBox) { if (halo) halo.remove(); halo = null; return; }
+    if (!halo) {
+      halo = document.createElement('canvas');
+      halo.className = 'falcon-dna-halo';
+      layer.insertBefore(halo, layer.firstChild);
+    }
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    halo.style.transform = 'translate(' + haloBox.x + 'px,' + haloBox.y + 'px)';
+    halo.style.width = haloBox.w + 'px';
+    halo.style.height = haloBox.h + 'px';
+    halo.width = Math.round(haloBox.w * dpr);
+    halo.height = Math.round(haloBox.h * dpr);
+    var ctx = halo.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, -haloBox.x * dpr, -haloBox.y * dpr);
+    ctx.strokeStyle = getComputedStyle(root).getPropertyValue('--falcon-line').trim() || '#ccc';
+    ctx.lineWidth = 1;
+    var r0 = Math.max(0, Math.floor(haloBox.y / DY)), r1 = Math.min(rows - 1, Math.ceil((haloBox.y + haloBox.h) / DY));
+    for (var r = r0; r <= r1; r++) {
+      for (var c = 0; c < cols; c++) {
+        if (!free[r * cols + c]) continue;
+        var x = colX(r, c), y = r * DY, w = haloWeight(x, y);
+        if (w <= 0) continue;
+        ctx.globalAlpha = w;
+        hexPath(ctx, x, y, R * 0.9);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function makeCell() {
+    var el = document.createElement('span');
+    el.className = 'falcon-nt';
+    el.appendChild(document.createElement('span'));
+    layer.appendChild(el);
+    made++;
+    return el;
+  }
+
+  function light(r, c, now, ms) {
+    if (r < 0 || c < 0 || r >= rows || c >= cols) return;
+    var key = r * cols + c;
+    if (!free[key]) return;
+    var x = colX(r, c), y = r * DY;
+    if (underFixed(x, y)) return;
+    var cell = active.get(key);
+    if (cell) { if (now + ms > cell.until) cell.until = now + ms; return; }
+    var el = pool.pop() || (made < MAX_CELLS ? makeCell() : null);
+    if (!el) return;
+    var base = BASES[(rand() * 4) | 0];                  // a fresh letter every time it fades in
+    el.className = 'falcon-nt falcon-nt-' + base;
+    el.firstChild.textContent = base;
+    el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    active.set(key, { el: el, until: now + ms, x: x, y: y });
+    pendingOn.push(el);
+  }
+
+  function lightAround(px, py, now) {
+    var reach = R * 4.2;
+    var r0 = Math.floor((py - reach) / DY), r1 = Math.ceil((py + reach) / DY);
+    for (var r = r0; r <= r1; r++) {
+      var off = (r & 1) ? DX / 2 : 0;
+      var c0 = Math.floor((px - reach - off) / DX), c1 = Math.ceil((px + reach - off) / DX);
+      for (var c = c0; c <= c1; c++) {
+        var dx = c * DX + off - px, dy = r * DY - py, d = Math.sqrt(dx * dx + dy * dy);
+        if (d <= reach) light(r, c, now, 450 + (1 - d / reach) * 750);
+      }
+    }
+  }
+
+  function spawn(now) {
+    var top = window.scrollY, vh = window.innerHeight;
+    var nearSticker = haloBox && rand() < 0.4 && haloBox.y + haloBox.h > top && haloBox.y < top + vh;
+    for (var t = 0; t < 10; t++) {
+      var x, y;
+      if (nearSticker) { x = haloBox.x + rand() * haloBox.w; y = haloBox.y + rand() * haloBox.h; }
+      else { x = rand() * docW; y = top + rand() * vh; }
+      var r = Math.round(y / DY), c = Math.round((x - ((r & 1) ? DX / 2 : 0)) / DX);
+      if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+      var key = r * cols + c;
+      if (!free[key] || active.has(key)) continue;
+      if (nearSticker && haloWeight(colX(r, c), r * DY) < 0.5) continue;
+      light(r, c, now, 1600 + rand() * 2400);
+      return;
+    }
+  }
+
+  function tick(now) {
+    raf = 0;
+    if (document.hidden) return;
+    readLive();
+    if (pendingOn.length) {
+      pendingOn.forEach(function (el) { el.classList.add('on'); });
+      pendingOn = [];
+    }
+    if (mouse.dirty && mouse.on) { lightAround(mouse.x, mouse.y, now); mouse.dirty = false; }
+    if (now >= nextSpawn) {
+      spawn(now);
+      nextSpawn = now + (docW < 600 ? 320 : 210) + rand() * 260;
+    }
+    active.forEach(function (cell, key) {
+      if (cell.until > now && underFixed(cell.x, cell.y)) cell.until = 0;
+      if (cell.until <= now) {
+        cell.el.classList.remove('on');
+        active.delete(key);
+        fading.push({ el: cell.el, at: now + 800 });
+      }
+    });
+    while (fading.length && fading[0].at <= now) pool.push(fading.shift().el);
+    raf = requestAnimationFrame(tick);
+  }
+  function start() {
+    if (!raf && !reduceMotion.matches && !document.hidden) raf = requestAnimationFrame(tick);
+  }
+
+  // Reduced motion: a still scattering of letters, no fades, no pointer response.
+  function seedStill() {
+    active.forEach(function (cell) { cell.el.classList.remove('on'); pool.push(cell.el); });
+    active.clear();
+    readLive();
+    var target = Math.max(10, Math.min(40, Math.round(docW * docH / 90000))), placed = 0;
+    for (var t = 0; t < target * 30 && placed < target; t++) {
+      var r = (rand() * rows) | 0, c = (rand() * cols) | 0;
+      if (!free[r * cols + c] || active.has(r * cols + c)) continue;
+      light(r, c, 0, Infinity);
+      placed++;
+    }
+    pendingOn.forEach(function (el) { el.classList.add('on'); });
+    pendingOn = [];
+  }
+
+  function track(e) {
+    if (reduceMotion.matches) return;
+    mouse.cx = e.clientX; mouse.cy = e.clientY;
+    mouse.x = e.pageX; mouse.y = e.pageY;
+    mouse.on = true; mouse.dirty = true;
+  }
+  document.addEventListener('pointermove', function (e) { if (e.pointerType !== 'touch') track(e); }, { passive: true });
+  document.addEventListener('pointerdown', track, { passive: true });
+  root.addEventListener('pointerleave', function () { mouse.on = false; }, { passive: true });
+  window.addEventListener('scroll', function () {
+    if (reduceMotion.matches) {
+      // No animation loop here: just hide still cells while they sit under the header or a column.
+      readLive();
+      active.forEach(function (cell) { cell.el.classList.toggle('on', !underFixed(cell.x, cell.y)); });
+      return;
+    }
+    if (!mouse.on) return;
+    mouse.x = mouse.cx + window.scrollX; mouse.y = mouse.cy + window.scrollY; mouse.dirty = true;
+  }, { passive: true });
+
+  var rebuildTimer = 0;
+  function rebuildSoon() { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(build, 150); }
+
+  readLive();
+  build();
+  start();
+  if ('ResizeObserver' in window) new ResizeObserver(rebuildSoon).observe(body);
+  else window.addEventListener('resize', rebuildSoon);
+  window.addEventListener('load', rebuildSoon);
+  setTimeout(build, 1300);                                // after the hero's entrance has settled
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(rebuildSoon);
+  document.addEventListener('visibilitychange', start);
+  reduceMotion.addEventListener('change', function () { build(); start(); });
+  // Quarto swaps the whole stylesheet on the theme switch and marks the body;
+  // the lattice is drawn in the theme's line colour, so it is redrawn then.
+  new MutationObserver(function () { setTimeout(drawHalo, 50); })
+    .observe(body, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const toggle = window.document.createElement('button');
+      toggle.type = "button";
+      toggle.setAttribute("role", "switch");
+      toggle.setAttribute("aria-checked", "false");
+      toggle.classList.add('top-right');
+      toggle.classList.add('quarto-color-scheme-toggle');
+      toggle.setAttribute("aria-label", "Toggle dark mode");
+      toggle.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      toggle.appendChild(i);
+      // Put the toggle in a landmark of its own, so that landmark navigation
+      // can reach it.
+      //
+      // The container is always a fresh direct child of body, and the toggle is
+      // never moved into page furniture that the theme or the author controls.
+      // The toggle is positioned against the page, so any ancestor that
+      // establishes a containing block captures it: a positioned element or a
+      // grid for position: absolute, and transform, filter, will-change or
+      // contain for position: fixed. A direct child of body has none of these
+      // to inherit, and the shift when one appears is silent and visual.
+      //
+      // ARIA says a document should have at most one banner, and axe reports a
+      // duplicate whether or not the banners carry distinct labels. So use a
+      // header when the page has no banner yet, and a named region otherwise.
+      //
+      // A header is a banner wherever it sits, unless it is inside sectioning
+      // content, so this cannot just look at the children of body: a custom
+      // page layout wraps the title block header in a plain div. An explicit
+      // role="banner" always counts.
+      const sectioning = 'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
+      const hasBanner = Array.from(
+        window.document.querySelectorAll('header:not([role]), [role="banner"]')
+      ).some(function(el) {
+        return el.hasAttribute("role") || el.closest(sectioning) === null;
+      });
+      const container = window.document.createElement(hasBanner ? "div" : "header");
+      if (hasBanner) {
+        container.setAttribute("role", "region");
+        container.setAttribute("aria-label", "Toggle dark mode");
+      }
+      container.classList.add('quarto-color-scheme-toggle-container');
+      container.appendChild(toggle);
+      window.document.body.appendChild(container);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/bhagesh-h\.github\.io\/FALCONAge\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+        for (let i=0; i<annoteTargets.length; i++) {
+          const annoteTarget = annoteTargets[i];
+          const targetCell = annoteTarget.getAttribute("data-target-cell");
+          const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+          const contentFn = () => {
+            const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+            if (content) {
+              const tipContent = content.cloneNode(true);
+              tipContent.classList.add("code-annotation-tip-content");
+              return tipContent.outerHTML;
+            }
+          }
+          const config = {
+            allowHTML: true,
+            content: contentFn,
+            onShow: (instance) => {
+              selectCodeLines(instance.reference);
+              instance.reference.classList.add('code-annotation-active');
+              window.tippy.hideAll();
+            },
+            onHide: (instance) => {
+              unselectCodeLines();
+              instance.reference.classList.remove('code-annotation-active');
+            },
+            maxWidth: 300,
+            delay: [50, 0],
+            duration: [200, 0],
+            offset: [5, 10],
+            arrow: true,
+            appendTo: function(el) {
+              return el.parentElement.parentElement.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'quarto',
+            placement: 'right',
+            plugins: [hideOnEscAndFocusOut],
+            popperOptions: {
+              modifiers: [
+              {
+                name: 'flip',
+                options: {
+                  flipVariations: false, // true by default
+                  allowedAutoPlacements: ['right'],
+                  fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                options: {
+                  mainAxis: false,
+                  altAxis: false
+                }
+              }
+              ]        
+            }      
+          };
+          window.tippy(annoteTarget, config); 
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/bhagesh-h/FALCONAge/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/bhagesh-h/FALCONAge/blob/main/dev/engine.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></div></div></footer></body></html>

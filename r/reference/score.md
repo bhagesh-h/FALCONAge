@@ -1,0 +1,92 @@
+# Score a dataset against one or more clocks
+
+Score a dataset against one or more clocks
+
+## Usage
+
+``` r
+score(
+  data,
+  clocks = "compatible",
+  dtype = NULL,
+  imputation = c("reference", "mean", "none"),
+  min_coverage = 0.8,
+  reference = NULL
+)
+
+# S3 method for class 'falcon_result'
+print(x, ...)
+
+# S3 method for class 'falcon_result'
+summary(object, ...)
+```
+
+## Arguments
+
+- data:
+
+  A `falcon_data`.
+
+- clocks:
+
+  `"compatible"` scores everything this dataset can support and reports
+  the rest as skipped with a reason. `"all"` attempts every clock of the
+  right modality and fails loudly on the ones that cannot run. A
+  character vector names them explicitly, and then every name must work
+  – an explicit request is never silently dropped.
+
+- dtype:
+
+  `NULL` (float64), `"float64"` or `"float32"`. Clocks flagged
+  `requires_fp64` in the registry override a float32 request, with a
+  warning.
+
+- imputation:
+
+  How to fill a clock feature the data does not carry. `"reference"`
+  uses the value the clock's authors published where one exists;
+  `"mean"` uses the column mean; `"none"` refuses, so the coverage check
+  fails loudly instead of being papered over. Zero is never used – in
+  beta space it means completely unmethylated, which is a real and
+  extreme measurement. The mitotic mean, percentile and transmission
+  clocks ignore it: their published statistic is taken over the features
+  present, so absent ones are left out and the coverage record reads
+  `"excluded"`.
+
+- min_coverage:
+
+  Fraction of a clock's features that must be present.
+
+- reference:
+
+  A reference fitted with
+  [`fit_kdm()`](https://bhagesh-h.github.io/FALCONAge/r/reference/fit_kdm.md)
+  or
+  [`fit_hd()`](https://bhagesh-h.github.io/FALCONAge/r/reference/fit_hd.md),
+  for the two clinical clocks that have no fixed coefficients.
+
+- x:
+
+  A `falcon_result`.
+
+- ...:
+
+  Ignored.
+
+- object:
+
+  A `falcon_result`.
+
+## Value
+
+A `falcon_result`: an S3 object wrapping the scores, the per-clock
+coverage and the run manifest.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+res <- score(d, clocks = "compatible")
+res <- score(d, clocks = c("horvath2013", "dnamphenoage"))
+} # }
+```
